@@ -20,7 +20,7 @@ python multicrab_nSubProducer.py --datasets TTJets -v 106X_v01 --selection dijet
 
 ### How to compute the total number of genWeights (events)
 
-To compute the total number of processed events from genWeights, there is a script called [computeGenWeights.py](test/computGenWeights.py). There, one needs to include the name of the dataset processed in the skimmer step inside the `dictSamples` dictionary and then, if the key of the sample starts with `QCD`, one can run:
+To compute the total number of processed events from genWeights, there is a script called [computeGenWeights.py](test/computeGenWeights.py). There, one needs to include the name of the dataset processed in the skimmer step inside the `dictSamples` dictionary and then, if the key of the sample starts with `QCD`, one can run:
 
 ```bash
 python computeGenWeights.py -d QCD
