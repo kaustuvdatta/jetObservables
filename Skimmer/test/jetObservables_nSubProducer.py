@@ -69,7 +69,7 @@ parser.add_argument(
     required=False
 )
 args = parser.parse_args(sys.argv[1:])
-if args.sample.startswith(('/EGamma', '/Single', '/JetHT' )) or ('EGamma' in args.iFile or 'Single' in args.iFile or ('JetHT' in args.iFile)):
+if args.sample.startswith(('/EGamma', '/Single', '/JetHT', 'EGamma', 'Single', 'JetHT' )) or ('EGamma' in args.iFile or 'Single' in args.iFile or ('JetHT' in args.iFile)):
     isMC = False
     print "sample is data"
 else: isMC = True
@@ -89,7 +89,7 @@ else:
 
 cuts = PV + " && " + METFilters + " && " + Triggers
 
-systSources = [ '_jesTotal', '_jer', '_pu' ]
+systSources = [ '_jesTotal', '_jer', '_pu' ] if isMC else []
 
 ### Lepton scale factors
 LeptonSF = {
@@ -137,8 +137,10 @@ jetmetCorrector = createJMECorrector(isMC=isMC, dataYear=args.year, jesUncert="A
 fatJetCorrector = createJMECorrector(isMC=isMC, dataYear=args.year, jesUncert="All", redojec=True, jetType = "AK8PFPuppi")
 
 modulesToRun = []
-if isMC: modulesToRun.append( puWeight_2016() )
+if isMC:
+    modulesToRun.append( puWeight_2016() )
 modulesToRun.append( fatJetCorrector() )
+
 #if isMC: modulesToRun.append( btagSF2016() )
 if args.selection.startswith('dijet'):
     modulesToRun.append( nSubProd( sysSource=systSources ) )
@@ -159,8 +161,8 @@ p1=PostProcessor(
         maxEntries=args.numEvents,
         prefetch=args.local,
         longTermCache=args.local,
-        haddFileName= "jetObservables_"+args.selection+"_nanoskim.root",
-        histFileName = "jetObservables_"+args.selection+"_histograms.root",
+        haddFileName= "jetObservables_"+args.selection+"_nanoskim.root" if args.local else 'jetObservables_nanoskim.root',
+        histFileName = "jetObservables_"+args.selection+"_histograms.root" if args.local else 'jetObservables_histograms.root',
         histDirName = 'jetObservables',
         )
 p1.run()
