@@ -1,6 +1,16 @@
 ## Unfolding step
 
-More info later.
+### Unfolding with TUnfold
+
+Several notebooks with the unfolding procedure are in  `jetObservables/Unfolding/notebooks/`. More information in each notebook.
+
+In addition, there is a python script to compute the unfolding in [runTUnfold.py](test/runTUnfold.py).
+
+
+### Unfolding with combine
+
+A work-in-progress script is in [makeDatacards.py](test/makeDatacards.py)
+
 
 ### How to compute cross sections
 

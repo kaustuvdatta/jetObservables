@@ -17,6 +17,7 @@ git clone https://github.com/cms-nanoAOD/nanoAOD-tools.git PhysicsTools/NanoAODT
 git clone https://github.com/cms-jet/NanoAODJMARTools.git PhysicsTools/NanoAODJMARTools
 git clone https://github.com/alefisico/jetObservables.git -b 106X jetObservables/
 git clone ssh://git@gitlab.cern.ch:7999/asparker/QJetMass.git jetObservables/QJetMass    ### This is just as example
+git clone git@github.com:kaustuvdatta/JSS-Unfolding.git jetObservables/Unfolding/notebooks/
 ln -s $CMSSW_BASE/src/PhysicsTools/NanoAODTools/scripts/haddnano.py jetObservables/Skimmer/test/
 scram b -j 6
 ```
