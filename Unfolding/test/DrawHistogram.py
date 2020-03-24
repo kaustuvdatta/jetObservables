@@ -50,7 +50,77 @@ def setSelection( listSel, xMin=0.65, yMax=0.65, align='right' ):
         yMax = yMax -0.05
 
 ##########################################################
-def plotUnfold( signalFile, var, lumi, reBin, combineLabel, plotLabel, xmin='', xmax='', labX=0.92, labY=0.50, axisX='', axisY='', log=False, ext='png', Norm=False ):
+def plotUnfoldCombined( signalFile, var, lumi, reBin, combineLabel, plotLabel, xmin='', xmax='', labX=0.92, labY=0.50, axisX='', axisY='', log=False, ext='png', Norm=False ):
+    """"Very specific, takes rootfile from combine and compute unfolding"""
+
+    MCScale = checkDict( signalFile[0], dictSamples )['XS'] / checkDict( signalFile[0], dictSamples )['2016']['nevents']
+    genMCHisto = signalFile[1].Get('jetObservables/genJet'+var)
+    genMCHisto.Scale( 1/MCScale, 'width' )
+    recoMCHisto = signalFile[1].Get('jetObservables/recoJet'+var)
+    recoMCHisto.Scale( 1/MCScale, 'width' )
+    if len(reBin)==1:
+        genMCHisto.Rebin( reBin[0] )
+        recoMCHisto.Rebin( reBin[0] )
+    else:
+        genMCHisto.Rebin( len(reBin), genMCHisto.GetName()+'_ReBin', array('d', reBin) )
+        recoMCHisto.Rebin( len(reBin), recoMCHisto.GetName()+'_ReBin', array('d', reBin) )
+
+    genMCHisto.SetLineWidth(2)
+    genMCHisto.SetLineColor(kBlue)
+    recoMCHisto.SetLineWidth(2)
+    recoMCHisto.SetLineStyle(2)
+    recoMCHisto.SetLineColor(kRed)
+
+    combineFile = TFile('higgsCombine'+combineLabel+'.MultiDimFit.mH120.root')
+    test = combineFile.Get('limit')
+
+    Xvalues = []
+    Yvalues = []
+    YMaxError = []
+    YMinError = []
+    for ibin in range(1, genMCHisto.GetNbinsX()+1):
+        histoCont = genMCHisto.GetBinContent(ibin)
+        histoErr = genMCHisto.GetBinError(ibin)
+        Xvalues.append( genMCHisto.GetBinCenter(ibin)  )
+
+        tmpHisto = TH1F('tmp'+str(ibin), 'tmp'+str(ibin), 100, -5, 5)
+        test.Draw("r_bin"+str(ibin)+">>tmp"+str(ibin))
+        combineCont = tmpHisto.GetMean()
+        combineErrUp = test.GetMaximum("r_bin"+str(ibin)) - combineCont
+        combineErrDown = combineCont - test.GetMinimum("r_bin"+str(ibin))
+
+        Yvalues.append( histoCont*combineCont )
+        YMaxError.append( abs( histoCont*combineCont ) * TMath.Sqrt( TMath.Power( histoErr/histoCont, 2 ) + TMath.Power( combineErrUp/combineCont, 2 ) ) )
+        YMinError.append( abs( histoCont*combineCont ) * TMath.Sqrt( TMath.Power( histoErr/histoCont, 2 ) + TMath.Power( combineErrDown/combineCont, 2 ) ) )
+
+    UnfoldGraph = TGraphAsymmErrors( len(Xvalues), array( 'd', Xvalues), array( 'd', Yvalues), array( 'd', [0]*len(Xvalues)), array( 'd', [0]*len(Xvalues)), array( 'd', YMinError), array( 'd', YMaxError) )
+    UnfoldGraph.SetMarkerStyle(8)
+    UnfoldGraph.GetXaxis().SetTitle( genMCHisto.GetXaxis().GetTitle() )
+    UnfoldGraph.GetYaxis().SetTitle( 'Events / '+str(genMCHisto.GetBinWidth(1)) )
+    UnfoldGraph.GetYaxis().SetTitleOffset( 0.8 )
+
+    legend=TLegend(0.70,0.70,0.90,0.90)
+    legend.SetFillStyle(0)
+    legend.SetTextSize(0.03)
+    legend.AddEntry( UnfoldGraph, 'Unfolding ('+plotLabel+')', 'pe' )
+    legend.AddEntry( genMCHisto, 'MC Truth', 'l' )
+    legend.AddEntry( recoMCHisto, 'Reco', 'l' )
+
+    tdrStyle.SetPadRightMargin(0.05)
+    canvas['c1'] = TCanvas('c1', 'c1',  10, 10, 750, 500 )
+    UnfoldGraph.Draw("AP")
+    recoMCHisto.Draw("histe same")
+    genMCHisto.Draw("histe same")
+    legend.Draw()
+    CMS_lumi.extraText = "Simulation Preliminary"
+    #CMS_lumi.lumi_13TeV = str( round( (lumi/1000.), 2 ) )+" fb^{-1}, 13 TeV, 2016"
+    CMS_lumi.lumi_13TeV = "13 TeV, 2016"
+    CMS_lumi.relPosX = 0.11
+    CMS_lumi.CMS_lumi(canvas['c1'], 4, 0)
+    canvas['c1'].SaveAs('Plots/Unfolding_'+combineLabel+'.'+ext)
+
+#####################################################
+def plotUnfoldCombined( signalFile, var, lumi, reBin, combineLabel, plotLabel, xmin='', xmax='', labX=0.92, labY=0.50, axisX='', axisY='', log=False, ext='png', Norm=False ):
     """"Very specific, takes rootfile from combine and compute unfolding"""
 
     MCScale = checkDict( signalFile[0], dictSamples )['XS'] / checkDict( signalFile[0], dictSamples )['2016']['nevents']

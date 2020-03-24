@@ -86,14 +86,25 @@ if __name__ == '__main__':
 
     dictSamples = {}
     dictSamples['TT'] = '/TT_TuneCUETP8M2T4_13TeV-powheg-pythia8/algomez-jetObservables_Skimmer_v02-dafc15ff64439ee3efd0c8e48ce3e57e/USER'
+    dictSamples['TTJets'] = '/TTJets_TuneCUETP8M1_13TeV-madgraphMLM-pythia8/algomez-jetObservables_Skimmer_TTJets_TuneCUETP8M1_13TeV-madgraphMLM-pythia8_v02-dafc15ff64439ee3efd0c8e48ce3e57e/USER'
     dictSamples['ST_s-channel'] = '/ST_s-channel_4f_InclusiveDecays_13TeV-amcatnlo-pythia8/algomez-jetObservables_Skimmer_v02-dafc15ff64439ee3efd0c8e48ce3e57e/USER'
     dictSamples['ST_t-channel_antitop'] = '/ST_t-channel_antitop_4f_inclusiveDecays_13TeV-powhegV2-madspin-pythia8_TuneCUETP8M1/algomez-jetObservables_Skimmer_v02-dafc15ff64439ee3efd0c8e48ce3e57e/USER'
     dictSamples['ST_t-channel_top'] = '/ST_t-channel_top_4f_inclusiveDecays_13TeV-powhegV2-madspin-pythia8_TuneCUETP8M1/algomez-jetObservables_Skimmer_v02-dafc15ff64439ee3efd0c8e48ce3e57e/USER'
     dictSamples['ST_tW_antitop'] = '/ST_tW_antitop_5f_inclusiveDecays_13TeV-powheg-pythia8_TuneCUETP8M2T4/algomez-jetObservables_Skimmer_v02-dafc15ff64439ee3efd0c8e48ce3e57e/USER'
     dictSamples['ST_tW_top'] = '/ST_tW_top_5f_inclusiveDecays_13TeV-powheg-pythia8_TuneCUETP8M2T4/algomez-jetObservables_Skimmer_v02-dafc15ff64439ee3efd0c8e48ce3e57e/USER'
     dictSamples['WJetsToLNu'] = '/WJetsToLNu_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/algomez-jetObservables_Skimmer_v02-dafc15ff64439ee3efd0c8e48ce3e57e/USER'
+
+    dictSamples['QCDPt15to7000'] = '/QCD_Pt-15to7000_TuneCUETP8M1_FlatP6_13TeV_pythia8/algomez-jetObservables_Skimmer_QCD_Pt15to7000_v02-3de7f16b11abe7d2f2c8fb8b12121ea5/USER'
     dictSamples['QCDPt170to300'] = '/QCD_Pt_170to300_TuneCUETP8M1_13TeV_pythia8/algomez-jetObservables_Skimmer_v02-dafc15ff64439ee3efd0c8e48ce3e57e/USER'
-    dictSamples['ST_s-channel'] = '/ST_s-channel_4f_InclusiveDecays_13TeV-amcatnlo-pythia8/algomez-jetObservables_Skimmer_v02-dafc15ff64439ee3efd0c8e48ce3e57e/USER'
+    dictSamples['QCDPt300to470'] = '/QCD_Pt_300to470_TuneCUETP8M1_13TeV_pythia8/algomez-jetObservables_Skimmer_v02-dafc15ff64439ee3efd0c8e48ce3e57e/USER'
+    dictSamples['QCDPt470to600'] = '/QCD_Pt_470to600_TuneCUETP8M1_13TeV_pythia8/algomez-jetObservables_Skimmer_QCD_Pt470to600_v02-dafc15ff64439ee3efd0c8e48ce3e57e/USER'
+    dictSamples['QCDPt600to800'] = '/QCD_Pt_600to800_TuneCUETP8M1_13TeV_pythia8/algomez-jetObservables_Skimmer_QCD_Pt600to800_v02-dafc15ff64439ee3efd0c8e48ce3e57e/USER'
+    dictSamples['QCDPt800to1000'] = '/QCD_Pt_800to1000_TuneCUETP8M1_13TeV_pythia8/algomez-jetObservables_Skimmer_QCD_Pt800to1000_v02-dafc15ff64439ee3efd0c8e48ce3e57e/USER'
+    dictSamples['QCDPt1000to1400'] = '/QCD_Pt_1000to1400_TuneCUETP8M1_13TeV_pythia8/algomez-jetObservables_Skimmer_QCD_Pt1000to1400_v02-dafc15ff64439ee3efd0c8e48ce3e57e/USER'
+    dictSamples['QCDPt1400to1800'] = '/QCD_Pt_1400to1800_TuneCUETP8M1_13TeV_pythia8/algomez-jetObservables_Skimmer_QCD_Pt1400to1800_v02-dafc15ff64439ee3efd0c8e48ce3e57e/USER'
+    dictSamples['QCDPt1800to2400'] = '/QCD_Pt_1800to2400_TuneCUETP8M1_13TeV_pythia8/algomez-jetObservables_Skimmer_QCD_Pt1800to2400_v02-dafc15ff64439ee3efd0c8e48ce3e57e/USER'
+    dictSamples['QCDPt2400to3200'] = '/QCD_Pt_2400to3200_TuneCUETP8M1_13TeV_pythia8/algomez-jetObservables_Skimmer_QCD_Pt2400to3200_v02-dafc15ff64439ee3efd0c8e48ce3e57e/USER'
+    dictSamples['QCDPt3200toInf'] = '/QCD_Pt_3200toInf_TuneCUETP8M1_13TeV_pythia8/algomez-jetObservables_Skimmer_QCD_Pt3200toInf_v02p1-dafc15ff64439ee3efd0c8e48ce3e57e/USER'
 
     ### To choose dataset from dictSamples
     processingSamples = {}
@@ -123,4 +134,7 @@ if __name__ == '__main__':
             allfiles = [ "root://xrootd-cms.infn.it/"+dic['logical_file_name'] for dic in fileDictList ]
         print ("dataset %s has %d files" % (jsample, len(allfiles)))
 
+        #for i in range (0, len(allfiles),20):
+        #    print i
+        #    computeGenWeights( allfiles[i:i+20], isample )
         computeGenWeights( allfiles, isample )

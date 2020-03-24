@@ -8,7 +8,7 @@ import ROOT
 from datasets import *
 from array import array
 import numpy as np
-from DrawHistogram import plotSimpleComparison, plotUnfold
+from DrawHistogram import plotSimpleComparison, plotUnfoldCombined
 sys.path.insert(0,'../python/')
 import CMS_lumi as CMS_lumi
 import tdrstyle as tdrstyle
@@ -211,6 +211,6 @@ if __name__ == '__main__':
 
     if args.process.endswith('plot'):
         for ivar in variables:
-            plotUnfold(sigFiles['ttbarMadgraph'], ivar, args.lumi, variables[ivar], ivar+'_from'+('Data' if args.process.startswith('data') else 'MC')+'_'+next(iter(sigFiles)), 'Madgraph' )
+            plotUnfoldCombined(sigFiles['ttbarMadgraph'], ivar, args.lumi, variables[ivar], ivar+'_from'+('Data' if args.process.startswith('data') else 'MC')+'_'+next(iter(sigFiles)), 'Madgraph' )
     else: createDatacards( dataFile, sigFiles, bkgFiles, variables )
 
