@@ -1,4 +1,4 @@
-#jssMeasurements
+jssMeasurements
 
 This analysis uses the extended nanoAOD format (info available [here] (https://twiki.cern.ch/twiki/bin/view/CMS/JetMET/JMARNanoAODv1))
 
