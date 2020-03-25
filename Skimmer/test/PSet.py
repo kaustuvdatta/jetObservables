@@ -8,7 +8,7 @@ process.source.fileNames = [
     # data
     #'/store/group/lpctlbsm/NanoAODJMAR_2019_V1/Production/CRAB/ST_tW_antitop_5f_inclusiveDecays_13TeV-powheg-pythia8_TuneCUETP8M2T4/STtWantitop5finclusiveDecays13TeV-powheg-pythia8TuneCUETP8M2T4/190321_164541/0000/nano102x_on_mini94x_2016_mc_NANO_8.root'
     #'/store/group/lpctlbsm/NanoAODJMAR_2019_V1/Production/CRAB/WJetsToQQ_HT400to600_qc19_3j_TuneCP5_13TeV-madgraphMLM-pythia8/WJetsToQQHT400to600qc193jTuneCP513TeV-madgraphMLM-pythia8RunIIFall17MiniAODv2-PU2017/190414_201204/0000/nano102x_on_mini94x_2017_mc_NANO_170.root'
-    '/store/group/lpctlbsm/NanoAODJMAR_2019_V1/Production/CRAB/TTJets_TuneCUETP8M1_13TeV-madgraphMLM-pythia8/TTJetsTuneCUETP8M113TeV-madgraphMLM-pythia8RunIISummer16MiniAODv3-PUMoriond1794XmcRun2/190321_164456/0000/nano102x_on_mini94x_2016_mc_NANO_12.root'
+    'root://xrootd-cms.infn.it//store/group/lpctlbsm/NanoAODJMAR_2019_V1/Production/CRAB/TTJets_TuneCUETP8M1_13TeV-madgraphMLM-pythia8/TTJetsTuneCUETP8M113TeV-madgraphMLM-pythia8RunIISummer16MiniAODv3-PUMoriond1794XmcRun2/190321_164456/0000/nano102x_on_mini94x_2016_mc_NANO_12.root'
     #'/store/group/lpctlbsm/NanoAODJMAR_2019_V1/Production/CRAB/TT_TuneCUETP8M2T4_13TeV-powheg-pythia8/TTTuneCUETP8M2T413TeV-powheg-pythia8RunIISummer16MiniAODv3-PUMoriond1794XmcRun2/190321_164443/0000/nano102x_on_mini94x_2016_mc_NANO_105.root'
     #'/store/user/algomez/QCD_Pt_800to1000_TuneCUETP8M1_13TeV_pythia8/QCDPt800to1000TuneCUETP8M113TeVpythia8RunIISummer16MiniAODv3-PUMoriond1794XmcRun2/190328_223023/0000/nano102x_on_mini94x_2016_mc_NANO_9.root'
     #'/store/group/lpctlbsm/NanoAODJMAR_2019_V1/Production/CRAB/WJetsToLNu_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/WJetsToLNuTuneCUETP8M113TeV-amcatnloFXFX-pythia8RunIISummer16MiniAODv3-PUMoriond1794X/190321_164609/0000/nano102x_on_mini94x_2016_mc_NANO_99.root'
@@ -34,5 +34,6 @@ process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(-1))
 
 process.output = cms.OutputModule("PoolOutputModule",
         fileName = cms.untracked.string('jetObservables_nanoskim.root'),
-        fakeNameForCrab =cms.untracked.bool(True))
+        #fakeNameForCrab =cms.untracked.bool(True)
+        )
 process.out = cms.EndPath(process.output)

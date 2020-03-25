@@ -256,7 +256,7 @@ class nsubjettinessProducer(Module):
         '''process event, return True (go to next module) or False (fail, go to next event)'''
 
         isMC = event.run == 1
-        
+
         self.dummy+=1
         #if (self.dummy > 50000): return False
         #self.verbose=True
@@ -264,7 +264,7 @@ class nsubjettinessProducer(Module):
 
         ### Get W->jj candidate ###
         if isMC: gen_ak8 = list(Collection(event, self.genJetBranchName ))
-        
+
         jets = list(Collection(event, self.jetBranchName ))
         pfCands = list(Collection(event, self.pfCandsBranchName ))
         electrons = list(Collection(event, self.electronBranchName))
@@ -498,7 +498,7 @@ class nsubjettinessProducer(Module):
                 tmpDeltaR = tmpsdrecojet.DeltaR( ireco.p4() )
                 if (tmpDeltaR < deltaR):
                     deltaR=tmpDeltaR
-                    if (tmpDeltaR<0.2): sdrecojetFull = ireco
+                    if (tmpDeltaR<0.3): sdrecojetFull = ireco
 
             # Cluster only the particles near the appropriate jet to save time
             sd_constituents = ROOT.vector("TLorentzVector")()
@@ -709,9 +709,9 @@ class nsubjettinessProducer(Module):
                     tau21 = nsub1[tauN]
                 if nsub0p5[tauN]==0. or nsub1[tauN]==0. or nsub2[tauN]==0.:
                     self.out.fillBranch("genEventNo_taus_are_0", event.event)
-                    print nsub0p5
-                    print nsub1
-                    print nsub2
+                    #print nsub0p5
+                    #print nsub1
+                    #print nsub2
 
                 self.out.fillBranch("goodgenjet0_tau_0p5_"+str(tauN),  nsub0p5[tauN]  )
                 getattr( self, "genJet_tau_0p5_"+str(tauN)).Fill( nsub0p5[tauN] )
