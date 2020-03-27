@@ -49,10 +49,10 @@ class nSubExtractor:
 
         else: self.sample_list = [i for i in self.sample_names if i.startswith(sample)]
 
-        if self.isMC: self.filepaths = ['../AutoObs/CMS/Unf_SysUnc/%s/jetObservables_nanoskim_*.root'%self.sample_list]
+        if self.isMC: self.filepaths = ['/data/inverse/AutoObs/CMS/Unf_SysUnc/%s/jetObservables_nanoskim_*.root'%self.sample_list]
             
         else:    
-            self.filepaths = ['../AutoObs/CMS/Unf_SysUnc/%s/jetObservables_nanoskim_*.root'%sample for sample in self.sample_list]
+            self.filepaths = ['/data/inverse/AutoObs/CMS/Unf_SysUnc/%s/jetObservables_nanoskim_*.root'%sample for sample in self.sample_list]
 
     
     def create_var_sel_list(self):
