@@ -19,5 +19,5 @@ This folder includes Jupyter notebooks for unfolding the nSub basis and ratios, 
     conda env list #to verify the right packages are installed
 
     ```
-
+    [Note that this environment also includes pytorch, tensorflow, etc. ML libraries that are not necessary to run the notebooks in this folder, and these can be removed from the .yml file if need be, before importing the environment on your machine]
     
