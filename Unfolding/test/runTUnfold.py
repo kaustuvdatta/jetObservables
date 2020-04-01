@@ -80,7 +80,17 @@ def runTUnfold( dataFile, sigFiles, bkgFiles, variables, sel, sysUncert ):
                 print '|--------> Removing this bkg: ', ibkg
                 tunfolder.SubtractBackground( bkgHistos[ibkg], ibkg )
 
-        ###### No idea what is happening here
+        ###### Adding SYS unc
+        for sys in [ 'jesTotal', 'jer', 'pu' ]:
+            for upDown in [ 'Up', 'Down' ]:
+                tunfolder.AddSysError(
+                                    signalHistos[next(iter(sigFiles))+'_respJet'+ivar+'_'+sys+upDown+sel],
+                                    sys+upDown,
+                                    ROOT.TUnfold.kHistMapOutputHoriz,
+                                    ROOT.TUnfoldSys.kSysErrModeShift  #### kSysErrModeMatrix the histogram sysError corresponds to an alternative response matrix. kSysErrModeShift the content of the histogram sysError are the absolute shifts of the response matrix. kSysErrModeRelative the content of the histogram sysError specifies the relative uncertainties
+                                    )
+
+        ###### Running the unfolding
         nScan=50
         tauMin=0.0
         tauMax=0.0
@@ -89,6 +99,7 @@ def runTUnfold( dataFile, sigFiles, bkgFiles, variables, sel, sysUncert ):
         logTauX = ROOT.MakeNullPointer(ROOT.TSpline)
         logTauY = ROOT.MakeNullPointer(ROOT.TSpline)
         lCurve = ROOT.MakeNullPointer(ROOT.TGraph)
+        ## this method scans the parameter tau and finds the kink in the L curve finally, the unfolding is done for the best choice of tau
         tunfolder.ScanLcurve(nScan,tauMin,tauMax,lCurve,logTauX,logTauY)
         #########################
 
@@ -231,7 +242,7 @@ if __name__ == '__main__':
     ##bkgFiles[] = [ '', TFile( inputFolder+'/jetObservables_histograms_'+ibkg+'.root' ), '', 'kMagenta' ]
 
     variables = {}
-    variables[ 'Tau21' ] = [ (5,10) ]  ### (reco,gen)
+    variables[ 'Tau21' ] = [ (10,20) ]  ### (reco,gen)
     #variables[ 'Tau21' ] = [ 0, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 1. ]
 
     sysUncert = [ '_jesTotal', '_jer', '_pu' ]

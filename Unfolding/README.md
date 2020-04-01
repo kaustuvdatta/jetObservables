@@ -1,10 +1,24 @@
 ## Unfolding step
 
+
 ### Unfolding with TUnfold
 
-Several notebooks with the unfolding procedure are in  `jetObservables/Unfolding/notebooks/`. More information in each notebook.
+#### Notebooks
 
-In addition, there is a python script to compute the unfolding in [runTUnfold.py](test/runTUnfold.py).
+Several notebooks with the unfolding procedure are in  `jetObservables/Unfolding/notebooks/`. More information in each notebook and in the dedicated [README](notebooks/README.md).
+
+#### Scripts
+
+There is a python script to compute the unfolding in [runTUnfold.py](test/runTUnfold.py). To run it:
+```bash
+cd test/
+python runTUnfold.py -v v02 -p MC -s _dijet
+```
+where `-v` refers to the version of the files, `-p` if the unfolding is done with respect to data or MC, and `-s` is the selection (`_dijetSel`, `_WSel`, `_topSel`). More info in `--help`.
+This script takes rootfiles created in the Skimmer part, which are stored locally under `jetObservables/Unfolding/test/Rootfiles/`. If the input files are located somewhere else, modify the variable `inputFolder` in [runTUnfold.py](test/runTUnfold.py). 
+The script will create several plots for cross checks and final unfolding, stored under `jetObservables/Unfolding/test/Plots/`. 
+
+For the purity/stability studies, the python script [Purity.py](test/Purity.py) makes these studies.
 
 
 ### Unfolding with combine
