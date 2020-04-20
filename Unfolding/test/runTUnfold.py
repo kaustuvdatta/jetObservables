@@ -103,6 +103,7 @@ def runTUnfold( dataFile, sigFiles, bkgFiles, variables, sel, sysUncert ):
                                     version=sel+'_'+args.version
                                     )
                 for upDown in [ 'Up', 'Down' ]:
+                    print sys+upDown
                     tunfolder.AddSysError(
                                         signalHistos[next(iter(sigFiles))+'_respJet'+ivar+sys+upDown+sel+"_Normalized"],
                                         sys+upDown,
@@ -134,7 +135,7 @@ def runTUnfold( dataFile, sigFiles, bkgFiles, variables, sel, sysUncert ):
         unfoldHisto = tunfolder.GetOutput("unfoldHisto")
 
         #### Get various covariances
-        print '|------> TUnfolding covariances:'
+        print '|------> TUnfolding covariances'
         cov = tunfolder.GetEmatrixTotal("cov", "Covariance Matrix")
         cov_uncorr = tunfolder.GetEmatrixSysUncorr("cov_uncorr", "Covariance Matrix from Uncorrelated Uncertainties")
         cov_uncorr_data = tunfolder.GetEmatrixInput("cov_uncorr_data", "Covariance Matrix from Stat Uncertainties of Input Data")
@@ -143,7 +144,7 @@ def runTUnfold( dataFile, sigFiles, bkgFiles, variables, sel, sysUncert ):
         unfoldHistoTotUnc = unfoldHisto.Clone("unfoldHistoTotUnc")          # Total uncertainty
         for ibin in range( 0, unfoldHisto.GetNbinsX()+1 ):
             unc_tot = ROOT.TMath.Sqrt( cov.GetBinContent(ibin,ibin) )
-            unfoldHistoTotUnc.SetBinError(ibin, unc_tot )
+            unfoldHistoTotUnc.SetBinContent(ibin, unc_tot )
             unfoldHisto.SetBinError(ibin, unc_tot )
 
 
@@ -151,25 +152,40 @@ def runTUnfold( dataFile, sigFiles, bkgFiles, variables, sel, sysUncert ):
         uncerUnfoldHisto = {}
         if len(sysUncert)>0 :
             print '|------> TUnfolding uncertainties:'
+            unfoldHistoSysUnc = unfoldHisto.Clone("unfoldHistoSysUnc")          # Syst uncertainty
+            unfoldHistoSysUnc.Reset()
+            unfoldHistoSysUnc.SetLineStyle(2)
+
             for sys in sysUncert:
                 for upDown in [ 'Up', 'Down' ]:
+                    print sys+upDown
                     uncerUnfoldHisto[ivar+sys+upDown] = tunfolder.GetDeltaSysSource(sys+upDown, "unfoldHisto_"+sys+upDown+"shift", "-1#sigma")
-                    uncerUnfoldHisto[ivar+sys+upDown].SetLineStyle(2)
+                    try: uncerUnfoldHisto[ivar+sys+upDown].SetLineStyle(2)
+                    except ReferenceError: uncerUnfoldHisto.pop( ivar+sys+upDown, None )
 
-        # Now prepare various distributions.
-#        o_sys = o.Clone("o_sys")        # Syst uncertainty
-#        o_sys.SetLineStyle(2)
-#
-#        # Create total uncertainty and sys uncertainty plots.
-#        # Also fix the uncertainties on the output
-#        for i in xrange( 0, o_up.GetNbinsX() + 1):
-#            yup = abs( o_up.GetBinContent(i))
-#            ydn = abs( o_dn.GetBinContent(i))
-#            dy = ROOT.TMath.Sqrt( (yup**2 + ydn**2) )
-#            o_sys.SetBinContent(i, dy )
+                # Create total uncertainty and sys uncertainty plots.
+                uncerUnfoldHisto[ivar+sys+'Total'] = unfoldHisto.Clone("unfoldHistoSysUnc")          # Syst uncertainty
+                uncerUnfoldHisto[ivar+sys+'Total'].Reset()
+                uncerUnfoldHisto[ivar+sys+'Total'].SetLineStyle(3)
+                for i in xrange( 0, unfoldHisto.GetNbinsX() + 1):
+                    try: yup = abs( uncerUnfoldHisto[ivar+sys+'Up'].GetBinContent(i))
+                    except KeyError: yup = 0
+                    try: ydn = abs( uncerUnfoldHisto[ivar+sys+'Down'].GetBinContent(i))
+                    except KeyError: ydn = 0
+                    dy = ROOT.TMath.Sqrt( (yup**2 + ydn**2) )
+                    uncerUnfoldHisto[ivar+sys+'Total'].SetBinContent(i, dy )
+                unfoldHistoSysUnc.Add( uncerUnfoldHisto[ivar+sys+'Total'] )
 
         ###### Plot unfolding results
-        canvasStack = ROOT.TCanvas('canvasStack', 'canvasStack', 750, 500)
+        tdrStyle.SetPadRightMargin(0.05)
+        tdrStyle.SetPadLeftMargin(0.15)
+        can = TCanvas('can', 'can',  10, 10, 750, 750 )
+        pad1 = TPad("pad1", "Main",0,0.207,1.00,1.00,-1)
+        pad2 = TPad("pad2", "Ratio",0,0.00,1.00,0.30,-1);
+        pad1.Draw()
+        pad2.Draw()
+
+        pad1.cd()
 
         legend=TLegend(0.65,0.65,0.90,0.88)
         legend.SetFillStyle(0)
@@ -197,7 +213,7 @@ def runTUnfold( dataFile, sigFiles, bkgFiles, variables, sel, sysUncert ):
         unfoldHistowoUnc.SetMarkerColor(kRed)
         unfoldHistowoUnc.SetLineColor(kRed-3)
         unfoldHistowoUnc.SetLineWidth(2)
-        legend.AddEntry( unfoldHistowoUnc, 'Unfolded, stat+unfolding unc', 'l' )
+        legend.AddEntry( unfoldHistowoUnc, 'Unfolded, stat+unf unc', 'l' )
 
         foldHisto = tunfolder.GetFoldedOutput("folded") #, 'folded', 'folded', , False)
         #if len(variables[ivar])>1: foldHisto = foldHisto.Rebin( len(variables[ivar])-1, foldHisto.GetName()+"_rebin", array( 'd', variables[ivar] ) )
@@ -224,8 +240,7 @@ def runTUnfold( dataFile, sigFiles, bkgFiles, variables, sel, sysUncert ):
         dataJetHisto.SetLineColor(kMagenta)
         legend.AddEntry( dataJetHisto, ('Data' if args.process.startswith('data') else 'MC Closure' ), 'l' )
 
-        genJetHisto.GetXaxis().SetTitle( genJetHisto.GetXaxis().GetTitle() )
-        genJetHisto.GetYaxis().SetTitle( 'dN/d#sigma' )
+        genJetHisto.GetYaxis().SetTitle( '#frac{1}{d#sigma} #frac{d#sigma}{d(#tauX)}' )
         genJetHisto.GetYaxis().SetTitleOffset(0.8)
         genJetHisto.SetMaximum( 1.2*max([ genJetHisto.GetMaximum(), unfoldHisto.GetMaximum(), unfoldHistowoUnc.GetMaximum(), foldHisto.GetMaximum(), dataJetHisto.GetMaximum() ] )  )
 
@@ -241,8 +256,73 @@ def runTUnfold( dataFile, sigFiles, bkgFiles, variables, sel, sysUncert ):
         #CMS_lumi.lumi_13TeV = str( round( (lumi/1000.), 2 ) )+" fb^{-1}, 13 TeV, 2016"
         CMS_lumi.lumi_13TeV = "13 TeV, 2016"
         CMS_lumi.relPosX = 0.11
-        CMS_lumi.CMS_lumi(canvasStack, 4, 0)
-        canvasStack.SaveAs('Plots/'+ivar+sel+'_from'+('Data' if args.process.startswith('data') else 'MC')+(''.join(sysUncert))+'_Tunfold_'+args.version+'.png')
+        CMS_lumi.CMS_lumi(pad1, 4, 0)
+
+        pad2.cd()
+        gStyle.SetOptFit(1)
+        pad2.SetGrid()
+        pad2.SetTopMargin(0)
+        pad2.SetBottomMargin(0.3)
+        tmpPad2= pad2.DrawFrame( 0, 0.5, 1, 1.5 )
+        tmpPad2.GetXaxis().SetTitle( genJetHisto.GetXaxis().GetTitle() )
+        tmpPad2.GetYaxis().SetTitle( "True/Unfolded" )
+        tmpPad2.GetYaxis().SetTitleOffset( 0.5 )
+        tmpPad2.GetYaxis().CenterTitle()
+        tmpPad2.SetLabelSize(0.12, 'x')
+        tmpPad2.SetTitleSize(0.12, 'x')
+        tmpPad2.SetLabelSize(0.12, 'y')
+        tmpPad2.SetTitleSize(0.12, 'y')
+        tmpPad2.SetNdivisions(505, 'x')
+        tmpPad2.SetNdivisions(505, 'y')
+        pad2.Modified()
+        hRatioUp = TGraphAsymmErrors()
+        hRatioUp.Divide( genJetHisto, unfoldHisto, 'pois' )
+        #hRatioUp.SetLineColor(kRed-4)
+        #hRatioUp.SetLineWidth(2)
+        hRatioUp.SetMarkerStyle(8)
+        hRatioUp.Draw('P0')
+        #hRatioDown.Draw('P same')
+
+        can.SaveAs('Plots/'+ivar+sel+'_from'+('Data' if args.process.startswith('data') else 'MC')+(''.join(sysUncert))+'_Tunfold_'+args.version+'.png')
+
+        canUnc = TCanvas('canUnc', 'canUnc',  10, 10, 750, 500 )
+        #canUnc.SetLogy()
+
+        legend=TLegend(0.70,0.65,0.90,0.88)
+        legend.SetFillStyle(0)
+        legend.SetTextSize(0.03)
+        legend.AddEntry( unfoldHistoTotUnc, 'Total Unc', 'l' )
+
+        #unfoldHistoTotUnc.SetMinimum(0.00001)
+        unfoldHistoTotUnc.SetLineWidth(2)
+        unfoldHistoTotUnc.Scale( 1/unfoldHistoTotUnc.Integral() )
+        unfoldHistoTotUnc.GetYaxis().SetTitle('Fractional Uncertainty')
+        unfoldHistoTotUnc.Draw('hist')
+
+        if len(sysUncert)>0 :
+            legend.AddEntry( unfoldHistoSysUnc, 'Total Syst Unc', 'l' )
+            unfoldHistoSysUnc.Scale( 1/unfoldHistoTotUnc.Integral() )
+            unfoldHistoSysUnc.SetLineWidth(2)
+            unfoldHistoSysUnc.Draw("hist same")
+            dummy=2
+            for k in uncerUnfoldHisto:
+                if k.endswith('Total'):
+                    print k
+                    legend.AddEntry( uncerUnfoldHisto[k], k.split('_')[1].split('Total')[0], 'l' )
+                    uncerUnfoldHisto[k].SetLineColor(dummy)
+                    uncerUnfoldHisto[k].SetLineWidth(2)
+                    uncerUnfoldHisto[k].Scale( 1/unfoldHistoTotUnc.Integral() )
+                    uncerUnfoldHisto[k].Draw("hist same")
+                    dummy=dummy+1
+
+        legend.Draw()
+        CMS_lumi.extraText = "Simulation Preliminary"
+        #CMS_lumi.lumi_13TeV = str( round( (lumi/1000.), 2 ) )+" fb^{-1}, 13 TeV, 2016"
+        CMS_lumi.lumi_13TeV = "13 TeV, 2016"
+        CMS_lumi.relPosX = 0.11
+        CMS_lumi.CMS_lumi(canUnc, 4, 0)
+
+        canUnc.SaveAs('Plots/'+ivar+sel+'_from'+('Data' if args.process.startswith('data') else 'MC')+(''.join(sysUncert))+'_Tunfold_UNC_'+args.version+'.png')
 
 ##########################################################################
 def loadHistograms( samples, variables, sel, sysUnc=[], isMC=True ):
@@ -338,8 +418,8 @@ if __name__ == '__main__':
     else: dataFile['data'] = [ TFile( inputFolder+'/jetObservables_histograms_SingleMuonRun2016ALL.root' ), 'Data', 'kBlack' ]
 
     sigFiles = {}
-    #sigFiles['TTJets'] = [ TFile( inputFolder+'/jetObservables_histograms_TTJets_TuneCUETP8M1_13TeV-madgraphMLM-pythia8.root'), 'ttbar (madgraph)', 'kBlue' ]
-    sigFiles['TT'] = [ TFile( inputFolder+'/jetObservables_histograms_TT_TuneCUETP8M2T4_13TeV-powheg-pythia8.root'), 'ttbar (madgraph)', 'kBlue' ]
+    sigFiles['TTJets'] = [ TFile( inputFolder+'/jetObservables_histograms_TTJets_TuneCUETP8M1_13TeV-madgraphMLM-pythia8.root'), 'ttbar (madgraph)', 'kBlue' ]
+    #sigFiles['TT'] = [ TFile( inputFolder+'/jetObservables_histograms_TT_TuneCUETP8M2T4_13TeV-powheg-pythia8.root'), 'ttbar (madgraph)', 'kBlue' ]
 
     bkgFiles = {}
     bkgFiles['ST_s-channel_4f_InclusiveDecays'] = [ TFile( inputFolder+'/jetObservables_histograms_ST_s-channel_4f_InclusiveDecays_13TeV-amcatnlo-pythia8.root' ), 'Single top', 'kMagenta' ]
@@ -352,7 +432,7 @@ if __name__ == '__main__':
 
     variables = {}
     variables[ 'Tau21' ] = [ 10 ]  ### (reco,gen)
-    #variables[ 'Tau21' ] = [ 0, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 1. ]
+    #variables[ 'Tau21' ] = [ 0, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 1. ]
 
     sysUncert = [ '_jesTotal', '_jer', '_pu' ]
     #sysUncert = [  ]
