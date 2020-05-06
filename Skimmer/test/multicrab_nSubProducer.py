@@ -99,7 +99,8 @@ def submitJobs( job, inputFiles, unitJobs ):
     #config.Data.outputPrimaryDataset = job
 
     # since the input will have no metadata information, output can not be put in DBS
-    config.JobType.outputFiles = [ 'jetObservables_nanoskim.root', 'jetObservables_histograms.root']
+    #config.JobType.outputFiles = [ 'jetObservables_nanoskim.root', 'jetObservables_histograms.root']
+    config.JobType.outputFiles = [ 'jetObservables_histograms.root']
     config.Data.outLFNDirBase = '/store/user/'+os.environ['USER']+'/jetObservables/'
 
     if len(requestname) > 100: requestname = (requestname[:95-len(requestname)])

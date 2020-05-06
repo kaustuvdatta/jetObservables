@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import os, sys
+import psutil
 import ROOT
 ROOT.PyConfig.IgnoreCommandLineOptions = True
 
@@ -51,6 +52,11 @@ parser.add_argument(
     '--local',
     action="store_true",
     help="Run local or condor/crab"
+)
+parser.add_argument(
+    '--createTrees',
+    action="store_true",
+    help="Measure RAM"
 )
 parser.add_argument(
     '--year',
@@ -146,27 +152,25 @@ if args.selection.startswith('dijet'):
     modulesToRun.append( nSubProd( sysSource=systSources ) )
 else:
     modulesToRun.append( jetmetCorrector() )
-    modulesToRun.append( nSubProd( selection=args.selection, sysSource=systSources, leptonSF=LeptonSF[args.year] ) )
+    modulesToRun.append( nSubProd( selection=args.selection, sysSource=systSources, leptonSF=LeptonSF[args.year], createTrees=args.createTrees ) )
 
 
 #### Make it run
 p1=PostProcessor(
         '.', (inputFiles() if not args.iFile else [args.iFile]),
-        cut=cuts,
-        #branchsel="keep_and_drop.txt",
-        modules=modulesToRun,
-        provenance=True,
-        fwkJobReport=True,
-        #jsonInput=runsAndLumis(),
-        maxEntries=args.numEvents,
-        prefetch=args.local,
-        longTermCache=args.local,
-        haddFileName= "jetObservables_"+args.selection+"_nanoskim.root" if args.local else 'jetObservables_nanoskim.root',
+        cut          = cuts,
+        #branchsel   = "keep_and_drop.txt",
+        modules      = modulesToRun,
+        provenance   = True,
+        #jsonInput   = runsAndLumis(),
+        maxEntries   = args.numEvents,
+        prefetch     = args.local,
+        longTermCache= args.local,
+        fwkJobReport = True, #args.createTrees,
+        #haddFileName = "jetObservables_"+args.selection+"_nanoskim.root" if args.createTrees else '',
         histFileName = "jetObservables_"+args.selection+"_histograms.root" if args.local else 'jetObservables_histograms.root',
-        histDirName = 'jetObservables',
+        histDirName  = 'jetObservables',
         )
 p1.run()
 print "DONE"
-if not args.local: os.system("ls -lR")
-
-
+#if not args.local: os.system("ls -lR")
