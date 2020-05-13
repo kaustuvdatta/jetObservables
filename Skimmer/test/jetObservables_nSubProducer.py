@@ -86,7 +86,7 @@ METFilters = "( (Flag_goodVertices==1) && (Flag_globalSuperTightHalo2016Filter==
 if not isMC: METFilters = METFilters + ' && (Flag_eeBadScFilter==1)'
 
 if args.selection.startswith('dijet'):
-    Triggers = '(HLT_PFHT900)'  #### need to include other triggers
+    Triggers = '( (HLT_PFHT900==1) && (HLT_AK8PFJet360_TrimMass30==1) && (HLT_AK8PFHT700_TrimR0p1PT0p03Mass50==1) && (HLT_PFJet450==1) )'
 else:
     Triggers = '(HLT_Mu50==1)'
 #if args.year.startswith('2016'): Triggers = ...
@@ -159,15 +159,15 @@ else:
 p1=PostProcessor(
         '.', (inputFiles() if not args.iFile else [args.iFile]),
         cut          = cuts,
-        #branchsel   = "keep_and_drop.txt",
+        outputbranchsel   = "keep_and_drop.txt",
         modules      = modulesToRun,
         provenance   = True,
         #jsonInput   = runsAndLumis(),
         maxEntries   = args.numEvents,
         prefetch     = args.local,
         longTermCache= args.local,
-        fwkJobReport = True, #args.createTrees,
-        #haddFileName = "jetObservables_"+args.selection+"_nanoskim.root" if args.createTrees else '',
+        fwkJobReport = True,
+        haddFileName = "jetObservables_"+args.selection+"_nanoskim.root" if args.createTrees else 'jetObservables_nanoskim.root',
         histFileName = "jetObservables_"+args.selection+"_histograms.root" if args.local else 'jetObservables_histograms.root',
         histDirName  = 'jetObservables',
         )
