@@ -28,7 +28,7 @@ class nSubProd(Module):
         self.minLeadAK8JetPtW = 200.
         self.minSDMassW = 60.   ### looser to pick low bins
         self.maxSDMassW = 120.  ### looser to pick higher bins
-        self.minLeadAK8JetPtTop= 450.
+        self.minLeadAK8JetPtTop= 350.
         self.minSDMassTop = 140.
         self.METCutWtop = 40.
 
@@ -521,7 +521,7 @@ class nSubProd(Module):
 
 
         #### Creating Nsub basis, filling histos and creating branches IF iSel
-        if (len(recoAK8jetInfo)>0):     ### similar as if iSel
+        if (len(recoAK8jetInfo)>0) and ('jet' in recoAK8jetInfo[next(iter(recoAK8jetInfo))]):     ### similar as if iSel
 
             #### Basic reco histos
             getattr( self, 'nPVs'+iSel ).Fill( getattr( event, 'PV_npvsGood'), weight )

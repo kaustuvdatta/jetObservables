@@ -45,11 +45,10 @@ fi
 
 def submitJobs( job, inputFiles, unitJobs ):
 
-
+    from CRABAPI.RawCommand import crabCommand
     from WMCore.Configuration import Configuration
     config = Configuration()
 
-    from CRABAPI.RawCommand import crabCommand
     from httplib import HTTPException
 
     # We want to put all the CRAB project directories from the tasks we submit here into one common directory.                                                        =
