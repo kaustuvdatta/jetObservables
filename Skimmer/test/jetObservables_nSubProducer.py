@@ -54,11 +54,6 @@ parser.add_argument(
     help="Run local or condor/crab"
 )
 parser.add_argument(
-    '--createTrees',
-    action="store_true",
-    help="Measure RAM"
-)
-parser.add_argument(
     '--year',
     action="store",
     help="year of data",
@@ -152,7 +147,9 @@ if args.selection.startswith('dijet'):
     modulesToRun.append( nSubProd( sysSource=systSources ) )
 else:
     modulesToRun.append( jetmetCorrector() )
-    modulesToRun.append( nSubProd( selection=args.selection, sysSource=systSources, leptonSF=LeptonSF[args.year], createTrees=args.createTrees ) )
+    if args.selection.startswith('dijet'): modulesToRun.append( nSubProd( selection=args.selection, sysSource=systSources, leptonSF=LeptonSF[args.year] ) )
+    else:
+        modulesToRun.append( nSubProd( selection='Wtop', sysSource=systSources, leptonSF=LeptonSF[args.year] ) )
 
 
 #### Make it run
@@ -167,7 +164,7 @@ p1=PostProcessor(
         prefetch     = args.local,
         longTermCache= args.local,
         fwkJobReport = True,
-        haddFileName = "jetObservables_"+args.selection+"_nanoskim.root" if args.createTrees else 'jetObservables_nanoskim.root',
+        haddFileName = "jetObservables_"+args.selection+"_nanoskim.root" if args.local else 'jetObservables_nanoskim.root',
         histFileName = "jetObservables_"+args.selection+"_histograms.root" if args.local else 'jetObservables_histograms.root',
         histDirName  = 'jetObservables',
         )

@@ -1,2 +1,27 @@
 # this is a comment
 drop *
+keep FatJet*
+keep Electron*
+keep Flag*
+keep GenDressed*
+keep GenJetAK8*
+#keep GenPartAK8*
+keep GenMET*
+keep GenPart*
+keep HLT_Mu*
+keep HLT_PFHT*
+keep HLT_*AK8*
+keep Jet*
+#keep PFCandsAK8*
+#keep LHE*eight*
+keep Muon*
+keep MET*
+keep PSWeight*
+keep PV*
+keep PuppiMET*
+keep btagWeight*
+keep genWeight*
+keep luminosity*
+keep run*
+keep event*
+keep sel*
