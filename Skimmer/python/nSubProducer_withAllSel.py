@@ -36,7 +36,7 @@ class nSubProd(Module):
         self.minBDisc = 0.3093  ### L: 0.0614, M: 0.3093, T: 07221
 
         ### Kinenatic Cuts Muons ###
-        self.minMuonPt = 20. if self.selection.startswith('_dijet') else 53.
+        self.minMuonPt = 20. if self.selection.startswith('_dijet') else 55.
         self.maxMuonEta = 2.4
 
         ### Kinenatic Cuts Electrons ###
@@ -197,6 +197,31 @@ class nSubProd(Module):
 
         pass
 
+    #############################################################################    
+    def getBTagWeight(self, nBTagged=0, jet_SFs=[0]): 
+        bTagWeight=0
+        if len(jet_SFs)>2 or nBTagged>2: 
+            print "Error, only leading and subleading AK4 jets are considered: # of btagged jets cannot exceed 2"
+        if nBTagged>len(jet_SFs): 
+            print "Number of b-tagged jets cannot be greater than number of them for which SFs are provided!"
+            return 0
+        if nBTagged==0 and len(jet_SFs)==0: return 1
+        
+        if len(jet_SFs)==1:
+            SF = jet_SFs[0]
+            
+            for i in range(0,2):
+                if i!=nBTagged: continue
+                bTagWeight+=pow(SF,i)*pow(1-SF,1-i)
+        
+        elif len(jet_SFs)==2:
+            SF1, SF2 = jet_SFs[0], jet_SFs[1]
+            for i in range(0,2):
+                for j in range(0,2):
+                    if (i+j)!=nBTagged: continue
+                    bTagWeight+=pow(SF1,i)*pow(1-SF1,1-i)*pow(SF2,j)*pow(1-SF2,1-j)
+        
+        return bTagWeight
 
     #############################################################################
     def endFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):
