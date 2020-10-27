@@ -47,7 +47,7 @@ class nSubProd(Module):
         self.totalWeight = 1
 
         ### Defining nsubjetiness basis
-        self.maxTau = 5
+        self.maxTau = 6
 	self.nSub_labels = ["_tau_0p5_", "_tau_1_", "_tau_2_"]
         self.nSub0p5 = ROOT.NsubjettinessWrapper( 0.5, 0.8, 0, 0 ) #beta, cone size, measureDef 0=Normalize, axesDef 0=KT_axes
         self.nSub1 = ROOT.NsubjettinessWrapper( 1, 0.8, 0, 0 )
