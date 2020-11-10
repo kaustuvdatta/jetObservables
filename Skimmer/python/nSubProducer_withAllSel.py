@@ -28,12 +28,13 @@ class nSubProd(Module):
         self.maxSDMassW = 120.  ### looser to pick higher bins
         self.minLeadAK8JetPtTop= 350.
         self.minSDMassTop = 140.
-        self.METCutWtop = 40.
+        self.METCutWtop = 50.
+        self.minLeptonicWPt = 150.
 
         ### Kinematics Cuts Jets ###
-        self.minJetPt = 20
+        self.minJetPt = 25
         self.maxJetEta = 2.4
-        self.minBDisc = 0.3093  ### L: 0.0614, M: 0.3093, T: 07221
+        self.minBDisc = 0.3040  ### L: 0.0532, M: 0.3040, T: 0.7476, for DeepJet (ie, DeepFlavB)  
 
         ### Kinenatic Cuts Muons ###
         self.minMuonPt = 20. if self.selection.startswith('_dijet') else 55.
