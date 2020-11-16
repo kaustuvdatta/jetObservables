@@ -453,13 +453,13 @@ class nSubProd(Module):
         ##################################################
 
         #### Basic AK4 b-jet cand. selection
-        recoAK4bjets = [ x for x in Jets if x.pt > self.minJetPt and abs(x.p4().Eta()) < self.maxJetEta and x.btagDeepFlavB > self.minBDisc and (x.jetId & 2)]
+        recoAK4bjets = [ x for x in jets if x.pt > self.minJetPt and abs(x.p4().Eta()) < self.maxJetEta and x.btagDeepFlavB > self.minBDisc and (x.jetId & 2)]
         recoAK4bjets.sort(key=lambda x:x.pt,reverse=True)
         
         ##################################################
         
-        #### Weight #########TODO: Where do we include btagweights? 
-        if self.isMC and self.selection.startswith('_Wtop'):
+        #### Weight #########
+        if self.isMC: 
             if len(recoMuons)>0: leptonWeights= self.leptonSF( "muon", recoMuons[0] )
             else: leptonWeights = [0, 0, 0]
         else: leptonWeights = [1, 1, 1]
@@ -686,10 +686,10 @@ class nSubProd(Module):
             if not isGen:
                 if self.isMC: 
                     bTagSFs =  [x.btagSF_deepjet_shape for x in AK4bjets]
-                    self.btagweight = self.getBTagWeight(nBTagged=len(recoAK4bjets), jet_SFs=bTagSFs) 
+                    self.btagweight = self.getBTagWeight(nBTagged=len(AK4bjets), jet_SFs=bTagSFs) 
                 else: self.btagweight = 1 
             
-                self.out.fillBranch("btagWeight", btagweight)
+                self.out.fillBranch("btagWeight", self.btagweight)
                 self.totalWeight = self.totalWeight*self.btagweight
             ##################################################
             

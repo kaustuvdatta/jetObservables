@@ -141,19 +141,17 @@ modulesToRun = []
 if isMC:
     if args.year=='2018':
         modulesToRun.append( puWeight_2018() )
-        print "Running with btag SF calc."
+        print "###Running with btag SF calc.###"
         modulesToRun.append( btagSF2018() )
     if args.year=='2017':
         modulesToRun.append( puWeight_2017() )
-        print "Running with btag SF calc."
+        print "###Running with btag SF calc.###"
         modulesToRun.append( btagSF2017() )
     if args.year=='2016':
         modulesToRun.append( puWeight_2016() )
         print "Running with btag SF calc."
         modulesToRun.append( btagSF2016() )
 modulesToRun.append( fatJetCorrector() )
-
-#if isMC: modulesToRun.append( btagSF2016() )
 modulesToRun.append( jetmetCorrector() )
 modulesToRun.append( nSubProd( sysSource=systSources, leptonSF=LeptonSF[args.year] ) )
 
