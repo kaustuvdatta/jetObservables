@@ -280,8 +280,8 @@ class nSubProd(Module):
             getattr( self, 'cutflowComparison'+iRecoSel ).Fill( 1 )
             self.out.fillBranch( 'eventCategory', 1 )
 
-            genJet['Jet'] = self.createNsubBasis( selGenJets[0], event, 'GenPartAK8' )
-            recoJet['Jet'] = self.createNsubBasis( selRecoJets[0], event, 'PFCandsAK8' )
+            genJet['Jet'] = self.createNsubBasis( selGenJets[0], event, 'GenJetCands' )
+            recoJet['Jet'] = self.createNsubBasis( selRecoJets[0], event, 'JetPFCands' )
 
             for (iGJ,igen), (iRJ,ireco) in zip( genJet.items(), recoJet.items() ):
 
@@ -349,7 +349,7 @@ class nSubProd(Module):
                 self.out.fillBranch( 'eventCategory', 5 )
                 getattr( self, 'cutflowComparison'+iGenSel ).Fill( 2 )
 
-                genJet['Jet'] = self.createNsubBasis( selGenJets[0], event, 'GenPartAK8' )
+                genJet['Jet'] = self.createNsubBasis( selGenJets[0], event, 'GenJetCands' )
 
                 for iGJ,igen in genJet.items():
 
@@ -383,7 +383,7 @@ class nSubProd(Module):
                 getattr( self, 'cutflowComparison'+iRecoSel ).Fill( 3 )
                 self.out.fillBranch( 'eventCategory', 7 )
 
-                recoJet['Jet'] = self.createNsubBasis( selRecoJets[0], event, 'PFCandsAK8' )
+                recoJet['Jet'] = self.createNsubBasis( selRecoJets[0], event, 'JetPFCands' )
 
                 for iRJ,ireco in recoJet.items():
 
