@@ -39,17 +39,24 @@ class nSubProd(Module):
         ### Kinenatic Cuts Muons ###
         self.minMuonPt = 20. if self.selection.startswith('_dijet') else 55.
         self.maxMuonEta = 2.4
+        self.minMuMETPt = 50.
 
         ### Kinenatic Cuts Electrons ###
-        self.minElectronPt = 35.
+        self.minElectronPt = 40.
         self.range1ElectronEta = [0,1.442]
-        self.range2ElectronEta = [1.56,2.5]
+        self.range2ElectronEta = [1.56,2.4]
 
+        '''
+        Relevant for boosted W tagging, commented since not running on electron samples:
+        ### Kinenatic Cuts Electrons ###
+        self.minElpt = 120. 
+        self.minElMETPt = 80.
+        '''
         self.totalWeight = 1
 
         ### Defining nsubjetiness basis
         self.maxTau = 6
-	self.nSub_labels = ["_tau_0p5_", "_tau_1_", "_tau_2_"]
+        self.nSub_labels = ["_tau_0p5_", "_tau_1_", "_tau_2_"]
         self.nSub0p5 = ROOT.NsubjettinessWrapper( 0.5, 0.8, 0, 0 ) #beta, cone size, measureDef 0=Normalize, axesDef 0=KT_axes
         self.nSub1 = ROOT.NsubjettinessWrapper( 1, 0.8, 0, 0 )
         self.nSub2 = ROOT.NsubjettinessWrapper( 2, 0.8, 0, 0 )
@@ -85,6 +92,7 @@ class nSubProd(Module):
         self.addObject( ROOT.TH1F('cutflow_gen',   ';cutflow_gen',   10, 0, 10) )
         self.addObject( ROOT.TH1F('PUweight',   ';PUWeight',   20, 0, 2) )
         self.addObject( ROOT.TH1F('Lepweight',   ';LepWeight',   20, 0, 2) )
+        self.addObject( ROOT.TH1F('Btagweight',   ';BtagWeight',   25, 0, 2) )
         #### general selection
         selList = (['_dijetSel' ] if self.selection.startswith('_dijet') else [ '_WSel', '_topSel' ] )
         for isel in [ '_noSelnoWeight', '_noSel' ] + selList:
@@ -234,11 +242,11 @@ class nSubProd(Module):
         if lepton.startswith("muon"): leptonP4eta = abs(leptonP4.eta)
         else: leptonP4eta = leptonP4.eta
 
-        SFFileTrigger = ROOT.TFile( os.environ['CMSSW_BASE']+"/src/jetObservables/Skimmer/data/"+self.leptonSFhelper[lepton]['Trigger'][0] )
+        SFFileTrigger = ROOT.TFile( os.environ['CMSSW_BASE']+"/src/jetObservables/Skimmer/data/leptonSF/"+self.leptonSFhelper[lepton]['Trigger'][0] )
         histoSFTrigger = SFFileTrigger.Get( self.leptonSFhelper[lepton]['Trigger'][1] )
         SFTrigger = histoSFTrigger.GetBinContent( histoSFTrigger.GetXaxis().FindBin( leptonP4.pt ), histoSFTrigger.GetYaxis().FindBin( leptonP4eta ) )
 
-        SFFileID = ROOT.TFile( os.environ['CMSSW_BASE']+"/src/jetObservables/Skimmer/data/"+self.leptonSFhelper[lepton]['ID'][0] )
+        SFFileID = ROOT.TFile( os.environ['CMSSW_BASE']+"/src/jetObservables/Skimmer/data/leptonSF/"+self.leptonSFhelper[lepton]['ID'][0] )
         histoSFID = SFFileID.Get( self.leptonSFhelper[lepton]['ID'][1] )
         histoSFID_X = histoSFID.GetXaxis().FindBin( leptonP4.pt if self.leptonSFhelper[lepton]['ID'][2] else leptonP4eta )
         histoSFID_Y = histoSFID.GetYaxis().FindBin( leptonP4eta if self.leptonSFhelper[lepton]['ID'][2] else leptonP4.pt )
@@ -246,7 +254,7 @@ class nSubProd(Module):
         SFID = SFID if SFID>0 else 1
 
         if self.year.startswith('2016') and lepton.startswith("muon"): leptonP4eta = leptonP4.eta    #### stupid fix for the stupid SF file
-        SFFileISO = ROOT.TFile( os.environ['CMSSW_BASE']+"/src/jetObservables/Skimmer/data/"+self.leptonSFhelper[lepton]['ISO'][0] )
+        SFFileISO = ROOT.TFile( os.environ['CMSSW_BASE']+"/src/jetObservables/Skimmer/data/leptonSF/"+self.leptonSFhelper[lepton]['ISO'][0] )
         histoSFISO = SFFileISO.Get( self.leptonSFhelper[lepton]['ISO'][1] )
         histoSFISO_X = histoSFISO.GetXaxis().FindBin( leptonP4.pt if self.leptonSFhelper[lepton]['ISO'][2] else leptonP4eta )
         histoSFISO_Y = histoSFISO.GetYaxis().FindBin( leptonP4eta if self.leptonSFhelper[lepton]['ISO'][2] else leptonP4.pt )
@@ -451,19 +459,28 @@ class nSubProd(Module):
     #############################################################################
     def recoSelection( self, event ):
         '''Analyzing reco information'''
-
+        
         AK8jets = list(Collection(event, 'FatJet' ))
         electrons = list(Collection(event, 'Electron'))
         muons = list(Collection(event, 'Muon'))
         jets = list(Collection(event, 'Jet'))
         met = Object(event, 'MET')
-
-        #### Lepton selection
+        
+        #### Lepton selection '''should we be keeping these remaining parts of the old reco selections for leptons? unsure whether to remove since I don't want to break the dijet selection, so only commenting out for the muon case for compatibility with boosted W tagging SF skimmer 
         recoElectrons  = [x for x in electrons if x.pt>self.minElectronPt and x.cutBased_HEEP and ((self.range1ElectronEta[0]<abs(x.eta)<self.range1ElectronEta[1]) or (self.range2ElectronEta[0]<abs(x.eta)<self.range2ElectronEta[1]))]
         recoElectrons.sort(key=lambda x:x.pt, reverse=True)
 
-        recoMuons = [ x for x in muons if x.pt > self.minMuonPt and x.highPtId > 1 and abs(x.p4().Eta()) < self.maxMuonEta and x.pfRelIso03_all < 0.1]
-        recoMuons.sort(key=lambda x:x.pt, reverse=True)
+        #recoMuons = [ x for x in muons if x.pt > self.minMuonPt and x.highPtId > 1 and abs(x.p4().Eta()) < self.maxMuonEta and x.pfRelIso03_all < 0.1]
+        #recoMuons.sort(key=lambda x:x.pt, reverse=True)
+        
+        #### Make some loose lepton selections; including loose pT cuts for veto
+        #electrons = [x for x in electrons if x.pt > 40. and x.cutBased >= 2 and ((self.range1ElectronEta[0]<abs(x.eta)<self.range1ElectronEta[1]) or (self.range2ElectronEta[0]<abs(x.eta)<self.range2ElectronEta[1]))] 
+        #electrons.sort(key=lambda x:x.pt,reverse=True)
+        electronTight = len(recoElectrons) > 0 and recoElectrons[0].pt > self.minElpt and recoElectrons[0].cutBased >= 4  
+        recoMuons = [x for x in muons if x.pt > self.minMuonPt and x.looseId and abs(x.p4().Eta()) < self.maxMuonEta and x.pfIsoId>=2] 
+        recoMuons.sort(key=lambda x:x.pt,reverse=True)
+        recoMuonTight = len(recoMuons) > 0 and recoMuons[0].pt > self.minMuonpt_Wtop and abs(recoMuons[0].eta) < self.maxMuEta and recoMuons[0].tightId and abs(recoMuons[0].dxy)<0.2 and abs(recoMuons[0].dz)<0.5 and recoMuons[0].miniPFRelIso_all<0.10
+        
         nleptons = len(recoMuons)+len(recoElectrons)
         ##################################################
 
@@ -478,21 +495,35 @@ class nSubProd(Module):
         recoAK8jets.sort(key=lambda x:x.pt_nom,reverse=True)
         ##################################################
 
+        #### Basic AK4 selection
+        recoAK4 = [ x for x in Jets if x.pt > self.minJetPt and abs(x.p4().Eta()) < self.maxJetEta and (x.jetId & 2)]
         #### Basic AK4 bjet selection
-        recoAK4bjets = [ x for x in jets if x.pt > self.minJetPt and abs(x.eta) < self.maxJetEta and x.btagDeepB > self.minBDisc ] # and x.jetId>4 ]
-        recoAK4bjets.sort(key=lambda x:x.pt,reverse=True)
+        # Applying additional selection on bjets for Wtop case in here since weights are being calculated here
+        if self.isMC and self.selection.startswith('_Wtop'):
+            lepton = ROOT.TLorentzVector()
+            if (recoMuonTight and (len(recoMuons) == 1) and (len(recoElectrons) == 0)) :  
+                lepton = recoMuons[0]
+            
+            recoAK4bjets = [ x for x in recoAK4 if x.btagDeepFlavB > self.minBDisc and abs(x.p4().DeltaPhi(lepton.p4())<2.) ]
+            recoAK4bjets.sort(key=lambda x:x.pt,reverse=True)
+            #if len(recoAK4bjets)>2: return False # b-tag weight calculator can handle at most two b-jets, for now (more shouldn't be required to be handled in this decay mode anyway...)
+            if self.isMC: bTagSFs =  [x.btagSF_deepjet_shape for x in recoAK4bjets]
+        
         ##################################################
-
         #### Weight
+        self.btagweight = 1.
         if self.isMC and self.selection.startswith('_Wtop'):
             if len(recoMuons)>0: leptonWeights= self.leptonSF( "muon", recoMuons[0] )
             else: leptonWeights = [0, 0, 0]
+            btagweight = self.getBTagWeight(nBTagged=len(recoAK4bjets), jet_SFs=bTagSFs) 
+
         else: leptonWeights = [1, 1, 1]
 
         if self.isMC:
-            weight = event.puWeight * event.genWeight * np.prod(leptonWeights)
+            weight = event.puWeight * btagweight  * event.genWeight * np.prod(leptonWeights)
             getattr( self, 'PUweight' ).Fill( event.puWeight )
             getattr( self, 'Lepweight' ).Fill( np.prod(leptonWeights) )
+            getattr( self, 'Btagweight' ).Fill( btagweight )
             self.leptonWeight = np.prod(leptonWeights)
         else:
             weight = 1
@@ -500,7 +531,8 @@ class nSubProd(Module):
         self.out.fillBranch("leptonWeight", np.prod(leptonWeights) )  ### dummy for nanoAOD Tools
         self.totalWeight = weight
         ##################################################
-
+        
+        #Should we move these histo fills for those with weights to after the selection blocks below?
         #### Checking no selection without weights
         getattr( self, 'nPVs_noSelnoWeight' ).Fill( getattr( event, 'PV_npvsGood') )
         getattr( self, 'nleps_noSelnoWeight' ).Fill( nleptons )
@@ -525,7 +557,7 @@ class nSubProd(Module):
             getattr( self, 'AK4jets_eta_noSelnoWeight' ).Fill( ijet.eta )
             getattr( self, 'AK4jets_phi_noSelnoWeight' ).Fill( ijet.phi )
         getattr( self, 'METPt_noSelnoWeight' ).Fill( MET.Pt() )
-
+        '''
         #### Checking no selection with weights
         getattr( self, 'nPVs_noSel' ).Fill( getattr( event, 'PV_npvsGood'), weight )
         getattr( self, 'nleps_noSel' ).Fill( nleptons, weight )
@@ -554,19 +586,19 @@ class nSubProd(Module):
         deltaPhi = recoAK8jets[0].p4().DeltaPhi( recoAK8jets[1].p4() ) if len(recoAK8jets)>1 else 0
         getattr( self, 'recoPtAsym_noSel' ).Fill( ptAsym, weight )
         getattr( self, 'recoDeltaPhi_noSel' ).Fill( deltaPhi, weight )
+        '''
 
         ##### Applying selection
         passSel = False
         iSel = None
 
         if self.selection.startswith('_dijet'):
-
             passSel = self.dijetSelection( event, recoMuons, recoElectrons, recoAK8jets, ptAsym, deltaPhi )
             iSel = '_dijetSel' if passSel else None
 
         elif self.selection.startswith('_Wtop'):
-
             passSel, iSel = self.WtopSelection( False, event, recoMuons, recoElectrons, recoAK4bjets, recoAK8jets, MET )
+            #calculating event weights for b-tagging (as done above) doesn't really make sense before applying the Wtop selections on b's in the Wtop case, (additionally code is currently limited to two accepted b-tags in an event at most). This way the above histos for the 'noSel' will have issues with weights, so I feel we should add some loose selections on b's before this; we could just remove all of the plotting above?
 
         #### Creating Nsub basis, filling histos and creating branches IF passSel
         if passSel and iSel:

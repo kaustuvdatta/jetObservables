@@ -134,8 +134,8 @@ LeptonSF = {
 
 
 #### Modules to run
-jetmetCorrector = createJMECorrector(isMC=isMC, dataYear='UL'+args.year, jesUncert="All")
-fatJetCorrector = createJMECorrector(isMC=isMC, dataYear='UL'+args.year, jesUncert="All", jetType = "AK8PFPuppi") #redojec=True,??? also do I need to fill the runPeriod var with something beyond the default value, currently it is always set to the default of run 'B' irrespective of year?
+jetmetCorrector = createJMECorrector(isMC=isMC, applySmearing=False, dataYear='UL'+args.year, jesUncert="All")
+fatJetCorrector = createJMECorrector(isMC=isMC, applySmearing=False, dataYear='UL'+args.year, jesUncert="All", jetType = "AK8PFPuppi") #redojec=True,??? also do I need to fill the runPeriod var with something beyond the default value, currently it is always set to the default of run 'B' irrespective of year?
 
 modulesToRun = []
 if isMC:
@@ -146,14 +146,14 @@ if isMC:
     if args.year=='2017':
         modulesToRun.append( puWeight_2017() )
         print "###Running with btag SF calc.###"
-        modulesToRun.append( btagSF2017() )
+        #modulesToRun.append( btagSF2017() )
     if args.year=='2016':
         modulesToRun.append( puWeight_2016() )
         print "Running with btag SF calc."
         modulesToRun.append( btagSF2016() )
 modulesToRun.append( fatJetCorrector() )
 modulesToRun.append( jetmetCorrector() )
-modulesToRun.append( nSubProd( sysSource=systSources, leptonSF=LeptonSF[args.year] ) )
+#modulesToRun.append( nSubProd( sysSource=systSources, leptonSF=LeptonSF[args.year] ) )
 
 
 #### Make it run

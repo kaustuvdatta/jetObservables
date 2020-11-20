@@ -685,8 +685,8 @@ class nSubProd(Module):
                 
             if not isGen:
                 if self.isMC: 
-                    bTagSFs =  [x.btagSF_deepjet_shape for x in AK4bjets]
-                    self.btagweight = self.getBTagWeight(nBTagged=len(AK4bjets), jet_SFs=bTagSFs) 
+                    #bTagSFs =  [x.btagSF_deepjet_shape for x in AK4bjets]
+                    self.btagweight = 1.#self.getBTagWeight(nBTagged=len(AK4bjets), jet_SFs=bTagSFs) 
                 else: self.btagweight = 1 
             
                 self.out.fillBranch("btagWeight", self.btagweight)
