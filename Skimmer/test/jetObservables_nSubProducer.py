@@ -70,7 +70,7 @@ parser.add_argument(
     required=False
 )
 args = parser.parse_args(sys.argv[1:])
-if args.sample.startswith(('/EGamma', '/Single', '/JetHT', 'EGamma', 'Single', 'JetHT' )) or ('EGamma' in args.iFile or 'Single' in args.iFile or ('JetHT' in args.iFile)):
+if args.sample.startswith(('/EGamma', '/Single', 'EGamma', 'Single', 'UL16_Single', '/UL16_Single', 'UL17_Single', '/UL17_Single', 'UL18_Single', '/UL18_Single', '/JetHT', 'JetHT' )) or ('EGamma' in args.iFile or 'SingleMuon' in args.iFile or ('JetHT' in args.iFile)):
     isMC = False
     print "sample is data"
 else: isMC = True
@@ -146,14 +146,14 @@ if isMC:
     if args.year=='2017':
         modulesToRun.append( puWeight_2017() )
         print "###Running with btag SF calc.###"
-        #modulesToRun.append( btagSF2017() )
+        modulesToRun.append( btagSF2017() )
     if args.year=='2016':
         modulesToRun.append( puWeight_2016() )
         print "Running with btag SF calc."
         modulesToRun.append( btagSF2016() )
 modulesToRun.append( fatJetCorrector() )
 modulesToRun.append( jetmetCorrector() )
-#modulesToRun.append( nSubProd( sysSource=systSources, leptonSF=LeptonSF[args.year] ) )
+modulesToRun.append( nSubProd( sysSource=systSources, leptonSF=LeptonSF[args.year] ) )
 
 
 #### Make it run
