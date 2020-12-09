@@ -1,0 +1,1 @@
+python jetObservables_nSubProducer.py --iFile 'root://cms-xrd-global.cern.ch///store/user/kadatta/PFNano/106x_v01/SingleMuon/Run2017B-09Aug2019_UL2017-v1_PFNanoAOD/200715_124336/0000/nano106X_on_mini106X_2017_data_NANO_100.root' --local --numEvents 250000 --selection Wtop --year '2017'

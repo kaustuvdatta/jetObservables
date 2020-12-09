@@ -13,12 +13,12 @@ from PhysicsTools.NanoAODTools.postprocessing.framework.eventloop import Module
 #this takes care of converting the input files from CRAB
 from PhysicsTools.NanoAODTools.postprocessing.framework.crabhelper import inputFiles,runsAndLumis
 
-from PhysicsTools.NanoAODTools.postprocessing.modules.common.puWeightProducer import puWeight_2016, puAutoWeight_2016
-from PhysicsTools.NanoAODTools.postprocessing.modules.btv.btagSFProducer import btagSF2016
+from PhysicsTools.NanoAODTools.postprocessing.modules.common.puWeightProducer import puWeight_2016, puAutoWeight_2016, puWeight_2017, puAutoWeight_2017
+from PhysicsTools.NanoAODTools.postprocessing.modules.btv.btagSFProducer import btagSF2016, btagSF2017
 from PhysicsTools.NanoAODTools.postprocessing.modules.jme.jetmetHelperRun2 import *
 
 # our module
-from jetObservables.Skimmer.nSubProducer_withAllSel import nSubProd
+from jetObservables.Skimmer.nSubProducer_WtopSel import nSubProd
 
 import argparse
 
@@ -58,7 +58,7 @@ parser.add_argument(
     action="store",
     help="year of data",
     choices=["2016", "2017", "2018"],
-    default="2016",
+    default="2017",
     required=False
 )
 parser.add_argument(
@@ -66,11 +66,11 @@ parser.add_argument(
     action="store",
     help="Event selection",
     choices=["dijet", "Wtop"],
-    default="W",
+    default="Wtop",
     required=False
 )
 args = parser.parse_args(sys.argv[1:])
-if args.sample.startswith(('/EGamma', '/Single', '/JetHT', 'EGamma', 'Single', 'JetHT' )) or ('EGamma' in args.iFile or 'Single' in args.iFile or ('JetHT' in args.iFile)):
+if args.sample.startswith(('/EGamma', '/Single', 'EGamma', 'Single', 'UL16_Single', '/UL16_Single', 'UL17_Single', '/UL17_Single', 'UL18_Single', '/UL18_Single', '/JetHT', 'JetHT' )) or ('EGamma' in args.iFile or 'SingleMuon' in args.iFile or ('JetHT' in args.iFile)):
     isMC = False
     print "sample is data"
 else: isMC = True
@@ -108,9 +108,9 @@ LeptonSF = {
     },
     '2017' : {
         'muon' : {
-            'Trigger' : [ "EfficienciesAndSF_RunBtoF_Nov17Nov2017.root", "IsoMu27_PtEtaBins/pt_abseta_ratio" ],
-            'ID' : [ "MuonID_2017_RunBCDEF_SF_ID.root", "NUM_TightID_DEN_genTracks_pt_abseta", True ],     ### True: X:pt Y:eta
-            'ISO' : [ "MuonID_2017_RunBCDEF_SF_ISO.root", "NUM_TightRelIso_DEN_TightIDandIPCut_pt_abseta", True ],
+            'Trigger' : [ "EfficienciesAndSF_RunBtoF_Nov17Nov2017.root", "Mu50_PtEtaBins/pt_abseta_ratio" ],
+            'ID' : [ "Efficiencies_muon_generalTracks_Z_Run2017_UL_ID.root", "NUM_TightID_DEN_TrackerMuons_abseta_pt", False ],  
+            'ISO' : [ "Efficiencies_muon_generalTracks_Z_Run2017_UL_ISO.root", "NUM_TightRelIso_DEN_TightIDandIPCut_abseta_pt", False ],
         },
         'electron' : {
             'Trigger' : [ "SingleEG_JetHT_Trigger_Scale_Factors_ttHbb_Data_MC_v5.0.histo.root", "SFs_ele_pt_ele_sceta_ele28_ht150_OR_ele35_2017BCDEF" ],
@@ -134,22 +134,26 @@ LeptonSF = {
 
 
 #### Modules to run
-jetmetCorrector = createJMECorrector(isMC=isMC, dataYear=args.year, jesUncert="All", redojec=True)
-fatJetCorrector = createJMECorrector(isMC=isMC, dataYear=args.year, jesUncert="All", redojec=True, jetType = "AK8PFPuppi")
+jetmetCorrector = createJMECorrector(isMC=isMC, applySmearing=False, dataYear='UL'+args.year, jesUncert="All")
+fatJetCorrector = createJMECorrector(isMC=isMC, applySmearing=False, dataYear='UL'+args.year, jesUncert="All", jetType = "AK8PFPuppi") #redojec=True,??? also do I need to fill the runPeriod var with something beyond the default value, currently it is always set to the default of run 'B' irrespective of year?
 
 modulesToRun = []
 if isMC:
-    modulesToRun.append( puWeight_2016() )
+    if args.year=='2018':
+        modulesToRun.append( puWeight_2018() )
+        print "###Running with btag SF calc.###"
+        modulesToRun.append( btagSF2018() )
+    if args.year=='2017':
+        modulesToRun.append( puWeight_2017() )
+        print "###Running with btag SF calc.###"
+        modulesToRun.append( btagSF2017() )
+    if args.year=='2016':
+        modulesToRun.append( puWeight_2016() )
+        print "Running with btag SF calc."
+        modulesToRun.append( btagSF2016() )
 modulesToRun.append( fatJetCorrector() )
-
-#if isMC: modulesToRun.append( btagSF2016() )
-if args.selection.startswith('dijet'):
-    modulesToRun.append( nSubProd( sysSource=systSources ) )
-else:
-    modulesToRun.append( jetmetCorrector() )
-    if args.selection.startswith('dijet'): modulesToRun.append( nSubProd( selection=args.selection, sysSource=systSources, leptonSF=LeptonSF[args.year] ) )
-    else:
-        modulesToRun.append( nSubProd( selection='Wtop', sysSource=systSources, leptonSF=LeptonSF[args.year] ) )
+modulesToRun.append( jetmetCorrector() )
+modulesToRun.append( nSubProd( sysSource=systSources, leptonSF=LeptonSF[args.year] ) )
 
 
 #### Make it run
