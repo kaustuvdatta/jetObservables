@@ -17,9 +17,6 @@ from PhysicsTools.NanoAODTools.postprocessing.modules.common.puWeightProducer im
 from PhysicsTools.NanoAODTools.postprocessing.modules.btv.btagSFProducer import btagSF2016, btagSF2017
 from PhysicsTools.NanoAODTools.postprocessing.modules.jme.jetmetHelperRun2 import *
 
-# our module
-from jetObservables.Skimmer.nSubProducer_WtopSel import nSubProd
-
 import argparse
 
 parser = argparse.ArgumentParser(description='Runs MEAnalysis')
@@ -81,7 +78,7 @@ METFilters = "( (Flag_goodVertices==1) && (Flag_globalSuperTightHalo2016Filter==
 if not isMC: METFilters = METFilters + ' && (Flag_eeBadScFilter==1)'
 
 if args.selection.startswith('dijet'):
-    Triggers = '( (HLT_PFHT900==1) && (HLT_AK8PFJet360_TrimMass30==1) && (HLT_AK8PFHT700_TrimR0p1PT0p03Mass50==1) && (HLT_PFJet450==1) )'
+    Triggers = '(HLT_PFJet550==1)'   ### Maybe not needed, highest unprescale trigger
 else:
     Triggers = '(HLT_Mu50==1)'
 #if args.year.startswith('2016'): Triggers = ...
@@ -109,7 +106,7 @@ LeptonSF = {
     '2017' : {
         'muon' : {
             'Trigger' : [ "EfficienciesAndSF_RunBtoF_Nov17Nov2017.root", "Mu50_PtEtaBins/pt_abseta_ratio" ],
-            'ID' : [ "Efficiencies_muon_generalTracks_Z_Run2017_UL_ID.root", "NUM_TightID_DEN_TrackerMuons_abseta_pt", False ],  
+            'ID' : [ "Efficiencies_muon_generalTracks_Z_Run2017_UL_ID.root", "NUM_TightID_DEN_TrackerMuons_abseta_pt", False ],
             'ISO' : [ "Efficiencies_muon_generalTracks_Z_Run2017_UL_ISO.root", "NUM_TightRelIso_DEN_TightIDandIPCut_abseta_pt", False ],
         },
         'electron' : {
@@ -146,19 +143,26 @@ if isMC:
     if args.year=='2017':
         modulesToRun.append( puWeight_2017() )
         print "###Running with btag SF calc.###"
-        modulesToRun.append( btagSF2017() )
+        ###########modulesToRun.append( btagSF2017() )
     if args.year=='2016':
         modulesToRun.append( puWeight_2016() )
         print "Running with btag SF calc."
         modulesToRun.append( btagSF2016() )
 modulesToRun.append( fatJetCorrector() )
 modulesToRun.append( jetmetCorrector() )
-modulesToRun.append( nSubProd( sysSource=systSources, leptonSF=LeptonSF[args.year] ) )
+
+# our module
+if args.selection.startswith('dijet'):
+    from jetObservables.Skimmer.nSubProducer_dijetSel import nSubProd
+    modulesToRun.append( nSubProd( sysSource=systSources, leptonSF=LeptonSF[args.year] ) )
+else:
+    from jetObservables.Skimmer.nSubProducer_WtopSel import nSubProd
+    modulesToRun.append( nSubProd( sysSource=systSources, leptonSF=LeptonSF[args.year] ) )
 
 
 #### Make it run
 p1=PostProcessor(
-        '.', (inputFiles() if not args.iFile else [args.iFile]),
+        '.', (inputFiles() if not args.iFile else args.iFile.split(',')),
         cut          = cuts,
         outputbranchsel   = "keep_and_drop.txt",
         modules      = modulesToRun,

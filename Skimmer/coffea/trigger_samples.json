@@ -1,0 +1,13 @@
+{
+        "SingleMuon2017B": [
+            "root://xrootd-cms.infn.it//store/data/Run2017B/SingleMuon/NANOAOD/UL2017_02Dec2019-v1/70000/BEFC25BC-02AE-724B-A0C8-E0F6F2CD97E4.root",
+            "root://xrootd-cms.infn.it//store/data/Run2017B/SingleMuon/NANOAOD/UL2017_02Dec2019-v1/70000/FC54AA3D-F3E3-8E47-904D-A1CF57776A03.root",
+            "root://xrootd-cms.infn.it//store/data/Run2017B/SingleMuon/NANOAOD/UL2017_02Dec2019-v1/70000/BEFC25BC-02AE-724B-A0C8-E0F6F2CD97E4.root"
+        ],
+        "SingleMuon2017C": [
+            "root://xrootd-cms.infn.it//store/data/Run2017C/SingleMuon/NANOAOD/UL2017_02Dec2019-v1/270000/EB166E23-D1EB-5F41-826D-8173FB8B9E65.root",
+            "root://xrootd-cms.infn.it//store/data/Run2017C/SingleMuon/NANOAOD/UL2017_02Dec2019-v1/270000/CE336FE7-A2A9-CD48-8062-4DDA61C3CF94.root",
+            "root://xrootd-cms.infn.it//store/data/Run2017C/SingleMuon/NANOAOD/UL2017_02Dec2019-v1/270000/2B748AE9-4766-1043-8EE8-1377C9DD368E.root"
+
+        ]
+}
