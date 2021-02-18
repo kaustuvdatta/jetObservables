@@ -5,7 +5,7 @@ import argparse
 
 import numpy as np
 
-import uproot4 as uproot
+import uproot as uproot
 from coffea import hist
 from coffea.nanoevents import NanoEventsFactory
 from coffea.util import load, save
@@ -22,7 +22,7 @@ def validate(file):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Run analysis on baconbits files using processor coffea files')
-    parser.add_argument( '--wf', '--workflow', dest='workflow', choices=['ttcom', 'bbtag'], help='Which processor to run')   ### needs review
+    ###parser.add_argument( '--wf', '--workflow', dest='workflow', choices=['ttcom', 'bbtag'], help='Which processor to run')   ### needs review
     parser.add_argument('-o', '--output', default=r'hists.coffea', help='Output histogram filename (default: %(default)s)')
     parser.add_argument('--samples', '--json', dest='samplejson', default='dummy_samples.json', help='JSON file containing dataset and file locations (default: %(default)s)')
 
@@ -36,7 +36,7 @@ if __name__ == '__main__':
     parser.add_argument('--max', type=int, default=None, metavar='N', help='Max number of chunks to run in total')
     args = parser.parse_args()
     if args.output == parser.get_default('output'):
-        args.output = f'hists_{args.workflow}_{(args.samplejson).rstrip(".json")}.coffea'
+        args.output = f'hists_{(args.samplejson).rstrip(".json")}.coffea'
 
 
     # load dataset
@@ -109,11 +109,9 @@ if __name__ == '__main__':
                                     executor_args={
                                         #'skipbadfiles':True,
                                         'schema': processor.NanoAODSchema,
-                                        #'flatten':True,
-                                        #'workers': args.workers
                                         },
-                                        #'workers': 4},
-                                    chunksize=args.chunk #, maxchunks=args.max
+                                    #chunksize=args.chunk,
+                                    maxchunks=args.max
                                     )
     elif args.executor == 'parsl':
         raise NotImplemented

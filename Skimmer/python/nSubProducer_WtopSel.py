@@ -10,12 +10,12 @@ from PhysicsTools.NanoAODTools.postprocessing.tools import *
 
 class nSubProd(Module):
 
-    def __init__(self, sysSource=[], leptonSF={}, year='2017'):
+    def __init__(self, sysSource=[], leptonSF={}, year='2017', isMC=True):
         self.writeHistFile=True
         self.leptonSFhelper = leptonSF
         print(self.leptonSFhelper)
-        #self.selection = '_'+selection
         self.year = year
+        self.isMC = isMC
 
         self.recoLevel=0
         self.fakes=0
@@ -73,8 +73,24 @@ class nSubProd(Module):
         self.totalWeight = 1
 
         ### Defining nsubjetiness basis
-        self.maxTau = 6
-        self.nSub_labels = ["_tau_0p5_", "_tau_1_", "_tau_2_"]
+        self.maxTau = 5
+        self.nSub_labels = {
+                "_tau_0p5_1": [ 1, 100 ],
+                "_tau_0p5_2": [ 0.6, 600 ],
+                "_tau_0p5_3": [ 0.6, 600 ],
+                "_tau_0p5_4": [ 0.5, 500 ],
+                "_tau_0p5_5": [ 0.5, 500 ],
+                "_tau_1_1": [ 1, 100 ],
+                "_tau_1_2": [ 0.4, 400 ],
+                "_tau_1_3": [ 0.4, 400 ],
+                "_tau_1_4": [ 0.2, 200 ],
+                "_tau_1_5": [ 0.2, 200 ],
+                "_tau_2_1": [ 1, 100 ],
+                "_tau_2_2": [ 0.2, 200 ],
+                "_tau_2_3": [ 0.2, 200 ],
+                "_tau_2_4": [ 0.2, 200 ],
+                "_tau_2_5": [ 0.2, 200 ]
+                }
         self.nSub0p5 = ROOT.NsubjettinessWrapper( 0.5, 0.8, 0, 0 ) #beta, cone size, measureDef 0=Normalize, axesDef 0=KT_axes
         self.nSub1 = ROOT.NsubjettinessWrapper( 1, 0.8, 0, 0 )
         self.nSub2 = ROOT.NsubjettinessWrapper( 2, 0.8, 0, 0 )
@@ -128,25 +144,26 @@ class nSubProd(Module):
 
             self.addObject( ROOT.TH1F('leadAK8JetMatched'+isel, ';AK8 reco jet SD mass matched'+isel+' [GeV]', 500, 0, 500) )
 
-        for isel in [ '_noSel' ] + selList :
-            self.addObject( ROOT.TH1F('ngenleps'+isel,   ';number of gen leptons',   20, 0, 20) )
-            self.addP4Hists( 'genmuons', isel )
-            self.addP4Hists( 'geneles', isel )
-            self.addObject( ROOT.TH1F('ngenAK8jets'+isel,   ';number of AK8 genjets',   20, 0, 20) )
-            self.addP4Hists( 'AK8genjets', isel )
-            self.addObject( ROOT.TH1F('ngenAK4jets'+isel,   ';number of AK4 genjets',   20, 0, 20) )
-            self.addP4Hists( 'AK4genjets', isel )
-            self.addObject( ROOT.TH1F('genMETPt'+isel,   ';gen MET (GeV)',   200, 0, 2000) )
-            self.addObject( ROOT.TH1F('genHT'+isel,   ';genHT (GeV)',   200, 0, 2000) )
-            self.addObject( ROOT.TH1F('genPtAsym'+isel,   '; pt Asymmetry', 100, 0, 1.) )
-            self.addObject( ROOT.TH1F('genDeltaPhi'+isel,   '; #Delta #Phi(j,j)', 100, 0, 5) )
+        if self.isMC:
+            for isel in [ '_noSel' ] + selList :
+                self.addObject( ROOT.TH1F('ngenleps'+isel,   ';number of gen leptons',   20, 0, 20) )
+                self.addP4Hists( 'genmuons', isel )
+                self.addP4Hists( 'geneles', isel )
+                self.addObject( ROOT.TH1F('ngenAK8jets'+isel,   ';number of AK8 genjets',   20, 0, 20) )
+                self.addP4Hists( 'AK8genjets', isel )
+                self.addObject( ROOT.TH1F('ngenAK4jets'+isel,   ';number of AK4 genjets',   20, 0, 20) )
+                self.addP4Hists( 'AK4genjets', isel )
+                self.addObject( ROOT.TH1F('genMETPt'+isel,   ';gen MET (GeV)',   200, 0, 2000) )
+                self.addObject( ROOT.TH1F('genHT'+isel,   ';genHT (GeV)',   200, 0, 2000) )
+                self.addObject( ROOT.TH1F('genPtAsym'+isel,   '; pt Asymmetry', 100, 0, 1.) )
+                self.addObject( ROOT.TH1F('genDeltaPhi'+isel,   '; #Delta #Phi(j,j)', 100, 0, 5) )
 
 
         for isel in selList:
             for iJ in self.nJet:
                 #self.addP4Hists( 'uforeco'+iJ, isel )
                 #self.addP4Hists( 'ufogen'+iJ, isel )
-                for itype in [ 'gen', 'missgen', 'accepgen', 'reco', 'fakereco', 'truereco' ]:
+                for itype in ( [ 'gen', 'missgen', 'accepgen', 'reco', 'fakereco', 'truereco' ] if self.isMC else [ 'reco' ] ):
 
                     if itype.endswith('reco'):
 
@@ -155,7 +172,7 @@ class nSubProd(Module):
                             self.addObject( ROOT.TH1F(itype+iJ+'_tau21'+sysUnc+isel, ';AK8 '+itype+' jet #tau_{21}', tauBins, 0, 1) )
                             self.addObject( ROOT.TH1F(itype+iJ+'_tau32'+sysUnc+isel, ';AK8 '+itype+' jet #tau_{32}', tauBins, 0, 1) )
 
-                            if itype.startswith('truereco'):
+                            if itype.startswith('truereco') and self.isMC:
                                 self.addObject( ROOT.TH2F('resp'+iJ+'_tau21'+sysUnc+isel, ';AK8 accepgen jet #tau_{21};AK8 truereco jet #tau_{21}', tauBins, 0, 1, tauBins, 0, 1) )
                                 self.addObject( ROOT.TH2F('resp'+iJ+'_tau32'+sysUnc+isel, ';AK8 accepgen jet #tau_{32};AK8 truereco jet #tau_{32}', tauBins, 0, 1, tauBins, 0, 1) )
                                 if sysUnc.endswith('nom'):
@@ -164,29 +181,20 @@ class nSubProd(Module):
                                     self.addObject( ROOT.TH1F('resol'+iJ+'_tau21'+isel, ';AK8 reco/gen jet #tau_{21}', 100, 0, 2) )
                                     self.addObject( ROOT.TH1F('resol'+iJ+'_tau32'+isel, ';AK8 reco/gen jet #tau_{32}', 100, 0, 2) )
 
-                            for tauN in range(1, self.maxTau+1):
-                                for x in self.nSub_labels:
-                                    if tauN>1:
-                                        maxValueTau=0.4
-                                        tauBins=400
-                                    else: maxValueTau=1
-                                    self.addObject( ROOT.TH1F(itype+iJ+x+str(tauN)+sysUnc+isel, ';AK8 '+itype+' jet #tau', tauBins, 0, maxValueTau ) )
-                                    if itype.startswith('reco'):
-                                        self.addObject( ROOT.TH2F('resp'+iJ+x+str(tauN)+sysUnc+isel, ';AK8 gen jet #tau_{'+str(tauN)+'};AK8 reco jet #tau_{'+str(tauN)+'}', tauBins, 0, maxValueTau, tauBins, 0, maxValueTau) )
-                                        if sysUnc.endswith('nom'): self.addObject( ROOT.TH1F('resol'+iJ+x+str(tauN)+isel, ';AK8 reco/gen jet #tau_{'+str(tauN)+'}', 100, 0, 2) )
+                            for x, y in self.nSub_labels.items():
+                                self.addObject( ROOT.TH1F(itype+iJ+x+sysUnc+isel, ';AK8 '+itype+' jet #tau', y[1], 0, y[0] ) )
+                                if itype.startswith('reco') and self.isMC:
+                                    self.addObject( ROOT.TH2F('resp'+iJ+x+sysUnc+isel, ';AK8 gen jet '+x+';AK8 reco jet '+x, y[1], 0, y[0], y[1], 0, y[0] ) )
+                                    if sysUnc.endswith('nom'): self.addObject( ROOT.TH1F('resol'+iJ+x+isel, ';AK8 reco/gen jet '+x, 200, 0, 2) )
+
                     else:
 
                         self.addP4Hists( itype+iJ, isel )
                         self.addObject( ROOT.TH1F(itype+iJ+'_tau21'+isel, ';AK8 '+itype+' jet #tau_{21}', tauBins, 0, 1) )
                         self.addObject( ROOT.TH1F(itype+iJ+'_tau32'+isel, ';AK8 '+itype+' jet #tau_{32}', tauBins, 0, 1) )
 
-                        for tauN in range(1, self.maxTau+1):
-                            for x in self.nSub_labels:
-                                if tauN>1:
-                                    maxValueTau=0.4
-                                    tauBins=400
-                                else: maxValueTau=1
-                                self.addObject( ROOT.TH1F(itype+iJ+x+str(tauN)+isel, ';AK8 '+itype+' jet #tau', tauBins, 0, maxValueTau ) )
+                        for x, y in self.nSub_labels.items():
+                            self.addObject( ROOT.TH1F(itype+iJ+x+isel, ';AK8 '+itype+' jet '+x, y[1], 0, y[0] ) )
 
 
     #############################################################################
@@ -205,7 +213,7 @@ class nSubProd(Module):
         self.out.branch('btagWeight',  "F")
         self.out.branch('eventCategory',  "I")
 
-        for iJ in [ 'Reco', 'Gen' ]:
+        for iJ in ([ 'Reco', 'Gen' ] if self.isMC else ['Reco'] ):
             self.out.branch('nsel'+iJ+'jets',  'I')  ### dummy for nanoAOD Tools
             self.out.branch('sel'+iJ+'jets_pt',  'F', lenVar='nsel'+iJ+'jets')
             self.out.branch('sel'+iJ+'jets_eta',  'F', lenVar='nsel'+iJ+'jets')
@@ -214,9 +222,8 @@ class nSubProd(Module):
             self.out.branch('sel'+iJ+'jets_Tau21',  'F', lenVar='nsel'+iJ+'jets')
             self.out.branch('sel'+iJ+'jets_Tau32',  'F', lenVar='nsel'+iJ+'jets')
 
-            for tauN in range(1, self.maxTau+1):
-                for x in self.nSub_labels:
-                    self.out.branch('sel'+iJ+'jets'+x+str(tauN), 'F', lenVar='nsel'+iJ+'jets' )
+            for x in self.nSub_labels:
+                self.out.branch('sel'+iJ+'jets'+x, 'F', lenVar='nsel'+iJ+'jets' )
         pass
 
     #############################################################################
@@ -248,55 +255,56 @@ class nSubProd(Module):
     #############################################################################
     def endFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):
 
-        self.genLevel = self.response+self.miss
-        self.genLevelW = self.responseW+self.missW
-        self.genLeveltop = self.responsetop+self.misstop
+        if self.isMC:
+            self.genLevel = self.response+self.miss
+            self.genLevelW = self.responseW+self.missW
+            self.genLeveltop = self.responsetop+self.misstop
 
-        getattr( self, 'cutflow_test' ).SetBinContent( 1, self.recoLevel )
-        getattr( self, 'cutflow_test' ).GetXaxis().SetBinLabel( 1, "allReco" )
-        getattr( self, 'cutflow_test' ).SetBinContent( 2, self.response )
-        getattr( self, 'cutflow_test' ).GetXaxis().SetBinLabel( 2, "allTrueRecoAccepGen" )
-        getattr( self, 'cutflow_test' ).SetBinContent( 3, self.fakes )
-        getattr( self, 'cutflow_test' ).GetXaxis().SetBinLabel( 3, "allFakes" )
-        getattr( self, 'cutflow_test' ).SetBinContent( 4, self.miss )
-        getattr( self, 'cutflow_test' ).GetXaxis().SetBinLabel( 4, "allMiss" )
-        getattr( self, 'cutflow_test' ).SetBinContent( 5, self.genLevel )
-        getattr( self, 'cutflow_test' ).GetXaxis().SetBinLabel( 5, "allGen" )
+            getattr( self, 'cutflow_test' ).SetBinContent( 1, self.recoLevel )
+            getattr( self, 'cutflow_test' ).GetXaxis().SetBinLabel( 1, "allReco" )
+            getattr( self, 'cutflow_test' ).SetBinContent( 2, self.response )
+            getattr( self, 'cutflow_test' ).GetXaxis().SetBinLabel( 2, "allTrueRecoAccepGen" )
+            getattr( self, 'cutflow_test' ).SetBinContent( 3, self.fakes )
+            getattr( self, 'cutflow_test' ).GetXaxis().SetBinLabel( 3, "allFakes" )
+            getattr( self, 'cutflow_test' ).SetBinContent( 4, self.miss )
+            getattr( self, 'cutflow_test' ).GetXaxis().SetBinLabel( 4, "allMiss" )
+            getattr( self, 'cutflow_test' ).SetBinContent( 5, self.genLevel )
+            getattr( self, 'cutflow_test' ).GetXaxis().SetBinLabel( 5, "allGen" )
 
-        getattr( self, 'cutflow_test' ).SetBinContent( 7, self.recoLevelW )
-        getattr( self, 'cutflow_test' ).GetXaxis().SetBinLabel( 7, "WReco" )
-        getattr( self, 'cutflow_test' ).SetBinContent( 8, self.responseW )
-        getattr( self, 'cutflow_test' ).GetXaxis().SetBinLabel( 8, "WtrueRecoAccepGen" )
-        getattr( self, 'cutflow_test' ).SetBinContent( 9, self.fakesW )
-        getattr( self, 'cutflow_test' ).GetXaxis().SetBinLabel( 9, "WFakes" )
-        getattr( self, 'cutflow_test' ).SetBinContent( 10, self.missW )
-        getattr( self, 'cutflow_test' ).GetXaxis().SetBinLabel( 10, "WMiss" )
-        getattr( self, 'cutflow_test' ).SetBinContent( 11, self.genLevelW )
-        getattr( self, 'cutflow_test' ).GetXaxis().SetBinLabel( 11, "WGen" )
+            getattr( self, 'cutflow_test' ).SetBinContent( 7, self.recoLevelW )
+            getattr( self, 'cutflow_test' ).GetXaxis().SetBinLabel( 7, "WReco" )
+            getattr( self, 'cutflow_test' ).SetBinContent( 8, self.responseW )
+            getattr( self, 'cutflow_test' ).GetXaxis().SetBinLabel( 8, "WtrueRecoAccepGen" )
+            getattr( self, 'cutflow_test' ).SetBinContent( 9, self.fakesW )
+            getattr( self, 'cutflow_test' ).GetXaxis().SetBinLabel( 9, "WFakes" )
+            getattr( self, 'cutflow_test' ).SetBinContent( 10, self.missW )
+            getattr( self, 'cutflow_test' ).GetXaxis().SetBinLabel( 10, "WMiss" )
+            getattr( self, 'cutflow_test' ).SetBinContent( 11, self.genLevelW )
+            getattr( self, 'cutflow_test' ).GetXaxis().SetBinLabel( 11, "WGen" )
 
-        getattr( self, 'cutflow_test' ).SetBinContent( 13, self.recoLeveltop )
-        getattr( self, 'cutflow_test' ).GetXaxis().SetBinLabel( 13, "topReco" )
-        getattr( self, 'cutflow_test' ).SetBinContent( 14, self.responsetop )
-        getattr( self, 'cutflow_test' ).GetXaxis().SetBinLabel( 14, "toptrueRecoAccepGen" )
-        getattr( self, 'cutflow_test' ).SetBinContent( 15, self.fakestop )
-        getattr( self, 'cutflow_test' ).GetXaxis().SetBinLabel( 15, "topFakes" )
-        getattr( self, 'cutflow_test' ).SetBinContent( 16, self.misstop )
-        getattr( self, 'cutflow_test' ).GetXaxis().SetBinLabel( 16, "topMiss" )
-        getattr( self, 'cutflow_test' ).SetBinContent( 17, self.genLeveltop )
-        getattr( self, 'cutflow_test' ).GetXaxis().SetBinLabel( 17, "topGen" )
+            getattr( self, 'cutflow_test' ).SetBinContent( 13, self.recoLeveltop )
+            getattr( self, 'cutflow_test' ).GetXaxis().SetBinLabel( 13, "topReco" )
+            getattr( self, 'cutflow_test' ).SetBinContent( 14, self.responsetop )
+            getattr( self, 'cutflow_test' ).GetXaxis().SetBinLabel( 14, "toptrueRecoAccepGen" )
+            getattr( self, 'cutflow_test' ).SetBinContent( 15, self.fakestop )
+            getattr( self, 'cutflow_test' ).GetXaxis().SetBinLabel( 15, "topFakes" )
+            getattr( self, 'cutflow_test' ).SetBinContent( 16, self.misstop )
+            getattr( self, 'cutflow_test' ).GetXaxis().SetBinLabel( 16, "topMiss" )
+            getattr( self, 'cutflow_test' ).SetBinContent( 17, self.genLeveltop )
+            getattr( self, 'cutflow_test' ).GetXaxis().SetBinLabel( 17, "topGen" )
 
-        getattr( self, 'cutflow_test' ).SetBinContent( 19, self.ufo )
-        getattr( self, 'cutflow_test' ).GetXaxis().SetBinLabel( 19, "allUfo" )
-        getattr( self, 'cutflow_test' ).SetBinContent( 20, self.ufoResponse )
-        getattr( self, 'cutflow_test' ).GetXaxis().SetBinLabel( 20, "ufoResponse" )
-        getattr( self, 'cutflow_test' ).SetBinContent( 21, self.ufoFake )
-        getattr( self, 'cutflow_test' ).GetXaxis().SetBinLabel( 21, "ufoFake" )
-        getattr( self, 'cutflow_test' ).SetBinContent( 22, self.ufoMiss )
-        getattr( self, 'cutflow_test' ).GetXaxis().SetBinLabel( 22, "ufoMiss" )
-        getattr( self, 'cutflow_test' ).SetBinContent( 23, self.ufoW )
-        getattr( self, 'cutflow_test' ).GetXaxis().SetBinLabel( 23, "ufoW" )
-        getattr( self, 'cutflow_test' ).SetBinContent( 24, self.ufotop )
-        getattr( self, 'cutflow_test' ).GetXaxis().SetBinLabel( 24, "ufotop" )
+            getattr( self, 'cutflow_test' ).SetBinContent( 19, self.ufo )
+            getattr( self, 'cutflow_test' ).GetXaxis().SetBinLabel( 19, "allUfo" )
+            getattr( self, 'cutflow_test' ).SetBinContent( 20, self.ufoResponse )
+            getattr( self, 'cutflow_test' ).GetXaxis().SetBinLabel( 20, "ufoResponse" )
+            getattr( self, 'cutflow_test' ).SetBinContent( 21, self.ufoFake )
+            getattr( self, 'cutflow_test' ).GetXaxis().SetBinLabel( 21, "ufoFake" )
+            getattr( self, 'cutflow_test' ).SetBinContent( 22, self.ufoMiss )
+            getattr( self, 'cutflow_test' ).GetXaxis().SetBinLabel( 22, "ufoMiss" )
+            getattr( self, 'cutflow_test' ).SetBinContent( 23, self.ufoW )
+            getattr( self, 'cutflow_test' ).GetXaxis().SetBinLabel( 23, "ufoW" )
+            getattr( self, 'cutflow_test' ).SetBinContent( 24, self.ufotop )
+            getattr( self, 'cutflow_test' ).GetXaxis().SetBinLabel( 24, "ufotop" )
 
     #############################################################################
     def leptonSF(self, lepton, leptonP4 ):
@@ -341,6 +349,7 @@ class nSubProd(Module):
         passRecoSel, iRecoSel, selRecoMuons, selRecoElectrons, selRecoAK4bjets, selRecoJets, selRecoMET = self.recoSelection( event )
         if self.isMC:
             if (not (iRecoSel or iGenSel)) and (not(passGenSel or passRecoSel)): return False
+        if not self.isMC and not passRecoSel: return False
 
 
         genJet = OrderedDict()
@@ -380,63 +389,63 @@ class nSubProd(Module):
                             getattr( self, 'reco'+iRJ+'_tau_1_'+str(tauN)+sysUnc+iRecoSel ).Fill( ireco['1'+str(tauN)], WEIGHT )
                             getattr( self, 'reco'+iRJ+'_tau_2_'+str(tauN)+sysUnc+iRecoSel ).Fill( ireco['2'+str(tauN)], WEIGHT )
 
-            if passGenSel:  ##### go to matrix
-                self.response= self.response+1
+            if self.isMC:
+                if passGenSel:  ##### go to matrix
+                    self.response= self.response+1
 
-                genJet['Jet'] = self.createNsubBasis( selGenJets[0], event, 'GenJetCands' )
+                    genJet['Jet'] = self.createNsubBasis( selGenJets[0], event, 'GenJetCands' )
 
-                if ( iGenSel==iRecoSel ):
-                    if iRecoSel.startswith('_W'): self.responseW = self.responseW+1
-                    elif iRecoSel.startswith('_top'): self.responsetop = self.responsetop+1
-                    else: print('Weird response', iRecoSel)
+                    if ( iGenSel==iRecoSel ):
+                        if iRecoSel.startswith('_W'): self.responseW = self.responseW+1
+                        elif iRecoSel.startswith('_top'): self.responsetop = self.responsetop+1
+                        else: print('Weird response', iRecoSel)
 
-                    for (iGJ,igen), (iRJ,ireco) in zip( genJet.items(), recoJet.items() ):
+                        for (iGJ,igen), (iRJ,ireco) in zip( genJet.items(), recoJet.items() ):
 
-                        getattr( self, 'accepgen'+iGJ+'_pt'+iRecoSel ).Fill( igen['jet'].pt, event.genWeight )
-                        getattr( self, 'accepgen'+iGJ+'_eta'+iRecoSel ).Fill( igen['jet'].eta, event.genWeight )
-                        getattr( self, 'accepgen'+iGJ+'_mass'+iRecoSel ).Fill( igen['jet'].mass, event.genWeight )
-                        getattr( self, 'accepgen'+iGJ+'_phi'+iRecoSel ).Fill( igen['jet'].phi, event.genWeight )
-                        getattr( self, 'accepgen'+iGJ+'_tau21'+iRecoSel ).Fill( igen['tau21'], event.genWeight )
-                        getattr( self, 'accepgen'+iGJ+'_tau32'+iRecoSel ).Fill( igen['tau32'], event.genWeight )
+                            getattr( self, 'accepgen'+iGJ+'_pt'+iRecoSel ).Fill( igen['jet'].pt, event.genWeight )
+                            getattr( self, 'accepgen'+iGJ+'_eta'+iRecoSel ).Fill( igen['jet'].eta, event.genWeight )
+                            getattr( self, 'accepgen'+iGJ+'_mass'+iRecoSel ).Fill( igen['jet'].mass, event.genWeight )
+                            getattr( self, 'accepgen'+iGJ+'_phi'+iRecoSel ).Fill( igen['jet'].phi, event.genWeight )
+                            getattr( self, 'accepgen'+iGJ+'_tau21'+iRecoSel ).Fill( igen['tau21'], event.genWeight )
+                            getattr( self, 'accepgen'+iGJ+'_tau32'+iRecoSel ).Fill( igen['tau32'], event.genWeight )
 
-                        getattr( self, 'gen'+iGJ+'_pt'+iRecoSel ).Fill( igen['jet'].pt, event.genWeight )
-                        getattr( self, 'gen'+iGJ+'_eta'+iRecoSel ).Fill( igen['jet'].eta, event.genWeight )
-                        getattr( self, 'gen'+iGJ+'_mass'+iRecoSel ).Fill( igen['jet'].mass, event.genWeight )
-                        getattr( self, 'gen'+iGJ+'_phi'+iRecoSel ).Fill( igen['jet'].phi, event.genWeight )
-                        getattr( self, 'gen'+iGJ+'_tau21'+iRecoSel ).Fill( igen['tau21'], event.genWeight )
-                        getattr( self, 'gen'+iGJ+'_tau32'+iRecoSel ).Fill( igen['tau32'], event.genWeight )
+                            getattr( self, 'gen'+iGJ+'_pt'+iRecoSel ).Fill( igen['jet'].pt, event.genWeight )
+                            getattr( self, 'gen'+iGJ+'_eta'+iRecoSel ).Fill( igen['jet'].eta, event.genWeight )
+                            getattr( self, 'gen'+iGJ+'_mass'+iRecoSel ).Fill( igen['jet'].mass, event.genWeight )
+                            getattr( self, 'gen'+iGJ+'_phi'+iRecoSel ).Fill( igen['jet'].phi, event.genWeight )
+                            getattr( self, 'gen'+iGJ+'_tau21'+iRecoSel ).Fill( igen['tau21'], event.genWeight )
+                            getattr( self, 'gen'+iGJ+'_tau32'+iRecoSel ).Fill( igen['tau32'], event.genWeight )
 
-                        for tauN in range(1, self.maxTau+1):
-                            getattr( self, 'accepgen'+iGJ+'_tau_0p5_'+str(tauN)+iRecoSel ).Fill( igen['0p5'+str(tauN)], event.genWeight )
-                            getattr( self, 'accepgen'+iGJ+'_tau_1_'+str(tauN)+iRecoSel ).Fill( igen['1'+str(tauN)], event.genWeight )
-                            getattr( self, 'accepgen'+iGJ+'_tau_2_'+str(tauN)+iRecoSel ).Fill( igen['2'+str(tauN)], event.genWeight )
+                            for tauN in range(1, self.maxTau+1):
+                                getattr( self, 'accepgen'+iGJ+'_tau_0p5_'+str(tauN)+iRecoSel ).Fill( igen['0p5'+str(tauN)], event.genWeight )
+                                getattr( self, 'accepgen'+iGJ+'_tau_1_'+str(tauN)+iRecoSel ).Fill( igen['1'+str(tauN)], event.genWeight )
+                                getattr( self, 'accepgen'+iGJ+'_tau_2_'+str(tauN)+iRecoSel ).Fill( igen['2'+str(tauN)], event.genWeight )
 
-                            getattr( self, 'gen'+iGJ+'_tau_0p5_'+str(tauN)+iRecoSel ).Fill( igen['0p5'+str(tauN)], event.genWeight )
-                            getattr( self, 'gen'+iGJ+'_tau_1_'+str(tauN)+iRecoSel ).Fill( igen['1'+str(tauN)], event.genWeight )
-                            getattr( self, 'gen'+iGJ+'_tau_2_'+str(tauN)+iRecoSel ).Fill( igen['2'+str(tauN)], event.genWeight )
+                                getattr( self, 'gen'+iGJ+'_tau_0p5_'+str(tauN)+iRecoSel ).Fill( igen['0p5'+str(tauN)], event.genWeight )
+                                getattr( self, 'gen'+iGJ+'_tau_1_'+str(tauN)+iRecoSel ).Fill( igen['1'+str(tauN)], event.genWeight )
+                                getattr( self, 'gen'+iGJ+'_tau_2_'+str(tauN)+iRecoSel ).Fill( igen['2'+str(tauN)], event.genWeight )
 
-                        WEIGHT =  self.totalWeight
-                        for sysUnc in self.sysSource:
-                            if ( getattr(ireco['jet'], 'pt'+(sysUnc if not sysUnc.startswith('_pu') else '_nom')) > minLeadAK8JetPt ):
+                            WEIGHT =  self.totalWeight
+                            for sysUnc in self.sysSource:
+                                if ( getattr(ireco['jet'], 'pt'+(sysUnc if not sysUnc.startswith('_pu') else '_nom')) > minLeadAK8JetPt ):
 
-                                if sysUnc.startswith('_pu'):
-                                    WEIGHT = event.genWeight * self.leptonWeight * getattr( event, 'puWeight'+sysUnc.split('pu')[1] )
-                                    getattr( self, 'truereco'+iRJ+'_pt'+sysUnc+iRecoSel ).Fill( getattr(ireco['jet'], 'pt_nom' ), WEIGHT )
-                                    getattr( self, 'truereco'+iRJ+'_mass'+sysUnc+iRecoSel ).Fill( getattr(ireco['jet'], 'msoftdrop_nom' ), WEIGHT )
-                                else:
-                                    getattr( self, 'truereco'+iRJ+'_pt'+sysUnc+iRecoSel ).Fill( getattr(ireco['jet'], 'pt'+sysUnc ), WEIGHT )
-                                    getattr( self, 'truereco'+iRJ+'_mass'+sysUnc+iRecoSel ).Fill( getattr(ireco['jet'], 'msoftdrop'+sysUnc ), WEIGHT )
-                                getattr( self, 'truereco'+iRJ+'_eta'+sysUnc+iRecoSel ).Fill( getattr(ireco['jet'], 'eta'), WEIGHT )
-                                getattr( self, 'truereco'+iRJ+'_phi'+sysUnc+iRecoSel ).Fill( getattr(ireco['jet'], 'phi'), WEIGHT )
-                                getattr( self, 'truereco'+iRJ+'_tau21'+sysUnc+iRecoSel ).Fill( ireco['tau21'], WEIGHT )
-                                getattr( self, 'truereco'+iRJ+'_tau32'+sysUnc+iRecoSel ).Fill( ireco['tau32'], WEIGHT )
-                                for tauN in range(1, self.maxTau+1):
-                                    getattr( self, 'truereco'+iRJ+'_tau_0p5_'+str(tauN)+sysUnc+iRecoSel ).Fill( ireco['0p5'+str(tauN)], WEIGHT )
-                                    getattr( self, 'truereco'+iRJ+'_tau_1_'+str(tauN)+sysUnc+iRecoSel ).Fill( ireco['1'+str(tauN)], WEIGHT )
-                                    getattr( self, 'truereco'+iRJ+'_tau_2_'+str(tauN)+sysUnc+iRecoSel ).Fill( ireco['2'+str(tauN)], WEIGHT )
+                                    if sysUnc.startswith('_pu'):
+                                        WEIGHT = event.genWeight * self.leptonWeight * getattr( event, 'puWeight'+sysUnc.split('pu')[1] )
+                                        getattr( self, 'truereco'+iRJ+'_pt'+sysUnc+iRecoSel ).Fill( getattr(ireco['jet'], 'pt_nom' ), WEIGHT )
+                                        getattr( self, 'truereco'+iRJ+'_mass'+sysUnc+iRecoSel ).Fill( getattr(ireco['jet'], 'msoftdrop_nom' ), WEIGHT )
+                                    else:
+                                        getattr( self, 'truereco'+iRJ+'_pt'+sysUnc+iRecoSel ).Fill( getattr(ireco['jet'], 'pt'+sysUnc ), WEIGHT )
+                                        getattr( self, 'truereco'+iRJ+'_mass'+sysUnc+iRecoSel ).Fill( getattr(ireco['jet'], 'msoftdrop'+sysUnc ), WEIGHT )
+                                    getattr( self, 'truereco'+iRJ+'_eta'+sysUnc+iRecoSel ).Fill( getattr(ireco['jet'], 'eta'), WEIGHT )
+                                    getattr( self, 'truereco'+iRJ+'_phi'+sysUnc+iRecoSel ).Fill( getattr(ireco['jet'], 'phi'), WEIGHT )
+                                    getattr( self, 'truereco'+iRJ+'_tau21'+sysUnc+iRecoSel ).Fill( ireco['tau21'], WEIGHT )
+                                    getattr( self, 'truereco'+iRJ+'_tau32'+sysUnc+iRecoSel ).Fill( ireco['tau32'], WEIGHT )
+                                    for tauN in range(1, self.maxTau+1):
+                                        getattr( self, 'truereco'+iRJ+'_tau_0p5_'+str(tauN)+sysUnc+iRecoSel ).Fill( ireco['0p5'+str(tauN)], WEIGHT )
+                                        getattr( self, 'truereco'+iRJ+'_tau_1_'+str(tauN)+sysUnc+iRecoSel ).Fill( ireco['1'+str(tauN)], WEIGHT )
+                                        getattr( self, 'truereco'+iRJ+'_tau_2_'+str(tauN)+sysUnc+iRecoSel ).Fill( ireco['2'+str(tauN)], WEIGHT )
 
-                            #### FIlling response matrices
-                            if self.isMC:
+                                #### FIlling response matrices
                                 if sysUnc.endswith('nom'):
                                     getattr( self, 'resol'+iRJ+'_pt'+iRecoSel ).Fill( getattr(ireco['jet'], 'pt')/getattr(igen['jet'], 'pt'), WEIGHT )
                                     getattr( self, 'resol'+iRJ+'_sdmass'+iRecoSel ).Fill( getattr(ireco['jet'], 'msoftdrop')/getattr(igen['jet'], 'mass'), WEIGHT )
@@ -455,35 +464,35 @@ class nSubProd(Module):
                                         getattr( self, 'resol'+iRJ+'_tau_2_'+str(tauN)+iRecoSel ).Fill( ( ireco['2'+str(tauN)]/igen['2'+str(tauN)] if igen['2'+str(tauN)]!=0 else -999 ), WEIGHT )
 
 
-                else: self.ufoResponse = self.ufoResponse+1
+                    else: self.ufoResponse = self.ufoResponse+1
 
-            else:           ##### fakes
-                self.fakes = self.fakes+1
-                if iRecoSel.startswith('_W'): self.fakesW = self.fakesW+1
-                elif iRecoSel.startswith('_top'): self.fakestop = self.fakestop+1
-                else: self.ufoFake = self.ufoFake+1
+                else:           ##### fakes
+                    self.fakes = self.fakes+1
+                    if iRecoSel.startswith('_W'): self.fakesW = self.fakesW+1
+                    elif iRecoSel.startswith('_top'): self.fakestop = self.fakestop+1
+                    else: self.ufoFake = self.ufoFake+1
 
-                for iRJ,ireco in recoJet.items():
+                    for iRJ,ireco in recoJet.items():
 
-                    WEIGHT =  self.totalWeight
-                    for sysUnc in self.sysSource:
-                        if ( getattr(ireco['jet'], 'pt'+(sysUnc if not sysUnc.startswith('_pu') else '_nom')) > minLeadAK8JetPt ):
+                        WEIGHT =  self.totalWeight
+                        for sysUnc in self.sysSource:
+                            if ( getattr(ireco['jet'], 'pt'+(sysUnc if not sysUnc.startswith('_pu') else '_nom')) > minLeadAK8JetPt ):
 
-                            if sysUnc.startswith('_pu'):
-                                WEIGHT = event.genWeight * self.leptonWeight * getattr( event, 'puWeight'+sysUnc.split('pu')[1] )
-                                getattr( self, 'fakereco'+iRJ+'_pt'+sysUnc+iRecoSel ).Fill( getattr(ireco['jet'], 'pt_nom' ), WEIGHT )
-                                getattr( self, 'fakereco'+iRJ+'_mass'+sysUnc+iRecoSel ).Fill( getattr(ireco['jet'], 'msoftdrop_nom' ), WEIGHT )
-                            else:
-                                getattr( self, 'fakereco'+iRJ+'_pt'+sysUnc+iRecoSel ).Fill( getattr(ireco['jet'], 'pt'+sysUnc ), WEIGHT )
-                                getattr( self, 'fakereco'+iRJ+'_mass'+sysUnc+iRecoSel ).Fill( getattr(ireco['jet'], 'msoftdrop'+sysUnc ), WEIGHT )
-                            getattr( self, 'fakereco'+iRJ+'_eta'+sysUnc+iRecoSel ).Fill( getattr(ireco['jet'], 'eta'), WEIGHT )
-                            getattr( self, 'fakereco'+iRJ+'_phi'+sysUnc+iRecoSel ).Fill( getattr(ireco['jet'], 'phi'), WEIGHT )
-                            getattr( self, 'fakereco'+iRJ+'_tau21'+sysUnc+iRecoSel ).Fill( ireco['tau21'], WEIGHT )
-                            getattr( self, 'fakereco'+iRJ+'_tau32'+sysUnc+iRecoSel ).Fill( ireco['tau32'], WEIGHT )
-                            for tauN in range(1, self.maxTau+1):
-                                getattr( self, 'fakereco'+iRJ+'_tau_0p5_'+str(tauN)+sysUnc+iRecoSel ).Fill( ireco['0p5'+str(tauN)], WEIGHT )
-                                getattr( self, 'fakereco'+iRJ+'_tau_1_'+str(tauN)+sysUnc+iRecoSel ).Fill( ireco['1'+str(tauN)], WEIGHT )
-                                getattr( self, 'fakereco'+iRJ+'_tau_2_'+str(tauN)+sysUnc+iRecoSel ).Fill( ireco['2'+str(tauN)], WEIGHT )
+                                if sysUnc.startswith('_pu'):
+                                    WEIGHT = event.genWeight * self.leptonWeight * getattr( event, 'puWeight'+sysUnc.split('pu')[1] )
+                                    getattr( self, 'fakereco'+iRJ+'_pt'+sysUnc+iRecoSel ).Fill( getattr(ireco['jet'], 'pt_nom' ), WEIGHT )
+                                    getattr( self, 'fakereco'+iRJ+'_mass'+sysUnc+iRecoSel ).Fill( getattr(ireco['jet'], 'msoftdrop_nom' ), WEIGHT )
+                                else:
+                                    getattr( self, 'fakereco'+iRJ+'_pt'+sysUnc+iRecoSel ).Fill( getattr(ireco['jet'], 'pt'+sysUnc ), WEIGHT )
+                                    getattr( self, 'fakereco'+iRJ+'_mass'+sysUnc+iRecoSel ).Fill( getattr(ireco['jet'], 'msoftdrop'+sysUnc ), WEIGHT )
+                                getattr( self, 'fakereco'+iRJ+'_eta'+sysUnc+iRecoSel ).Fill( getattr(ireco['jet'], 'eta'), WEIGHT )
+                                getattr( self, 'fakereco'+iRJ+'_phi'+sysUnc+iRecoSel ).Fill( getattr(ireco['jet'], 'phi'), WEIGHT )
+                                getattr( self, 'fakereco'+iRJ+'_tau21'+sysUnc+iRecoSel ).Fill( ireco['tau21'], WEIGHT )
+                                getattr( self, 'fakereco'+iRJ+'_tau32'+sysUnc+iRecoSel ).Fill( ireco['tau32'], WEIGHT )
+                                for tauN in range(1, self.maxTau+1):
+                                    getattr( self, 'fakereco'+iRJ+'_tau_0p5_'+str(tauN)+sysUnc+iRecoSel ).Fill( ireco['0p5'+str(tauN)], WEIGHT )
+                                    getattr( self, 'fakereco'+iRJ+'_tau_1_'+str(tauN)+sysUnc+iRecoSel ).Fill( ireco['1'+str(tauN)], WEIGHT )
+                                    getattr( self, 'fakereco'+iRJ+'_tau_2_'+str(tauN)+sysUnc+iRecoSel ).Fill( ireco['2'+str(tauN)], WEIGHT )
 
         else:  #### Misses
             self.miss = self.miss+1
@@ -530,7 +539,7 @@ class nSubProd(Module):
 
 
         self.fillBranches( 'selRecojets', recoJet )
-        self.fillBranches( 'selGenjets', genJet )
+        if self.isMC: self.fillBranches( 'selGenjets', genJet )
 
         return True
 
@@ -800,8 +809,8 @@ class nSubProd(Module):
 
             if not isGen:
                 if self.isMC:
-                    ###bTagSFs =  [x.btagSF_deepjet_M for x in AK4bjets]
-                    self.btagweight = 1 ####self.getBTagWeight(nBTagged=len(AK4bjets), jet_SFs=bTagSFs)
+                    bTagSFs =  [x.btagSF_deepjet_M for x in AK4bjets]
+                    self.btagweight = self.getBTagWeight(nBTagged=len(AK4bjets), jet_SFs=bTagSFs)
                 else: self.btagweight = 1
 
                 self.out.fillBranch("btagWeight", self.btagweight)
