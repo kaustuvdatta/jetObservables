@@ -77,21 +77,21 @@ class nSubProd(Module):
         ### Defining nsubjetiness basis
         self.maxTau = 5
         self.nSub_labels = {
-                "_tau_0p5_1": [ 1, 100 ],
-                "_tau_0p5_2": [ 0.6, 600 ],
-                "_tau_0p5_3": [ 0.6, 600 ],
-                "_tau_0p5_4": [ 0.5, 500 ],
-                "_tau_0p5_5": [ 0.5, 500 ],
-                "_tau_1_1": [ 1, 100 ],
-                "_tau_1_2": [ 0.4, 400 ],
-                "_tau_1_3": [ 0.4, 400 ],
-                "_tau_1_4": [ 0.2, 200 ],
-                "_tau_1_5": [ 0.2, 200 ],
-                "_tau_2_1": [ 1, 100 ],
-                "_tau_2_2": [ 0.2, 200 ],
-                "_tau_2_3": [ 0.2, 200 ],
-                "_tau_2_4": [ 0.2, 200 ],
-                "_tau_2_5": [ 0.2, 200 ]
+                        "_tau_0p5_1": [ 1, 200  ],
+                        "_tau_0p5_2": [ 0.8, 800  ],
+                        "_tau_0p5_3": [ 0.6, 600  ],
+                        "_tau_0p5_4": [ 0.6, 600  ],
+                        "_tau_0p5_5": [ 0.6, 600  ],
+                        "_tau_1_1": [ 1, 200  ],
+                        "_tau_1_2": [ 0.6, 600  ],
+                        "_tau_1_3": [ 0.4, 800  ],
+                        "_tau_1_4": [ 0.4, 800  ],
+                        "_tau_1_5": [ 0.4, 800  ],
+                        "_tau_2_1": [ 1, 200  ],
+                        "_tau_2_2": [ 0.4, 800  ],
+                        "_tau_2_3": [ 0.4, 800  ],
+                        "_tau_2_4": [ 0.4, 800  ],
+                        "_tau_2_5": [ 0.4, 800  ]
                 }
         self.nSub0p5 = ROOT.NsubjettinessWrapper( 0.5, 0.8, 0, 0 ) #beta, cone size, measureDef 0=Normalize, axesDef 0=KT_axes
         self.nSub1 = ROOT.NsubjettinessWrapper( 1, 0.8, 0, 0 )
