@@ -61,7 +61,7 @@ def submitJobs( job, inputFiles, unitJobs ):
     config.section_("JobType")
     config.JobType.pluginName = 'Analysis'
     config.JobType.psetName = 'PSet.py'
-    config.JobType.maxMemoryMB = 5000
+    config.JobType.maxMemoryMB = 2500
     config.JobType.allowUndistributedCMSSW = True
 
     config.section_("Data")
@@ -72,7 +72,7 @@ def submitJobs( job, inputFiles, unitJobs ):
 
     config.section_("Site")
     config.Site.storageSite = options.storageSite
-    config.Site.whitelist = ['T1_US_FNAL','T2_CH_CSCS','T3_US_FNALLPC']
+    config.Site.whitelist = ['T1_US_FNAL','T2_CH_CSCS','T3_US_FNALLPC' ]
     #config.Site.blacklist = ['T2_US_Florida','T3_TW_*','T2_BR_*','T2_GR_Ioannina','T2_BR_SPRACE','T2_RU_IHEP','T2_PL_Swierk','T2_KR_KNU','T3_TW_NTU_HEP']
 
 
@@ -90,7 +90,8 @@ def submitJobs( job, inputFiles, unitJobs ):
     config.JobType.inputFiles = [ options.pythonFile ,'haddnano.py', 'keep_and_drop.txt']
     config.JobType.sendPythonFolder  = True
 
-    if job.startswith(('Single', 'JetHT')): config.Data.lumiMask = '/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions16/13TeV/Final/Cert_271036-284044_13TeV_PromptReco_Collisions16_JSON.txt'
+    if job.startswith(('Single', 'JetHT')): config.Data.lumiMask = '/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions17/13TeV/Legacy_2017/Cert_294927-306462_13TeV_UL2017_Collisions17_GoldenJSON.txt'
+            
     #config.Data.userInputFiles = inputFiles
     config.Data.inputDataset = inputFiles
     #config.Data.splitting = 'EventAwareLumiBased' if job.startswith('QCD_Pt') else 'FileBased'
@@ -142,7 +143,7 @@ if __name__ == '__main__':
             )
     parser.add_option(
             "-s", "--selection",
-            dest="selection", default="dijet",
+            dest="selection", default="Wtop",
             help=("Selection: dijet, Wtop"),
             )
     parser.add_option(
@@ -157,25 +158,23 @@ if __name__ == '__main__':
 
     dictSamples = {}
     
+    #dictSamples['UL17_TTToSemileptonic_hdampDOWN'] = ['/TTToSemiLeptonic_hdampDOWN_TuneCP5_13TeV-powheg-pythia8/kadatta-RunIISummer19UL17PFNanoAOD-106X_mc2017_realistic_v6-v2-830c141d7b4aa70b88c71a25d598b0f2/USER',1]
+    dictSamples['UL17_TTToSemileptonic'] = ['/TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8/kadatta-RunIISummer19UL17PFNanoAOD-106X_mc2017_realistic_v6-v2-8f037877c18053811b946b7194702f97/USER',1]
+    dictSamples['UL17_ST_t-channel_antitop'] = ['/ST_t-channel_antitop_5f_InclusiveDecays_TuneCP5_13TeV-powheg-pythia8/kadatta-RunIISummer19UL17PFNanoAOD-106X_mc2017_realistic_v6-v1-8f037877c18053811b946b7194702f97/USER',1]
+    #dictSamples['UL17_ST_tW_top'] = ['/ST_tW_top_5f_NoFullyHadronicDecays_TuneCP5_13TeV-powheg-pythia8/kadatta-RunIISummer19UL17PFNanoAOD-106X_mc2017_realistic_v6-v3-8f037877c18053811b946b7194702f97/USER',1]
+
+    '''
     #2017 UL (PFNano) samples
-    
-    dictSamples['UL17_TTbar_Pythia8'] = ['/TTbar_13TeV_TuneCP5_Pythia8/kadatta-RunIISummer19UL17PFNanoAOD-106X_mc2017_realistic_v6-v1-830c141d7b4aa70b88c71a25d598b0f2/USER',1]
-    dictSamples['UL17_TTToSemileptonic'] = ['/TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8/algomez-RunIISummer19UL17PFNanoAOD-106X_mc2017_realistic_v6-v2-830c141d7b4aa70b88c71a25d598b0f2/USER',1]
     dictSamples['UL17_TTToSemileptonic_TuneCP5up'] = ['/TTToSemiLeptonic_TuneCP5up_13TeV-powheg-pythia8/kadatta-RunIISummer19UL17PFNanoAOD-106X_mc2017_realistic_v6-v2-830c141d7b4aa70b88c71a25d598b0f2/USER',1]
     dictSamples['UL17_TTToSemileptonic_TuneCP5down'] = ['/TTToSemiLeptonic_TuneCP5down_13TeV-powheg-pythia8/kadatta-RunIISummer19UL17PFNanoAOD-106X_mc2017_realistic_v6-v2-830c141d7b4aa70b88c71a25d598b0f2/USER',1]
     dictSamples['UL17_TTToSemileptonic_TuneCP5erdON'] = ['/TTToSemiLeptonic_TuneCP5_erdON_13TeV-powheg-pythia8/kadatta-RunIISummer19UL17PFNanoAOD-106X_mc2017_realistic_v6-v2-830c141d7b4aa70b88c71a25d598b0f2/USER',1]
-    dictSamples['UL17_TTToSemileptonic_hdampDOWN'] = ['/TTToSemiLeptonic_hdampDOWN_TuneCP5_13TeV-powheg-pythia8/kadatta-RunIISummer19UL17PFNanoAOD-106X_mc2017_realistic_v6-v2-830c141d7b4aa70b88c71a25d598b0f2/USER',1]
+
     dictSamples['UL17_TTToSemileptonic_hdampUP'] = ['/TTToSemiLeptonic_hdampUP_TuneCP5_13TeV-powheg-pythia8/kadatta-RunIISummer19UL17PFNanoAOD-106X_mc2017_realistic_v6-v2-830c141d7b4aa70b88c71a25d598b0f2/USER',1]
     dictSamples['UL17_TTTo2L2Nu'] = ['/TTTo2L2Nu_TuneCP5_13TeV-powheg-pythia8/kadatta-RunIISummer19UL17PFNanoAOD-106X_mc2017_realistic_v6-v2-830c141d7b4aa70b88c71a25d598b0f2/USER',1]
     
     dictSamples['UL17_TTJets'] = ['/TTJets_TuneCP5_13TeV-amcatnloFXFX-pythia8/kadatta-RunIISummer19UL17PFNanoAOD-106X_mc2017_realistic_v6-v2-830c141d7b4aa70b88c71a25d598b0f2/USER',1]
 
-    dictSamples['UL17_ST_s-channel'] = ['/ST_s-channel_4f_leptonDecays_TuneCP5_13TeV-amcatnlo-pythia8/kadatta-RunIISummer19UL17PFNanoAOD-106X_mc2017_realistic_v6-v1-830c141d7b4aa70b88c71a25d598b0f2/USER',1]
-    dictSamples['UL17_ST_t-channel_top'] = ['/ST_t-channel_top_5f_InclusiveDecays_TuneCP5_13TeV-powheg-pythia8/kadatta-RunIISummer19UL17PFNanoAOD-106X_mc2017_realistic_v6-v1-830c141d7b4aa70b88c71a25d598b0f2/USER',1]
-    #dictSamples['UL17_ST_t-channel_antitop'] = ['/ST_t-channel_antitop_5f_InclusiveDecays_TuneCP5_13TeV-powheg-pythia8/kadatta-RunIISummer19UL17PFNanoAOD-106X_mc2017_realistic_v6-v1-830c141d7b4aa70b88c71a25d598b0f2/USER',1]
-    #dictSamples['UL17_ST_tW_top'] = ['/ST_tW_top_5f_NoFullyHadronicDecays_TuneCP5_13TeV-powheg-pythia8/kadatta-RunIISummer19UL17PFNanoAOD-106X_mc2017_realistic_v6-v3-830c141d7b4aa70b88c71a25d598b0f2/USER',1]
-    #dictSamples['UL17_ST_tW_antitop'] = ['/ST_tW_antitop_5f_NoFullyHadronicDecays_TuneCP5_13TeV-powheg-pythia8/kadatta-RunIISummer19UL17PFNanoAOD-106X_mc2017_realistic_v6-v3-830c141d7b4aa70b88c71a25d598b0f2/USER',1]
-
+    
     dictSamples['UL17_WJetsToLNu'] = ['/WJetsToLNu_TuneCP5_13TeV-madgraphMLM-pythia8/kadatta-RunIISummer19UL17PFNanoAOD-106X_mc2017_realistic_v6-v2-830c141d7b4aa70b88c71a25d598b0f2/USER',1]
     dictSamples['UL17_W1JetsToLNu'] = ['/W1JetsToLNu_TuneCP5_13TeV-madgraphMLM-pythia8/kadatta-RunIISummer19UL17PFNanoAOD-106X_mc2017_realistic_v6-v2-830c141d7b4aa70b88c71a25d598b0f2/USER',1]
     dictSamples['UL17_W2JetsToLNu'] = ['/W2JetsToLNu_TuneCP5_13TeV-madgraphMLM-pythia8/kadatta-RunIISummer19UL17PFNanoAOD-106X_mc2017_realistic_v6-v2-830c141d7b4aa70b88c71a25d598b0f2/USER',1]
@@ -199,15 +198,19 @@ if __name__ == '__main__':
     dictSamples['UL17_QCD_Pt150to3000_Herwig7'] = ['/QCD_Pt-150to3000_TuneCH3_FlatPower7_13TeV-herwig7/kadatta-RunIISummer19UL17PFNanoAOD-106X_mc2017_realistic_v6-v2-830c141d7b4aa70b88c71a25d598b0f2/USER',1]
     dictSamples['UL17_QCD_Pt15to7000_Pythia8'] = ['/QCD_Pt-15to7000_TuneCP5_Flat_13TeV_pythia8/mmorris-RunIISummer19UL17PFNanoAOD-106X_mc2017_realistic_v6_ext2-v2-830c141d7b4aa70b88c71a25d598b0f2/USER',1]
     
-    '''
-    #2017 UL (PFNano) samples
+
+    dictSamples['UL17_ST_s-channel'] = ['/ST_s-channel_4f_leptonDecays_TuneCP5_13TeV-amcatnlo-pythia8/kadatta-RunIISummer19UL17PFNanoAOD-106X_mc2017_realistic_v6-v1-830c141d7b4aa70b88c71a25d598b0f2/USER',1]
+    dictSamples['UL17_ST_t-channel_top'] = ['/ST_t-channel_top_5f_InclusiveDecays_TuneCP5_13TeV-powheg-pythia8/kadatta-RunIISummer19UL17PFNanoAOD-106X_mc2017_realistic_v6-v1-830c141d7b4aa70b88c71a25d598b0f2/USER',1]
+    
+    dictSamples['UL17_ST_tW_antitop'] = ['/ST_tW_antitop_5f_NoFullyHadronicDecays_TuneCP5_13TeV-powheg-pythia8/kadatta-RunIISummer19UL17PFNanoAOD-106X_mc2017_realistic_v6-v3-830c141d7b4aa70b88c71a25d598b0f2/USER',1]
+    
     dictSamples['UL17_SingleMuonB'] = ['/SingleMuon/kadatta-Run2017B-09Aug2019_UL2017-v1_PFNanoAOD-711e27fd71aadb4a77ae7e6321a59353/USER',1]
     dictSamples['UL17_SingleMuonC'] = ['/SingleMuon/kadatta-Run2017C-09Aug2019_UL2017-v1_PFNanoAOD-711e27fd71aadb4a77ae7e6321a59353/USER',1]
     dictSamples['UL17_SingleMuonD'] = ['/SingleMuon/kadatta-Run2017D-09Aug2019_UL2017-v1_PFNanoAOD-711e27fd71aadb4a77ae7e6321a59353/USER',1]
     dictSamples['UL17_SingleMuonE'] = ['/SingleMuon/kadatta-Run2017E-09Aug2019_UL2017-v1_PFNanoAOD-711e27fd71aadb4a77ae7e6321a59353/USER',1]
     dictSamples['UL17_SingleMuonF'] = ['/SingleMuon/kadatta-Run2017F-09Aug2019_UL2017-v1_PFNanoAOD-711e27fd71aadb4a77ae7e6321a59353/USER',1]
     
-    
+    dictSamples['UL17_TTbar_Pythia8'] = ['/TTbar_13TeV_TuneCP5_Pythia8/kadatta-RunIISummer19UL17PFNanoAOD-106X_mc2017_realistic_v6-v1-830c141d7b4aa70b88c71a25d598b0f2/USER',1]
     
     #2016 re-reco samples
     dictSamples['JetHT2016B'] = ['/JetHT/algomez-JetHT_Run2016B-17Jul2018_ver2-v2-c59ef3ac16263506c0c61b1b9e3fa54b/USER', 1 ]
