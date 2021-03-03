@@ -156,7 +156,7 @@ if args.selection.startswith('dijet'):
     from jetObservables.Skimmer.nSubProducer_dijetSel import nSubProd
     modulesToRun.append( nSubProd( sysSource=systSources, leptonSF=LeptonSF[args.year], isMC=isMC ) )
 else:
-    from jetObservables.Skimmer.nSubProducer_WtopSel import nSubProd
+    from jetObservables.Skimmer.nSubProducer_WTaggingNormTest import nSubProd
     modulesToRun.append( nSubProd( sysSource=systSources, leptonSF=LeptonSF[args.year], isMC=isMC ) )
 
 
