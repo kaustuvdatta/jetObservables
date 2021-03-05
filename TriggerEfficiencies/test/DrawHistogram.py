@@ -28,12 +28,16 @@ def plotTriggerEfficiency( inFileSample, sample, triggerDenom, triggerPass, trig
 	outputFileName = name+'_'+triggerDenom+"_"+triggerPass+'_'+sample+'_TriggerEfficiency'+args.version+'.'+args.extension
 	print 'Processing.......', outputFileName
 
-	DenomOnly = inFileSample.Get( 'triggerEfficiencies/AK8Jet1Pt_'+triggerDenom )
+	DenomOnly = inFileSample.Get( 'TriggerEfficiencies/jet1Pt_AK8PFJet80_simulated' )
+	#DenomOnly = inFileSample.Get( 'TriggerEfficiencies/jet1Pt_HLT_AK8PFJet80_AK8PFJet80' )
+	#DenomOnly = inFileSample.Get( 'triggerEfficiencies/AK8Jet1Pt_'+triggerDenom )
 	DenomOnly.Rebin(rebin)
 	Denom = DenomOnly.Clone()
-	PassingOnly = inFileSample.Get( 'triggerEfficiencies/AK8Jet1Pt_'+triggerPass )
+	PassingOnly = inFileSample.Get( 'TriggerEfficiencies/jet1Pt_'+triggerPass+'_simulated' )
+	#PassingOnly = inFileSample.Get( 'TriggerEfficiencies/jet1Pt_HLT_'+triggerPass+'_AK8PFJet80' )
+	#PassingOnly = inFileSample.Get( 'triggerEfficiencies/AK8Jet1Pt_'+triggerPass )
 	PassingOnly.Rebin(rebin)
-        PassingOnly.Scale( triggerScale )
+        #PassingOnly.Scale( triggerScale )
 	Passing = PassingOnly.Clone()
 	print Denom, Passing
 	Efficiency = TGraphAsymmErrors( Passing, Denom, 'cp'  )
@@ -639,10 +643,11 @@ if __name__ == '__main__':
 
     triggerList = [ 'AK8PFJet140','AK8PFJet200', 'AK8PFJet260', 'AK8PFJet320', 'AK8PFJet400', 'AK8PFJet450', 'AK8PFJet500'] #, 'AK8PFJet550']
     triggerScales = [ 1560.152778, 219.7049972, 88.4261417, 33.82744031, 5.40387734, 4.298722004, 1, 1 ]  ##full UL2017
+    #triggerScales = [ 10.52455351,	14,	2.484615895,	2.614035851,	6.259846066,	1.257089278,	4.298722004,	1 ]
 
     Samples = {}
     #Samples[ 'SingleMuon2017B' ] = [ TFile.Open('Rootfiles/triggerEfficiencies_histograms.root'), 0 ]
-    Samples[ 'JetHT2017' ] = [ TFile.Open('Rootfiles/triggerEfficiencies_histograms_JetHTRun2017.root'), 0 ]
+    Samples[ 'JetHT2017' ] = [ TFile.Open('Rootfiles/triggerEfficiencies_histograms_MiniAOD_JetHTRun2017B.root'), 0 ]
 
 
     processingSamples = {}
@@ -657,7 +662,7 @@ if __name__ == '__main__':
     for i in Plots:
         for isam, samFile in processingSamples.iteritems():
             for q, it in enumerate(triggerList):
-                plotTriggerEfficiency( samFile[0], isam, 'baseTrigger', it, triggerScales[q], i[0], i[1], i[2], i[3], i[4], i[5] )
+                plotTriggerEfficiency( samFile[0], isam, it+'_baseline', it, triggerScales[q], i[0], i[1], i[2], i[3], i[4], i[5] )
 #        if args.proc.startswith('simple'):
 #            #cuts = [ 'Pt10', 'Pt20','Pt30','Pt40','Pt50', 'Pt10Eta5', 'Pt20Eta5', 'Pt30Eta5', 'Pt40Eta5', 'Pt50Eta5' ]
 #            cuts = [ 'Pt10', 'Pt30','Pt50', 'Pt10Eta5', 'Pt30Eta5', 'Pt50Eta5' ]
