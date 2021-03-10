@@ -36,7 +36,7 @@ def setTDRStyle():
   tdrStyle.SetFrameLineColor(1)
   tdrStyle.SetFrameLineStyle(1)
   tdrStyle.SetFrameLineWidth(1)
-  
+
 #For the histo:
   #tdrStyle.SetHistFillColor(1)
   #tdrStyle.SetHistFillStyle(0)
@@ -49,9 +49,9 @@ def setTDRStyle():
   tdrStyle.SetEndErrorSize(2)
   #tdrStyle.SetErrorMarker(20)
   #tdrStyle.SetErrorX(0.)
-  
+
   #tdrStyle.SetMarkerStyle(20)
-  
+
 #For the fit/function:
   tdrStyle.SetOptFit(0000)
   tdrStyle.SetFitFormat("5.4g")

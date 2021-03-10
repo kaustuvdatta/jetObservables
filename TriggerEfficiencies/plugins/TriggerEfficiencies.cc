@@ -146,6 +146,29 @@ void TriggerEfficiencies::analyze(const Event& iEvent, const EventSetup& iSetup)
 	iEvent.getByToken(triggerEvent_,trigEvent);
 	iEvent.getByToken(jetToken_, jets);
 
+    const edm::TriggerNames &names = iEvent.triggerNames(*triggerBits);
+    //bool ORTriggers = checkORListOfTriggerBitsMiniAOD( names, triggerBits, triggerPrescales, listOfTriggers, false );
+    //bool basedTriggerFired = checkTriggerBitsMiniAOD( names, triggerBits, triggerPrescales, baseTrigger, true );
+
+    for (size_t t = 0; t < listOfTriggers.size(); t++) {
+        for (unsigned int i = 0, n = triggerBits->size(); i < n; ++i) {
+            if (TString(names.triggerName(i)).Contains(listOfTriggers[t])) { 
+                if (triggerBits->accept(i)) {
+                    triggerDesicion.push_back( 1 );
+                    triggerPrescale.push_back( triggerPrescales->getPrescaleForIndex(i) );
+                    //LogWarning("triggerbit") << names.triggerName(i) << " " <<  hltAK8PFJet80_bool << " " << hltAK8PFJet80_prescale;
+                } else {
+                    triggerDesicion.push_back( 0 );
+                    triggerPrescale.push_back( 0 );
+                }
+            }
+        }
+    }
+    event = iEvent.id().event();
+    run = iEvent.id().run();
+    lumi = iEvent.luminosityBlock();
+    PrescaleTree->Fill();
+
 	/// Applying kinematic, trigger and jet ID
 	pat::JetCollection JETS;
     //vector<pat::Jet> JETS;
@@ -162,91 +185,75 @@ void TriggerEfficiencies::analyze(const Event& iEvent, const EventSetup& iSetup)
 	}
 
 
-    if ( JETS.size()>0 ) {
+    if ( JETS.size()>1 ) {
 
-        const edm::TriggerNames &names = iEvent.triggerNames(*triggerBits);
-        //bool ORTriggers = checkORListOfTriggerBitsMiniAOD( names, triggerBits, triggerPrescales, listOfTriggers, false );
-        //bool basedTriggerFired = checkTriggerBitsMiniAOD( names, triggerBits, triggerPrescales, baseTrigger, true );
+        TLorentzVector hltJet, recoJet, recoJet2;
+        recoJet.SetPtEtaPhiM( JETS[0].pt(), JETS[0].eta(), JETS[0].phi(), JETS[0].mass() );
+        recoJet2.SetPtEtaPhiM( JETS[1].pt(), JETS[1].eta(), JETS[1].phi(), JETS[1].mass() );
+        double deltaPhi = recoJet.DeltaPhi(recoJet2);
+        double ptAsym = TMath::Abs( recoJet.Pt() - recoJet2.Pt() )/( recoJet.Pt() + recoJet2.Pt() );
 
-        for (size_t t = 0; t < listOfTriggers.size(); t++) {
-            for (unsigned int i = 0, n = triggerBits->size(); i < n; ++i) {
-                if (TString(names.triggerName(i)).Contains(listOfTriggers[t])) { 
-                    if (triggerBits->accept(i)) {
-                        triggerDesicion.push_back( 1 );
-                        triggerPrescale.push_back( triggerPrescales->getPrescaleForIndex(i) );
-                        //LogWarning("triggerbit") << names.triggerName(i) << " " <<  hltAK8PFJet80_bool << " " << hltAK8PFJet80_prescale;
-                    } else {
-                        triggerDesicion.push_back( 0 );
-                        triggerPrescale.push_back( 0 );
+        if ( ( deltaPhi > 2 ) and ( ptAsym < 0.3 ) ){
+
+            //LogWarning("test") << deltaPhi << " " << ptAsym;
+            if ( ( listOfTriggers.size() == triggerDesicion.size() ) and ( triggerDesicion.size() == triggerPrescale.size() ) ){
+                for (size_t t = 0; t < listOfTriggers.size(); t++) {
+                    if (triggerDesicion[t]==1) {
+                        //LogWarning("pass") << listOfTriggers[t] << " " << triggerDesicion[t] << " " << triggerPrescale[t];
+                        auto tmp = "jet1Pt_" + listOfTriggers[t] ;
+                        histos1D_[ tmp+ "_only" ]->Fill( JETS[0].pt() );
+                        if ( (triggerDesicion[0]==1) ){
+                            histos1D_[ tmp+ "_AK8PFJet80" ]->Fill( JETS[0].pt() );
+                            histos1D_[ tmp+ "_AK8PFJet80_scaled" ]->Fill( JETS[0].pt(), triggerPrescale[t] );
+                        }
                     }
                 }
             }
-        }
 
 
-        if ( ( listOfTriggers.size() == triggerDesicion.size() ) and ( triggerDesicion.size() == triggerPrescale.size() ) ){
-            for (size_t t = 0; t < listOfTriggers.size(); t++) {
-                if (triggerDesicion[t]==1) {
-                    //LogWarning("pass") << listOfTriggers[t] << " " << triggerDesicion[t] << " " << triggerPrescale[t];
-                    auto tmp = "jet1Pt_" + listOfTriggers[t] ;
-                    histos1D_[ tmp+ "_only" ]->Fill( JETS[0].pt() );
-                    if ( (triggerDesicion[0]==1) ){
-                        histos1D_[ tmp+ "_AK8PFJet80" ]->Fill( JETS[0].pt() );
-                        histos1D_[ tmp+ "_AK8PFJet80_scaled" ]->Fill( JETS[0].pt(), triggerPrescale[t] );
+            if (triggerDesicion[0]==1){
+                double hltPt = 0;
+                for (pat::TriggerObjectStandAlone obj : *triggerObjects) { // note: not "const &" since we want to call unpackPathNames
+                    obj.unpackPathNames(names);
+                    obj.unpackFilterLabels(iEvent, *triggerBits );
+                    for (unsigned h = 0; h < obj.filterLabels().size(); ++h){
+                        TString filterLabel = obj.filterLabels()[h];
+                        //cout << filterLabel << endl;
+                        TString hltObjectPt_ = "hltSinglePFJet80AK8";
+                        if ( filterLabel.Contains( hltObjectPt_ ) ) {
+                            hltPt = obj.pt();
+                            hltJet.SetPtEtaPhiM( obj.pt(), obj.eta(), obj.phi(), obj.mass()  );
+                            /*cout << "\tTrigger object Pt:  pt " << obj.pt()
+                                                << ", eta " << obj.eta()
+                                                << ", phi " << obj.phi()
+                                                << ", mass " << obj.mass() << endl;*/
+                        }
                     }
+                }
+
+                if ( hltJet.DeltaR( recoJet )<0.8 ){ 
+                    if ( hltPt>80 ) histos1D_[ "jet1Pt_AK8PFJet80_simulated" ]->Fill( JETS[0].pt() );
+                    if ( hltPt>140 ) histos1D_[ "jet1Pt_AK8PFJet140_simulated" ]->Fill( JETS[0].pt() );
+                    if ( hltPt>200 ) histos1D_[ "jet1Pt_AK8PFJet200_simulated" ]->Fill( JETS[0].pt() );
+                    if ( hltPt>260 ) histos1D_[ "jet1Pt_AK8PFJet260_simulated" ]->Fill( JETS[0].pt() );
+                    if ( hltPt>320 ) histos1D_[ "jet1Pt_AK8PFJet320_simulated" ]->Fill( JETS[0].pt() );
+                    if ( hltPt>400 ) histos1D_[ "jet1Pt_AK8PFJet400_simulated" ]->Fill( JETS[0].pt() );
+                    if ( hltPt>450 ) histos1D_[ "jet1Pt_AK8PFJet450_simulated" ]->Fill( JETS[0].pt() );
+                    if ( hltPt>500 ) histos1D_[ "jet1Pt_AK8PFJet500_simulated" ]->Fill( JETS[0].pt() );
+                    if ( hltPt>550 ) histos1D_[ "jet1Pt_AK8PFJet550_simulated" ]->Fill( JETS[0].pt() );
+                    if ( hltPt>80 ) histos1D_[ "jet2Pt_AK8PFJet80_simulated" ]->Fill( JETS[1].pt() );
+                    if ( hltPt>140 ) histos1D_[ "jet2Pt_AK8PFJet140_simulated" ]->Fill( JETS[1].pt() );
+                    if ( hltPt>200 ) histos1D_[ "jet2Pt_AK8PFJet200_simulated" ]->Fill( JETS[1].pt() );
+                    if ( hltPt>260 ) histos1D_[ "jet2Pt_AK8PFJet260_simulated" ]->Fill( JETS[1].pt() );
+                    if ( hltPt>320 ) histos1D_[ "jet2Pt_AK8PFJet320_simulated" ]->Fill( JETS[1].pt() );
+                    if ( hltPt>400 ) histos1D_[ "jet2Pt_AK8PFJet400_simulated" ]->Fill( JETS[1].pt() );
+                    if ( hltPt>450 ) histos1D_[ "jet2Pt_AK8PFJet450_simulated" ]->Fill( JETS[1].pt() );
+                    if ( hltPt>500 ) histos1D_[ "jet2Pt_AK8PFJet500_simulated" ]->Fill( JETS[1].pt() );
+                    if ( hltPt>550 ) histos1D_[ "jet2Pt_AK8PFJet550_simulated" ]->Fill( JETS[1].pt() );
                 }
             }
         }
-
-       event = iEvent.id().event();
-       run = iEvent.id().run();
-       lumi = iEvent.luminosityBlock();
-       PrescaleTree->Fill();
-
-
-       TLorentzVector hltJet, recoJet;
-       recoJet.SetPtEtaPhiM( JETS[0].pt(), JETS[0].eta(), JETS[0].phi(), JETS[0].mass() );
-        if (triggerDesicion[0]==1){
-            double hltPt = 0;
-            for (pat::TriggerObjectStandAlone obj : *triggerObjects) { // note: not "const &" since we want to call unpackPathNames
-                obj.unpackPathNames(names);
-                obj.unpackFilterLabels(iEvent, *triggerBits );
-                for (unsigned h = 0; h < obj.filterLabels().size(); ++h){
-                    TString filterLabel = obj.filterLabels()[h];
-                    //cout << filterLabel << endl;
-                    TString hltObjectPt_ = "hltSinglePFJet80AK8";
-                    if ( filterLabel.Contains( hltObjectPt_ ) ) {
-                        hltPt = obj.pt();
-                        hltJet.SetPtEtaPhiM( obj.pt(), obj.eta(), obj.phi(), obj.mass()  );
-                        /*cout << "\tTrigger object Pt:  pt " << obj.pt()
-                                            << ", eta " << obj.eta()
-                                            << ", phi " << obj.phi()
-                                            << ", mass " << obj.mass() << endl;*/
-                    }
-                }
-            }
-            if ( hltJet.DeltaR( recoJet )<0.4 ){ 
-            if ( hltPt>80 ) histos1D_[ "jet1Pt_AK8PFJet80_simulated" ]->Fill( JETS[0].pt() );
-            if ( hltPt>140 ) histos1D_[ "jet1Pt_AK8PFJet140_simulated" ]->Fill( JETS[0].pt() );
-            if ( hltPt>200 ) histos1D_[ "jet1Pt_AK8PFJet200_simulated" ]->Fill( JETS[0].pt() );
-            if ( hltPt>260 ) histos1D_[ "jet1Pt_AK8PFJet260_simulated" ]->Fill( JETS[0].pt() );
-            if ( hltPt>320 ) histos1D_[ "jet1Pt_AK8PFJet320_simulated" ]->Fill( JETS[0].pt() );
-            if ( hltPt>400 ) histos1D_[ "jet1Pt_AK8PFJet400_simulated" ]->Fill( JETS[0].pt() );
-            if ( hltPt>450 ) histos1D_[ "jet1Pt_AK8PFJet450_simulated" ]->Fill( JETS[0].pt() );
-            if ( hltPt>500 ) histos1D_[ "jet1Pt_AK8PFJet500_simulated" ]->Fill( JETS[0].pt() );
-            if ( hltPt>550 ) histos1D_[ "jet1Pt_AK8PFJet550_simulated" ]->Fill( JETS[0].pt() );
-
-            }
-
-        }
-
     }
-
-
-            //for (size_t t = 0; t < triggerDesicion.size(); t++) {
-            //    cout << t << " " << triggerDesicion[t] << " " << triggerPrescale[t] << endl;
-           // }
-
 
 }
 
@@ -293,6 +300,16 @@ void TriggerEfficiencies::beginJob() {
     histos1D_[ "jet1Pt_AK8PFJet450_simulated" ] = fs_->make< TH1D >( "jet1Pt_AK8PFJet450_simulated", "jet1Pt_AK8PFJet450_simulated", 150, 0., 1500. );
     histos1D_[ "jet1Pt_AK8PFJet500_simulated" ] = fs_->make< TH1D >( "jet1Pt_AK8PFJet500_simulated", "jet1Pt_AK8PFJet500_simulated", 150, 0., 1500. );
     histos1D_[ "jet1Pt_AK8PFJet550_simulated" ] = fs_->make< TH1D >( "jet1Pt_AK8PFJet550_simulated", "jet1Pt_AK8PFJet550_simulated", 150, 0., 1500. );
+
+    histos1D_[ "jet2Pt_AK8PFJet80_simulated" ] = fs_->make< TH1D >( "jet2Pt_AK8PFJet80_simulated", "jet2Pt_AK8PFJet80_simulated", 150, 0., 1500. );
+    histos1D_[ "jet2Pt_AK8PFJet140_simulated" ] = fs_->make< TH1D >( "jet2Pt_AK8PFJet140_simulated", "jet2Pt_AK8PFJet140_simulated", 150, 0., 1500. );
+    histos1D_[ "jet2Pt_AK8PFJet200_simulated" ] = fs_->make< TH1D >( "jet2Pt_AK8PFJet200_simulated", "jet2Pt_AK8PFJet200_simulated", 150, 0., 1500. );
+    histos1D_[ "jet2Pt_AK8PFJet260_simulated" ] = fs_->make< TH1D >( "jet2Pt_AK8PFJet260_simulated", "jet2Pt_AK8PFJet260_simulated", 150, 0., 1500. );
+    histos1D_[ "jet2Pt_AK8PFJet320_simulated" ] = fs_->make< TH1D >( "jet2Pt_AK8PFJet320_simulated", "jet2Pt_AK8PFJet320_simulated", 150, 0., 1500. );
+    histos1D_[ "jet2Pt_AK8PFJet400_simulated" ] = fs_->make< TH1D >( "jet2Pt_AK8PFJet400_simulated", "jet2Pt_AK8PFJet400_simulated", 150, 0., 1500. );
+    histos1D_[ "jet2Pt_AK8PFJet450_simulated" ] = fs_->make< TH1D >( "jet2Pt_AK8PFJet450_simulated", "jet2Pt_AK8PFJet450_simulated", 150, 0., 1500. );
+    histos1D_[ "jet2Pt_AK8PFJet500_simulated" ] = fs_->make< TH1D >( "jet2Pt_AK8PFJet500_simulated", "jet2Pt_AK8PFJet500_simulated", 150, 0., 1500. );
+    histos1D_[ "jet2Pt_AK8PFJet550_simulated" ] = fs_->make< TH1D >( "jet2Pt_AK8PFJet550_simulated", "jet2Pt_AK8PFJet550_simulated", 150, 0., 1500. );
 
 
 	

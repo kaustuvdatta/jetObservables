@@ -50,13 +50,12 @@ def submitJobs( job, inputFiles, unitJobs ):
 
     if job.startswith(('Single', 'JetHT')): config.Data.lumiMask = '/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions17/13TeV/Legacy_2017/Cert_294927-306462_13TeV_UL2017_Collisions17_GoldenJSON.txt'
     config.Data.inputDataset = inputFiles
-    #config.Data.splitting = 'EventAwareLumiBased' if job.startswith('QCD_Pt') else 'FileBased'
     config.Data.splitting = 'Automatic'
     #config.Data.unitsPerJob = unitJobs
     #config.Data.outputPrimaryDataset = job
 
     # since the input will have no metadata information, output can not be put in DBS
-    config.Data.outLFNDirBase = '/store/user/'+os.environ['USER']+'/tmp/jetObservables/triggerEfficiencies'
+    config.Data.outLFNDirBase = '/store/user/'+os.environ['USER']+'/tmpFiles/jetObservables/triggerEfficiencies'
 
     if len(requestname) > 100: requestname = (requestname[:95-len(requestname)])
     print 'requestname = ', requestname
@@ -127,6 +126,5 @@ if __name__ == '__main__':
 
         if '2017' in isam: options.year = '2017'
         options.datasets = isam
-        print('Creating bash file...')
 
         submitJobs( isam, processingSamples[isam][0], processingSamples[isam][1] )
