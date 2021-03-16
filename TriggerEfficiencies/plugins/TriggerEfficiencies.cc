@@ -187,7 +187,7 @@ void TriggerEfficiencies::analyze(const Event& iEvent, const EventSetup& iSetup)
 
     if ( JETS.size()>1 ) {
 
-        TLorentzVector hltJet, recoJet, recoJet2;
+        TLorentzVector hltJet, hltJet2, recoJet, recoJet2;
         recoJet.SetPtEtaPhiM( JETS[0].pt(), JETS[0].eta(), JETS[0].phi(), JETS[0].mass() );
         recoJet2.SetPtEtaPhiM( JETS[1].pt(), JETS[1].eta(), JETS[1].phi(), JETS[1].mass() );
         double deltaPhi = recoJet.DeltaPhi(recoJet2);
@@ -201,25 +201,25 @@ void TriggerEfficiencies::analyze(const Event& iEvent, const EventSetup& iSetup)
                     if (triggerDesicion[t]==1) {
                         //LogWarning("pass") << listOfTriggers[t] << " " << triggerDesicion[t] << " " << triggerPrescale[t];
                         auto tmp = "jet1Pt_" + listOfTriggers[t] ;
-                        histos1D_[ tmp+ "_only" ]->Fill( JETS[0].pt() );
                         if ( (triggerDesicion[0]==1) ){
-                            histos1D_[ tmp+ "_AK8PFJet80" ]->Fill( JETS[0].pt() );
-                            histos1D_[ tmp+ "_AK8PFJet80_scaled" ]->Fill( JETS[0].pt(), triggerPrescale[t] );
+                            histos1D_[ tmp+ "_AK8PFJet60" ]->Fill( JETS[0].pt() );
+                            histos1D_[ tmp+ "_AK8PFJet60_scaled" ]->Fill( JETS[0].pt(), triggerPrescale[t] );
                         }
                     }
                 }
             }
 
 
-            if (triggerDesicion[0]==1){
+            if ( (triggerDesicion[0]==1) or (triggerDesicion[2]==1) ){
                 double hltPt = 0;
+                double hltPt2 = 0;
                 for (pat::TriggerObjectStandAlone obj : *triggerObjects) { // note: not "const &" since we want to call unpackPathNames
                     obj.unpackPathNames(names);
                     obj.unpackFilterLabels(iEvent, *triggerBits );
                     for (unsigned h = 0; h < obj.filterLabels().size(); ++h){
                         TString filterLabel = obj.filterLabels()[h];
                         //cout << filterLabel << endl;
-                        TString hltObjectPt_ = "hltSinglePFJet80AK8";
+                        TString hltObjectPt_ = "hltSinglePFJet60AK8";
                         if ( filterLabel.Contains( hltObjectPt_ ) ) {
                             hltPt = obj.pt();
                             hltJet.SetPtEtaPhiM( obj.pt(), obj.eta(), obj.phi(), obj.mass()  );
@@ -228,28 +228,42 @@ void TriggerEfficiencies::analyze(const Event& iEvent, const EventSetup& iSetup)
                                                 << ", phi " << obj.phi()
                                                 << ", mass " << obj.mass() << endl;*/
                         }
+                        TString hltObjectPt2_ = "hltSinglePFJet140AK8";
+                        if ( filterLabel.Contains( hltObjectPt2_ ) ) {
+                            hltPt2 = obj.pt();
+                            hltJet2.SetPtEtaPhiM( obj.pt(), obj.eta(), obj.phi(), obj.mass()  );
+                        }
                     }
                 }
 
-                if ( hltJet.DeltaR( recoJet )<0.8 ){ 
+                if ( (triggerDesicion[0]==1) and ( hltJet.DeltaR( recoJet )<0.8 ) ){ 
+                    if ( hltPt>60 ) histos1D_[ "jet1Pt_AK8PFJet60_only" ]->Fill( JETS[0].pt() );
+                    if ( hltPt>60 ) histos1D_[ "jet1Pt_AK8PFJet60_simulated" ]->Fill( JETS[0].pt() );
                     if ( hltPt>80 ) histos1D_[ "jet1Pt_AK8PFJet80_simulated" ]->Fill( JETS[0].pt() );
                     if ( hltPt>140 ) histos1D_[ "jet1Pt_AK8PFJet140_simulated" ]->Fill( JETS[0].pt() );
                     if ( hltPt>200 ) histos1D_[ "jet1Pt_AK8PFJet200_simulated" ]->Fill( JETS[0].pt() );
                     if ( hltPt>260 ) histos1D_[ "jet1Pt_AK8PFJet260_simulated" ]->Fill( JETS[0].pt() );
-                    if ( hltPt>320 ) histos1D_[ "jet1Pt_AK8PFJet320_simulated" ]->Fill( JETS[0].pt() );
-                    if ( hltPt>400 ) histos1D_[ "jet1Pt_AK8PFJet400_simulated" ]->Fill( JETS[0].pt() );
-                    if ( hltPt>450 ) histos1D_[ "jet1Pt_AK8PFJet450_simulated" ]->Fill( JETS[0].pt() );
-                    if ( hltPt>500 ) histos1D_[ "jet1Pt_AK8PFJet500_simulated" ]->Fill( JETS[0].pt() );
-                    if ( hltPt>550 ) histos1D_[ "jet1Pt_AK8PFJet550_simulated" ]->Fill( JETS[0].pt() );
+                    if ( hltPt>60 ) histos1D_[ "jet2Pt_AK8PFJet60_only" ]->Fill( JETS[1].pt() );
+                    if ( hltPt>60 ) histos1D_[ "jet2Pt_AK8PFJet60_simulated" ]->Fill( JETS[1].pt() );
                     if ( hltPt>80 ) histos1D_[ "jet2Pt_AK8PFJet80_simulated" ]->Fill( JETS[1].pt() );
                     if ( hltPt>140 ) histos1D_[ "jet2Pt_AK8PFJet140_simulated" ]->Fill( JETS[1].pt() );
                     if ( hltPt>200 ) histos1D_[ "jet2Pt_AK8PFJet200_simulated" ]->Fill( JETS[1].pt() );
                     if ( hltPt>260 ) histos1D_[ "jet2Pt_AK8PFJet260_simulated" ]->Fill( JETS[1].pt() );
-                    if ( hltPt>320 ) histos1D_[ "jet2Pt_AK8PFJet320_simulated" ]->Fill( JETS[1].pt() );
-                    if ( hltPt>400 ) histos1D_[ "jet2Pt_AK8PFJet400_simulated" ]->Fill( JETS[1].pt() );
-                    if ( hltPt>450 ) histos1D_[ "jet2Pt_AK8PFJet450_simulated" ]->Fill( JETS[1].pt() );
-                    if ( hltPt>500 ) histos1D_[ "jet2Pt_AK8PFJet500_simulated" ]->Fill( JETS[1].pt() );
-                    if ( hltPt>550 ) histos1D_[ "jet2Pt_AK8PFJet550_simulated" ]->Fill( JETS[1].pt() );
+                }
+
+                if ( (triggerDesicion[2]==1) and ( hltJet2.DeltaR( recoJet )<0.8 ) ){ 
+                    if ( hltPt2>140 ) histos1D_[ "jet1Pt_AK8PFJet140_only" ]->Fill( JETS[0].pt() );
+                    if ( hltPt2>320 ) histos1D_[ "jet1Pt_AK8PFJet320_simulated" ]->Fill( JETS[0].pt() );
+                    if ( hltPt2>400 ) histos1D_[ "jet1Pt_AK8PFJet400_simulated" ]->Fill( JETS[0].pt() );
+                    if ( hltPt2>450 ) histos1D_[ "jet1Pt_AK8PFJet450_simulated" ]->Fill( JETS[0].pt() );
+                    if ( hltPt2>500 ) histos1D_[ "jet1Pt_AK8PFJet500_simulated" ]->Fill( JETS[0].pt() );
+                    if ( hltPt2>550 ) histos1D_[ "jet1Pt_AK8PFJet550_simulated" ]->Fill( JETS[0].pt() );
+                    if ( hltPt2>140 ) histos1D_[ "jet2Pt_AK8PFJet140_only" ]->Fill( JETS[1].pt() );
+                    if ( hltPt2>320 ) histos1D_[ "jet2Pt_AK8PFJet320_simulated" ]->Fill( JETS[1].pt() );
+                    if ( hltPt2>400 ) histos1D_[ "jet2Pt_AK8PFJet400_simulated" ]->Fill( JETS[1].pt() );
+                    if ( hltPt2>450 ) histos1D_[ "jet2Pt_AK8PFJet450_simulated" ]->Fill( JETS[1].pt() );
+                    if ( hltPt2>500 ) histos1D_[ "jet2Pt_AK8PFJet500_simulated" ]->Fill( JETS[1].pt() );
+                    if ( hltPt2>550 ) histos1D_[ "jet2Pt_AK8PFJet550_simulated" ]->Fill( JETS[1].pt() );
                 }
             }
         }
@@ -262,35 +276,33 @@ void TriggerEfficiencies::analyze(const Event& iEvent, const EventSetup& iSetup)
 void TriggerEfficiencies::beginJob() {
 
 
-    histos1D_[ "jet1Pt_HLT_AK8PFJet80_only" ] = fs_->make< TH1D >( "jet1Pt_HLT_AK8PFJet80_only", "jet1Pt_HLT_AK8PFJet80_only", 150, 0., 1500. );
-    histos1D_[ "jet1Pt_HLT_AK8PFJet140_only" ] = fs_->make< TH1D >( "jet1Pt_HLT_AK8PFJet140_only", "jet1Pt_HLT_AK8PFJet140_only", 150, 0., 1500. );
-    histos1D_[ "jet1Pt_HLT_AK8PFJet200_only" ] = fs_->make< TH1D >( "jet1Pt_HLT_AK8PFJet200_only", "jet1Pt_HLT_AK8PFJet200_only", 150, 0., 1500. );
-    histos1D_[ "jet1Pt_HLT_AK8PFJet260_only" ] = fs_->make< TH1D >( "jet1Pt_HLT_AK8PFJet260_only", "jet1Pt_HLT_AK8PFJet260_only", 150, 0., 1500. );
-    histos1D_[ "jet1Pt_HLT_AK8PFJet320_only" ] = fs_->make< TH1D >( "jet1Pt_HLT_AK8PFJet320_only", "jet1Pt_HLT_AK8PFJet320_only", 150, 0., 1500. );
-    histos1D_[ "jet1Pt_HLT_AK8PFJet400_only" ] = fs_->make< TH1D >( "jet1Pt_HLT_AK8PFJet400_only", "jet1Pt_HLT_AK8PFJet400_only", 150, 0., 1500. );
-    histos1D_[ "jet1Pt_HLT_AK8PFJet450_only" ] = fs_->make< TH1D >( "jet1Pt_HLT_AK8PFJet450_only", "jet1Pt_HLT_AK8PFJet450_only", 150, 0., 1500. );
-    histos1D_[ "jet1Pt_HLT_AK8PFJet500_only" ] = fs_->make< TH1D >( "jet1Pt_HLT_AK8PFJet500_only", "jet1Pt_HLT_AK8PFJet500_only", 150, 0., 1500. );
-    histos1D_[ "jet1Pt_HLT_AK8PFJet550_only" ] = fs_->make< TH1D >( "jet1Pt_HLT_AK8PFJet550_only", "jet1Pt_HLT_AK8PFJet550_only", 150, 0., 1500. );
-    histos1D_[ "jet1Pt_HLT_AK8PFJet80_AK8PFJet80" ] = fs_->make< TH1D >( "jet1Pt_HLT_AK8PFJet80_AK8PFJet80", "jet1Pt_HLT_AK8PFJet80_AK8PFJet80", 150, 0., 1500. );
-    histos1D_[ "jet1Pt_HLT_AK8PFJet140_AK8PFJet80" ] = fs_->make< TH1D >( "jet1Pt_HLT_AK8PFJet140_AK8PFJet80", "jet1Pt_HLT_AK8PFJet140_AK8PFJet80", 150, 0., 1500. );
-    histos1D_[ "jet1Pt_HLT_AK8PFJet200_AK8PFJet80" ] = fs_->make< TH1D >( "jet1Pt_HLT_AK8PFJet200_AK8PFJet80", "jet1Pt_HLT_AK8PFJet200_AK8PFJet80", 150, 0., 1500. );
-    histos1D_[ "jet1Pt_HLT_AK8PFJet260_AK8PFJet80" ] = fs_->make< TH1D >( "jet1Pt_HLT_AK8PFJet260_AK8PFJet80", "jet1Pt_HLT_AK8PFJet260_AK8PFJet80", 150, 0., 1500. );
-    histos1D_[ "jet1Pt_HLT_AK8PFJet320_AK8PFJet80" ] = fs_->make< TH1D >( "jet1Pt_HLT_AK8PFJet320_AK8PFJet80", "jet1Pt_HLT_AK8PFJet320_AK8PFJet80", 150, 0., 1500. );
-    histos1D_[ "jet1Pt_HLT_AK8PFJet400_AK8PFJet80" ] = fs_->make< TH1D >( "jet1Pt_HLT_AK8PFJet400_AK8PFJet80", "jet1Pt_HLT_AK8PFJet400_AK8PFJet80", 150, 0., 1500. );
-    histos1D_[ "jet1Pt_HLT_AK8PFJet450_AK8PFJet80" ] = fs_->make< TH1D >( "jet1Pt_HLT_AK8PFJet450_AK8PFJet80", "jet1Pt_HLT_AK8PFJet450_AK8PFJet80", 150, 0., 1500. );
-    histos1D_[ "jet1Pt_HLT_AK8PFJet500_AK8PFJet80" ] = fs_->make< TH1D >( "jet1Pt_HLT_AK8PFJet500_AK8PFJet80", "jet1Pt_HLT_AK8PFJet500_AK8PFJet80", 150, 0., 1500. );
-    histos1D_[ "jet1Pt_HLT_AK8PFJet550_AK8PFJet80" ] = fs_->make< TH1D >( "jet1Pt_HLT_AK8PFJet550_AK8PFJet80", "jet1Pt_HLT_AK8PFJet550_AK8PFJet80", 150, 0., 1500. );
-    histos1D_[ "jet1Pt_HLT_AK8PFJet80_AK8PFJet80_scaled" ] = fs_->make< TH1D >( "jet1Pt_HLT_AK8PFJet80_AK8PFJet80_scaled", "jet1Pt_HLT_AK8PFJet80_AK8PFJet80_scaled", 150, 0., 1500. );
-    histos1D_[ "jet1Pt_HLT_AK8PFJet140_AK8PFJet80_scaled" ] = fs_->make< TH1D >( "jet1Pt_HLT_AK8PFJet140_AK8PFJet80_scaled", "jet1Pt_HLT_AK8PFJet140_AK8PFJet80_scaled", 150, 0., 1500. );
-    histos1D_[ "jet1Pt_HLT_AK8PFJet200_AK8PFJet80_scaled" ] = fs_->make< TH1D >( "jet1Pt_HLT_AK8PFJet200_AK8PFJet80_scaled", "jet1Pt_HLT_AK8PFJet200_AK8PFJet80_scaled", 150, 0., 1500. );
-    histos1D_[ "jet1Pt_HLT_AK8PFJet260_AK8PFJet80_scaled" ] = fs_->make< TH1D >( "jet1Pt_HLT_AK8PFJet260_AK8PFJet80_scaled", "jet1Pt_HLT_AK8PFJet260_AK8PFJet80_scaled", 150, 0., 1500. );
-    histos1D_[ "jet1Pt_HLT_AK8PFJet320_AK8PFJet80_scaled" ] = fs_->make< TH1D >( "jet1Pt_HLT_AK8PFJet320_AK8PFJet80_scaled", "jet1Pt_HLT_AK8PFJet320_AK8PFJet80_scaled", 150, 0., 1500. );
-    histos1D_[ "jet1Pt_HLT_AK8PFJet400_AK8PFJet80_scaled" ] = fs_->make< TH1D >( "jet1Pt_HLT_AK8PFJet400_AK8PFJet80_scaled", "jet1Pt_HLT_AK8PFJet400_AK8PFJet80_scaled", 150, 0., 1500. );
-    histos1D_[ "jet1Pt_HLT_AK8PFJet450_AK8PFJet80_scaled" ] = fs_->make< TH1D >( "jet1Pt_HLT_AK8PFJet450_AK8PFJet80_scaled", "jet1Pt_HLT_AK8PFJet450_AK8PFJet80_scaled", 150, 0., 1500. );
-    histos1D_[ "jet1Pt_HLT_AK8PFJet500_AK8PFJet80_scaled" ] = fs_->make< TH1D >( "jet1Pt_HLT_AK8PFJet500_AK8PFJet80_scaled", "jet1Pt_HLT_AK8PFJet500_AK8PFJet80_scaled", 150, 0., 1500. );
-    histos1D_[ "jet1Pt_HLT_AK8PFJet550_AK8PFJet80_scaled" ] = fs_->make< TH1D >( "jet1Pt_HLT_AK8PFJet550_AK8PFJet80_scaled", "jet1Pt_HLT_AK8PFJet550_AK8PFJet80_scaled", 150, 0., 1500. );
+    histos1D_[ "jet1Pt_AK8PFJet60_only" ] = fs_->make< TH1D >( "jet1Pt_AK8PFJet60_only", "jet1Pt_AK8PFJet60_only", 150, 0., 1500. );
+    histos1D_[ "jet1Pt_AK8PFJet140_only" ] = fs_->make< TH1D >( "jet1Pt_AK8PFJet140_only", "jet1Pt_AK8PFJet140_only", 150, 0., 1500. );
+    histos1D_[ "jet2Pt_AK8PFJet60_only" ] = fs_->make< TH1D >( "jet2Pt_AK8PFJet60_only", "jet2Pt_AK8PFJet60_only", 150, 0., 1500. );
+    histos1D_[ "jet2Pt_AK8PFJet140_only" ] = fs_->make< TH1D >( "jet2Pt_AK8PFJet140_only", "jet2Pt_AK8PFJet140_only", 150, 0., 1500. );
+    histos1D_[ "jet1Pt_HLT_AK8PFJet60_AK8PFJet60" ] = fs_->make< TH1D >( "jet1Pt_HLT_AK8PFJet60_AK8PFJet60", "jet1Pt_HLT_AK8PFJet60_AK8PFJet60", 150, 0., 1500. );
+    histos1D_[ "jet1Pt_HLT_AK8PFJet60_AK8PFJet60" ] = fs_->make< TH1D >( "jet1Pt_HLT_AK8PFJet60_AK8PFJet60", "jet1Pt_HLT_AK8PFJet60_AK8PFJet60", 150, 0., 1500. );
+    histos1D_[ "jet1Pt_HLT_AK8PFJet140_AK8PFJet60" ] = fs_->make< TH1D >( "jet1Pt_HLT_AK8PFJet140_AK8PFJet60", "jet1Pt_HLT_AK8PFJet140_AK8PFJet60", 150, 0., 1500. );
+    histos1D_[ "jet1Pt_HLT_AK8PFJet200_AK8PFJet60" ] = fs_->make< TH1D >( "jet1Pt_HLT_AK8PFJet200_AK8PFJet60", "jet1Pt_HLT_AK8PFJet200_AK8PFJet60", 150, 0., 1500. );
+    histos1D_[ "jet1Pt_HLT_AK8PFJet260_AK8PFJet60" ] = fs_->make< TH1D >( "jet1Pt_HLT_AK8PFJet260_AK8PFJet60", "jet1Pt_HLT_AK8PFJet260_AK8PFJet60", 150, 0., 1500. );
+    histos1D_[ "jet1Pt_HLT_AK8PFJet320_AK8PFJet60" ] = fs_->make< TH1D >( "jet1Pt_HLT_AK8PFJet320_AK8PFJet60", "jet1Pt_HLT_AK8PFJet320_AK8PFJet60", 150, 0., 1500. );
+    histos1D_[ "jet1Pt_HLT_AK8PFJet400_AK8PFJet60" ] = fs_->make< TH1D >( "jet1Pt_HLT_AK8PFJet400_AK8PFJet60", "jet1Pt_HLT_AK8PFJet400_AK8PFJet60", 150, 0., 1500. );
+    histos1D_[ "jet1Pt_HLT_AK8PFJet450_AK8PFJet60" ] = fs_->make< TH1D >( "jet1Pt_HLT_AK8PFJet450_AK8PFJet60", "jet1Pt_HLT_AK8PFJet450_AK8PFJet60", 150, 0., 1500. );
+    histos1D_[ "jet1Pt_HLT_AK8PFJet500_AK8PFJet60" ] = fs_->make< TH1D >( "jet1Pt_HLT_AK8PFJet500_AK8PFJet60", "jet1Pt_HLT_AK8PFJet500_AK8PFJet60", 150, 0., 1500. );
+    histos1D_[ "jet1Pt_HLT_AK8PFJet550_AK8PFJet60" ] = fs_->make< TH1D >( "jet1Pt_HLT_AK8PFJet550_AK8PFJet60", "jet1Pt_HLT_AK8PFJet550_AK8PFJet60", 150, 0., 1500. );
+    histos1D_[ "jet1Pt_HLT_AK8PFJet60_AK8PFJet60_scaled" ] = fs_->make< TH1D >( "jet1Pt_HLT_AK8PFJet60_AK8PFJet60_scaled", "jet1Pt_HLT_AK8PFJet60_AK8PFJet60_scaled", 150, 0., 1500. );
+    histos1D_[ "jet1Pt_HLT_AK8PFJet60_AK8PFJet60_scaled" ] = fs_->make< TH1D >( "jet1Pt_HLT_AK8PFJet60_AK8PFJet60_scaled", "jet1Pt_HLT_AK8PFJet60_AK8PFJet60_scaled", 150, 0., 1500. );
+    histos1D_[ "jet1Pt_HLT_AK8PFJet140_AK8PFJet60_scaled" ] = fs_->make< TH1D >( "jet1Pt_HLT_AK8PFJet140_AK8PFJet60_scaled", "jet1Pt_HLT_AK8PFJet140_AK8PFJet60_scaled", 150, 0., 1500. );
+    histos1D_[ "jet1Pt_HLT_AK8PFJet200_AK8PFJet60_scaled" ] = fs_->make< TH1D >( "jet1Pt_HLT_AK8PFJet200_AK8PFJet60_scaled", "jet1Pt_HLT_AK8PFJet200_AK8PFJet60_scaled", 150, 0., 1500. );
+    histos1D_[ "jet1Pt_HLT_AK8PFJet260_AK8PFJet60_scaled" ] = fs_->make< TH1D >( "jet1Pt_HLT_AK8PFJet260_AK8PFJet60_scaled", "jet1Pt_HLT_AK8PFJet260_AK8PFJet60_scaled", 150, 0., 1500. );
+    histos1D_[ "jet1Pt_HLT_AK8PFJet320_AK8PFJet60_scaled" ] = fs_->make< TH1D >( "jet1Pt_HLT_AK8PFJet320_AK8PFJet60_scaled", "jet1Pt_HLT_AK8PFJet320_AK8PFJet60_scaled", 150, 0., 1500. );
+    histos1D_[ "jet1Pt_HLT_AK8PFJet400_AK8PFJet60_scaled" ] = fs_->make< TH1D >( "jet1Pt_HLT_AK8PFJet400_AK8PFJet60_scaled", "jet1Pt_HLT_AK8PFJet400_AK8PFJet60_scaled", 150, 0., 1500. );
+    histos1D_[ "jet1Pt_HLT_AK8PFJet450_AK8PFJet60_scaled" ] = fs_->make< TH1D >( "jet1Pt_HLT_AK8PFJet450_AK8PFJet60_scaled", "jet1Pt_HLT_AK8PFJet450_AK8PFJet60_scaled", 150, 0., 1500. );
+    histos1D_[ "jet1Pt_HLT_AK8PFJet500_AK8PFJet60_scaled" ] = fs_->make< TH1D >( "jet1Pt_HLT_AK8PFJet500_AK8PFJet60_scaled", "jet1Pt_HLT_AK8PFJet500_AK8PFJet60_scaled", 150, 0., 1500. );
+    histos1D_[ "jet1Pt_HLT_AK8PFJet550_AK8PFJet60_scaled" ] = fs_->make< TH1D >( "jet1Pt_HLT_AK8PFJet550_AK8PFJet60_scaled", "jet1Pt_HLT_AK8PFJet550_AK8PFJet60_scaled", 150, 0., 1500. );
 
 
+    histos1D_[ "jet1Pt_AK8PFJet60_simulated" ] = fs_->make< TH1D >( "jet1Pt_AK8PFJet60_simulated", "jet1Pt_AK8PFJet60_simulated", 150, 0., 1500. );
     histos1D_[ "jet1Pt_AK8PFJet80_simulated" ] = fs_->make< TH1D >( "jet1Pt_AK8PFJet80_simulated", "jet1Pt_AK8PFJet80_simulated", 150, 0., 1500. );
     histos1D_[ "jet1Pt_AK8PFJet140_simulated" ] = fs_->make< TH1D >( "jet1Pt_AK8PFJet140_simulated", "jet1Pt_AK8PFJet140_simulated", 150, 0., 1500. );
     histos1D_[ "jet1Pt_AK8PFJet200_simulated" ] = fs_->make< TH1D >( "jet1Pt_AK8PFJet200_simulated", "jet1Pt_AK8PFJet200_simulated", 150, 0., 1500. );
@@ -301,6 +313,7 @@ void TriggerEfficiencies::beginJob() {
     histos1D_[ "jet1Pt_AK8PFJet500_simulated" ] = fs_->make< TH1D >( "jet1Pt_AK8PFJet500_simulated", "jet1Pt_AK8PFJet500_simulated", 150, 0., 1500. );
     histos1D_[ "jet1Pt_AK8PFJet550_simulated" ] = fs_->make< TH1D >( "jet1Pt_AK8PFJet550_simulated", "jet1Pt_AK8PFJet550_simulated", 150, 0., 1500. );
 
+    histos1D_[ "jet2Pt_AK8PFJet60_simulated" ] = fs_->make< TH1D >( "jet2Pt_AK8PFJet60_simulated", "jet2Pt_AK8PFJet60_simulated", 150, 0., 1500. );
     histos1D_[ "jet2Pt_AK8PFJet80_simulated" ] = fs_->make< TH1D >( "jet2Pt_AK8PFJet80_simulated", "jet2Pt_AK8PFJet80_simulated", 150, 0., 1500. );
     histos1D_[ "jet2Pt_AK8PFJet140_simulated" ] = fs_->make< TH1D >( "jet2Pt_AK8PFJet140_simulated", "jet2Pt_AK8PFJet140_simulated", 150, 0., 1500. );
     histos1D_[ "jet2Pt_AK8PFJet200_simulated" ] = fs_->make< TH1D >( "jet2Pt_AK8PFJet200_simulated", "jet2Pt_AK8PFJet200_simulated", 150, 0., 1500. );

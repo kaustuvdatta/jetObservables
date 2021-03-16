@@ -78,7 +78,7 @@ METFilters = "( (Flag_goodVertices==1) && (Flag_globalSuperTightHalo2016Filter==
 if not isMC: METFilters = METFilters + ' && (Flag_eeBadScFilter==1)'
 
 if args.selection.startswith('dijet'):
-    Triggers =  '( (HLT_PFJet140==1) || (HLT_PFJet200==1) || (HLT_PFJet260==1) || (HLT_PFJet320==1) || (HLT_PFJet400==1) || (HLT_PFJet450==1) || (HLT_PFJet500==1) || (HLT_PFJet550==1) )'
+    Triggers =  '( (HLT_PFJet80==1) || (HLT_PFJet140==1) || (HLT_PFJet200==1) || (HLT_PFJet260==1) || (HLT_PFJet320==1) || (HLT_PFJet400==1) || (HLT_PFJet450==1) || (HLT_PFJet500==1) || (HLT_PFJet550==1) )'
 else:
     Triggers = '(HLT_Mu50==1)'
 #if args.year.startswith('2016'): Triggers = ...

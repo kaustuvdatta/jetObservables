@@ -35,7 +35,7 @@ def plotTriggerEfficiency( inFileSample, sample, triggerDenom, triggerPass, name
 
     histos = {}
 
-    tmpDenom = inFileSample.Get( 'TriggerEfficiencies/jet1Pt_AK8PFJet80_simulated' )
+    tmpDenom = inFileSample.Get( 'TriggerEfficiencies/jet1Pt_'+triggerDenom+'_only' )
     histos[ 'denomOnly'+triggerPass ] = tmpDenom.Clone()
     #histos[ 'denomOnly'+triggerPass ] = inFileSample.Get( 'TriggerEfficiencies/jet1Pt_HLT_AK8PFJet80_AK8PFJet80' )
     #histos[ 'denomOnly'+triggerPass ] = inFileSample.Get( 'triggerEfficiencies/AK8Jet1Pt_'+triggerDenom )
@@ -633,11 +633,19 @@ if __name__ == '__main__':
     CMS_lumi.extraText = "Preliminary"
     CMS_lumi.lumi_13TeV = '13 TeV'
 
-    triggerList = [ 'AK8PFJet140','AK8PFJet200', 'AK8PFJet260', 'AK8PFJet320', 'AK8PFJet400', 'AK8PFJet450', 'AK8PFJet500', 'AK8PFJet550']
+    triggerList = [ ('AK8PFJet80', 'AK8PFJet60'),
+                    ('AK8PFJet140', 'AK8PFJet60'),
+                    ('AK8PFJet200', 'AK8PFJet60'),
+                    ('AK8PFJet260', 'AK8PFJet60'),
+                    ('AK8PFJet320', 'AK8PFJet140'),
+                    ('AK8PFJet400', 'AK8PFJet140' ),
+                    ('AK8PFJet450', 'AK8PFJet140' ),
+                    ('AK8PFJet500', 'AK8PFJet140' ),
+                    ('AK8PFJet550', 'AK8PFJet140' )]
 
     Samples = {}
     #Samples[ 'SingleMuon2017B' ] = [ TFile.Open('Rootfiles/triggerEfficiencies_histograms.root'), 0 ]
-    Samples[ 'JetHT2017' ] = [ TFile.Open('Rootfiles/triggerEfficiencies_histograms_MiniAOD_JetHTRun2017ALL.root'), 0 ]
+    Samples[ 'JetHT2017' ] = [ TFile.Open('/eos/home-a/algomez/tmpFiles/jetObservables/triggerEfficiencies/Plots/v04/triggerEfficiencies_histograms_MiniAOD_JetHTRun2017B.root'), 0 ]
 
 
     processingSamples = {}
@@ -652,7 +660,7 @@ if __name__ == '__main__':
     for i in Plots:
         for isam, samFile in processingSamples.iteritems():
             for q, it in enumerate(triggerList):
-                plotTriggerEfficiency( samFile[0], isam, it+'_baseline', it, i[0], i[1], i[2], i[3], i[4], i[5] )
+                plotTriggerEfficiency( samFile[0], isam, it[1], it[0], i[0], i[1], i[2], i[3], i[4], i[5] )
 #        if args.proc.startswith('simple'):
 #            #cuts = [ 'Pt10', 'Pt20','Pt30','Pt40','Pt50', 'Pt10Eta5', 'Pt20Eta5', 'Pt30Eta5', 'Pt40Eta5', 'Pt50Eta5' ]
 #            cuts = [ 'Pt10', 'Pt30','Pt50', 'Pt10Eta5', 'Pt30Eta5', 'Pt50Eta5' ]

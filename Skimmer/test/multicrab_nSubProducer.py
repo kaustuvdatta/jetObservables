@@ -63,7 +63,7 @@ def submitJobs( job, inputFiles, unitJobs ):
     config.section_("JobType")
     config.JobType.pluginName = 'Analysis'
     config.JobType.psetName = 'PSet.py'
-    config.JobType.maxMemoryMB = 5000
+    #config.JobType.maxMemoryMB = 5000
     config.JobType.allowUndistributedCMSSW = True
 
     config.section_("Data")
@@ -96,9 +96,9 @@ def submitJobs( job, inputFiles, unitJobs ):
     #config.Data.userInputFiles = inputFiles
     config.Data.inputDataset = inputFiles
     #config.Data.splitting = 'EventAwareLumiBased' if job.startswith('QCD_Pt') else 'FileBased'
-    #config.Data.splitting = 'Automatic'
-    config.Data.splitting = 'FileBased'
-    config.Data.unitsPerJob = unitJobs
+    config.Data.splitting = 'Automatic'
+    #config.Data.splitting = 'FileBased'
+    #config.Data.unitsPerJob = unitJobs
     #config.Data.outputPrimaryDataset = job
 
     # since the input will have no metadata information, output can not be put in DBS
@@ -210,6 +210,10 @@ if __name__ == '__main__':
     dictSamples['UL17_SingleMuonF'] = ['/SingleMuon/kadatta-Run2017F-09Aug2019_UL2017-v1_PFNanoAOD-711e27fd71aadb4a77ae7e6321a59353/USER',1]
 
     dictSamples['UL17_JetHTB'] = ['/JetHT/algomez-Run2017B-09Aug2019_UL2017-v1_PFNanoAOD_v01-80f73ea405e21cd3471806cdd3428ad6/USER',1]
+    dictSamples['UL17_JetHTC'] = ['/JetHT/algomez-Run2017C-09Aug2019_UL2017-v1_PFNanoAOD_v01-80f73ea405e21cd3471806cdd3428ad6/USER',1]
+    dictSamples['UL17_JetHTD'] = ['/JetHT/algomez-Run2017D-09Aug2019_UL2017-v1_PFNanoAOD_v01-80f73ea405e21cd3471806cdd3428ad6/USER',1]
+    dictSamples['UL17_JetHTE'] = ['/JetHT/algomez-Run2017E-09Aug2019_UL2017-v1_PFNanoAOD_v01-80f73ea405e21cd3471806cdd3428ad6/USER',1]
+    dictSamples['UL17_JetHTF'] = ['/JetHT/algomez-Run2017F-09Aug2019_UL2017-v1_PFNanoAOD_v01-80f73ea405e21cd3471806cdd3428ad6/USER',1]
 
     '''
 
