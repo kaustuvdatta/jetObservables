@@ -810,8 +810,11 @@ class nSubProd(Module):
             leptWpT=muons[0].p4()+MET
             if leptWpT.Pt()>self.minLeptonicWPt:
                 
-                AK4bjets = [x for x in AK4bjets if abs(x.p4().DeltaPhi(muons[0].p4()))<2.]
+                AK4bjets = [x for x in AK4bjets if abs(x.p4().DeltaPhi(muons[0].p4()))<2.]# and x.p4().DeltaR( muons[0].p4() )>0.4 and (muons[0].p4().DeltaR( x.p4() )<1.5)]
+                #AK4bjets = [x for x in AK4bjets if abs(x.p4().DeltaPhi(muons[0].p4()))<2. and AK8jets[0].p4().DeltaR( x.p4() )>0.8 and x.p4().DeltaR( muons[0].p4() )>0.4 and (muons[0].p4().DeltaR( x.p4() )<1.5)] # only to check for bjets in ak8
+                
                 AK8jets = [x for x in AK8jets if abs(x.p4().DeltaPhi(muons[0].p4()))>2.]
+                
                 if (len(AK8jets)>0) and (len(AK4bjets)>=1) and (len(AK4bjets)<3):
                     if not isGen:
                         if self.isMC:
@@ -821,12 +824,13 @@ class nSubProd(Module):
 
                         self.out.fillBranch("btagWeight", self.btagweight)
                         self.totalWeight = self.totalWeight*self.btagweight
-                    jetMass = AK8jets[0].mass if isGen else AK8jets[0].msoftdrop
-                    if (jetMass>self.minSDMassW and jetMass<=self.maxSDMassW) and (AK8jets[0].pt>self.minLeadAK8JetPtW): 
-                        if not isGen: print (AK8jets[0].pt,AK4bjets[0].pt,event.event,event.luminosityBlock,isGen)
+                    jetMass = AK8jets[0].mass if isGen else AK8jets[0].msoftdrop_nom
+                    if (jetMass>self.minSDMassW and jetMass<self.maxSDMassW) and (AK8jets[0].pt>self.minLeadAK8JetPtW): 
+                        if not isGen: print (AK8jets[0].pt,AK8jets[0].msoftdrop,AK4bjets[0].pt,event.event,event.luminosityBlock,isGen)
                         return True, '_WSel' 
-                    elif (jetMass>self.minSDMassTop) and (AK8jets[0].pt>self.minLeadAK8JetPtTop): 
-                        if not isGen: print ("TOP Sel.", AK8jets[0].pt,AK4bjets[0].pt,event.event,event.luminosityBlock,isGen)
+
+                    elif (jetMass/ (1 if self.isGen else AK8jets[0].corr_PUPPI ) > self.minSDMassTop) and (AK8jets[0].pt>self.minLeadAK8JetPtTop): 
+                        if not isGen: print ("TOP Sel.", AK8jets[0].pt,AK8jets[0].msoftdrop,AK4bjets[0].pt,event.event,event.luminosityBlock,isGen)
                         return True, '_topSel'
                     else: return False, None
                 else: return False, None 

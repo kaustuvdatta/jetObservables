@@ -45,8 +45,8 @@ class nSubProd(Module):
 
         ### Cuts for selections
         self.minLeadAK8JetPtW = 200.
-        self.minSDMassW = 0#60.   ### looser to pick low bins
-        self.maxSDMassW = 16000#120.  ### looser to pick higher bins
+        self.minSDMassW = 60.#60.   ### looser to pick low bins
+        self.maxSDMassW = 120.#120.  ### looser to pick higher bins
         self.minLeadAK8JetPtTop= 350.
         self.minSDMassTop = 140.
         self.METCutWtop = 50.
@@ -822,7 +822,7 @@ class nSubProd(Module):
                 if (muons[0].p4().DeltaR( bjet.p4() )>0.4) and (muons[0].p4().DeltaR( bjet.p4() )<1.5): leptonicTop.append( True )
             if all(muonIso) and ((MET+muons[0].p4()).Pt()>self.minLeptonicWPt) and any(leptonicTop) and (AK8jets[0].p4().DeltaR(muons[0].p4())>0.8) and (len(AK4bjets)>=1): #change to >=1 since we only have 1 explicit b after removing b's overlapping with ak8's in the merged top case  
                 jetMass = AK8jets[0].mass if isGen else AK8jets[0].msoftdrop
-                if (AK8jets[0].pt>self.minLeadAK8JetPtW): return True, '_WSel'
+                if (jetMass<self.maxSDMassW) and (jetMass>self.minSDMassW) and (AK8jets[0].pt>self.minLeadAK8JetPtW): return True, '_WSel'
                 elif (jetMass>self.minSDMassTop) and (AK8jets[0].pt>self.minLeadAK8JetPtTop): return True, '_topSel'
                 else: return False, None
             else: return False, None
