@@ -142,13 +142,8 @@ if isMC:
         if not args.selection.startswith('dijet'): modulesToRun.append( btagSF2018() )
     if args.year=='2017':
         modulesToRun.append( puAutoWeight_2017() )
-<<<<<<< HEAD
-        #print "###Running with btag SF calc.###"
-        #if not args.selection.startswith('dijet'): modulesToRun.append( btagSF2017() )
-=======
         print "###Running with btag SF calc.###"
         if not args.selection.startswith('dijet'): modulesToRun.append( btagSF2017() )
->>>>>>> ed227b3115b9ba03f2fbb328168905144b69e12e
     if args.year=='2016':
         modulesToRun.append( puWeight_2016() )
         print "Running with btag SF calc."
