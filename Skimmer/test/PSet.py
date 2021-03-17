@@ -3,7 +3,8 @@ process = cms.Process('NANO')
 process.source = cms.Source("PoolSource", fileNames = cms.untracked.vstring(),
 )
 process.source.fileNames = [
-        'root://cms-xrd-global.cern.ch//store/user/algomez/PFNano/106X_v1/JetHT/Run2017B-09Aug2019_UL2017-v1_PFNanoAOD_v01/210301_094536/0000/nano106X_on_mini106X_2017_data_NANO_195.root',
+    'root://cms-xrd-global.cern.ch///store/user/kadatta/PFNano/106X_v1/TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8/RunIISummer19UL17PFNanoAOD-106X_mc2017_realistic_v6-v2/210120_093555/0000/nano106X_on_mini106X_2017_mc_NANO_1.root',
+    #'root://cms-xrd-global.cern.ch//store/user/algomez/PFNano/106X_v1/JetHT/Run2017B-09Aug2019_UL2017-v1_PFNanoAOD_v01/210301_094536/0000/nano106X_on_mini106X_2017_data_NANO_195.root',
 #'root://cms-xrd-global.cern.ch//store/user/algomez/PFNano/106X_v1/JetHT/Run2017B-09Aug2019_UL2017-v1_PFNanoAOD_v01/210301_094536/0000/nano106X_on_mini106X_2017_data_NANO_399.root',
 #'root://cms-xrd-global.cern.ch//store/user/algomez/PFNano/106X_v1/JetHT/Run2017B-09Aug2019_UL2017-v1_PFNanoAOD_v01/210301_094536/0000/nano106X_on_mini106X_2017_data_NANO_22.root',
 #'root://cms-xrd-global.cern.ch//store/user/kadatta/PFNano/106X_v1/TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8/RunIISummer19UL17PFNanoAOD-106X_mc2017_realistic_v6-v2/210120_093555/0000/nano106X_on_mini106X_2017_mc_NANO_227.root',

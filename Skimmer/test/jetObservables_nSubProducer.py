@@ -159,7 +159,7 @@ if args.selection.startswith('dijet'):
     from jetObservables.Skimmer.nSubProducer_dijetSel import nSubProd
     modulesToRun.append( nSubProd( sysSource=systSources, leptonSF=LeptonSF[args.year], isMC=isMC, triggerFile=triggerFile ) )
 else:
-    from jetObservables.Skimmer.nSubProducer_WtopSel import nSubProd
+    from jetObservables.Skimmer.nSubProducer_WTaggingNormTest import nSubProd #WtopSel import nSubProd
     modulesToRun.append( nSubProd( sysSource=systSources, leptonSF=LeptonSF[args.year], isMC=isMC ) )
 
 
@@ -175,7 +175,7 @@ p1=PostProcessor(
         prefetch     = args.local,
         longTermCache= args.local,
         fwkJobReport = True,
-        haddFileName = "jetObservables_"+args.selection+"_nanoskim.root" if args.local else 'jetObservables_nanoskim.root',
+        haddFileName = "jetObservables_"+args.selection+"_nanoskim.rooot" if args.local else 'jetObservables_nanoskim.root',
         histFileName = "jetObservables_"+args.selection+"_histograms.root" if args.local else 'jetObservables_histograms.root',
         histDirName  = 'jetObservables',
         )

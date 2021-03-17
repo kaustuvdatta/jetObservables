@@ -63,7 +63,7 @@ def submitJobs( job, inputFiles, unitJobs ):
     config.section_("JobType")
     config.JobType.pluginName = 'Analysis'
     config.JobType.psetName = 'PSet.py'
-    #config.JobType.maxMemoryMB = 5000
+    config.JobType.maxMemoryMB = 2400
     config.JobType.allowUndistributedCMSSW = True
 
     config.section_("Data")
@@ -74,7 +74,7 @@ def submitJobs( job, inputFiles, unitJobs ):
 
     config.section_("Site")
     config.Site.storageSite = options.storageSite
-    config.Site.whitelist = ['T1_US_FNAL','T2_CH_CSCS','T3_US_FNALLPC']
+    config.Site.whitelist = ['T1_US_FNAL','T2_CH_CSCS','T3_US_FNALLPC' ]
     #config.Site.blacklist = ['T2_US_Florida','T3_TW_*','T2_BR_*','T2_GR_Ioannina','T2_BR_SPRACE','T2_RU_IHEP','T2_PL_Swierk','T2_KR_KNU','T3_TW_NTU_HEP']
 
 
@@ -145,7 +145,7 @@ if __name__ == '__main__':
             )
     parser.add_option(
             "-s", "--selection",
-            dest="selection", default="dijet",
+            dest="selection", default="Wtop",
             help=("Selection: dijet, Wtop"),
             )
     parser.add_option(
@@ -159,31 +159,28 @@ if __name__ == '__main__':
 
 
     dictSamples = {}
-
-    #2017 UL (PFNano) samples
-
+    #dictSamples['UL17_QCD_Pt470to600'] = ['/QCD_Pt_470to600_TuneCP5_13TeV_pythia8/kadatta-RunIISummer19UL17PFNanoAOD-106X_mc2017_realistic_v6-v2-830c141d7b4aa70b88c71a25d598b0f2/USER',1]
+    #dictSamples['UL17_WJetsToLNu'] = ['/WJetsToLNu_TuneCP5_13TeV-madgraphMLM-pythia8/kadatta-RunIISummer19UL17PFNanoAOD-106X_mc2017_realistic_v6-v2-830c141d7b4aa70b88c71a25d598b0f2/USER',1]
+    #dictSamples['UL17_ST_s-channel'] = ['/ST_s-channel_4f_leptonDecays_TuneCP5_13TeV-amcatnlo-pythia8/kadatta-RunIISummer19UL17PFNanoAOD-106X_mc2017_realistic_v6-v1-830c141d7b4aa70b88c71a25d598b0f2/USER',1]
+    dictSamples['UL17_SingleMuonD'] = ['/SingleMuon/kadatta-Run2017D-09Aug2019_UL2017-v1_PFNanoAOD-711e27fd71aadb4a77ae7e6321a59353/USER',1]
+    #dictSamples['UL17_TTToSemileptonic'] = ['/TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8/kadatta-RunIISummer19UL17PFNanoAOD-106X_mc2017_realistic_v6-v2-8f037877c18053811b946b7194702f97/USER',1]
+    
+    '''
     dictSamples['UL17_TTbar_Pythia8'] = ['/TTbar_13TeV_TuneCP5_Pythia8/kadatta-RunIISummer19UL17PFNanoAOD-106X_mc2017_realistic_v6-v1-830c141d7b4aa70b88c71a25d598b0f2/USER',1]
-    dictSamples['UL17_TTToSemileptonic'] = ['/TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8/algomez-RunIISummer19UL17PFNanoAOD-106X_mc2017_realistic_v6-v2-830c141d7b4aa70b88c71a25d598b0f2/USER',1]
     dictSamples['UL17_TTToSemileptonic_TuneCP5up'] = ['/TTToSemiLeptonic_TuneCP5up_13TeV-powheg-pythia8/kadatta-RunIISummer19UL17PFNanoAOD-106X_mc2017_realistic_v6-v2-830c141d7b4aa70b88c71a25d598b0f2/USER',1]
     dictSamples['UL17_TTToSemileptonic_TuneCP5down'] = ['/TTToSemiLeptonic_TuneCP5down_13TeV-powheg-pythia8/kadatta-RunIISummer19UL17PFNanoAOD-106X_mc2017_realistic_v6-v2-830c141d7b4aa70b88c71a25d598b0f2/USER',1]
     dictSamples['UL17_TTToSemileptonic_TuneCP5erdON'] = ['/TTToSemiLeptonic_TuneCP5_erdON_13TeV-powheg-pythia8/kadatta-RunIISummer19UL17PFNanoAOD-106X_mc2017_realistic_v6-v2-830c141d7b4aa70b88c71a25d598b0f2/USER',1]
     dictSamples['UL17_TTToSemileptonic_hdampDOWN'] = ['/TTToSemiLeptonic_hdampDOWN_TuneCP5_13TeV-powheg-pythia8/kadatta-RunIISummer19UL17PFNanoAOD-106X_mc2017_realistic_v6-v2-830c141d7b4aa70b88c71a25d598b0f2/USER',1]
     dictSamples['UL17_TTToSemileptonic_hdampUP'] = ['/TTToSemiLeptonic_hdampUP_TuneCP5_13TeV-powheg-pythia8/kadatta-RunIISummer19UL17PFNanoAOD-106X_mc2017_realistic_v6-v2-830c141d7b4aa70b88c71a25d598b0f2/USER',1]
     dictSamples['UL17_TTTo2L2Nu'] = ['/TTTo2L2Nu_TuneCP5_13TeV-powheg-pythia8/kadatta-RunIISummer19UL17PFNanoAOD-106X_mc2017_realistic_v6-v2-830c141d7b4aa70b88c71a25d598b0f2/USER',1]
-
     dictSamples['UL17_TTJets'] = ['/TTJets_TuneCP5_13TeV-amcatnloFXFX-pythia8/kadatta-RunIISummer19UL17PFNanoAOD-106X_mc2017_realistic_v6-v2-830c141d7b4aa70b88c71a25d598b0f2/USER',1]
-
-    dictSamples['UL17_ST_s-channel'] = ['/ST_s-channel_4f_leptonDecays_TuneCP5_13TeV-amcatnlo-pythia8/kadatta-RunIISummer19UL17PFNanoAOD-106X_mc2017_realistic_v6-v1-830c141d7b4aa70b88c71a25d598b0f2/USER',1]
-    dictSamples['UL17_ST_t-channel_top'] = ['/ST_t-channel_top_5f_InclusiveDecays_TuneCP5_13TeV-powheg-pythia8/kadatta-RunIISummer19UL17PFNanoAOD-106X_mc2017_realistic_v6-v1-830c141d7b4aa70b88c71a25d598b0f2/USER',1]
-    #dictSamples['UL17_ST_t-channel_antitop'] = ['/ST_t-channel_antitop_5f_InclusiveDecays_TuneCP5_13TeV-powheg-pythia8/kadatta-RunIISummer19UL17PFNanoAOD-106X_mc2017_realistic_v6-v1-830c141d7b4aa70b88c71a25d598b0f2/USER',1]
-    #dictSamples['UL17_ST_tW_top'] = ['/ST_tW_top_5f_NoFullyHadronicDecays_TuneCP5_13TeV-powheg-pythia8/kadatta-RunIISummer19UL17PFNanoAOD-106X_mc2017_realistic_v6-v3-830c141d7b4aa70b88c71a25d598b0f2/USER',1]
-    #dictSamples['UL17_ST_tW_antitop'] = ['/ST_tW_antitop_5f_NoFullyHadronicDecays_TuneCP5_13TeV-powheg-pythia8/kadatta-RunIISummer19UL17PFNanoAOD-106X_mc2017_realistic_v6-v3-830c141d7b4aa70b88c71a25d598b0f2/USER',1]
-
-    dictSamples['UL17_WJetsToLNu'] = ['/WJetsToLNu_TuneCP5_13TeV-madgraphMLM-pythia8/kadatta-RunIISummer19UL17PFNanoAOD-106X_mc2017_realistic_v6-v2-830c141d7b4aa70b88c71a25d598b0f2/USER',1]
-    dictSamples['UL17_W1JetsToLNu'] = ['/W1JetsToLNu_TuneCP5_13TeV-madgraphMLM-pythia8/kadatta-RunIISummer19UL17PFNanoAOD-106X_mc2017_realistic_v6-v2-830c141d7b4aa70b88c71a25d598b0f2/USER',1]
-    dictSamples['UL17_W2JetsToLNu'] = ['/W2JetsToLNu_TuneCP5_13TeV-madgraphMLM-pythia8/kadatta-RunIISummer19UL17PFNanoAOD-106X_mc2017_realistic_v6-v2-830c141d7b4aa70b88c71a25d598b0f2/USER',1]
-    dictSamples['UL17_W3JetsToLNu'] = ['/W3JetsToLNu_TuneCP5_13TeV-madgraphMLM-pythia8/kadatta-RunIISummer19UL17PFNanoAOD-106X_mc2017_realistic_v6-v2-830c141d7b4aa70b88c71a25d598b0f2/USER',1]
-    dictSamples['UL17_W4JetsToLNu'] = ['/W4JetsToLNu_TuneCP5_13TeV-madgraphMLM-pythia8/kadatta-RunIISummer19UL17PFNanoAOD-106X_mc2017_realistic_v6-v2-830c141d7b4aa70b88c71a25d598b0f2/USER',1]
+    dictSamples['UL17_TTToSemileptonic'] = ['/TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8/kadatta-RunIISummer19UL17PFNanoAOD-106X_mc2017_realistic_v6-v2-8f037877c18053811b946b7194702f97/USER',1]
+    
+    
+    #dictSamples['UL17_W1JetsToLNu'] = ['/W1JetsToLNu_TuneCP5_13TeV-madgraphMLM-pythia8/kadatta-RunIISummer19UL17PFNanoAOD-106X_mc2017_realistic_v6-v2-830c141d7b4aa70b88c71a25d598b0f2/USER',1]
+    #dictSamples['UL17_W2JetsToLNu'] = ['/W2JetsToLNu_TuneCP5_13TeV-madgraphMLM-pythia8/kadatta-RunIISummer19UL17PFNanoAOD-106X_mc2017_realistic_v6-v2-830c141d7b4aa70b88c71a25d598b0f2/USER',1]
+    #dictSamples['UL17_W3JetsToLNu'] = ['/W3JetsToLNu_TuneCP5_13TeV-madgraphMLM-pythia8/kadatta-RunIISummer19UL17PFNanoAOD-106X_mc2017_realistic_v6-v2-830c141d7b4aa70b88c71a25d598b0f2/USER',1]
+    #dictSamples['UL17_W4JetsToLNu'] = ['/W4JetsToLNu_TuneCP5_13TeV-madgraphMLM-pythia8/kadatta-RunIISummer19UL17PFNanoAOD-106X_mc2017_realistic_v6-v2-830c141d7b4aa70b88c71a25d598b0f2/USER',1]
 
     dictSamples['UL17_WW'] = ['/WW_TuneCP5_13TeV-pythia8/kadatta-RunIISummer19UL17PFNanoAOD-106X_mc2017_realistic_v6-v2-830c141d7b4aa70b88c71a25d598b0f2/USER',1]
     dictSamples['UL17_WZ'] = ['/WZ_TuneCP5_13TeV-pythia8/kadatta-RunIISummer19UL17PFNanoAOD-106X_mc2017_realistic_v6-v2-830c141d7b4aa70b88c71a25d598b0f2/USER',1]
@@ -191,7 +188,6 @@ if __name__ == '__main__':
 
     dictSamples['UL17_QCD_Pt170to300'] = ['/QCD_Pt_170to300_TuneCP5_13TeV_pythia8/kadatta-RunIISummer19UL17PFNanoAOD-106X_mc2017_realistic_v6-v2-830c141d7b4aa70b88c71a25d598b0f2/USER',1]
     dictSamples['UL17_QCD_Pt300to470'] = ['/QCD_Pt_300to470_TuneCP5_13TeV_pythia8/kadatta-RunIISummer19UL17PFNanoAOD-106X_mc2017_realistic_v6-v2-830c141d7b4aa70b88c71a25d598b0f2/USER',1]
-    dictSamples['UL17_QCD_Pt470to600'] = ['/QCD_Pt_470to600_TuneCP5_13TeV_pythia8/kadatta-RunIISummer19UL17PFNanoAOD-106X_mc2017_realistic_v6-v2-830c141d7b4aa70b88c71a25d598b0f2/USER',1]
     dictSamples['UL17_QCD_Pt600to800'] = ['/QCD_Pt_600to800_TuneCP5_13TeV_pythia8/kadatta-RunIISummer19UL17PFNanoAOD-106X_mc2017_realistic_v6-v2-830c141d7b4aa70b88c71a25d598b0f2/USER',1]
     dictSamples['UL17_QCD_Pt800to1000'] = ['/QCD_Pt_800to1000_TuneCP5_13TeV_pythia8/kadatta-RunIISummer19UL17PFNanoAOD-106X_mc2017_realistic_v6-v2-830c141d7b4aa70b88c71a25d598b0f2/USER',1]
     dictSamples['UL17_QCD_Pt1000to1400'] = ['/QCD_Pt_1000to1400_TuneCP5_13TeV_pythia8/kadatta-RunIISummer19UL17PFNanoAOD-106X_mc2017_realistic_v6-v2-830c141d7b4aa70b88c71a25d598b0f2/USER',1]
@@ -199,13 +195,16 @@ if __name__ == '__main__':
     dictSamples['UL17_QCD_Pt1800to2400'] = ['/QCD_Pt_1800to2400_TuneCP5_13TeV_pythia8/kadatta-RunIISummer19UL17PFNanoAOD-106X_mc2017_realistic_v6-v2-830c141d7b4aa70b88c71a25d598b0f2/USER',1]
     dictSamples['UL17_QCD_Pt2400to3200'] = ['/QCD_Pt_2400to3200_TuneCP5_13TeV_pythia8/kadatta-RunIISummer19UL17PFNanoAOD-106X_mc2017_realistic_v6-v2-830c141d7b4aa70b88c71a25d598b0f2/USER',1]
     dictSamples['UL17_QCD_Pt3200toInf'] = ['/QCD_Pt_3200toInf_TuneCP5_13TeV_pythia8/kadatta-RunIISummer19UL17PFNanoAOD-106X_mc2017_realistic_v6-v2-830c141d7b4aa70b88c71a25d598b0f2/USER',1]
-    dictSamples['UL17_QCD_Pt150to3000_Herwig7'] = ['/QCD_Pt-150to3000_TuneCH3_FlatPower7_13TeV-herwig7/kadatta-RunIISummer19UL17PFNanoAOD-106X_mc2017_realistic_v6-v2-830c141d7b4aa70b88c71a25d598b0f2/USER',1]
-    dictSamples['UL17_QCD_Pt15to7000_Pythia8'] = ['/QCD_Pt-15to7000_TuneCP5_Flat_13TeV_pythia8/mmorris-RunIISummer19UL17PFNanoAOD-106X_mc2017_realistic_v6_ext2-v2-830c141d7b4aa70b88c71a25d598b0f2/USER',1]
-
-    #2017 UL (PFNano) samples
+    #dictSamples['UL17_QCD_Pt150to3000_Herwig7'] = ['/QCD_Pt-150to3000_TuneCH3_FlatPower7_13TeV-herwig7/kadatta-RunIISummer19UL17PFNanoAOD-106X_mc2017_realistic_v6-v2-830c141d7b4aa70b88c71a25d598b0f2/USER',1]
+    #dictSamples['UL17_QCD_Pt15to7000_Pythia8'] = ['/QCD_Pt-15to7000_TuneCP5_Flat_13TeV_pythia8/mmorris-RunIISummer19UL17PFNanoAOD-106X_mc2017_realistic_v6_ext2-v2-830c141d7b4aa70b88c71a25d598b0f2/USER',1]
+    
+    dictSamples['UL17_ST_t-channel_top'] = ['/ST_t-channel_top_5f_InclusiveDecays_TuneCP5_13TeV-powheg-pythia8/kadatta-RunIISummer19UL17PFNanoAOD-106X_mc2017_realistic_v6-v1-830c141d7b4aa70b88c71a25d598b0f2/USER',1]
+    dictSamples['UL17_ST_t-channel_antitop'] = ['/ST_t-channel_antitop_5f_InclusiveDecays_TuneCP5_13TeV-powheg-pythia8/kadatta-RunIISummer19UL17PFNanoAOD-106X_mc2017_realistic_v6-v1-8f037877c18053811b946b7194702f97/USER',1]
+    dictSamples['UL17_ST_tW_top'] = ['/ST_tW_top_5f_NoFullyHadronicDecays_TuneCP5_13TeV-powheg-pythia8/kadatta-RunIISummer19UL17PFNanoAOD-106X_mc2017_realistic_v6-v3-8f037877c18053811b946b7194702f97/USER',1]
+    dictSamples['UL17_ST_tW_antitop'] = ['/ST_tW_antitop_5f_NoFullyHadronicDecays_TuneCP5_13TeV-powheg-pythia8/kadatta-RunIISummer19UL17PFNanoAOD-106X_mc2017_realistic_v6-v3-830c141d7b4aa70b88c71a25d598b0f2/USER',1]
+    
     dictSamples['UL17_SingleMuonB'] = ['/SingleMuon/kadatta-Run2017B-09Aug2019_UL2017-v1_PFNanoAOD-711e27fd71aadb4a77ae7e6321a59353/USER',1]
     dictSamples['UL17_SingleMuonC'] = ['/SingleMuon/kadatta-Run2017C-09Aug2019_UL2017-v1_PFNanoAOD-711e27fd71aadb4a77ae7e6321a59353/USER',1]
-    dictSamples['UL17_SingleMuonD'] = ['/SingleMuon/kadatta-Run2017D-09Aug2019_UL2017-v1_PFNanoAOD-711e27fd71aadb4a77ae7e6321a59353/USER',1]
     dictSamples['UL17_SingleMuonE'] = ['/SingleMuon/kadatta-Run2017E-09Aug2019_UL2017-v1_PFNanoAOD-711e27fd71aadb4a77ae7e6321a59353/USER',1]
     dictSamples['UL17_SingleMuonF'] = ['/SingleMuon/kadatta-Run2017F-09Aug2019_UL2017-v1_PFNanoAOD-711e27fd71aadb4a77ae7e6321a59353/USER',1]
 
@@ -216,7 +215,15 @@ if __name__ == '__main__':
     dictSamples['UL17_JetHTF'] = ['/JetHT/algomez-Run2017F-09Aug2019_UL2017-v1_PFNanoAOD_v01-80f73ea405e21cd3471806cdd3428ad6/USER',1]
 
     '''
+    '''
+    '''
+    '''
+    #2017 UL (PFNano) MC samples for Wtop
 
+
+    #2017 UL (PFNano) data samples for Wtop
+    
+   
     #2016 re-reco samples
     dictSamples['JetHT2016B'] = ['/JetHT/algomez-JetHT_Run2016B-17Jul2018_ver2-v2-c59ef3ac16263506c0c61b1b9e3fa54b/USER', 1 ]
     dictSamples['JetHT2016C'] = ['/JetHT/algomez-JetHT_Run2016C-17Jul2018-v1-c59ef3ac16263506c0c61b1b9e3fa54b/USER', 1 ]
