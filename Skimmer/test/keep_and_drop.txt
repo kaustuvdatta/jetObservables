@@ -21,6 +21,7 @@ keep PV*
 keep PuppiMET*
 keep btagWeight*
 keep genWeight*
+keep triggerWeight*
 keep luminosity*
 keep run*
 keep event*

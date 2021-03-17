@@ -5,44 +5,6 @@ This is a small script that submits a config over many datasets
 import os
 from optparse import OptionParser
 
-def make_list(option, opt, value, parser):
-    setattr(parser.values, option.dest, value.split(','))
-
-def createBash():
-
-    BASH_SCRIPT = '''
-#this is not meant to be run locally
-#
-echo Check if TTY
-if [ "`tty`" != "not a tty" ]; then
-  echo "YOU SHOULD NOT RUN THIS IN INTERACTIVE, IT DELETES YOUR LOCAL FILES"
-else
-
-###ls -lR .
-echo "ENV..................................."
-env
-echo "VOMS"
-voms-proxy-info -all
-echo "CMSSW BASE, python path, pwd"
-echo $CMSSW_BASE
-echo $PYTHON_PATH
-echo $PWD
-rm -rf $CMSSW_BASE/lib/
-rm -rf $CMSSW_BASE/src/
-rm -rf $CMSSW_BASE/module/
-rm -rf $CMSSW_BASE/python/
-mv lib $CMSSW_BASE/lib
-mv src $CMSSW_BASE/src
-mv python $CMSSW_BASE/python
-
-echo Found Proxy in: $X509_USER_PROXY
-echo "python {pythonFile} --year {year}"
-python {pythonFile} --year {year}
-fi
-    '''
-    open('runPostProc'+options.datasets+'.sh', 'w').write(BASH_SCRIPT.format(**options.__dict__))
-
-
 def submitJobs( job, inputFiles, unitJobs ):
 
     from CRABAPI.RawCommand import crabCommand
@@ -60,8 +22,7 @@ def submitJobs( job, inputFiles, unitJobs ):
 
     config.section_("JobType")
     config.JobType.pluginName = 'Analysis'
-    config.JobType.psetName = 'PSet.py'
-    ##config.JobType.maxMemoryMB = 5000
+    config.JobType.psetName = 'triggerEfficiencies_MiniAOD.py'
     config.JobType.allowUndistributedCMSSW = True
 
     config.section_("Data")
@@ -86,21 +47,15 @@ def submitJobs( job, inputFiles, unitJobs ):
 
     requestname = 'jetObservables_triggerEfficiencies_'+ job + '_' +options.version
     print requestname
-    config.JobType.scriptExe = 'runPostProc'+options.datasets+'.sh'
-    config.JobType.inputFiles = [ options.pythonFile ,'haddnano.py', 'keep_and_drop.txt']
-    config.JobType.sendPythonFolder  = True
 
     if job.startswith(('Single', 'JetHT')): config.Data.lumiMask = '/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions17/13TeV/Legacy_2017/Cert_294927-306462_13TeV_UL2017_Collisions17_GoldenJSON.txt'
-    #config.Data.userInputFiles = inputFiles
     config.Data.inputDataset = inputFiles
-    #config.Data.splitting = 'EventAwareLumiBased' if job.startswith('QCD_Pt') else 'FileBased'
-    config.Data.splitting = 'FileBased'
-    config.Data.unitsPerJob = unitJobs
+    config.Data.splitting = 'Automatic'
+    #config.Data.unitsPerJob = unitJobs
     #config.Data.outputPrimaryDataset = job
 
     # since the input will have no metadata information, output can not be put in DBS
-    config.JobType.outputFiles = [ 'triggerEfficiencies_histograms.root', 'triggerEfficiencies.root']
-    config.Data.outLFNDirBase = '/store/user/'+os.environ['USER']+'/jetObservables/triggerEfficiencies'
+    config.Data.outLFNDirBase = '/store/user/'+os.environ['USER']+'/tmpFiles/jetObservables/triggerEfficiencies'
 
     if len(requestname) > 100: requestname = (requestname[:95-len(requestname)])
     print 'requestname = ', requestname
@@ -152,17 +107,11 @@ if __name__ == '__main__':
 
     dictSamples = {}
 
-    dictSamples['SingleMuon_Run2017B'] = [ '/SingleMuon/Run2017B-UL2017_MiniAODv1_NanoAODv2-v1/NANOAOD', 1 ]
-    dictSamples['SingleMuon_Run2017C'] = [ '/SingleMuon/Run2017C-UL2017_02Dec2019-v1/NANOAOD', 1 ]
-    dictSamples['SingleMuon_Run2017D'] = [ '/SingleMuon/Run2017D-UL2017_MiniAODv1_NanoAODv2-v1/NANOAOD', 1 ]
-    dictSamples['SingleMuon_Run2017E'] = [ '/SingleMuon/Run2017E-UL2017_MiniAODv1_NanoAODv2-v1/NANOAOD', 1 ]
-    dictSamples['SingleMuon_Run2017F'] = [ '/SingleMuon/Run2017F-UL2017_MiniAODv1_NanoAODv2-v2/NANOAOD', 1 ]
-
-    dictSamples['JetHT_Run2017B'] = [ '/JetHT/Run2017B-UL2017_MiniAODv1_NanoAODv2-v1/NANOAOD', 1 ]
-    dictSamples['JetHT_Run2017C'] = [ '/JetHT/Run2017C-UL2017_MiniAODv1_NanoAODv2-v1/NANOAOD', 1 ]
-    dictSamples['JetHT_Run2017D'] = [ '/JetHT/Run2017D-UL2017_MiniAODv1_NanoAODv2-v1/NANOAOD', 1 ]
-    dictSamples['JetHT_Run2017E'] = [ '/JetHT/Run2017E-UL2017_MiniAODv1_NanoAODv2-v1/NANOAOD', 1 ]
-    dictSamples['JetHT_Run2017F'] = [ '/JetHT/Run2017F-UL2017_MiniAODv1_NanoAODv2-v2/NANOAOD', 1 ]
+    dictSamples['JetHT_Run2017B'] = [ '/JetHT/Run2017B-UL2017_MiniAODv2-v1/MINIAOD', 1 ]
+    dictSamples['JetHT_Run2017C'] = [ '/JetHT/Run2017C-UL2017_MiniAODv2-v1/MINIAOD', 1 ]
+    dictSamples['JetHT_Run2017D'] = [ '/JetHT/Run2017D-UL2017_MiniAODv2-v1/MINIAOD', 1 ]
+    dictSamples['JetHT_Run2017E'] = [ '/JetHT/Run2017E-UL2017_MiniAODv2-v1/MINIAOD', 1 ]
+    dictSamples['JetHT_Run2017F'] = [ '/JetHT/Run2017F-UL2017_MiniAODv2-v1/MINIAOD', 1 ]
 
     processingSamples = {}
     if 'all' in options.datasets:
@@ -177,8 +126,5 @@ if __name__ == '__main__':
 
         if '2017' in isam: options.year = '2017'
         options.datasets = isam
-        print('Creating bash file...')
-        createBash()
 
-        print ("dataset %s has %d files" % (processingSamples[isam], len(processingSamples[isam][0])))
         submitJobs( isam, processingSamples[isam][0], processingSamples[isam][1] )

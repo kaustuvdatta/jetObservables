@@ -22,150 +22,145 @@ tdrstyle.setTDRStyle()
 gStyle.SetOptStat(0)
 
 
-def plotTriggerEfficiency( inFileSample, sample, triggerDenom, triggerPass, triggerScale, name, xlabel, xmin, xmax, rebin, log):
-	"""docstring for plot"""
+xline = array('d', [0,1000])
+yline = array('d', [0.98,.98])
+line = TGraph(2, xline, yline)
+line.SetLineColor(kRed)
 
-	outputFileName = name+'_'+triggerDenom+"_"+triggerPass+'_'+sample+'_TriggerEfficiency'+args.version+'.'+args.extension
-	print 'Processing.......', outputFileName
+def plotTriggerEfficiency( inFileSample, sample, triggerDenom, triggerPass, name, xlabel, xmin, xmax, rebin, log):
+    """docstring for plot"""
 
-	DenomOnly = inFileSample.Get( 'triggerEfficiencies/AK8Jet1Pt_'+triggerDenom )
-	DenomOnly.Rebin(rebin)
-	Denom = DenomOnly.Clone()
-	PassingOnly = inFileSample.Get( 'triggerEfficiencies/AK8Jet1Pt_'+triggerPass )
-	PassingOnly.Rebin(rebin)
-        PassingOnly.Scale( triggerScale )
-	Passing = PassingOnly.Clone()
-	print Denom, Passing
-	Efficiency = TGraphAsymmErrors( Passing, Denom, 'cp'  )
-	#Efficiency = TEfficiency( Passing, Denom )
+    outputFileName = name+'_'+triggerDenom+"_"+triggerPass+'_'+sample+'_TriggerEfficiency'+args.version+'.'+args.extension
+    print 'Processing.......', outputFileName
 
-	binWidth = DenomOnly.GetBinWidth(1)
+    histos = {}
 
-	legend=TLegend(0.50,0.75,0.90,0.90)
-	legend.SetFillStyle(0)
-	legend.SetTextSize(0.04)
+    tmpDenom = inFileSample.Get( 'TriggerEfficiencies/jet1Pt_'+triggerDenom+'_only' )
+    histos[ 'denomOnly'+triggerPass ] = tmpDenom.Clone()
+    #histos[ 'denomOnly'+triggerPass ] = inFileSample.Get( 'TriggerEfficiencies/jet1Pt_HLT_AK8PFJet80_AK8PFJet80' )
+    #histos[ 'denomOnly'+triggerPass ] = inFileSample.Get( 'triggerEfficiencies/AK8Jet1Pt_'+triggerDenom )
+    histos[ 'denomOnly'+triggerPass ].Rebin(rebin)
+    histos[ 'PassingOnly'+triggerPass ] = inFileSample.Get( 'TriggerEfficiencies/jet1Pt_'+triggerPass+'_simulated' )
+    #histos[ 'PassingOnly'+triggerPass ] = inFileSample.Get( 'TriggerEfficiencies/jet1Pt_HLT_'+triggerPass+'_AK8PFJet80' )
+    #histos[ 'PassingOnly'+triggerPass ] = inFileSample.Get( 'triggerEfficiencies/AK8Jet1Pt_'+triggerPass )
+    histos[ 'PassingOnly'+triggerPass ].Rebin(rebin)
+    Passing = histos[ 'PassingOnly'+triggerPass ].Clone()
+    #histos[ 'eff'+triggerPass ] = TGraphAsymmErrors( histos[ 'PassingOnly'+triggerPass ].Clone(), histos[ 'denomOnly'+triggerPass ].Clone(), 'cp'  )
+    histos[ 'eff'+triggerPass ] = TEfficiency( histos[ 'PassingOnly'+triggerPass ].Clone(), histos[ 'denomOnly'+triggerPass ].Clone() )
 
-	DenomOnly.SetLineWidth(2)
-	DenomOnly.SetLineColor(kRed-4)
-	PassingOnly.SetLineWidth(2)
-	PassingOnly.SetLineColor(kBlue-4)
+    binWidth = histos[ 'denomOnly'+triggerPass ].GetBinWidth(1)
 
-	can = TCanvas('c1', 'c1',  10, 10, 750, 750 )
-	pad1 = TPad("pad1", "Histo",0,0.46,1.00,1.00,-1)
-	pad2 = TPad("pad2", "Efficiency",0,0.00,1.00,0.531,-1);
-	pad1.Draw()
-	pad2.Draw()
+    legend=TLegend(0.50,0.75,0.90,0.90)
+    legend.SetFillStyle(0)
+    legend.SetTextSize(0.04)
 
-	pad1.cd()
-	if log: pad1.SetLogy()
+    histos[ 'denomOnly'+triggerPass ].SetLineWidth(2)
+    histos[ 'denomOnly'+triggerPass ].SetLineColor(kGray)
+    #histos[ 'PassingOnly'+triggerPass ].SetLineWidth(2)
+    #histos[ 'PassingOnly'+triggerPass ].SetLineColor(kBlue-4)
 
-	legend.AddEntry( DenomOnly, 'SingleMu trigger', 'l' )
-	legend.AddEntry( PassingOnly, triggerPass, 'l' )
-	#DenomOnly.SetMinimum(10)
-	DenomOnly.GetXaxis().SetRangeUser( xmin, xmax )
-	DenomOnly.Draw('histe')
-	DenomOnly.GetYaxis().SetTitleSize(0.06)
-	DenomOnly.GetYaxis().SetTitleOffset(0.8)
-	DenomOnly.GetYaxis().SetLabelSize(0.06)
-	DenomOnly.GetXaxis().SetTitleOffset(0.8)
-	DenomOnly.GetXaxis().SetTitleSize(0.06)
-	DenomOnly.GetXaxis().SetLabelSize(0.05)
-	PassingOnly.Draw('histe same')
-	DenomOnly.GetYaxis().SetTitle( 'Events / '+str(binWidth) )
+    tdrStyle.SetPadTickY(0)
+    can = TCanvas('c1', 'c1',  10, 10, 750, 500 )
+    pad1 = TPad("pad1", "Histo",0,0.00,1.00,1.00,-1)
+    pad2 = TPad("pad2", "",0,0.00,1.00,1.00,-1)
+    pad2.SetFillStyle(4000)
+    pad1.Draw()
+    pad1.cd()
+    if log: pad1.SetLogy()
 
-	CMS_lumi.CMS_lumi(pad1, 4, 0)
-	legend.Draw()
+    legend.AddEntry( histos[ 'denomOnly'+triggerPass ], 'SingleMu trigger', 'l' )
+    legend.AddEntry( histos[ 'PassingOnly'+triggerPass ], triggerPass, 'l' )
+    #histos[ 'denomOnly'+triggerPass ].SetMinimum(10)
+    histos[ 'denomOnly'+triggerPass ].GetXaxis().SetRangeUser( xmin, xmax )
+    histos[ 'denomOnly'+triggerPass ].SetMaximum( histos[ 'denomOnly'+triggerPass ].GetMaximum()*1.5 )
+    histos[ 'denomOnly'+triggerPass ].Draw('histe')
+    histos[ 'denomOnly'+triggerPass ].GetYaxis().SetTitleSize(0.06)
+    histos[ 'denomOnly'+triggerPass ].GetYaxis().SetTitleOffset(0.8)
+    histos[ 'denomOnly'+triggerPass ].GetYaxis().SetLabelSize(0.06)
+    histos[ 'denomOnly'+triggerPass ].GetXaxis().SetTitleOffset(0.8)
+    histos[ 'denomOnly'+triggerPass ].GetXaxis().SetTitleSize(0.06)
+    histos[ 'denomOnly'+triggerPass ].GetXaxis().SetLabelSize(0.05)
+    histos[ 'PassingOnly'+triggerPass ].Draw('histe same')
+    histos[ 'denomOnly'+triggerPass ].GetYaxis().SetTitle( 'Events / '+str(binWidth) )
 
-	pad2.cd()
-	pad2.SetTopMargin(0)
-	pad2.SetBottomMargin(0.3)
-	Efficiency.SetMarkerStyle(8)
-	Efficiency.SetLineWidth(2)
-	Efficiency.SetLineColor(kBlue-4)
-	Efficiency.SetFillStyle(1001)
-	Efficiency.GetYaxis().SetTitle("Efficiency")
-	Efficiency.GetYaxis().SetLabelSize(0.06)
-	Efficiency.GetXaxis().SetLabelSize(0.06)
-	Efficiency.GetYaxis().SetTitleSize(0.06)
-	Efficiency.GetYaxis().SetTitleOffset(0.8)
-	Efficiency.SetMinimum(-0.1)
-	Efficiency.SetMaximum(1.1)
-	Efficiency.GetXaxis().SetLimits( xmin, xmax )
-	Efficiency.GetXaxis().SetTitle( xlabel )
-	Efficiency.Draw()
+    CMS_lumi.CMS_lumi(pad1, 4, 0)
+    #legend.Draw()
+    gPad.Update()
+    xMin = pad1.GetUxmin()
+    xMax = pad1.GetUxmax()
+    dx = (xMax - xMin) / 0.8
+    ymin = 0 #histos[ 'eff'+triggerPass ].CreateGraph().GetHistogram().GetMinimum()
+    ymax = 1 #histos[ 'eff'+triggerPass ].CreateGraph().GetHistogram().GetMaximum()
+    dy = (ymax - ymin) / 0.8
+    pad2.Range(xMin-0.1*dx, ymin-0.1*dy, xMax+0.1*dx, ymax+0.1*dy)
+    pad2.Draw()
+    pad2.cd()
+    histos[ 'eff'+triggerPass ].SetMarkerStyle(8)
+    #histos[ 'eff'+triggerPass ].SetLineWidth(2)
+    #histos[ 'eff'+triggerPass ].SetLineColor(kBlue-4)
+    histos[ 'eff'+triggerPass ].SetFillStyle(1001)
+    histos[ 'eff'+triggerPass ].Draw()
+    pad2.Update()
+#    histos[ 'eff'+triggerPass ].GetPaintedGraph().GetYaxis().SetLabelSize(0.06)
+#    histos[ 'eff'+triggerPass ].GetPaintedGraph().GetXaxis().SetLabelSize(0.06)
+#    histos[ 'eff'+triggerPass ].GetPaintedGraph().GetYaxis().SetTitleSize(0.06)
+#    histos[ 'eff'+triggerPass ].GetPaintedGraph().GetYaxis().SetTitleOffset(0.8)
+    histos[ 'eff'+triggerPass ].GetPaintedGraph().GetYaxis().SetLabelOffset(9999)
+    histos[ 'eff'+triggerPass ].GetPaintedGraph().GetXaxis().SetLimits( xmin, xmax )
+    histos[ 'eff'+triggerPass ].GetPaintedGraph().GetYaxis().SetTickLength( 0 )
+    #histos[ 'eff'+triggerPass ].GetPaintedGraph().SetMinimum(-0.1)
+    #histos[ 'eff'+triggerPass ].GetPaintedGraph().SetMaximum(1.1)
+    gPad.Update()
 
-	can.SaveAs( 'Plots/'+outputFileName.replace('.','Extended.') )
-	del can
+    newAxis = TGaxis( xmax,ymin,xmax, ymax,ymin,ymax,502,"+L") #,0.03 )
+    #newAxis.SetLabelOffset(0.1)
+    #newAxis.SetLineColor(kRed)
+    #newAxis.SetLabelColor(kRed)
+    newAxis.SetTitleSize(0.06)
+    newAxis.SetTitleOffset(0.6)
+    newAxis.SetLabelSize(0.05)
+    #newAxis.SetLabelOffset(0.06)
+    #newAxis.SetTickLength(0.01)
+    #newAxis.SetLabelSize(0.03)
+    newAxis.SetTitle("Efficiency")
+    newAxis.Draw()
+    line.Draw('same')
 
-	#### Fitting
-	#errF = TF1('errF', '0.5*(1+TMath::Erf((x-[0])/[1]))', 500, 1500 )
-	#errF = TF1('errF', '0.5*(1+TMath::Erf(([0]*x-[1])/[2]))', 400, 1000 )  ## HT
-	#errF = TF1('errF', '0.5*(1+TMath::Erf(([0]*x-[1])/[2]))', 0, 100 )  ## Mass
-	#Efficiency.SetStatisticOption(TEfficiency.kFWilson)
-	#for i in range(5): eff.Fit(errF, '+')
-	#for i in range(5): Efficiency.Fit('errF', 'MIR')
-	#print '&'*10, '900', errF.Eval(900)
-	#print '&'*10, '1000', errF.Eval(1000)
-	gStyle.SetOptFit(1)
-	can1 = TCanvas('c1', 'c1',  10, 10, 750, 500 )
-	Efficiency.SetMarkerStyle(8)
-	Efficiency.SetMarkerColor(kGray)
-	Efficiency.SetMinimum(-0.15)
-	#Efficiency.SetMinimum(0.8)
-	Efficiency.SetMaximum(1.15)
-	Efficiency.GetXaxis().SetTitle( xlabel )
-	Efficiency.GetYaxis().SetLabelSize(0.05)
-	Efficiency.GetXaxis().SetLabelSize(0.05)
-	Efficiency.GetYaxis().SetTitleSize(0.06)
-	Efficiency.GetYaxis().SetTitleOffset(0.8)
-	Efficiency.GetXaxis().SetTitleOffset(0.8)
-	#Efficiency.GetXaxis().SetLimits( 400, 1200 )
-	#Efficiency.GetXaxis().SetLimits( 700, 1050 )
-	Efficiency.GetXaxis().SetLimits( xmin, xmax )
-	Efficiency.Draw('AP')
-	'''
-	errF.SetLineColor(kRed)
-	errF.SetLineWidth(2)
-	errF.Draw('sames')
-	can1.Update()
-	st1 = Efficiency.GetListOfFunctions().FindObject("stats")
-	st1.SetX1NDC(.60);
-	st1.SetX2NDC(.90);
-	st1.SetY1NDC(.20);
-	st1.SetY2NDC(.50);
-#	#eff.Draw("same")
-	can1.Modified()
-	'''
+#    #errF = TF1('errF', '0.5*(1+TMath::Erf((x-[0])/[1]))', 100, 600 )
+#    errF = TF1('errF', '0.5*(1+TMath::Erf(([0]*x-[1])/[2]))', 100, 700 )  ## Mass
+#    #histos[ 'eff'+triggerPass ].SetStatisticOption(TEfficiency.kFWilson)
+#    for i in range(5): histos[ 'eff'+triggerPass ].Fit(errF)
+#    errF.Draw("same")
+#    #for i in range(5): Efficiency.Fit('errF', 'MIR')
 
-	'''
-	rightmax = 1.2*PassingOnly.GetMaximum()
-	rightmin = PassingOnly.GetMinimum()
-	scale = gPad.GetUymax()/rightmax
-	PassingOnly.SetLineColor(kBlue-5)
-	PassingOnly.Scale( scale )
-	PassingOnly.Draw( 'hist same' )
-	#axis = TGaxis( gPad.GetUxmax(), gPad.GetUymin(), gPad.GetUxmax(), gPad.GetUymax(),-3,rightmax,710,"+L")
-	axis = TGaxis( gPad.GetUxmax(), gPad.GetUymin(), gPad.GetUxmax(), gPad.GetUymax(),rightmin,rightmax,10,"+L")
-	axis.SetTitle('Events / '+str(binWidth) )
-	axis.SetTitleColor(kBlue-5)
-	axis.SetTitleSize(0.06)
-	axis.SetLabelSize(0.05)
-	axis.SetTitleFont(42)
-	axis.SetLabelFont(42)
-	axis.SetLineColor(kBlue-5)
-	axis.SetLabelColor(kBlue-5)
-	axis.SetTitleOffset(0.7)
-	axis.Draw()
-	'''
-	CMS_lumi.relPosX = 0.11
-	CMS_lumi.cmsTextSize = 0.7
-	CMS_lumi.extraOverCmsTextSize = 0.6
-	CMS_lumi.CMS_lumi(can1, 4, 0)
+    can.SaveAs( 'Plots/'+outputFileName )
+    del can
 
-	can1.SaveAs( 'Plots/'+outputFileName )
-	del can1
-
-	return Efficiency
+#    #### Fitting
+#    #errF = TF1('errF', '0.5*(1+TMath::Erf((x-[0])/[1]))', 500, 1500 )
+#    #errF = TF1('errF', '0.5*(1+TMath::Erf(([0]*x-[1])/[2]))', 400, 1000 )  ## HT
+#    #errF = TF1('errF', '0.5*(1+TMath::Erf(([0]*x-[1])/[2]))', 0, 100 )  ## Mass
+#    #Efficiency.SetStatisticOption(TEfficiency.kFWilson)
+#    #for i in range(5): eff.Fit(errF, '+')
+#    #for i in range(5): Efficiency.Fit('errF', 'MIR')
+#    #print '&'*10, '900', errF.Eval(900)
+#    #print '&'*10, '1000', errF.Eval(1000)
+#    gStyle.SetOptFit(1)
+#    '''
+#    errF.SetLineColor(kRed)
+#    errF.SetLineWidth(2)
+#    errF.Draw('sames')
+#    can1.Update()
+#    st1 = Efficiency.GetListOfFunctions().FindObject("stats")
+#    st1.SetX1NDC(.60);
+#    st1.SetX2NDC(.90);
+#    st1.SetY1NDC(.20);
+#    st1.SetY2NDC(.50);
+##	#eff.Draw("same")
+#    can1.Modified()
+#    '''
+#
+    return histos[ 'eff'+triggerPass ]
 
 def plotDiffEff( listOfEff, name ):
 	"""docstring for plotDiffEff"""
@@ -623,6 +618,7 @@ if __name__ == '__main__':
         [ '2D', 'jet1SDMassvsPt', 'Leading SD Jet Mass [GeV]', 'Leading Jet Pt [GeV]', 20, 200, 20, 400, 800, 50, 0.85, 0.2],
 
         [ 'simple', 'AK8Jet1Pt', 'Leading jet pt [GeV]', 100, 800, 1, True],
+        [ 'simple', 'AK8Jet2Pt', '2nd Leading jet pt [GeV]', 100, 800, 1, True],
 
         [ 'eff', 'recoLeadJetPt', 'Leading jet pt [GeV]', 100, 1000, 10, True],
         [ 'eff', 'recoHT', 'HT [GeV]', 500, 1500, 10, True],
@@ -634,15 +630,22 @@ if __name__ == '__main__':
 
     bkgFiles = {}
     signalFiles = {}
-    CMS_lumi.extraText = "Preliminary Simulation"
+    CMS_lumi.extraText = "Preliminary"
     CMS_lumi.lumi_13TeV = '13 TeV'
 
-    triggerList = [ 'AK8PFJet140','AK8PFJet200', 'AK8PFJet260', 'AK8PFJet320', 'AK8PFJet400', 'AK8PFJet450', 'AK8PFJet500'] #, 'AK8PFJet550']
-    triggerScales = [ 1560.152778, 219.7049972, 88.4261417, 33.82744031, 5.40387734, 4.298722004, 1, 1 ]  ##full UL2017
+    triggerList = [ ('AK8PFJet80', 'AK8PFJet60'),
+                    ('AK8PFJet140', 'AK8PFJet60'),
+                    ('AK8PFJet200', 'AK8PFJet60'),
+                    ('AK8PFJet260', 'AK8PFJet60'),
+                    ('AK8PFJet320', 'AK8PFJet140'),
+                    ('AK8PFJet400', 'AK8PFJet140' ),
+                    ('AK8PFJet450', 'AK8PFJet140' ),
+                    ('AK8PFJet500', 'AK8PFJet140' ),
+                    ('AK8PFJet550', 'AK8PFJet140' )]
 
     Samples = {}
     #Samples[ 'SingleMuon2017B' ] = [ TFile.Open('Rootfiles/triggerEfficiencies_histograms.root'), 0 ]
-    Samples[ 'JetHT2017' ] = [ TFile.Open('Rootfiles/triggerEfficiencies_histograms_JetHTRun2017.root'), 0 ]
+    Samples[ 'JetHT2017' ] = [ TFile.Open('/eos/home-a/algomez/tmpFiles/jetObservables/triggerEfficiencies/Plots/v04/triggerEfficiencies_histograms_MiniAOD_JetHTRun2017B.root'), 0 ]
 
 
     processingSamples = {}
@@ -657,7 +660,7 @@ if __name__ == '__main__':
     for i in Plots:
         for isam, samFile in processingSamples.iteritems():
             for q, it in enumerate(triggerList):
-                plotTriggerEfficiency( samFile[0], isam, 'baseTrigger', it, triggerScales[q], i[0], i[1], i[2], i[3], i[4], i[5] )
+                plotTriggerEfficiency( samFile[0], isam, it[1], it[0], i[0], i[1], i[2], i[3], i[4], i[5] )
 #        if args.proc.startswith('simple'):
 #            #cuts = [ 'Pt10', 'Pt20','Pt30','Pt40','Pt50', 'Pt10Eta5', 'Pt20Eta5', 'Pt30Eta5', 'Pt40Eta5', 'Pt50Eta5' ]
 #            cuts = [ 'Pt10', 'Pt30','Pt50', 'Pt10Eta5', 'Pt30Eta5', 'Pt50Eta5' ]

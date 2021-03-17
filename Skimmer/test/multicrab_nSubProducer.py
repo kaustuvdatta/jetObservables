@@ -36,6 +36,8 @@ mv src $CMSSW_BASE/src
 mv python $CMSSW_BASE/python
 
 echo Found Proxy in: $X509_USER_PROXY
+wget -O triggerEfficiencies_histograms_MiniAOD_JetHTRun2017B.pkl https://cernbox.cern.ch/index.php/s/XwHYRYHzf0Zomuf/download
+ls
 echo "python {pythonFile} --sample {datasets} --selection {selection}"
 python {pythonFile} --sample {datasets} --selection {selection}
 fi
@@ -94,13 +96,14 @@ def submitJobs( job, inputFiles, unitJobs ):
     #config.Data.userInputFiles = inputFiles
     config.Data.inputDataset = inputFiles
     #config.Data.splitting = 'EventAwareLumiBased' if job.startswith('QCD_Pt') else 'FileBased'
-    config.Data.splitting = 'FileBased'
-    config.Data.unitsPerJob = unitJobs
+    config.Data.splitting = 'Automatic'
+    #config.Data.splitting = 'FileBased'
+    #config.Data.unitsPerJob = unitJobs
     #config.Data.outputPrimaryDataset = job
 
     # since the input will have no metadata information, output can not be put in DBS
     config.JobType.outputFiles = [ 'jetObservables_nanoskim.root', 'jetObservables_histograms.root']
-    config.Data.outLFNDirBase = '/store/user/'+os.environ['USER']+'/jetObservables/'
+    config.Data.outLFNDirBase = '/store/user/'+os.environ['USER']+'/tmpFiles/jetObservables/'
 
     if len(requestname) > 100: requestname = (requestname[:95-len(requestname)])
     print 'requestname = ', requestname
@@ -204,6 +207,13 @@ if __name__ == '__main__':
     dictSamples['UL17_SingleMuonC'] = ['/SingleMuon/kadatta-Run2017C-09Aug2019_UL2017-v1_PFNanoAOD-711e27fd71aadb4a77ae7e6321a59353/USER',1]
     dictSamples['UL17_SingleMuonE'] = ['/SingleMuon/kadatta-Run2017E-09Aug2019_UL2017-v1_PFNanoAOD-711e27fd71aadb4a77ae7e6321a59353/USER',1]
     dictSamples['UL17_SingleMuonF'] = ['/SingleMuon/kadatta-Run2017F-09Aug2019_UL2017-v1_PFNanoAOD-711e27fd71aadb4a77ae7e6321a59353/USER',1]
+
+    dictSamples['UL17_JetHTB'] = ['/JetHT/algomez-Run2017B-09Aug2019_UL2017-v1_PFNanoAOD_v01-80f73ea405e21cd3471806cdd3428ad6/USER',1]
+    dictSamples['UL17_JetHTC'] = ['/JetHT/algomez-Run2017C-09Aug2019_UL2017-v1_PFNanoAOD_v01-80f73ea405e21cd3471806cdd3428ad6/USER',1]
+    dictSamples['UL17_JetHTD'] = ['/JetHT/algomez-Run2017D-09Aug2019_UL2017-v1_PFNanoAOD_v01-80f73ea405e21cd3471806cdd3428ad6/USER',1]
+    dictSamples['UL17_JetHTE'] = ['/JetHT/algomez-Run2017E-09Aug2019_UL2017-v1_PFNanoAOD_v01-80f73ea405e21cd3471806cdd3428ad6/USER',1]
+    dictSamples['UL17_JetHTF'] = ['/JetHT/algomez-Run2017F-09Aug2019_UL2017-v1_PFNanoAOD_v01-80f73ea405e21cd3471806cdd3428ad6/USER',1]
+
     '''
     '''
     '''
@@ -270,8 +280,8 @@ if __name__ == '__main__':
 
     for isam in processingSamples:
 
-        if isam.startswith('QCD') or isam.startswith('JetHT'): options.selection = 'dijet'
-        else: options.selection = 'Wtop'
+        #if isam.startswith('QCD') or isam.startswith('JetHT'): options.selection = 'dijet'
+        #else: options.selection = 'Wtop'
 
         options.datasets = isam
         print('Creating bash file...')

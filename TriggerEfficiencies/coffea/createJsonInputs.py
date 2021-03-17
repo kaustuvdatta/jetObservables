@@ -29,6 +29,12 @@ dictSamples['SingleMuon_Run2017D'] = '/SingleMuon/Run2017D-UL2017_MiniAODv1_Nano
 dictSamples['SingleMuon_Run2017E'] = '/SingleMuon/Run2017E-UL2017_MiniAODv1_NanoAODv2-v1/NANOAOD'
 dictSamples['SingleMuon_Run2017F'] = '/SingleMuon/Run2017F-UL2017_MiniAODv1_NanoAODv2-v2/NANOAOD'
 
+dictSamples['JetHT_Run2017B'] = '/JetHT/Run2017B-UL2017_MiniAODv1_NanoAODv2-v1/NANOAOD'
+dictSamples['JetHT_Run2017C'] = '/JetHT/Run2017C-UL2017_MiniAODv1_NanoAODv2-v1/NANOAOD'
+dictSamples['JetHT_Run2017D'] = '/JetHT/Run2017D-UL2017_MiniAODv1_NanoAODv2-v1/NANOAOD'
+dictSamples['JetHT_Run2017E'] = '/JetHT/Run2017E-UL2017_MiniAODv1_NanoAODv2-v1/NANOAOD'
+dictSamples['JetHT_Run2017F'] = '/JetHT/Run2017F-UL2017_MiniAODv1_NanoAODv2-v2/NANOAOD'
+
 
 ### To choose dataset from dictSamples
 processingSamples = {}

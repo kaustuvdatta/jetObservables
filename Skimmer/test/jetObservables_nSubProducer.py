@@ -67,7 +67,7 @@ parser.add_argument(
     required=False
 )
 args = parser.parse_args(sys.argv[1:])
-if args.sample.startswith(('/EGamma', '/Single', 'EGamma', 'Single', 'UL16_Single', '/UL16_Single', 'UL17_Single', '/UL17_Single', 'UL18_Single', '/UL18_Single', '/JetHT', 'JetHT' )) or ('EGamma' in args.iFile or 'SingleMuon' in args.iFile or ('JetHT' in args.iFile)):
+if args.sample.startswith(('/EGamma', '/Single', 'EGamma', 'Single', 'UL16_Single', '/UL16_Single', 'UL17_Single', '/UL17_Single', 'UL18_Single', '/UL18_Single', '/JetHT', 'JetHT', '/UL17_Jet', 'UL17_Jet' )) or ('EGamma' in args.iFile or 'SingleMuon' in args.iFile or ('JetHT' in args.iFile)):
     isMC = False
     print "sample is data"
 else: isMC = True
@@ -78,7 +78,7 @@ METFilters = "( (Flag_goodVertices==1) && (Flag_globalSuperTightHalo2016Filter==
 if not isMC: METFilters = METFilters + ' && (Flag_eeBadScFilter==1)'
 
 if args.selection.startswith('dijet'):
-    Triggers =  '( (HLT_PFJet140==1) || (HLT_PFJet200==1) || (HLT_PFJet260==1) || (HLT_PFJet320==1) || (HLT_PFJet400==1) || (HLT_PFJet450==1) || (HLT_PFJet500==1) || (HLT_PFJet550==1) )'
+    Triggers =  '( (HLT_PFJet80==1) || (HLT_PFJet140==1) || (HLT_PFJet200==1) || (HLT_PFJet260==1) || (HLT_PFJet320==1) || (HLT_PFJet400==1) || (HLT_PFJet450==1) || (HLT_PFJet500==1) || (HLT_PFJet550==1) )'
 else:
     Triggers = '(HLT_Mu50==1)'
 #if args.year.startswith('2016'): Triggers = ...
@@ -142,8 +142,13 @@ if isMC:
         if not args.selection.startswith('dijet'): modulesToRun.append( btagSF2018() )
     if args.year=='2017':
         modulesToRun.append( puAutoWeight_2017() )
+<<<<<<< HEAD
         #print "###Running with btag SF calc.###"
         #if not args.selection.startswith('dijet'): modulesToRun.append( btagSF2017() )
+=======
+        print "###Running with btag SF calc.###"
+        if not args.selection.startswith('dijet'): modulesToRun.append( btagSF2017() )
+>>>>>>> ed227b3115b9ba03f2fbb328168905144b69e12e
     if args.year=='2016':
         modulesToRun.append( puWeight_2016() )
         print "Running with btag SF calc."
@@ -153,8 +158,11 @@ if not args.selection.startswith('dijet'): modulesToRun.append( jetmetCorrector(
 
 # our module
 if args.selection.startswith('dijet'):
+    if args.local: triggerFile = "../../TriggerEfficiencies/test/Rootfiles/triggerEfficiencies_histograms_MiniAOD_JetHTRun2017ALL.root"
+    #if args.local: triggerFile = "/eos/home-a/algomez/tmpFiles/jetObservables/triggerPrescales/triggerEfficiencies_histograms_MiniAOD_JetHTRun2017B.pkl"
+    else: triggerFile = 'triggerEfficiencies_histograms_MiniAOD_JetHTRun2017B.pkl'
     from jetObservables.Skimmer.nSubProducer_dijetSel import nSubProd
-    modulesToRun.append( nSubProd( sysSource=systSources, leptonSF=LeptonSF[args.year], isMC=isMC ) )
+    modulesToRun.append( nSubProd( sysSource=systSources, leptonSF=LeptonSF[args.year], isMC=isMC, triggerFile=triggerFile ) )
 else:
     from jetObservables.Skimmer.nSubProducer_WTaggingNormTest import nSubProd #WtopSel import nSubProd
     modulesToRun.append( nSubProd( sysSource=systSources, leptonSF=LeptonSF[args.year], isMC=isMC ) )
