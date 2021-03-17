@@ -172,8 +172,8 @@ p1=PostProcessor(
         prefetch     = args.local,
         longTermCache= args.local,
         fwkJobReport = True,
-        haddFileName = "jetObservables_"+args.selection+"_nanoskim_wo_muoninbjetsamehemiandnobinak8.root" if args.local else 'jetObservables_nanoskim_wo_muoninbjetsamehemiandnobinak8.root',
-        histFileName = "jetObservables_"+args.selection+"_histograms_wo_muoninbjetsamehemiandnobinak8.root" if args.local else 'jetObservables_histograms_wo_muoninbjetsamehemiandnobinak8.root',
+        haddFileName = "jetObservables_"+args.selection+"_nanoskim.rooot" if args.local else 'jetObservables_nanoskim.root',
+        histFileName = "jetObservables_"+args.selection+"_histograms.root" if args.local else 'jetObservables_histograms.root',
         histDirName  = 'jetObservables',
         )
 p1.run()

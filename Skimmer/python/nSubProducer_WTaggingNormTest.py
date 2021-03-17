@@ -829,7 +829,7 @@ class nSubProd(Module):
                         if not isGen: print (AK8jets[0].pt,AK8jets[0].msoftdrop,AK4bjets[0].pt,event.event,event.luminosityBlock,isGen)
                         return True, '_WSel' 
 
-                    elif (jetMass/ (1 if self.isGen else AK8jets[0].corr_PUPPI ) > self.minSDMassTop) and (AK8jets[0].pt>self.minLeadAK8JetPtTop): 
+                    elif (jetMass/ (1 if isGen else AK8jets[0].msoftdrop_corr_PUPPI) > self.minSDMassTop) and (AK8jets[0].pt>self.minLeadAK8JetPtTop): 
                         if not isGen: print ("TOP Sel.", AK8jets[0].pt,AK8jets[0].msoftdrop,AK4bjets[0].pt,event.event,event.luminosityBlock,isGen)
                         return True, '_topSel'
                     else: return False, None
