@@ -142,8 +142,8 @@ if isMC:
         if not args.selection.startswith('dijet'): modulesToRun.append( btagSF2018() )
     if args.year=='2017':
         modulesToRun.append( puAutoWeight_2017() )
-        print "###Running with btag SF calc.###"
-        if not args.selection.startswith('dijet'): modulesToRun.append( btagSF2017() )
+        #print "###Running with btag SF calc.###"
+        #if not args.selection.startswith('dijet'): modulesToRun.append( btagSF2017() )
     if args.year=='2016':
         modulesToRun.append( puWeight_2016() )
         print "Running with btag SF calc."
@@ -175,8 +175,8 @@ p1=PostProcessor(
         prefetch     = args.local,
         longTermCache= args.local,
         fwkJobReport = True,
-        haddFileName = "jetObservables_"+args.selection+"_nanoskim.rooot" if args.local else 'jetObservables_nanoskim.root',
-        histFileName = "jetObservables_"+args.selection+"_histograms.root" if args.local else 'jetObservables_histograms.root',
+        haddFileName = "jetObservables_"+args.selection+"_nanoskim_test3.rooot" if args.local else 'jetObservables_nanoskim_test3.root',
+        histFileName = "jetObservables_"+args.selection+"_histograms_test3.root" if args.local else 'jetObservables_histograms_test3.root',
         histDirName  = 'jetObservables',
         )
 p1.run()

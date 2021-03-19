@@ -1,3 +1,4 @@
+
 import ROOT
 import math, os, sys
 import numpy as np
@@ -45,8 +46,8 @@ class nSubProd(Module):
 
         ### Cuts for selections
         self.minLeadAK8JetPtW = 200.
-        self.minSDMassW = 60.#60.#   ### looser to pick low bins
-        self.maxSDMassW = 120.#120.#  ### looser to pick higher bins
+        self.minSDMassW = 65.#60.#   ### looser to pick low bins
+        self.maxSDMassW = 115.#120.#  ### looser to pick higher bins
         self.minLeadAK8JetPtTop= 350.
         self.minSDMassTop = 140.
         self.METCutWtop = 50.
@@ -552,7 +553,7 @@ class nSubProd(Module):
         electrons = list(Collection(event, 'Electron'))
         muons = list(Collection(event, 'Muon'))
         jets = list(Collection(event, 'Jet'))
-        met = Object(event, 'MET')
+	met = Object(event, 'MET')
         
       
         #### Lepton selection
@@ -661,7 +662,7 @@ class nSubProd(Module):
         passSel = False
         iSel = None
 
-        passSel, iSel = self.WtopSelection( False, event, recoMuons, recoElectrons, recoAK4bjets, recoAK8jets, MET, met )
+        passSel, iSel = self.WtopSelection( False, event, recoMuons, recoElectrons, recoAK4bjets, recoAK8jets, MET)
 
         reweight = self.totalWeight #called this 'reweight' since the weight here should now include b-tag event weights
         #### Creating Nsub basis, filling histos and creating branches IF passSel
@@ -766,7 +767,7 @@ class nSubProd(Module):
         passSel = False
         iSel = None
 
-        passSel, iSel = self.WtopSelection( True, event, genMuons, genElectrons, genAK4bjets, genAK8jets, genMET, genmet )
+        passSel, iSel = self.WtopSelection( True, event, genMuons, genElectrons, genAK4bjets, genAK8jets, genMET )
 
         ##### Filling histograms
         if passSel and iSel:
@@ -800,18 +801,19 @@ class nSubProd(Module):
         return passSel, iSel, genMuons, genElectrons, genAK4bjets, genAK8jets, genMET
 
     #############################################################################
-    def WtopSelection( self, isGen, event, muons, electrons, AK4bjets, AK8jets, MET, met_collection ):
+    def WtopSelection( self, isGen, event, muons, electrons, AK4bjets, AK8jets, MET):#, met_collection ):
 
         #if (len(muons)==1) and (len(electrons) == 0) and (len(AK8jets)>0) and (len(AK4bjets)>1) and (MET.Pt()>self.METCutWtop):
-        if isGen: metval = MET.Pt()
-        else: metval = met_collection.sumEt 
+        #if isGen: metval = MET.Pt()
+        
+        #else: metval = met_collection.sumEt 
 
-        if (len(muons)==1) and (len(electrons)== 0) and (len(AK8jets)>0) and (len(AK4bjets)>=1) and (metval>self.METCutWtop):                
+        if (len(muons)==1) and (len(electrons)== 0) and (len(AK8jets)>0) and (len(AK4bjets)>=1) and (MET.Pt()>self.METCutWtop):                
             leptWpT=muons[0].p4()+MET
             if leptWpT.Pt()>self.minLeptonicWPt:
                 
-                AK4bjets = [x for x in AK4bjets if abs(x.p4().DeltaPhi(muons[0].p4()))<2.]# and x.p4().DeltaR( muons[0].p4() )>0.4 and (muons[0].p4().DeltaR( x.p4() )<1.5)]
-                #AK4bjets = [x for x in AK4bjets if abs(x.p4().DeltaPhi(muons[0].p4()))<2. and AK8jets[0].p4().DeltaR( x.p4() )>0.8 and x.p4().DeltaR( muons[0].p4() )>0.4 and (muons[0].p4().DeltaR( x.p4() )<1.5)] # only to check for bjets in ak8
+                #AK4bjets = [x for x in AK4bjets if abs(x.p4().DeltaPhi(muons[0].p4()))<2.]# and x.p4().DeltaR( muons[0].p4() )>0.4 and (muons[0].p4().DeltaR( x.p4() )<1.5)]
+                AK4bjets = [x for x in AK4bjets if abs(x.p4().DeltaPhi(muons[0].p4()))<2.]# and AK8jets[0].p4().DeltaR( x.p4() )>0.8 and x.p4().DeltaR( muons[0].p4() )>0.4]# and (muons[0].p4().DeltaR( x.p4() )<1.5)] # only to check for bjets in ak8 
                 
                 AK8jets = [x for x in AK8jets if abs(x.p4().DeltaPhi(muons[0].p4()))>2.]
                 
@@ -825,12 +827,13 @@ class nSubProd(Module):
                         self.out.fillBranch("btagWeight", self.btagweight)
                         self.totalWeight = self.totalWeight*self.btagweight
                     jetMass = AK8jets[0].mass if isGen else AK8jets[0].msoftdrop_nom
-                    if (jetMass>self.minSDMassW and jetMass<self.maxSDMassW) and (AK8jets[0].pt>self.minLeadAK8JetPtW): 
-                        if not isGen: print (AK8jets[0].pt,AK8jets[0].msoftdrop,AK4bjets[0].pt,event.event,event.luminosityBlock,isGen)
+                    
+                    if (jetMass>self.minSDMassW) and (jetMass<self.maxSDMassW) and (AK8jets[0].pt>self.minLeadAK8JetPtW): 
+                        if not isGen: print (AK8jets[0].pt,AK8jets[0].msoftdrop_nom, AK8jets[0].msoftdrop, AK4bjets[0].pt,event.event,event.luminosityBlock,isGen)
                         return True, '_WSel' 
 
                     elif (jetMass/ (1 if isGen else AK8jets[0].msoftdrop_corr_PUPPI) > self.minSDMassTop) and (AK8jets[0].pt>self.minLeadAK8JetPtTop): 
-                        if not isGen: print ("TOP Sel.", AK8jets[0].pt,AK8jets[0].msoftdrop,AK4bjets[0].pt,event.event,event.luminosityBlock,isGen)
+                        if not isGen: print ("TOP Sel.", AK8jets[0].pt, AK8jets[0].msoftdrop_nom, AK8jets[0].msoftdrop, AK8jets[0].msoftdrop_corr_PUPPI,AK4bjets[0].pt,event.event,event.luminosityBlock,isGen)
                         return True, '_topSel'
                     else: return False, None
                 else: return False, None 
