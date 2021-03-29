@@ -48,7 +48,8 @@ def submitJobs( job, inputFiles, unitJobs ):
     requestname = 'jetObservables_triggerEfficiencies_'+ job + '_' +options.version
     print requestname
 
-    if job.startswith(('Single', 'JetHT')): config.Data.lumiMask = '/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions17/13TeV/Legacy_2017/Cert_294927-306462_13TeV_UL2017_Collisions17_GoldenJSON.txt'
+    if job.split('Run')[1].startswith('2017'): config.Data.lumiMask = '/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions17/13TeV/Legacy_2017/Cert_294927-306462_13TeV_UL2017_Collisions17_GoldenJSON.txt'
+    elif job.split('Run')[1].startswith('2018'): config.Data.lumiMask = '/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions18/13TeV/Legacy_2018/Cert_314472-325175_13TeV_Legacy2018_Collisions18_JSON.txt'
     config.Data.inputDataset = inputFiles
     config.Data.splitting = 'Automatic'
     #config.Data.unitsPerJob = unitJobs
@@ -112,6 +113,10 @@ if __name__ == '__main__':
     dictSamples['JetHT_Run2017D'] = [ '/JetHT/Run2017D-UL2017_MiniAODv2-v1/MINIAOD', 1 ]
     dictSamples['JetHT_Run2017E'] = [ '/JetHT/Run2017E-UL2017_MiniAODv2-v1/MINIAOD', 1 ]
     dictSamples['JetHT_Run2017F'] = [ '/JetHT/Run2017F-UL2017_MiniAODv2-v1/MINIAOD', 1 ]
+
+    dictSamples['JetHT_Run2018A'] = [ '/JetHT/Run2018A-UL2018_MiniAODv2-v1/MINIAOD', 1 ]
+    dictSamples['JetHT_Run2018B'] = [ '/JetHT/Run2018B-UL2018_MiniAODv2-v1/MINIAOD', 1 ]
+    dictSamples['JetHT_Run2018D'] = [ '/JetHT/Run2018D-UL2018_MiniAODv2-v1/MINIAOD', 1 ]
 
     processingSamples = {}
     if 'all' in options.datasets:

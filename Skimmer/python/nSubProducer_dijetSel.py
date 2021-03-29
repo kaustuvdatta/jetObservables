@@ -61,28 +61,28 @@ class nSubProd(Module):
                 }
         self.triggerTable = OrderedDict()
         self.triggerTable[ 'AK8PFJet80' ] = {
-                    '2017' : [ 200,   220, 14504.86,  82434.76,  39582.94,  7196.95,  4636.59,  10684.93,  3789.37,  374901.27,  161589.62 ],
+                    '2017' : [ 200,   238, 14504.86,  82434.76,  39582.94,  7196.95,  4636.59,  10684.93,  3789.37,  374901.27,  161589.62 ],
                     }
         self.triggerTable[ 'AK8PFJet140' ] = {
-                    '2017' : [ 220,   280, 154.40,  1761.20,  2274.56,  429.64,  2530.13,  1507.08,  299.13,  14529.74,  6604.47 ],
+                    '2017' : [ 238,   304, 154.40,  1761.20,  2274.56,  429.64,  2530.13,  1507.08,  299.13,  14529.74,  6604.47 ],
                     }
         self.triggerTable[ 'AK8PFJet200' ] = {
-                    '2017' : [ 280,   350, 10.42,  355.20,  540.55,  97.30,  618.20,  305.10,  55.52,  2441.68,  1111.29 ],
+                    '2017' : [ 304,   370, 10.42,  355.20,  540.55,  97.30,  618.20,  305.10,  55.52,  2441.68,  1111.29 ],
                     }
         self.triggerTable[ 'AK8PFJet260' ] = {
-                    '2017' : [ 350,   440, 52.56,  60.42,  95.84,  99.46,  71.33,  70.41,  106.94,  96.96,  84.21 ],
+                    '2017' : [ 370,   436, 52.56,  60.42,  95.84,  99.46,  71.33,  70.41,  106.94,  96.96,  84.21 ],
                     }
         self.triggerTable[ 'AK8PFJet320' ] = {
-                    '2017' : [ 440,   510, 20.95,  23.84,  37.16,  39.98,  26.83,  26.57,  40.28,  34.86,  33.72 ],
+                    '2017' : [ 436,   524, 20.95,  23.84,  37.16,  39.98,  26.83,  26.57,  40.28,  34.86,  33.72 ],
                     }
         self.triggerTable[ 'AK8PFJet400' ] = {
-                    '2017' : [ 510,   600, 1.00,  1.00,  12.32,  13.97,  8.69,  9.66,  14.38,  11.38,  11.59 ],
+                    '2017' : [ 524,   579, 1.00,  1.00,  12.32,  13.97,  8.69,  9.66,  14.38,  11.38,  11.59 ],
                     }
-#        self.triggerTable[ 'AK8PFJet450' ] = {
-#                    '2017' : [ 580,   570, 1.04,  1.15,  6.83,  7.32,  5.12,  5.49,  7.90,  6.36,  6.53  ],
-#                    }
+        self.triggerTable[ 'AK8PFJet450' ] = {
+                    '2017' : [ 579,   634, 1.04,  1.15,  6.83,  7.32,  5.12,  5.49,  7.90,  6.36,  6.53  ],
+                    }
         self.triggerTable[ 'AK8PFJet500' ] = {
-                    '2017' : [ 600.,   10000., 1. , 1., 1., 1., 1., 1., 1., 1., 1.],
+                    '2017' : [ 634.,   10000., 1. , 1., 1., 1., 1., 1., 1., 1., 1.],
                     }
 
         ### Defining nsubjetiness basis
@@ -281,8 +281,8 @@ class nSubProd(Module):
         recoJet = OrderedDict()
         if passRecoSel:  #### Detector level dist.
 
-            tmpRecoJet1 = self.createNsubBasis( selRecoJets[0], event, ( 'JetPFCands' if self.isMC else 'PFCands' ) )
-            tmpRecoJet2 = self.createNsubBasis( selRecoJets[1], event, ( 'JetPFCands' if self.isMC else 'PFCands' ) )
+            tmpRecoJet1 = self.createNsubBasis( selRecoJets[0], event, 'PFCands' )
+            tmpRecoJet2 = self.createNsubBasis( selRecoJets[1], event, 'PFCands' )
             getattr( self, 'recoJet1_sortedPt_pt'+iRecoSel ).Fill( getattr(tmpRecoJet1['jet'], 'pt_nom' ), self.totalWeight )
             getattr( self, 'recoJet1_sortedPt_eta'+iRecoSel ).Fill( getattr(tmpRecoJet1['jet'], 'eta' ), self.totalWeight )
             getattr( self, 'recoJet1_sortedPt_phi'+iRecoSel ).Fill( getattr(tmpRecoJet1['jet'], 'phi' ), self.totalWeight )
@@ -351,8 +351,8 @@ class nSubProd(Module):
                 if passGenSel:  ##### go to matrix
                     self.response= self.response+1
 
-                    genJet['Jet1'] = self.createNsubBasis( selGenJets[0], event, 'GenJetCands' )
-                    genJet['Jet2'] = self.createNsubBasis( selGenJets[1], event, 'GenJetCands' )
+                    genJet['Jet1'] = self.createNsubBasis( selGenJets[0], event, 'GenCands' )
+                    genJet['Jet2'] = self.createNsubBasis( selGenJets[1], event, 'GenCands' )
 
                     if ( iGenSel==iRecoSel ):
 
@@ -451,8 +451,8 @@ class nSubProd(Module):
         else:  #### Misses
             self.miss = self.miss+1
 
-            genJet['Jet1'] = self.createNsubBasis( selGenJets[0], event, 'GenJetCands' )
-            genJet['Jet2'] = self.createNsubBasis( selGenJets[1], event, 'GenJetCands' )
+            genJet['Jet1'] = self.createNsubBasis( selGenJets[0], event, 'GenCands' )
+            genJet['Jet2'] = self.createNsubBasis( selGenJets[1], event, 'GenCands' )
 
             if passGenSel:
 

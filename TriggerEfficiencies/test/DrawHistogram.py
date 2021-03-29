@@ -27,7 +27,7 @@ yline = array('d', [0.98,.98])
 line = TGraph(2, xline, yline)
 line.SetLineColor(kRed)
 
-def plotTriggerEfficiency( inFileSample, sample, triggerDenom, triggerPass, name, xlabel, xmin, xmax, rebin, log):
+def plotTriggerEfficiency( inFileSample, sample, triggerDenom, denomScale, triggerPass, passScale, name, minFit, maxFit, xlabel, xmin, xmax, rebin, log):
     """docstring for plot"""
 
     outputFileName = name+'_'+triggerDenom+"_"+triggerPass+'_'+sample+'_TriggerEfficiency'+args.version+'.'+args.extension
@@ -35,18 +35,21 @@ def plotTriggerEfficiency( inFileSample, sample, triggerDenom, triggerPass, name
 
     histos = {}
 
-    tmpDenom = inFileSample.Get( 'TriggerEfficiencies/jet1Pt_'+triggerDenom+'_only' )
-    histos[ 'denomOnly'+triggerPass ] = tmpDenom.Clone()
-    #histos[ 'denomOnly'+triggerPass ] = inFileSample.Get( 'TriggerEfficiencies/jet1Pt_HLT_AK8PFJet80_AK8PFJet80' )
-    #histos[ 'denomOnly'+triggerPass ] = inFileSample.Get( 'triggerEfficiencies/AK8Jet1Pt_'+triggerDenom )
+    if args.type.startswith('simulated'):
+        histos[ 'denomOnly'+triggerPass ] = inFileSample.Get( 'TriggerEfficiencies/jet1Pt_'+triggerDenom+'_only' ).Clone()
+        histos[ 'PassingOnly'+triggerPass ] = inFileSample.Get( 'TriggerEfficiencies/jet1Pt_'+triggerPass+'_simulated' ).Clone()
+    else:
+        histos[ 'denomOnly'+triggerPass ] = inFileSample.Get( 'TriggerEfficiencies/jet1Pt_HLT_'+triggerDenom+'_scaled' ).Clone()
+        #histos[ 'denomOnly'+triggerPass ].Scale( denomScale )
+        histos[ 'PassingOnly'+triggerPass ] = inFileSample.Get( 'TriggerEfficiencies/jet1Pt_HLT_'+triggerPass+'_scaled' ).Clone()
+        histos[ 'PassingOnly'+triggerPass ].Scale( passScale )
+
     histos[ 'denomOnly'+triggerPass ].Rebin(rebin)
-    histos[ 'PassingOnly'+triggerPass ] = inFileSample.Get( 'TriggerEfficiencies/jet1Pt_'+triggerPass+'_simulated' )
-    #histos[ 'PassingOnly'+triggerPass ] = inFileSample.Get( 'TriggerEfficiencies/jet1Pt_HLT_'+triggerPass+'_AK8PFJet80' )
-    #histos[ 'PassingOnly'+triggerPass ] = inFileSample.Get( 'triggerEfficiencies/AK8Jet1Pt_'+triggerPass )
     histos[ 'PassingOnly'+triggerPass ].Rebin(rebin)
-    Passing = histos[ 'PassingOnly'+triggerPass ].Clone()
-    #histos[ 'eff'+triggerPass ] = TGraphAsymmErrors( histos[ 'PassingOnly'+triggerPass ].Clone(), histos[ 'denomOnly'+triggerPass ].Clone(), 'cp'  )
-    histos[ 'eff'+triggerPass ] = TEfficiency( histos[ 'PassingOnly'+triggerPass ].Clone(), histos[ 'denomOnly'+triggerPass ].Clone() )
+    if args.type.startswith('simulated'):
+        histos[ 'eff'+triggerPass ] = TEfficiency( histos[ 'PassingOnly'+triggerPass ].Clone(), histos[ 'denomOnly'+triggerPass ].Clone() )
+    else:
+        histos[ 'eff'+triggerPass ] = TGraphAsymmErrors( histos[ 'PassingOnly'+triggerPass ].Clone(), histos[ 'denomOnly'+triggerPass ].Clone(), 'pois'  )
 
     binWidth = histos[ 'denomOnly'+triggerPass ].GetBinWidth(1)
 
@@ -105,11 +108,16 @@ def plotTriggerEfficiency( inFileSample, sample, triggerDenom, triggerPass, name
 #    histos[ 'eff'+triggerPass ].GetPaintedGraph().GetXaxis().SetLabelSize(0.06)
 #    histos[ 'eff'+triggerPass ].GetPaintedGraph().GetYaxis().SetTitleSize(0.06)
 #    histos[ 'eff'+triggerPass ].GetPaintedGraph().GetYaxis().SetTitleOffset(0.8)
-    histos[ 'eff'+triggerPass ].GetPaintedGraph().GetYaxis().SetLabelOffset(9999)
-    histos[ 'eff'+triggerPass ].GetPaintedGraph().GetXaxis().SetLimits( xmin, xmax )
-    histos[ 'eff'+triggerPass ].GetPaintedGraph().GetYaxis().SetTickLength( 0 )
-    #histos[ 'eff'+triggerPass ].GetPaintedGraph().SetMinimum(-0.1)
-    #histos[ 'eff'+triggerPass ].GetPaintedGraph().SetMaximum(1.1)
+    if args.type.startswith('simulated'):
+        histos[ 'eff'+triggerPass ].GetPaintedGraph().GetYaxis().SetLabelOffset(9999)
+        histos[ 'eff'+triggerPass ].GetPaintedGraph().GetXaxis().SetLimits( xmin, xmax )
+        histos[ 'eff'+triggerPass ].GetPaintedGraph().GetYaxis().SetTickLength( 0 )
+    else:
+        histos[ 'eff'+triggerPass ].GetYaxis().SetLabelOffset(9999)
+        histos[ 'eff'+triggerPass ].GetXaxis().SetLimits( xmin, xmax )
+        histos[ 'eff'+triggerPass ].GetYaxis().SetTickLength( 0 )
+        histos[ 'eff'+triggerPass ].SetMinimum(0)
+        histos[ 'eff'+triggerPass ].SetMaximum(1.2)
     gPad.Update()
 
     newAxis = TGaxis( xmax,ymin,xmax, ymax,ymin,ymax,502,"+L") #,0.03 )
@@ -126,12 +134,16 @@ def plotTriggerEfficiency( inFileSample, sample, triggerDenom, triggerPass, name
     newAxis.Draw()
     line.Draw('same')
 
-#    #errF = TF1('errF', '0.5*(1+TMath::Erf((x-[0])/[1]))', 100, 600 )
-#    errF = TF1('errF', '0.5*(1+TMath::Erf(([0]*x-[1])/[2]))', 100, 700 )  ## Mass
-#    #histos[ 'eff'+triggerPass ].SetStatisticOption(TEfficiency.kFWilson)
-#    for i in range(5): histos[ 'eff'+triggerPass ].Fit(errF)
+##    errF = TF1('errF', '(1+TMath::Erf((x-[0])/[1]))', minFit, maxFit )
+#    errF = TF1('errF', '[3]*( [2] + (0.5 * ( 1-[2]) * ( 1 + TMath::Erf( (x-[0])/[1] ) )))', minFit, maxFit )  ## Mass
+#    errF.SetParLimits(0, 0, 200 )
+#    errF.SetParLimits(1, 0, 100 )
+#    errF.SetParLimits(2, -10, 10 )
+#    errF.SetParLimits(3, .9, 1.1 )
+##    histos[ 'eff'+triggerPass ].SetStatisticOption(TEfficiency.kFWilson)
+#    for i in range(5): histos[ 'eff'+triggerPass ].Fit(errF, 'MIR')
 #    errF.Draw("same")
-#    #for i in range(5): Efficiency.Fit('errF', 'MIR')
+##    #for i in range(5): Efficiency.Fit('errF', 'MIR')
 
     can.SaveAs( 'Plots/'+outputFileName )
     del can
@@ -598,12 +610,12 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument('-p', '--proc', action='store', default='simple', help='Process to draw, example.' )
+    parser.add_argument('-t', '--type', action='store', default='simulated', help='Using prescales or simulated' )
     parser.add_argument('-d', '--dataset', action='store', default='all', help='Dataset: JetHT, SingleMuon, etc.' )
     parser.add_argument('-v', '--version', action='store', default='v01', help='Version of the files' )
     parser.add_argument('-C', '--cut', action='store', default='_cutDEta', help='cut, example: cutDEta' )
     parser.add_argument('-s', '--single', action='store', default='all', help='single histogram, example: massAve_cutDijet.' )
     parser.add_argument('-l', '--lumi', action='store', default='15.5', help='Luminosity, example: 1.' )
-    parser.add_argument('-t', '--trigger', action='store', default='AK8PFHT700TrimMass50', help="Trigger used, name of directory" )
     parser.add_argument('-e', '--extension', action='store', default='png', help='Extension of plots.' )
 
     try: args = parser.parse_args()
@@ -618,7 +630,7 @@ if __name__ == '__main__':
         [ '2D', 'jet1SDMassvsPt', 'Leading SD Jet Mass [GeV]', 'Leading Jet Pt [GeV]', 20, 200, 20, 400, 800, 50, 0.85, 0.2],
 
         [ 'simple', 'AK8Jet1Pt', 'Leading jet pt [GeV]', 100, 800, 1, True],
-        [ 'simple', 'AK8Jet2Pt', '2nd Leading jet pt [GeV]', 100, 800, 1, True],
+#        [ 'simple', 'AK8Jet2Pt', '2nd Leading jet pt [GeV]', 100, 800, 1, True],
 
         [ 'eff', 'recoLeadJetPt', 'Leading jet pt [GeV]', 100, 1000, 10, True],
         [ 'eff', 'recoHT', 'HT [GeV]', 500, 1500, 10, True],
@@ -633,19 +645,22 @@ if __name__ == '__main__':
     CMS_lumi.extraText = "Preliminary"
     CMS_lumi.lumi_13TeV = '13 TeV'
 
-    triggerList = [ ('AK8PFJet80', 'AK8PFJet60'),
-                    ('AK8PFJet140', 'AK8PFJet60'),
-                    ('AK8PFJet200', 'AK8PFJet60'),
-                    ('AK8PFJet260', 'AK8PFJet60'),
-                    ('AK8PFJet320', 'AK8PFJet140'),
-                    ('AK8PFJet400', 'AK8PFJet140' ),
-                    ('AK8PFJet450', 'AK8PFJet140' ),
-                    ('AK8PFJet500', 'AK8PFJet140' ),
-                    ('AK8PFJet550', 'AK8PFJet140' )]
+    triggerList = [
+#                    ['AK8PFJet80', 16419.911,   'AK8PFJet60', 82183.849,  150, 250 ],
+                    ['AK8PFJet140', 0.0085,   'AK8PFJet80', 16419.911, 150, 250 ],
+                    ['AK8PFJet200', 0.067,    'AK8PFJet140', 1560.153, 100, 800 ],
+                    ['AK8PFJet260', 0.42,     'AK8PFJet200', 219.705, 100, 800 ],
+                    ['AK8PFJet320', 1.,     'AK8PFJet260', 88.426, 100, 800 ],
+                    ['AK8PFJet400', 1.,      'AK8PFJet320', 33.827, 100, 800  ],
+                    ['AK8PFJet450', 1.,      'AK8PFJet400', 5.404, 100, 800  ],
+                    ['AK8PFJet500', 1.,          'AK8PFJet450', 4.299, 100, 800  ],
+                    ['AK8PFJet550', 1.,          'AK8PFJet500', 1, 100, 800  ]
+                    ]
 
     Samples = {}
     #Samples[ 'SingleMuon2017B' ] = [ TFile.Open('Rootfiles/triggerEfficiencies_histograms.root'), 0 ]
-    Samples[ 'JetHT2017' ] = [ TFile.Open('/eos/home-a/algomez/tmpFiles/jetObservables/triggerEfficiencies/Plots/v04/triggerEfficiencies_histograms_MiniAOD_JetHTRun2017B.root'), 0 ]
+    Samples[ 'JetHT2017' ] = [ TFile.Open('/eos/home-a/algomez/tmpFiles/jetObservables/triggerEfficiencies/Plots/v05/triggerEfficiencies_histograms_MiniAOD_JetHTRun2017ALL.root'), 0 ]
+    #Samples[ 'JetHT2018' ] = [ TFile.Open('/eos/home-a/algomez/tmpFiles/jetObservables/triggerEfficiencies/Plots/v05/triggerEfficiencies_histograms_MiniAOD_JetHTRun2018ALL.root'), 0 ]
 
 
     processingSamples = {}
@@ -660,7 +675,7 @@ if __name__ == '__main__':
     for i in Plots:
         for isam, samFile in processingSamples.iteritems():
             for q, it in enumerate(triggerList):
-                plotTriggerEfficiency( samFile[0], isam, it[1], it[0], i[0], i[1], i[2], i[3], i[4], i[5] )
+                plotTriggerEfficiency( samFile[0], isam, it[2], it[3], it[0], it[1],  i[0], it[4], it[5], i[1], i[2], i[3], i[4], i[5] )
 #        if args.proc.startswith('simple'):
 #            #cuts = [ 'Pt10', 'Pt20','Pt30','Pt40','Pt50', 'Pt10Eta5', 'Pt20Eta5', 'Pt30Eta5', 'Pt40Eta5', 'Pt50Eta5' ]
 #            cuts = [ 'Pt10', 'Pt30','Pt50', 'Pt10Eta5', 'Pt30Eta5', 'Pt50Eta5' ]

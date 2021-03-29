@@ -1,6 +1,4 @@
 import FWCore.ParameterSet.Config as cms
-from RecoJets.Configuration.RecoGenJets_cff import ak4GenJets
-from RecoJets.Configuration.RecoPFJets_cff import ak4PFJets
 
 process = cms.Process("Demo")
 
@@ -25,14 +23,14 @@ process.TFileService = cms.Service("TFileService",
         closeFileFast = cms.untracked.bool(True)
         )
 
-triggerThresholds = [ 60, 80, 140, 200, 260, 320, 400, 450, 500, 550 ]
+triggerThresholds = [ '60', '80', '140', '200', '260', '320', '400', '450', '500', '550' ]
 listOfTriggers = [ 'HLT_AK8PFJet'+str(x) for x in triggerThresholds  ]
 
 ###### Running analyzer, which creates a tree with variables
 process.TriggerEfficiencies = cms.EDAnalyzer("TriggerEfficiencies",
         cutAK8jetPt= cms.double( 170 ) ,
         baseTrigger = cms.string( 'HLT_AK8PFJet60' ),
-        triggerThresholds = cms.vdouble( triggerThresholds ),
+        triggerThresholds = cms.vstring( triggerThresholds ),
         listOfTriggers = cms.vstring( listOfTriggers )
         )
 
