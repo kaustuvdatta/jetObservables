@@ -17,25 +17,30 @@ dbsPhys03 = DbsApi('https://cmsweb.cern.ch/dbs/prod/phys03/DBSReader')
 
 
 #####################################
-def computeGenWeights( inputFiles, outputName ):
+def computeGenWeights( inputFiles, genEventSumw = 0, genEventSumw2 = 0, genEventCount = 0 ):
     """docstring for computeGenWeights"""
 
-    genEventSumw = 0
-    genEventSumw2 = 0
-    genEventCount = 0
-    genWeight = 0
 
     executor = concurrent.futures.ThreadPoolExecutor()
+    notProcessedFiles = []
     for i, fi in enumerate(inputFiles):
-        bl = uproot.open(fi, executor=executor)['Runs']
-        genEventSumw += bl.array("genEventSumw")[0]
-        genEventSumw2 += bl.array("genEventSumw2")[0]
-        genEventCount += bl.array("genEventCount")[0]
-        print("file",i,genEventSumw)
+        try:
+            bl = uproot.open(fi, executor=executor)['Runs']
+            genEventSumw += bl.array("genEventSumw")[0]
+            genEventSumw2 += bl.array("genEventSumw2")[0]
+            genEventCount += bl.array("genEventCount")[0]
+            print("file",i,genEventSumw)
+        except OSError:
+            notProcessedFiles.append(fi)
+            print('file not processed',fi)
+            continue
 
     print ('Total number of genEventCount in sample: ', genEventCount)
     print ('Total number of genEventSumw in sample: ', genEventSumw)
     print ('Total number of genEventSumw2 in sample: ', genEventSumw2)
+
+    return notProcessedFiles, genEventCount, genEventSumw, genEventSumw2
+
 
 
 #####################################
@@ -45,6 +50,7 @@ if __name__ == '__main__':
 
     parser.add_argument("-d", "--datasets", action='store', dest="datasets", default="ttHTobb", help="Name of dataset to process" )
     parser.add_argument("-v", "--version", action='store', dest="version", default="v00", help="Version" )
+    parser.add_argument("-l", "--local", action='store_true', help="Run local or through xrootd" )
     parser.add_argument("-y", "--year", action='store', choices=[ '2016', '2017', '2018' ],  default="2017", help="Version" )
 
     try: args = parser.parse_args()
@@ -66,12 +72,14 @@ if __name__ == '__main__':
             print('|--------> Sample '+isample+' does not have skimmer sample in datasets.py')
             continue
 
+        prefix = '/pnfs/psi.ch/cms/trivcat' if args.local else "root://xrootd-cms.infn.it/"
+
         ### Create a list from the dataset
         if isinstance( jsample, list ):
             allfiles = []
             for jsam in jsample:
                 fileDictList = ( dbsPhys03 if jsam.endswith('USER') else dbsGlobal).listFiles(dataset=jsam,validFileOnly=1)
-                tmpfiles = [ "root://xrootd-cms.infn.it/"+dic['logical_file_name'] for dic in fileDictList ]
+                tmpfiles = [ prefix+dic['logical_file_name'] for dic in fileDictList ]
                 #print tmpfiles
                 allfiles = allfiles + tmpfiles
             #print allfiles
@@ -79,10 +87,10 @@ if __name__ == '__main__':
             fileDictList = ( dbsPhys03 if jsample.endswith('USER') else dbsGlobal).listFiles(dataset=jsample,validFileOnly=1)
             # DBS client returns a list of dictionaries, but we want a list of Logical File Names
             #allfiles = [ {"root://cms-xrd-global.cern.ch/"+dic['logical_file_name']: "Runs"} for dic in fileDictList ]
-            allfiles = [ "root://xrootd-cms.infn.it/"+dic['logical_file_name'] for dic in fileDictList ]
+            allfiles = [ prefix+dic['logical_file_name'] for dic in fileDictList ]
         print ("dataset %s has %d files" % (jsample, len(allfiles)))
 
-        #for i in range (0, len(allfiles),20):
-        #    print i
-        #    computeGenWeights( allfiles[i:i+20], isample )
-        computeGenWeights( allfiles, isample )
+        notProcessedFiles, tmpEventCount, tmpEventSumw, tmpEventSumw2 = computeGenWeights( allfiles )
+        #while len(notProcessedFiles)>0:
+        #    notProcessedFiles, tmpEventCount, tmpEventSumw, tmpEventSumw2 = computeGenWeights( notProcessedFiles, genEventCount=tmpEventCount, genEventSumw=tmpEventSumw, genEventSumw2=tmpEventSumw2 )
+
