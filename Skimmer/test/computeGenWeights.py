@@ -20,7 +20,6 @@ dbsPhys03 = DbsApi('https://cmsweb.cern.ch/dbs/prod/phys03/DBSReader')
 def computeGenWeights( inputFiles, genEventSumw = 0, genEventSumw2 = 0, genEventCount = 0 ):
     """docstring for computeGenWeights"""
 
-
     executor = concurrent.futures.ThreadPoolExecutor()
     notProcessedFiles = []
     for i, fi in enumerate(inputFiles):
@@ -38,8 +37,7 @@ def computeGenWeights( inputFiles, genEventSumw = 0, genEventSumw2 = 0, genEvent
     print ('Total number of genEventCount in sample: ', genEventCount)
     print ('Total number of genEventSumw in sample: ', genEventSumw)
     print ('Total number of genEventSumw2 in sample: ', genEventSumw2)
-
-    return notProcessedFiles, genEventCount, genEventSumw, genEventSumw2
+    print ('List of not processed files\n', notProcessedFiles)
 
 
 
@@ -90,7 +88,5 @@ if __name__ == '__main__':
             allfiles = [ prefix+dic['logical_file_name'] for dic in fileDictList ]
         print ("dataset %s has %d files" % (jsample, len(allfiles)))
 
-        notProcessedFiles, tmpEventCount, tmpEventSumw, tmpEventSumw2 = computeGenWeights( allfiles )
-        #while len(notProcessedFiles)>0:
-        #    notProcessedFiles, tmpEventCount, tmpEventSumw, tmpEventSumw2 = computeGenWeights( notProcessedFiles, genEventCount=tmpEventCount, genEventSumw=tmpEventSumw, genEventSumw2=tmpEventSumw2 )
+        computeGenWeights( allfiles )
 
