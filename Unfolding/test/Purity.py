@@ -4,13 +4,14 @@
 #!/usr/bin/env python
 import argparse, os, shutil, sys
 import ROOT
-from datasets import checkDict, dictSamples
 from array import array
 import numpy as np
 from DrawHistogram import plotSimpleComparison
 sys.path.insert(0,'../python/')
 import CMS_lumi as CMS_lumi
 import tdrstyle as tdrstyle
+sys.path.insert(0,'../../Skimmer/test/')
+from datasets import checkDict, dictSamples
 
 ####gReset()
 ROOT.gROOT.SetBatch()
@@ -25,10 +26,17 @@ def runPurity( bkgFiles, variables, sel ):
 
     ### Getting input histos
     signalHistos = loadHistograms( bkgFiles, variables, sel )
+    if args.selection.startswith('_dijet'):
+        tmpHistos = { k:v for (k,v) in signalHistos.items() if 'Inf' in k }
+        for ih in tmpHistos:
+            for jh in signalHistos:
+                if (jh.endswith('0'+ih.split('Inf')[1])) and not ('Inf' in jh ):
+                    tmpHistos[ih].Add( signalHistos[jh].Clone() )
+        signalHistos = tmpHistos
 
     for ivar in variables:
 
-        outputDir='Plots/Unfold/'+args.year+'/'+ivar+'/'
+        outputDir='Plots/Purity/'+args.year+'/'+ivar+'/'
         if not os.path.exists(outputDir): os.makedirs(outputDir)
 
         dictGraph = {}
@@ -103,39 +111,14 @@ def loadHistograms( samples, variables, sel ):
 
     allHistos = {}
     for var in variables:
+        ih = 'resp'+var+'_nom'+sel
         for isam in samples:
-            ih = 'resp'+var+'_nom'+sel
             tmpHisto = samples[isam][0].Get( 'jetObservables/'+ih )
+            tmpHisto.Scale( samples[isam][1]['XS'] / samples[isam][1][args.year]['nGenWeights'] )
             for ibin in variables[var][0]:
-                if isinstance(ibin, int):
-                    allHistos[isam+'_'+ih+str(ibin)] = tmpHisto.Clone()
-                    allHistos[isam+'_'+ih+str(ibin)].SetName('Rebin_'+str(ibin))
-                    allHistos[isam+'_'+ih+str(ibin)].Rebin2D( ibin, ibin )
-                else:
-                    #### fancy way to create variable binning TH2D
-                    ##### IT IS NOT USED IN THIS SCRIPT YET
-                    tmpHisto = TH2F( allHistos[isam+'_'+ih].GetName()+isam+"_Rebin", allHistos[isam+'_'+ih].GetName()+isam+"_Rebin", len(variables[var])-1, array( 'd', variables[var]), len(variables[var])-1, array( 'd', variables[var]) )
-
-                    tmpArrayContent = np.zeros((len(variables[var]), len(variables[var])))
-                    tmpArrayError = np.zeros((len(variables[var]), len(variables[var])))
-
-                    for biny in range( 1, allHistos[isam+'_'+ih].GetNbinsY()+1 ):
-                        by = allHistos[isam+'_'+ih].GetYaxis().GetBinCenter( biny )
-                        for binx in range( 1, allHistos[isam+'_'+ih].GetNbinsX()+1 ):
-                            bx = allHistos[isam+'_'+ih].GetXaxis().GetBinCenter(binx)
-                            for iY in range( len(variables[var])-1 ):
-                                for iX in range( len(variables[var])-1 ):
-                                    if (by<variables[var][iY+1] and by>variables[var][iY]) and (bx<variables[var][iX+1] and bx>variables[var][iX]):
-                                        jbin = allHistos[isam+'_'+ih].GetBin(binx,biny)
-                                        tmpArrayContent[iX][iY] = tmpArrayContent[iX][iY] + allHistos[isam+'_'+ih].GetBinContent( jbin )
-                                        tmpArrayContent[iX][iY] = tmpArrayContent[iX][iY] + TMath.Power( allHistos[isam+'_'+ih].GetBinError( jbin ), 2 )
-
-                    for biny in range( 1, tmpHisto.GetNbinsY()+1 ):
-                        for binx in range( 1, tmpHisto.GetNbinsX()+1 ):
-                            tmpHisto.SetBinContent( tmpHisto.GetBin(binx,biny), tmpArrayContent[binx-1][biny-1] )
-
-                    allHistos[isam+'_'+ih] = tmpHisto
-
+                allHistos[isam+'_'+ih+str(ibin)] = tmpHisto.Clone()
+                allHistos[isam+'_'+ih+str(ibin)].SetName(tmpHisto.GetName()+isam+'_Rebin_'+str(ibin))
+                allHistos[isam+'_'+ih+str(ibin)].Rebin2D( ibin, ibin )
 
     return allHistos
 
@@ -146,9 +129,7 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("-p", "--process", action='store', dest="process", default="data", help="Process to unfold: data or MC." )
     parser.add_argument("-s", "--selection", action='store', dest="selection", default="_dijetSel", help="Selection to unfold: _dijetSel, _WSel, _topSel" )
-    ##parser.add_argument("-r", "--runCombine", action='store_true', dest="runCombine", help="Run combine (true)" )
     parser.add_argument('-y', '--year', action='store', default='2017', help='Year: 2016, 2017, 2018.' )
     parser.add_argument("-v", "--version", action='store', dest="version", default="v00", help="Version" )
     parser.add_argument('-e', '--ext', action='store', default='png', help='Extension of plots.' )
@@ -158,13 +139,15 @@ if __name__ == '__main__':
         parser.print_help()
         sys.exit(0)
 
-    inputFolder='Rootfiles/'+args.version
-
     bkgFiles = {}
-    bkgFiles['QCDHerwig'] = [
-                            ROOT.TFile.Open( checkDict( 'QCD_Pt-15to7000_TuneCH3_Flat_13TeV_herwig7', dictSamples )[args.year]['skimmerHisto'] ),
-                            checkDict( 'QCD_Pt-15to7000_TuneCH3_Flat_13TeV_herwig7', dictSamples )
-            ]
+    for isam in dictSamples:
+        if not checkDict( isam, dictSamples )[args.year]['skimmerHisto'].endswith('root'): continue
+        #if isam.startswith('QCD_Pt') and isam.endswith('pythia8'):
+        if isam.startswith('QCD_HT'):
+            bkgFiles[isam.split('_Tune')[0]] = [
+                            ROOT.TFile.Open( checkDict( isam, dictSamples )[args.year]['skimmerHisto'] ),
+                            checkDict( isam, dictSamples )
+                        ]
 
     variables = {}
     for ijet in [ ('Jet1', 'Outer'), ('Jet2', 'Central') ]:

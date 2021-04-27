@@ -40,7 +40,7 @@ To run:
 ```bash
 cd jetObservables/Skimmer/test/
 git clone https://github.com/cms-sw/genproductions.git
-mv genproductions/test/calculateXSectionAndFilterEfficiency/ .
+mv genproductions/Utilities/calculateXSectionAndFilterEfficiency/ .
 rm -rf genproductions
 ```
 
