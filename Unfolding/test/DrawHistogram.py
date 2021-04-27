@@ -505,6 +505,73 @@ def plotSignalBkg( name, xmin, xmax, rebinX, axisX='', axisY='', labX=0.92, labY
         canvas[outputFileName].SaveAs( outputDir+'/'+outputFileName )
     del canvas[outputFileName]
 
+##################################################
+def plotResolution( name, xmin, xmax, rebinX, axisX='', axisY='', labX=0.92, labY=0.50, log=False,
+                      addRatioFit=False, Norm=False, ext='png', outputDir='Plots/', legendAlignment='right' ):
+    """function to resolution"""
+
+    outputFileName = name+'_Resolution_'+args.version+'.'+ext
+    print('Processing.......', outputFileName)
+
+    if legendAlignment.startswith('right'): legend=ROOT.TLegend(0.60,0.75,0.90,0.90)
+    else: legend=ROOT.TLegend(0.20,0.75,0.50,0.90)
+    legend.SetFillStyle(0)
+    legend.SetTextSize(0.04)
+
+    bkgHistos = OrderedDict()
+    maxList = []
+    if len(bkgFiles) > 0:
+        for bkgSamples in bkgFiles:
+            bkgHistos[ bkgSamples ] = bkgFiles[ bkgSamples ][0].Get( 'jetObservables/'+name )
+            bkgHistos[ bkgSamples ].SetTitle(bkgSamples)
+            bkgHistos[ bkgSamples ].Scale( args.lumi*bkgFiles[ bkgSamples ][1]['XS'] / bkgFiles[ bkgSamples ][1][args.year]['nGenWeights'] )
+            print(bkgSamples, round(bkgHistos[ bkgSamples ].Integral(), 2) )
+            if isinstance(rebinX, int): bkgHistos[ bkgSamples ] = bkgHistos[ bkgSamples ].Rebin( rebinX )
+            else:
+                tmpBkgHist = bkgHistos[ bkgSamples ].Clone()
+                bkgHistos[bkgSamples] = tmpBkgHist.Rebin( len(rebinX)-1, tmpBkgHist.GetName()+"_rebinX", rebinX )
+            bkgHistos[ bkgSamples ].SetLineColor( bkgFiles[ bkgSamples ][1]['color'] )
+            bkgHistos[ bkgSamples ].SetLineWidth( 2 )
+
+    for bkg in bkgFiles:
+        if args.selection.startswith('dijet'):
+            if bkg.startswith('QCD_Pt') and not bkg.endswith('Inf'):
+                bkgHistos['QCD_Pt_3200toInf'].Add( bkgHistos[bkg] )
+                bkgHistos.pop(bkg, None)
+            elif bkg.startswith('QCD_HT') and not bkg.endswith('Inf'):
+                bkgHistos['QCD_HT2000toInf'].Add( bkgHistos[bkg] )
+                bkgHistos.pop(bkg, None)
+            else:
+                legend.AddEntry( bkgHistos[ bkg ], bkgFiles[ bkg ][1]['label'], 'le' ) # if Norm else 'f' )
+
+    stackHisto = ROOT.THStack('stackHisto'+name, 'stack'+name)
+    for samples in bkgHistos:
+        print(samples)
+        bkgHistos[ samples ].Scale( 1/bkgHistos[ samples ].Integral() )
+        stackHisto.Add( bkgHistos[ samples ].Clone() )
+        binWidth = bkgHistos[ samples ].GetBinWidth(1)
+
+    canvas[name] = ROOT.TCanvas('c1'+name, 'c1'+name,  10, 10, 750, 500 )
+    if log:
+        canvas[name].SetLogy()
+        outName = outputFileName.replace('_simplePlot','_Log_simplePlot')
+    else: outName = outputFileName
+
+    if xmax and xmin: stackHisto.GetXaxis().SetRangeUser( xmin, xmax )
+    #stackHisto.SetLineColor(ROOT.kRed)
+    #stackHisto2.SetLineColor(ROOT.kBlue)
+    stackHisto.Draw('nostack')
+    if not axisY: stackHisto.GetYaxis().SetTitle( 'Normalized / '+str(binWidth) )
+    stackHisto.GetYaxis().SetTitleOffset(0.90)
+    if axisX: stackHisto.GetXaxis().SetTitle( axisX )
+
+    CMS_lumi.lumi_13TeV = "13 TeV, "+args.year
+    CMS_lumi.relPosX = 0.11
+    CMS_lumi.CMS_lumi(canvas[name], 4, 0)
+    legend.Draw()
+
+    canvas[name].SaveAs( outputDir+'/'+outName )
+    #del can
 
 if __name__ == '__main__':
 
@@ -551,7 +618,7 @@ if __name__ == '__main__':
                             checkDict( isam, dictSamples )
                         ]
 
-    outputDir = 'Plots/Basic/'+args.year
+    outputDir = 'Plots/'+('Resolution' if args.process.startswith('reso') else 'Basic')+'/'+args.year
     if not os.path.exists(outputDir): os.makedirs(outputDir)
     CMS_lumi.extraText = "Simulation Preliminary"
     CMS_lumi.lumi_13TeV = ('#leq' if args.selection.startswith('dijet') else '')+str( round( (args.lumi/1000.), 2 ) )+" fb^{-1}, 13 TeV, "+args.year
@@ -566,7 +633,10 @@ if __name__ == '__main__':
     for ijet in [ ('Jet1', 'Outer'), ('Jet2', 'Central') ]:
         plotList.append( [ 'bkgData', 'reco'+ijet[0]+'_pt_nom', ijet[1]+' AK8 jet pt [GeV]', 100, 1500, 5, 'right' ] )
         plotList.append( [ 'bkgData', 'reco'+ijet[0]+'_eta_nom', ijet[1]+' AK8 jet eta', -3, 3, 5, 'left' ] )
+        plotList.append( [ 'resol', 'resol'+ijet[0]+'_pt', ijet[1]+'AK8 jet reco/gen pt', 0., 2., 2, 'right' ] )
+        plotList.append( [ 'resol', 'resol'+ijet[0]+'_sdmass', ijet[1]+'AK8 jet reco/gen sd mass', 0., 2., 2, 'right' ] )
     for ivar, varInfo in nSubVariables.items():
+        plotList.append( [ 'resol', 'resol'+ivar, varInfo['label']+' reco/gen', 0., 2., 2, 'right' ] )
         plotList.append( [ 'bkgData', 'reco'+ivar+'_nom', varInfo['label'], varInfo['bins'][0], varInfo['bins'][-1], varInfo['bins'], varInfo['alignLeg'] ] )
 
     if args.only: Plots = [ y[1:] for y in plotList if ( ( args.process in y[0] ) and ( args.only in y[1] ) )  ]
@@ -583,6 +653,9 @@ if __name__ == '__main__':
             plotQuality(
                 i[0]+'_'+args.selection, i[1], i[2], i[3], i[4], i[5], i[6], i[7], i[8],
                 fitRatio=args.addFit )
+        elif ( 'resol' in args.process ):
+            plotResolution( i[0]+'_'+args.selection, i[2], i[3], i[4],
+                            log=args.log, axisX=i[1], Norm=args.norm, legendAlignment=i[5], outputDir=outputDir)
         elif ( 'simple' in args.process ):
             plotSimpleComparison(
                     ###bkgFiles["TTToSemiLeptonic"][0], "TTToSemiLeptonic", signalFiles["ttHTobb"][0], "ttHTobb",
