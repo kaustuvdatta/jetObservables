@@ -179,7 +179,7 @@ dictSamples = {
         '2018' :  {
             'miniAOD' : [ '/QCD_Pt_800to1000_TuneCP5_13TeV_pythia8/RunIISummer19UL18MiniAODv2-106X_upgrade2018_realistic_v16_L1v1-v1/MINIAODSIM' ],
             'nanoAOD' : [ '/QCD_Pt_800to1000_TuneCP5_13TeV_pythia8/algomez-RunIISummer19UL18PFNanoAOD-106X_upgrade2018_realistic_v16_L1v1-v1-fff189d3e67d18da8f7301eb2c0e2940/USER' ],
-            'skimmer' : [ '' ],
+            'skimmer' : [ '/QCD_Pt_800to1000_TuneCP5_13TeV_pythia8/algomez-RunIISummer19UL18PFNanoAOD_jetObservables_Skimmer_v02-fff189d3e67d18da8f7301eb2c0e2940/USER' ],
             'nevents' : 00,
             'nGenWeights' : 00,
             },
