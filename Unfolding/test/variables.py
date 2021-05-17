@@ -80,3 +80,10 @@ for ijet in [ ('Jet1', 'Outer' ), ('Jet2', 'Central') ]:
 		'alignLeg' : 'right'
 		}
 
+nSubVariables[ 'Jet_tau21' ] = {
+            #'bins' : [20],
+            'bins' : np.arange( 0.0, 1.1, 0.1 ),
+            #'bins' : np.concatenate( ( np.array([ 0, 0.2 ]), np.arange( 0.3, 0.9, 0.06 ), np.array([ 1.]) ) ),
+            'label' : 'Leading AK8 jet #tau_{21}',
+            'alignLeg' : 'right'
+            }

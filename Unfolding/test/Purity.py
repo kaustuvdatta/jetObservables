@@ -36,7 +36,7 @@ def runPurity( bkgFiles, variables, sel ):
 
     for ivar in variables:
 
-        outputDir='Plots/Purity/'+args.year+'/'+ivar+'/'
+        outputDir='Plots/'+args.selection.split('_')[1]+'/Purity/'+args.year+'/'+ivar+'/'
         if not os.path.exists(outputDir): os.makedirs(outputDir)
 
         dictGraph = {}

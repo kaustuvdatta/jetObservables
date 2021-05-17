@@ -46,6 +46,12 @@ parser.add_argument(
     default=""
 )
 parser.add_argument(
+    '--runEra',
+    action="store",
+    help="Run era for data",
+    default=""
+)
+parser.add_argument(
     '--local',
     action="store_true",
     help="Run local or condor/crab"
@@ -131,8 +137,9 @@ LeptonSF = {
 
 
 #### Modules to run
-if not args.selection.startswith('dijet'): jetmetCorrector = createJMECorrector(isMC=isMC, applySmearing=False, dataYear='UL'+args.year, jesUncert="All")
-fatJetCorrector = createJMECorrector(isMC=isMC, applySmearing=False, dataYear='UL'+args.year, jesUncert="All", jetType = "AK8PFPuppi") #redojec=True,??? also do I need to fill the runPeriod var with something beyond the default value, currently it is always set to the default of run 'B' irrespective of year?
+if not args.selection.startswith('dijet'):
+    jetmetCorrector = createJMECorrector(isMC=isMC, applySmearing=False, dataYear='UL'+args.year, jesUncert="All", runPeriod=args.runEra )
+fatJetCorrector = createJMECorrector(isMC=isMC, applySmearing=False, dataYear='UL'+args.year, jesUncert="All", jetType = "AK8PFPuppi", runPeriod=args.runEra)
 
 modulesToRun = []
 if isMC:
@@ -157,7 +164,7 @@ if args.selection.startswith('dijet'):
     #if args.local: triggerFile = "/eos/home-a/algomez/tmpFiles/jetObservables/triggerPrescales/triggerEfficiencies_histograms_MiniAOD_JetHTRun2017B.pkl"
     else: triggerFile = 'triggerEfficiencies_histograms_MiniAOD_JetHTRun2017B.pkl'
     from jetObservables.Skimmer.nSubProducer_dijetSel import nSubProd
-    modulesToRun.append( nSubProd( sysSource=systSources, leptonSF=LeptonSF[args.year], isMC=isMC, triggerFile=triggerFile ) )
+    modulesToRun.append( nSubProd( sysSource=systSources, leptonSF=LeptonSF[args.year], isMC=isMC, triggerFile=triggerFile, year=args.year ) )
 else:
     from jetObservables.Skimmer.nSubProducer_WTaggingNormTest import nSubProd #WtopSel import nSubProd
     modulesToRun.append( nSubProd( sysSource=systSources, leptonSF=LeptonSF[args.year], isMC=isMC ) )
@@ -175,7 +182,7 @@ p1=PostProcessor(
         prefetch     = args.local,
         longTermCache= args.local,
         fwkJobReport = True,
-        haddFileName = "jetObservables_"+args.selection+"_nanoskim.rooot" if args.local else 'jetObservables_nanoskim.root',
+        haddFileName = "jetObservables_"+args.selection+"_nanoskim.root" if args.local else 'jetObservables_nanoskim.root',
         histFileName = "jetObservables_"+args.selection+"_histograms.root" if args.local else 'jetObservables_histograms.root',
         histDirName  = 'jetObservables',
         )

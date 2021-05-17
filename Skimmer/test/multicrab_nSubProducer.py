@@ -39,7 +39,7 @@ mv python $CMSSW_BASE/python
 echo Found Proxy in: $X509_USER_PROXY
 ls
 echo "python {pythonFile} --sample {datasets} --selection {selection}"
-python {pythonFile} --sample {datasets} --selection {selection}
+python {pythonFile} --sample {datasets} --selection {selection} --year {year} --runEra {runEra}
 fi
     '''
     open('runPostProc'+options.datasets+'.sh', 'w').write(BASH_SCRIPT.format(**options.__dict__))
@@ -68,11 +68,11 @@ def submitJobs( job, inputFiles, unitJobs ):
 
     config.section_("Data")
     config.Data.inputDBS = 'phys03'
-    config.Data.ignoreLocality = True
+    #config.Data.ignoreLocality = True
 
     config.section_("Site")
     config.Site.storageSite = options.storageSite
-    config.Site.whitelist = ['T1_US_FNAL','T2_CH_CSCS','T3_US_FNALLPC' ]
+    #config.Site.whitelist = ['T1_US_FNAL','T2_CH_CSCS','T3_US_FNALLPC' ]
 
 
     def submit(config):
@@ -87,7 +87,9 @@ def submitJobs( job, inputFiles, unitJobs ):
     config.JobType.inputFiles = [ options.pythonFile ,'haddnano.py', 'keep_and_drop.txt']
     config.JobType.sendPythonFolder  = True
 
-    if job.startswith(('UL17_Single', 'UL17_JetHT', 'JetHT', 'SingleMuon')) and options.year.startswith('2017'): config.Data.lumiMask = '/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions17/13TeV/Legacy_2017/Cert_294927-306462_13TeV_UL2017_Collisions17_GoldenJSON.txt'
+    if job.startswith(('UL17_Single', 'UL17_JetHT', 'JetHT', 'SingleMuon')):
+        if options.year.startswith('2017'): config.Data.lumiMask = '/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions17/13TeV/Legacy_2017/Cert_294927-306462_13TeV_UL2017_Collisions17_GoldenJSON.txt'
+        elif options.year.startswith('2018'): config.Data.lumiMask = '/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions18/13TeV/Legacy_2018/Cert_314472-325175_13TeV_Legacy2018_Collisions18_JSON.txt'
     #config.Data.userInputFiles = inputFiles
     config.Data.inputDataset = inputFiles
     #config.Data.splitting = 'EventAwareLumiBased' if job.startswith('QCD_Pt') else 'FileBased'
@@ -100,7 +102,7 @@ def submitJobs( job, inputFiles, unitJobs ):
     config.JobType.outputFiles = [ 'jetObservables_nanoskim.root', 'jetObservables_histograms.root']
     config.Data.outLFNDirBase = '/store/user/'+os.environ['USER']+'/jetObservables/'
 
-    requestname = 'jetObservables_Skimmer_'+ job.replace('_','').replace('-','') + '_' +options.version
+    requestname = 'jetObservables_Skimmer_'+ job.replace('_','').replace('-','')+'_'+options.year + '_' +options.version
     print requestname
     if len(requestname) > 100: requestname = (requestname[:95-len(requestname)])
     if os.path.isdir('crab_projects/crab_'+requestname):
@@ -161,6 +163,12 @@ if __name__ == '__main__':
             dest="pythonFile", default="jetObservables_nSubProducer.py",
             help=("python file to run"),
             )
+    parser.add_option(
+            '--runEra',
+            action="store",
+            help="Run era for data",
+            default=""
+    )
 
 
     (options, args) = parser.parse_args()
@@ -175,6 +183,7 @@ if __name__ == '__main__':
             if sam.startswith(('JetHT', 'SingleMuon')):
                 for iera in checkDict( sam, dictSamples )[options.year]['nanoAOD']:
                     processingSamples[ sam+'Run'+options.year+iera ] = [ checkDict( sam, dictSamples )[options.year]['nanoAOD'][iera], 1 ]
+                    options.runEra = iera
             else:
                 tmpList = checkDict( sam, dictSamples )[options.year]['nanoAOD']
                 processingSamples[ sam ] = [ tmpList[0], 1 ]
