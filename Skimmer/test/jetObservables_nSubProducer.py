@@ -117,9 +117,9 @@ LeptonSF = {
     },
     '2018' : {
         'muon' : {
-            'Trigger' : [ "EfficienciesAndSF_2018Data_AfterMuonHLTUpdate.root", "IsoMu24_PtEtaBins/pt_abseta_ratio" ],
-            'ID' : [ "MuonID_2018_RunABCD_SF_ID.root", "NUM_TightID_DEN_TrackerMuons_pt_abseta", True ],
-            'ISO' : [ "MuonID_2018_RunABCD_SF_ISO.root", "NUM_TightRelIso_DEN_TightIDandIPCut_pt_abseta", True ],
+            'Trigger' : [ "EfficienciesAndSF_2018Data_AfterMuonHLTUpdate.root", "Mu50_OR_OldMu100_OR_TkMu100_PtEtaBins/pt_abseta_ratio" ],
+            'ID' : [ "Efficiencies_muon_generalTracks_Z_Run2018_UL_ID.root", "NUM_TightID_DEN_TrackerMuons_abseta_pt", False ],
+            'ISO' : [ "Efficiencies_muon_generalTracks_Z_Run2018_UL_ISO.root", "NUM_TightRelIso_DEN_TightIDandIPCut_abseta_pt", False ],
         },
         'electron' : {
             'Trigger' : [ "SingleEG_JetHT_Trigger_Scale_Factors_ttHbb_Data_MC_v5.0.root", "SFs_ele_pt_ele_sceta_ele28_ht150_OR_ele35_2017BCDEF" ],
@@ -132,7 +132,7 @@ LeptonSF = {
 
 #### Modules to run
 if not args.selection.startswith('dijet'): jetmetCorrector = createJMECorrector(isMC=isMC, applySmearing=False, dataYear='UL'+args.year, jesUncert="All")
-fatJetCorrector = createJMECorrector(isMC=isMC, applySmearing=False, dataYear='UL'+args.year, jesUncert="All", jetType = "AK8PFPuppi") #redojec=True,??? also do I need to fill the runPeriod var with something beyond the default value, currently it is always set to the default of run 'B' irrespective of year?
+fatJetCorrector = createJMECorrector(isMC=isMC, applySmearing=False, dataYear='UL'+args.year, jesUncert="All", jetType = "AK8PFPuppi")
 
 modulesToRun = []
 if isMC:
@@ -142,8 +142,8 @@ if isMC:
         if not args.selection.startswith('dijet'): modulesToRun.append( btagSF2018() )
     if args.year=='2017':
         modulesToRun.append( puAutoWeight_2017() )
-        #print "###Running with btag SF calc.###"
-        #if not args.selection.startswith('dijet'): modulesToRun.append( btagSF2017() )
+        print "###Running with btag SF calc.###"
+        if not args.selection.startswith('dijet'): modulesToRun.append( btagSF2017() )
     if args.year=='2016':
         modulesToRun.append( puWeight_2016() )
         print "Running with btag SF calc."
@@ -175,8 +175,8 @@ p1=PostProcessor(
         prefetch     = args.local,
         longTermCache= args.local,
         fwkJobReport = True,
-        haddFileName = "jetObservables_"+args.selection+"_nanoskim_test3.rooot" if args.local else 'jetObservables_nanoskim_test3.root',
-        histFileName = "jetObservables_"+args.selection+"_histograms_test3.root" if args.local else 'jetObservables_histograms_test3.root',
+        haddFileName = "jetObservables_"+args.selection+"_nanoskim.root" if args.local else 'jetObservables_nanoskim.root',
+        histFileName = "jetObservables_"+args.selection+"_histograms.root" if args.local else 'jetObservables_histograms.root',
         histDirName  = 'jetObservables',
         )
 p1.run()
