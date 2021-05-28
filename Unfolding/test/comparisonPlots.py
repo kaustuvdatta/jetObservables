@@ -22,92 +22,211 @@ ROOT.gStyle.SetOptStat(0)
 canvas = {}
 
 ##################################################
-def plotSignalBkg( name, xmin, xmax, rebinX, axisX='', axisY='', labX=0.92, labY=0.50, log=False,
-                      addRatioFit=False, ext='png', outputDir='Plots/', legendAlignment='right' ):
+def makePlots( name, ext='png', outputDir='Plots/' ):
     """function to plot s and b histos"""
 
-    outputFileName = name+'_AnalysisPlots_'+args.version+'.'+ext
-    if log: outputFileName = outputFileName.replace('Plots','Plots_Log')
-    print('Processing.......', outputFileName)
-
-    if legendAlignment.startswith('right'): legend=ROOT.TLegend(0.60,(0.75 if args.selection.startswith('dijet') else 0.65),0.90,0.90)
-    else: legend=ROOT.TLegend(0.20,(0.75 if args.selection.startswith('dijet') else 0.65),0.50,0.90)
-    legend.SetFillStyle(0)
-    legend.SetTextSize(0.04)
-
+    numBins = 0
     dictHistos = OrderedDict()
     for ivar in nSubVariables.keys():
-        if name.split('_')[0].endswith( ivar.split('_')[0] ):
+        if name.endswith( ivar.split('_')[0] ):
             dictHistos[ivar] = {
                     'data' : dictFiles[ivar].Get( 'dataMinusBkgsGenBin' ),
-                    'unfoldHisto' : dictFiles[ivar].Get( 'unfoldHisto'+ivar )
+                    'unfold' : dictFiles[ivar].Get( 'unfoldHisto'+ivar ),
+                    'unfoldwoUnc' : dictFiles[ivar].Get( 'unfoldHistowoUnc'+ivar ),
+                    'fold' : dictFiles[ivar].Get( 'foldHisto'+ivar ),
+                    'gen' : dictFiles[ivar].Get( 'gen'+ivar+'_'+args.selection+'_Rebin' ),
+                    'reco' : dictFiles[ivar].Get( 'reco'+ivar+'_nom_'+args.selection+'_Rebin_GenBin' ),
+                    'data'+secondQCD : dictFiles[ivar+secondQCD].Get( 'dataMinusBkgsGenBin' ),
+                    'unfold'+secondQCD : dictFiles[ivar+secondQCD].Get( 'unfoldHisto'+ivar ),
+                    'unfoldwoUnc'+secondQCD : dictFiles[ivar+secondQCD].Get( 'unfoldHistowoUnc'+ivar ),
+                    'fold'+secondQCD : dictFiles[ivar+secondQCD].Get( 'foldHisto'+ivar ),
+                    'gen'+secondQCD : dictFiles[ivar+secondQCD].Get( 'gen'+ivar+'_'+args.selection+'_Rebin' ),
+                    'reco'+secondQCD : dictFiles[ivar+secondQCD].Get( 'reco'+ivar+'_nom_'+args.selection+'_Rebin_GenBin' )
                     }
+            numBins = numBins + dictHistos[ivar]['data'].GetNbinsX()
 
-    #legend.AddEntry( dataHistos[ 'DATA' ], 'Data', 'lep' )
+            ############################################
+            ## Self Clsoure
+            otherHistos = OrderedDict()
+            mainHisto = dictHistos[ivar]['unfold']
+            if args.process.startswith('MCClosure'):
+                mainHistoLabel = 'Unfold'
+                otherHistos['Accepted Gen'] = dictHistos[ivar]['gen']
+                otherHistos['Folded'] = dictHistos[ivar]['fold']
+            elif args.process.startswith('MCSelfClosure'):
+                mainHistoLabel = 'MC reco'
+                otherHistos['Accepted Gen'] = dictHistos[ivar]['gen']
+                otherHistos['Folded'] = dictHistos[ivar]['fold']
+                otherHistos['True Reco'] = dictHistos[ivar]['reco']
+            elif args.process.startswith('data'):
+                mainHistoLabel = 'Data'
+                otherHistos['Accepted Gen'] = dictHistos[ivar]['gen']
+            drawUnfold( ivar, mainHisto, mainHistoLabel, otherHistos, nSubVariables[ivar], outputDir=outputDir )
 
-    pad = {}
-    canvas[outputFileName] = ROOT.TCanvas('c1'+name, 'c1'+name, 2000, 750 )
-    canvas[outputFileName].Divide( len(dictHistos), 1 )
+    combinePlots( name+'_'+args.selection, dictHistos, numBins, outputDir=outputDir, axisX='' )
+
+##########################################################################
+def drawUnfold( ivar, mainHisto, mainHistoLabel, otherHistos, varInfo, outputDir ):
+    """docstring for drawUnfold"""
+
+    outputDir=outputDir+'/'+ivar+'/'+args.process+'/'
+    if not os.path.exists(outputDir): os.makedirs(outputDir)
+    outputName = outputDir+ivar+args.selection+'_from'+('Data' if args.process.startswith('data') else 'MC')+'_Tunfold_'+args.version+'.'+args.ext
+
     ROOT.gStyle.SetPadRightMargin(0.05)
     ROOT.gStyle.SetPadLeftMargin(0.15)
-    dummy = 0
-    for ivar, ihistos in dictHistos.items():
-        dummy=dummy+1
-        canvas[outputFileName].cd(dummy)
-        pad[ivar+'1'] = ROOT.TPad(ivar+'1', "Fit",0,0.207,1.00,1.00,-1)
-        pad[ivar+'2'] = ROOT.TPad(ivar+'2', "Pull",0,0.00,1.00,0.30,-1);
-        pad[ivar+'1'].Draw()
-        pad[ivar+'2'].Draw()
+    can = ROOT.TCanvas('can'+ivar, 'can'+ivar,  10, 10, 750, 750 )
+    pad1 = ROOT.TPad("pad1"+ivar, "Main",0,0.207,1.00,1.00,-1)
+    pad2 = ROOT.TPad("pad2"+ivar, "Ratio",0,0.00,1.00,0.30,-1);
+    pad1.Draw()
+    pad2.Draw()
 
-        pad[ivar+'1'].cd()
-        if log: pad[ivar+'1'].SetLogy()
-#        if 'tau' in axisX:
-#            dataHistos['DATA'].GetYaxis().SetTitle( '#frac{1}{d#sigma} #frac{d#sigma}{d#'+axisX.split('#')[1]+'}' )
-#        else:
-#            dataHistos['DATA'].GetYaxis().SetTitle( 'Events / '+str(binWidth) )
-#        dataHistos[ 'DATA' ].SetMarkerStyle(8)
-#        dataHistos['DATA'].GetYaxis().SetTitleSize( 0.05 )
-#        dataHistos['DATA'].GetYaxis().SetTitleOffset( 1.2 )
-#        dataHistos['DATA'].GetXaxis().SetTitle( axisX )
-#        if xmax: dataHistos['DATA'].GetXaxis().SetRangeUser( xmin, xmax )
-#        dataHistos['DATA'].SetMaximum( hBkg.GetMaximum()*1.2 )
-#        #dataHistos['DATA'].SetMinimum( 2. )
-#
-#        #stackHisto.SetMinimum( 0.1 )
-#        if not args.selection.startswith('dijet'):
-#            hBkg.SetLineColor( bkgFiles['TTToSemiLeptonic'][1]['color'] )
-#            hBkg.SetFillColor( 0 )
-#            hBkg.SetLineWidth(2)
-#        else:
-#            hBkg.SetLineWidth(2)
+    pad1.cd()
 
-        dictHistos[ivar][ 'data' ].Draw('hist')
-        dictHistos[ivar][ 'unfoldHisto' ].Draw('hist same')
+    if varInfo['alignLeg'].startswith('right'): legend=ROOT.TLegend(0.65,0.65,0.90,0.88)
+    else: legend=ROOT.TLegend(0.20,0.65,0.40,0.88)
+    legend.SetFillStyle(0)
+    legend.SetTextSize(0.03)
 
-        CMS_lumi.extraText = " Preliminary"
-        CMS_lumi.CMS_lumi( pad[ivar+'1'], 4, 0)
-        legend.Draw()
+    dataIntegral = mainHisto.Integral()
+    mainHisto.Scale(1, 'width')  ### divide by bin width
+    #######mainHisto.Scale(1/mainHisto.Integral(), 'width')  ### divide by bin width
+    mainHisto.SetLineWidth(2)
+    mainHisto.SetLineStyle(2)
+    mainHisto.SetLineColor(ROOT.kMagenta)
+    legend.AddEntry( mainHisto, mainHistoLabel, 'l' )
 
-        pad[ivar+'2'].cd()
-        pad[ivar+'2'].SetGrid()
-        pad[ivar+'2'].SetTopMargin(0)
-        pad[ivar+'2'].SetBottomMargin(0.3)
+    tmpMax = [ mainHisto.GetMaximum() ]
+    for ilabel, ih in otherHistos.items():
+        #ih.Scale(1, 'width')
+        #ih.Scale(scaleFactor)
+        ih.Scale(dataIntegral/ih.Integral(), 'width')  ### divide by bin width
+        ih.SetLineWidth(2)
+        ih.SetLineColor(1)
+        tmpMax.append( ih.GetMaximum() )
+        legend.AddEntry( ih, ilabel, 'l' )
 
-        tmppad= pad[ivar+'2'].DrawFrame(xmin,0.5,xmax,1.5)
-        tmppad.GetYaxis().SetTitle( "Data/Sim." )
-        tmppad.GetXaxis().SetTitle(  axisX )
-        tmppad.GetYaxis().SetTitleOffset( 0.5 )
-        tmppad.GetYaxis().CenterTitle()
-        tmppad.SetLabelSize(0.12, 'x')
-        tmppad.SetTitleSize(0.12, 'x')
-        tmppad.SetLabelSize(0.12, 'y')
-        tmppad.SetTitleSize(0.12, 'y')
-        tmppad.SetNdivisions(505, 'x')
-        tmppad.SetNdivisions(505, 'y')
-        pad[ivar+'2'].Modified()
-        hRatio = ROOT.TGraphAsymmErrors()
-        hRatio.Divide( dictHistos[ivar][ 'data' ], dictHistos[ivar][ 'unfoldHisto' ], 'pois' )
-        hRatio.Draw('P')
+
+    mainHisto.GetYaxis().SetTitle( '#frac{1}{d#sigma} #frac{d#sigma}{d#'+varInfo['label'].split('#')[1]+'}' )
+    #mainHisto.GetYaxis().SetTitleOffset(0.95)
+    mainHisto.GetYaxis().SetTitleSize(0.05)
+    mainHisto.SetMaximum( 1.2*max( tmpMax )  )
+
+    mainHisto.Draw( "histe")
+    for ih in otherHistos: otherHistos[ih].Draw("histe same")
+    mainHisto.Draw( "histe same")
+
+    legend.Draw()
+    CMS_lumi.relPosX = 0.12
+    CMS_lumi.CMS_lumi(pad1, 4, 0)
+
+    pad2.cd()
+    ROOT.gStyle.SetOptFit(1)
+    pad2.SetGrid()
+    pad2.SetTopMargin(0)
+    pad2.SetBottomMargin(0.3)
+    tmpPad2= pad2.DrawFrame( 0, 0., varInfo['bins'][-1], 1.9 )
+    tmpPad2.GetXaxis().SetTitle( varInfo['label'] )
+    tmpPad2.GetYaxis().SetTitle( "Gen/Unfolded" )
+    tmpPad2.GetYaxis().SetTitleOffset( 0.5 )
+    tmpPad2.GetYaxis().CenterTitle()
+    tmpPad2.SetLabelSize(0.12, 'x')
+    tmpPad2.SetTitleSize(0.12, 'x')
+    tmpPad2.SetLabelSize(0.12, 'y')
+    tmpPad2.SetTitleSize(0.12, 'y')
+    tmpPad2.SetNdivisions(505, 'x')
+    tmpPad2.SetNdivisions(505, 'y')
+    pad2.Modified()
+    hRatioUp = ROOT.TGraphAsymmErrors()
+    hRatioUp.Divide( mainHisto, otherHistos[next(iter(otherHistos))], 'pois' )
+    #hRatioUp.SetLineColor(kRed-4)
+    #hRatioUp.SetLineWidth(2)
+    hRatioUp.SetMarkerStyle(8)
+    hRatioUp.Draw('P0')
+    #hRatioDown.Draw('P same')
+
+    can.SaveAs(outputName)
+    ROOT.gStyle.SetPadRightMargin(0.09)     ## reseating
+    ROOT.gStyle.SetPadLeftMargin(0.12)
+
+
+##################################################
+def combinePlots( name, dictHistos, numBins, axisX='', outputDir='Plots/'):
+    """docstring for combinePlots"""
+
+    outputFileName = name+'_combinePlots_'+args.version+'.'+args.ext
+    if args.log: outputFileName = outputFileName.replace('Plots','Plots_Log')
+    print('Processing.......', outputFileName)
+
+    legend=ROOT.TLegend(0.50,0.80,0.90,0.90)
+    legend.SetNColumns(2)
+    legend.SetFillStyle(0)
+    legend.SetTextSize(0.07)
+
+    dictHistos['combData'] = ROOT.TH1F('combData', 'combData', numBins, 0, numBins)
+    legend.AddEntry( dictHistos[ 'combData' ], 'Data', 'lep' )
+    dictHistos['combUnfold'] = ROOT.TH1F('combUnfold', 'combUnfold', numBins, 0, numBins)
+    legend.AddEntry( dictHistos[ 'combUnfold' ], 'Unfold', 'lep' )
+
+    tmpNbin = 0
+    for ivar,ih in dictHistos.items():
+        if ivar.startswith('Jet'):
+            for ibin in range(1, ih['data'].GetNbinsX()+1):
+                tmpNbin = tmpNbin+1
+                dictHistos['combData'].SetBinContent( tmpNbin, ih['data'].GetBinContent(ibin) )
+                dictHistos['combData'].SetBinError( tmpNbin, ih['data'].GetBinError(ibin) )
+                dictHistos['combUnfold'].SetBinContent( tmpNbin, ih['unfold'].GetBinContent(ibin) )
+                dictHistos['combUnfold'].SetBinError( tmpNbin, ih['unfold'].GetBinError(ibin) )
+
+
+    canvas[outputFileName] = ROOT.TCanvas('c1'+name, 'c1'+name, 1400, 750 )
+    ROOT.gStyle.SetPadRightMargin(0.05)
+    ROOT.gStyle.SetPadLeftMargin(0.10)
+    pad1 = ROOT.TPad(ivar+'1', "Fit",0.,0.207,1.00,1.00,-1)
+    pad2 = ROOT.TPad(ivar+'2', "Pull",0,0.00,1.00,0.30,-1);
+    pad1.Draw()
+    pad2.Draw()
+
+    pad1.cd()
+    if args.log: pad1.SetLogy()
+    dictHistos['combData'].GetYaxis().SetTitle( '#frac{1}{d#sigma} #frac{d#sigma}{d#tau_{X}}' )
+    dictHistos['combData'].GetYaxis().SetTitleSize( 0.05 )
+    dictHistos['combData'].GetYaxis().SetTitleOffset( 0.8 )
+    dictHistos['combData'].SetMaximum( dictHistos['combUnfold'].GetMaximum()*1.2 )
+    dictHistos['combData'].SetMinimum( 0.001 )
+    dictHistos['combData'].SetLineColor( ROOT.kBlack )
+    dictHistos['combData'].SetLineWidth( 2 )
+
+    dictHistos['combUnfold'].SetLineColor( ROOT.kMagenta )
+    dictHistos['combUnfold'].SetLineWidth( 2 )
+    dictHistos['combData'].Draw('E')
+    dictHistos[ 'combUnfold' ].Draw('E same')
+
+    CMS_lumi.extraText = " Preliminary"
+    CMS_lumi.relPosX = 0.07
+    CMS_lumi.CMS_lumi( pad1, 4, 0)
+    legend.Draw()
+
+    pad2.cd()
+    pad2.SetGrid()
+    pad2.SetTopMargin(0)
+    pad2.SetBottomMargin(0.3)
+
+    tmppad= pad2.DrawFrame(0,0.,numBins,1.95)
+    tmppad.GetYaxis().SetTitle( "Data/Unfold" )
+    tmppad.GetXaxis().SetTitle(  axisX )
+    tmppad.GetYaxis().SetTitleOffset( 0.3 )
+    tmppad.GetYaxis().CenterTitle()
+    tmppad.SetLabelSize(0.12, 'x')
+    tmppad.SetTitleSize(0.12, 'x')
+    tmppad.SetLabelSize(0.12, 'y')
+    tmppad.SetTitleSize(0.12, 'y')
+    tmppad.SetNdivisions(505, 'x')
+    tmppad.SetNdivisions(505, 'y')
+    pad2.Modified()
+    hRatio = ROOT.TGraphAsymmErrors()
+    hRatio.Divide( dictHistos['combData'], dictHistos[ 'combUnfold' ], 'pois' )
+    hRatio.Draw('P')
 
     canvas[outputFileName].SaveAs( outputDir+'/'+outputFileName )
     del canvas[outputFileName]
@@ -116,7 +235,7 @@ def plotSignalBkg( name, xmin, xmax, rebinX, axisX='', axisY='', labX=0.92, labY
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('-p', '--proc', action='store', default='bkgData', dest='process', help='Process to draw, example: 1D, 2D, MC.' )
+    parser.add_argument('-p', '--proc', action='store', default='MCClosure', dest='process', help='Process to draw, example: data, MCClosure, MCSelfClosure.' )
     parser.add_argument('-s', '--selection', action='store', default='dijetSel', help='Selection: dijetSel, WSel, topSel.' )
     parser.add_argument('-v', '--version', action='store', default='v0', help='Version: v01, v02.' )
     parser.add_argument('-y', '--year', action='store', default='2017', help='Year: 2016, 2017, 2018.' )
@@ -127,6 +246,8 @@ if __name__ == '__main__':
     parser.add_argument('-n', '--norm', action='store_true', default=False, dest='norm',  help='Normalized plot (true) or not (false)' )
     parser.add_argument('-F', '--addFit', action='store_true', default=False, dest='addFit',  help='Plot fit in ratio plot.' )
     parser.add_argument("--only", action='store', dest="only", default="", help="Submit only one variable" )
+    parser.add_argument("--QCDHT", action='store_true', dest="QCDHT", default=False, help="For dijet sel, signal QCD is HT or not" )
+    parser.add_argument("--inputFolder", action='store', dest="inputFolder", default="", help="input folder" )
 
     try: args = parser.parse_args()
     except:
@@ -136,21 +257,20 @@ if __name__ == '__main__':
     VER = args.version.split('_')[1] if '_' in args.version else args.version
     args.lumi = checkDict( ( 'JetHT' if args.selection.startswith('dijet') else 'SingleMuon' ), dictSamples )[args.year]['lumi']
 
-    tmpFile = '/afs/cern.ch/user/a/algomez/cernbox/JetObservables/Updates/20210510/Plots/Unfold/'
+    mainQCD = 'QCD_HT2000toInf' if args.QCDHT else 'QCD_Pt_3200toInf'
+    secondQCD =  'QCD_Pt_3200toInf' if args.QCDHT else 'QCD_HT2000toInf'
     dictFiles = OrderedDict()
     for ivar, varInfo in nSubVariables.items():
         if args.selection.startswith('dijet') and ivar.startswith(('Jet1', 'Jet2')):
-            dictFiles[ivar] = ROOT.TFile.Open( tmpFile+'/'+args.year+'/'+ivar+'/MCClosure/outputHistograms_QCD_HT2000toInf.root' )
+            dictFiles[ivar] = ROOT.TFile.Open( args.inputFolder+'Plots/'+args.selection+'/Unfold/'+args.year+'/'+ivar+'/'+args.process+'/outputHistograms_'+mainQCD+'.root' )
+            dictFiles[ivar+secondQCD] = ROOT.TFile.Open( args.inputFolder+'Plots/'+args.selection+'/Unfold/'+args.year+'/'+ivar+'/'+args.process+'/outputHistograms_'+secondQCD+'.root' )
 
-    outputDir = 'Plots/'#+args.selection+'/'+('Resolution' if args.process.startswith('reso') else 'Basic')+'/'+args.year
+    outputDir = 'Plots/'+args.selection+'/Unfold/'+args.year
     if not os.path.exists(outputDir): os.makedirs(outputDir)
-    CMS_lumi.extraText = "Simulation Preliminary"
+    CMS_lumi.extraText = 'Preliminary' if args.process.startswith('data') else "Simulation Preliminary"
     CMS_lumi.lumi_13TeV = ('#leq' if args.selection.startswith('dijet') else '')+str( round( (args.lumi/1000.), 2 ) )+" fb^{-1}, 13 TeV, "+args.year
 
-    plotList = []
-    plotList.append( [ 'recoJet1', nSubVariables['Jet1_tau21']['label'], nSubVariables['Jet1_tau21']['bins'][0], nSubVariables['Jet1_tau21']['bins'][-1], nSubVariables['Jet1_tau21']['bins'], nSubVariables['Jet1_tau21']['alignLeg'] ] )
+    plotList = [ 'recoJet1', 'recoJet2' ] if args.selection.startswith('dijet') else [ 'recoJet' ]
 
     for i in plotList:
-        if ( 'bkgData' in args.process ):
-            plotSignalBkg( i[0]+'_'+args.selection, i[2], i[3], i[4],
-                            log=args.log, axisX=i[1], legendAlignment=i[5], outputDir=outputDir)
+        makePlots( i, outputDir=outputDir)

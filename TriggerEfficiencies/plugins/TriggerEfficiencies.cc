@@ -22,6 +22,7 @@
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/MakerMacros.h"
 
+#include "SimDataFormats/PileupSummaryInfo/interface/PileupSummaryInfo.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "FWCore/ServiceRegistry/interface/Service.h"
@@ -78,6 +79,7 @@ class TriggerEfficiencies : public EDAnalyzer {
 		vector<string> listOfTriggers;
 		vector<string> triggerThresholds;
 
+        edm::EDGetTokenT<reco::VertexCollection> vtxToken_;
 		edm::EDGetTokenT<edm::TriggerResults> triggerBits_;
         edm::EDGetTokenT<std::vector<pat::TriggerObjectStandAlone> > triggerObjects_;
 		edm::EDGetTokenT<pat::PackedTriggerPrescales> triggerPrescales_;
@@ -99,6 +101,7 @@ class TriggerEfficiencies : public EDAnalyzer {
 // constructors and destructor
 //
 TriggerEfficiencies::TriggerEfficiencies(const ParameterSet& iConfig):
+    vtxToken_(consumes<reco::VertexCollection>(iConfig.getParameter<edm::InputTag>("vertices"))),
 	triggerBits_(consumes<edm::TriggerResults>(iConfig.getParameter<edm::InputTag>("bits"))),
     triggerObjects_(consumes<std::vector<pat::TriggerObjectStandAlone> >(iConfig.getParameter<edm::InputTag>("objects"))),
 	triggerPrescales_(consumes<pat::PackedTriggerPrescales>(iConfig.getParameter<edm::InputTag>("prescales"))),
@@ -134,17 +137,22 @@ void TriggerEfficiencies::analyze(const Event& iEvent, const EventSetup& iSetup)
     triggerDesicion.clear();
     triggerPrescale.clear();
 
+    edm::Handle<reco::VertexCollection> vertices;
 	edm::Handle<edm::TriggerResults> triggerBits;
     edm::Handle<std::vector<pat::TriggerObjectStandAlone> > triggerObjects;
 	edm::Handle<pat::PackedTriggerPrescales> triggerPrescales;
 	edm::Handle<trigger::TriggerEvent> trigEvent; 
 	edm::Handle<pat::JetCollection> jets;
 
+    iEvent.getByToken(vtxToken_, vertices);
 	iEvent.getByToken(triggerBits_, triggerBits);
     iEvent.getByToken(triggerObjects_, triggerObjects);
 	iEvent.getByToken(triggerPrescales_, triggerPrescales);
 	iEvent.getByToken(triggerEvent_,trigEvent);
 	iEvent.getByToken(jetToken_, jets);
+
+    if (vertices->empty()) return; // skip the event if no PV found
+    //const reco::Vertex &PV = vertices->front();
 
     const edm::TriggerNames &names = iEvent.triggerNames(*triggerBits);
     //bool ORTriggers = checkORListOfTriggerBitsMiniAOD( names, triggerBits, triggerPrescales, listOfTriggers, false );
@@ -201,6 +209,8 @@ void TriggerEfficiencies::analyze(const Event& iEvent, const EventSetup& iSetup)
                         auto tmp = "jet1Pt_" + listOfTriggers[t] ;
                         histos1D_[ tmp ]->Fill( JETS[0].pt() );
                         histos1D_[ tmp+"_scaled" ]->Fill( JETS[0].pt(), triggerPrescale[t] );
+                        auto tmp2 = "NPV_" + listOfTriggers[t] ;
+                        histos1D_[ tmp2 ]->Fill( vertices->size() );
                     }
                 }
             }
@@ -241,6 +251,16 @@ void TriggerEfficiencies::analyze(const Event& iEvent, const EventSetup& iSetup)
 // ------------ method called once each job just before starting event loop  ------------
 void TriggerEfficiencies::beginJob() {
 
+    histos1D_[ "NPV_HLT_AK8PFJet60" ] = fs_->make< TH1D >( "NPV_HLT_AK8PFJet60", "NPV_HLT_AK8PFJet60", 100, 0., 100. );
+    histos1D_[ "NPV_HLT_AK8PFJet80" ] = fs_->make< TH1D >( "NPV_HLT_AK8PFJet80", "NPV_HLT_AK8PFJet80", 100, 0., 100. );
+    histos1D_[ "NPV_HLT_AK8PFJet140" ] = fs_->make< TH1D >( "NPV_HLT_AK8PFJet140", "NPV_HLT_AK8PFJet140", 100, 0., 100. );
+    histos1D_[ "NPV_HLT_AK8PFJet200" ] = fs_->make< TH1D >( "NPV_HLT_AK8PFJet200", "NPV_HLT_AK8PFJet200", 100, 0., 100. );
+    histos1D_[ "NPV_HLT_AK8PFJet260" ] = fs_->make< TH1D >( "NPV_HLT_AK8PFJet260", "NPV_HLT_AK8PFJet260", 100, 0., 100. );
+    histos1D_[ "NPV_HLT_AK8PFJet320" ] = fs_->make< TH1D >( "NPV_HLT_AK8PFJet320", "NPV_HLT_AK8PFJet320", 100, 0., 100. );
+    histos1D_[ "NPV_HLT_AK8PFJet400" ] = fs_->make< TH1D >( "NPV_HLT_AK8PFJet400", "NPV_HLT_AK8PFJet400", 100, 0., 100. );
+    histos1D_[ "NPV_HLT_AK8PFJet450" ] = fs_->make< TH1D >( "NPV_HLT_AK8PFJet450", "NPV_HLT_AK8PFJet450", 100, 0., 100. );
+    histos1D_[ "NPV_HLT_AK8PFJet500" ] = fs_->make< TH1D >( "NPV_HLT_AK8PFJet500", "NPV_HLT_AK8PFJet500", 100, 0., 100. );
+    histos1D_[ "NPV_HLT_AK8PFJet550" ] = fs_->make< TH1D >( "NPV_HLT_AK8PFJet550", "NPV_HLT_AK8PFJet550", 100, 0., 100. );
 
     histos1D_[ "jet1Pt_HLT_AK8PFJet60" ] = fs_->make< TH1D >( "jet1Pt_HLT_AK8PFJet60", "jet1Pt_HLT_AK8PFJet60", 150, 0., 1500. );
     histos1D_[ "jet1Pt_HLT_AK8PFJet80" ] = fs_->make< TH1D >( "jet1Pt_HLT_AK8PFJet80", "jet1Pt_HLT_AK8PFJet80", 150, 0., 1500. );
@@ -316,6 +336,7 @@ void TriggerEfficiencies::fillDescriptions(edm::ConfigurationDescriptions & desc
 	desc.add<double>("cutAK8jet2Pt", 450.);
 	desc.add<double>("cutAK8jet1Mass", 60.);
 	desc.add<string>("baseTrigger", "HLT_AK8PFJet200");
+	desc.add<InputTag>("vertices", 	InputTag("offlineSlimmedPrimaryVertices"));
 	desc.add<InputTag>("bits", 	InputTag("TriggerResults", "", "HLT"));
 	desc.add<InputTag>("prescales", 	InputTag("patTrigger"));
 	desc.add<InputTag>("objects", 	InputTag("slimmedPatTrigger"));

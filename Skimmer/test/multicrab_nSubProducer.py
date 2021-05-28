@@ -173,10 +173,6 @@ if __name__ == '__main__':
 
     (options, args) = parser.parse_args()
 
-
-#    dictSamples = {}
-#    #dictSamples['UL17_QCD_Pt470to600'] = ['/QCD_Pt_470to600_TuneCP5_13TeV_pythia8/kadatta-RunIISummer19UL17PFNanoAOD-106X_mc2017_realistic_v6-v2-830c141d7b4aa70b88c71a25d598b0f2/USER',1]
-
     processingSamples = {}
     for sam in dictSamples:
         if sam.startswith( options.datasets ) | options.datasets.startswith('all'):
