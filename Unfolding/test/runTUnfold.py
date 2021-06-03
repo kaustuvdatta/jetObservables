@@ -28,7 +28,7 @@ def runTUnfold( dataFile, sigFiles, bkgFiles, variables, sel, sysUncert ):
 
     for ivar in variables:
 
-        outputDir=args.outputFolder+'Plots/'+sel.split('_')[1]+'/Unfold/'+args.year+'/'+ivar+'/'+args.process+(('SelfClosure' if args.selfClosure else 'Closure') if args.process.startswith('MC') else '') +'/'
+        outputDir=args.outputFolder+'Plots/'+sel.split('_')[1]+'/Unfold/'+args.year+'/'+ivar+'/'+args.process+'/'
         if not os.path.exists(outputDir): os.makedirs(outputDir)
 
         ### labels
@@ -54,15 +54,20 @@ def runTUnfold( dataFile, sigFiles, bkgFiles, variables, sel, sysUncert ):
                     signalHistos[ signalLabel+'_resp'+ivar+sys+upDown+sel ] = dataFile[ivar+'_2017'].Get(signalLabel+'_resp'+ivar+sys+upDown+sel)
                     signalHistos[ signalLabel+'_resp'+ivar+sys+upDown+sel ].Add( dataFile[ivar+'_2018'].Get(signalLabel+'_resp'+ivar+sys+upDown+sel) )
 
-            altSignalHisto = {
+            altSignalHistos = {
                 altSignalLabel+'_resp'+ivar+'_nom'+sel : dataFile[ivar+'_2017'].Get(altSignalLabel+'_resp'+ivar+'_nom'+sel)
                 }
-            altSignalHisto[ altSignalLabel+'_resp'+ivar+'_nom'+sel ].Add( dataFile[ivar+'_2017'].Get(altSignalLabel+'_resp'+ivar+'_nom'+sel) )
+            altSignalHistos[ altSignalLabel+'_resp'+ivar+'_nom'+sel ].Add( dataFile[ivar+'_2017'].Get(altSignalLabel+'_resp'+ivar+'_nom'+sel) )
 
             allHistos = {
-                    'dataMinusBkgs' : dataFile[ivar+'_2017'].Get( 'dataMinusBkgs' )
+                    'dataMinusBkgs' : dataFile[ivar+'_2017'].Get( 'dataMinusBkgs' ),
+                    'dataMinusBkgsGenBin' : dataFile[ivar+'_2017'].Get( 'dataMinusBkgsGenBin' )
                     }
             allHistos[ 'dataMinusBkgs' ].Add( dataFile[ivar+'_2018'].Get( 'dataMinusBkgs' ) )
+            allHistos[ 'dataMinusBkgsGenBin' ].Add( dataFile[ivar+'_2018'].Get( 'dataMinusBkgsGenBin' ) )
+
+            dataHistos = { }
+            bkgHistos = { }
 
         else:
             print('|-------> Running single year '+args.year)
@@ -74,7 +79,7 @@ def runTUnfold( dataFile, sigFiles, bkgFiles, variables, sel, sysUncert ):
             tmp2SigFiles = { k:v for (k,v) in sigFiles.items() if k.startswith(tmp2SigLabel)  }
             altSignalHistos = loadHistograms( tmp2SigFiles, ivar, sel, sysUnc=[], respOnly=True)
             if args.process.startswith("MC"):
-                if args.selfClosure:
+                if args.process.startswith('MCSelfClosure'):
                     dataHistos = { 'data'+k.split(('Inf' if sel.startswith('_dijet') else 'Leptonic'))[1] : v for (k,v) in signalHistos.items() if 'reco' in k }
                 else:
                     dataHistos = loadHistograms( dataFile, ivar, sel, isMC=True, addGenInfo=False )
@@ -127,22 +132,6 @@ def runTUnfold( dataFile, sigFiles, bkgFiles, variables, sel, sysUncert ):
     #                    signalHistos[signalLabel+'_resp'+ivar+sys+upDown+sel].SetBinContent(  signalHistos[signalLabel+'_resp'+ivar+sys+upDown+sel].GetBin( ibin, 0 ), signalHistos[signalLabel+'_missgen'+ivar+sel].GetBinContent(ibin) )
     #                    signalHistos[signalLabel+'_resp'+ivar+sys+upDown+sel].SetBinContent(  signalHistos[signalLabel+'_resp'+ivar+sys+upDown+sel].GetBin( ibin, -1 ), signalHistos[signalLabel+'_missgen'+ivar+sel].GetBinContent(ibin) )
 
-            ######## Cross check: plotting response matrix
-            print '|------> Cross check: plotting response matrix for signal'
-            ROOT.gStyle.SetPadRightMargin(0.15)
-            #ROOT.gStyle.SetPalette(ROOT.kGistEarth)
-            #ROOT.TColor.InvertPalette()
-            can2D = ROOT.TCanvas(ivar+'can2D', ivar+'can2D', 750, 500 )
-            signalHistos[signalLabel+'_resp'+ivar+'_nom'+sel].GetXaxis().SetTitle('Accepted Gen '+variables[ivar]['label'])
-            signalHistos[signalLabel+'_resp'+ivar+'_nom'+sel].GetYaxis().SetTitle('True Reco '+variables[ivar]['label'])
-            signalHistos[signalLabel+'_resp'+ivar+'_nom'+sel].GetYaxis().SetTitleOffset( 0.8 )
-            #signalHistos[signalLabel+'_resp'+ivar+'_nom'+sel].GetYaxis().SetRange( variables[ivar]['bins'][0], variables[ivar]['bins'][-1] )
-            signalHistos[signalLabel+'_resp'+ivar+'_nom'+sel].Draw("colz")
-            CMS_lumi.extraText = "Simulation Preliminary"
-            CMS_lumi.lumi_13TeV = "13 TeV, "+args.year
-            CMS_lumi.relPosX = 0.12
-            CMS_lumi.CMS_lumi(can2D, 4, 0)
-            can2D.SaveAs(outputDir+ivar+'_from'+('Data' if args.process.startswith('data') else 'MC')+'_'+signalLabel+sel+'_responseMatrix'+args.version+'.'+args.ext)
             ####### Cross check response matrix
             tmpGenHisto = signalHistos[signalLabel+'_resp'+ivar+'_nom'+sel].ProjectionX()
             plotSimpleComparison( tmpGenHisto, 'projection', signalHistos[signalLabel+'_accepgen'+ivar+sel].Clone(), 'Regular AccepGen', ivar+'_from'+('Data' if args.process.startswith('data') else 'MC')+'_'+signalLabel+"_TestProjectionGen", rebinX=1, version=sel+'_'+args.version, outputDir=outputDir )
@@ -166,6 +155,23 @@ def runTUnfold( dataFile, sigFiles, bkgFiles, variables, sel, sysUncert ):
             tmpHisto = signalHistos[signalLabel+'_resp'+ivar+'_nom'+sel].ProjectionY()
             tmpHisto.Scale( 1/tmpHisto.Integral() )
             plotSimpleComparison( allHistos[ 'dataMinusBkgs' ], 'data-Bkgs', tmpHisto, 'signal true reco', ivar+'_from'+('Data' if args.process.startswith('data') else 'MC')+'_'+signalLabel+"_TestDataMinusBkgs", rebinX=1, version=sel+'_'+args.version, outputDir=outputDir )
+
+        ######## Cross check: plotting response matrix
+        print '|------> Cross check: plotting response matrix for signal'
+        ROOT.gStyle.SetPadRightMargin(0.15)
+        #ROOT.gStyle.SetPalette(ROOT.kGistEarth)
+        #ROOT.TColor.InvertPalette()
+        can2D = ROOT.TCanvas(ivar+'can2D', ivar+'can2D', 750, 500 )
+        signalHistos[signalLabel+'_resp'+ivar+'_nom'+sel].GetXaxis().SetTitle('Accepted Gen '+variables[ivar]['label'])
+        signalHistos[signalLabel+'_resp'+ivar+'_nom'+sel].GetYaxis().SetTitle('True Reco '+variables[ivar]['label'])
+        signalHistos[signalLabel+'_resp'+ivar+'_nom'+sel].GetYaxis().SetTitleOffset( 0.8 )
+        #signalHistos[signalLabel+'_resp'+ivar+'_nom'+sel].GetYaxis().SetRange( variables[ivar]['bins'][0], variables[ivar]['bins'][-1] )
+        signalHistos[signalLabel+'_resp'+ivar+'_nom'+sel].Draw("colz")
+        CMS_lumi.extraText = "Simulation Preliminary"
+        CMS_lumi.lumi_13TeV = "13 TeV, "+ ( '2017+2018' if args.year.startswith('all') else args.year )
+        CMS_lumi.relPosX = 0.12
+        CMS_lumi.CMS_lumi(can2D, 4, 0)
+        can2D.SaveAs(outputDir+ivar+'_from'+('Data' if args.process.startswith('data') else 'MC')+'_'+signalLabel+sel+'_responseMatrix'+args.version+'.'+args.ext)
 
         ######## TUnfold part
         print '|------> TUnfolding starts:'
@@ -463,7 +469,7 @@ def drawUnfold( ivar, dataJetHisto, genJetHisto, unfoldHisto, unfoldHistowoUnc, 
     dataJetHisto.SetLineWidth(2)
     dataJetHisto.SetLineStyle(2)
     dataJetHisto.SetLineColor(ROOT.kMagenta)
-    legend.AddEntry( dataJetHisto, ('Data-Bkgs' if args.process.startswith('data') else 'MC '+('Self-' if args.selfClosure else '')+'Closure' ), 'l' )
+    legend.AddEntry( dataJetHisto, ('Data-Bkgs' if args.process.startswith('data') else 'MC '+('Self-' if args.process.startswith('MCSelfClosure') else '')+'Closure' ), 'l' )
 
     #genJetHisto.Scale(1, 'width')
     #genJetHisto.Scale(scaleFactor)
@@ -521,10 +527,10 @@ def drawUnfold( ivar, dataJetHisto, genJetHisto, unfoldHisto, unfoldHistowoUnc, 
     legend.Draw()
     if args.process.startswith('data'):
         CMS_lumi.extraText = "Preliminary"
-        CMS_lumi.lumi_13TeV = ("#leq" if args.selection.startswith('_dijet') else '' )+str( round( (args.lumi/1000.), 2 ) )+" fb^{-1}, 13 TeV, "+args.year
+        CMS_lumi.lumi_13TeV = ('#leq' if args.selection.startswith('dijet') else '')+str( round( (args.lumi/1000.), 2 ) )+" fb^{-1}, 13 TeV"+('' if args.year.startswith('all') else ", "+( '2017+2018' if args.year.startswith('all') else args.year ) )
     else:
         CMS_lumi.extraText = "Simulation Preliminary"
-        CMS_lumi.lumi_13TeV = "13 TeV, "+args.year
+        CMS_lumi.lumi_13TeV = "13 TeV, "+ ( '2017+2018' if args.year.startswith('all') else args.year )
     CMS_lumi.relPosX = 0.12
     CMS_lumi.CMS_lumi(pad1, 4, 0)
 
@@ -600,7 +606,7 @@ def drawUncertainties( ivar, unfoldHistoTotUnc, unfoldHistoSysUnc, uncerUnfoldHi
     legend.Draw()
     CMS_lumi.extraText = "Simulation Preliminary"
     #CMS_lumi.lumi_13TeV = str( round( (lumi/1000.), 2 ) )+" fb^{-1}, 13 TeV, 2016"
-    CMS_lumi.lumi_13TeV = "13 TeV, "+args.year
+    CMS_lumi.lumi_13TeV = "13 TeV, "+ ( '2017+2018' if args.year.startswith('all') else args.year )
     CMS_lumi.relPosX = 0.11
     CMS_lumi.CMS_lumi(canUnc, 4, 0)
 
@@ -616,7 +622,6 @@ if __name__ == '__main__':
     parser.add_argument("-s", "--selection", action='store', dest="selection", default="_dijetSel", help="Selection to unfold: _dijetSel, _WSel, _topSel" )
     parser.add_argument("--only", action='store', dest="only", default="", help="Submit only one variable" )
     parser.add_argument("--QCDHT", action='store_true', dest="QCDHT", default=False, help="For dijet sel, signal QCD is HT or not" )
-    parser.add_argument("--selfClosure", action='store_true', dest="selfClosure", default=False, help="Run selfClosure test " )
     parser.add_argument("--noUnc", action='store_true', dest="noUnc", default=False, help="Run without Unc " )
     ##parser.add_argument("-r", "--runCombine", action='store_true', dest="runCombine", help="Run combine (true)" )
     parser.add_argument("-v", "--version", action='store', dest="version", default="v00", help="Version" )
@@ -625,6 +630,7 @@ if __name__ == '__main__':
     parser.add_argument('--plotOnly', action='store_true', default=False, dest='plotOnly',  help='Plot only.' )
     parser.add_argument("--inputFolder", action='store', dest="inputFolder", default="", help="input folder" )
     parser.add_argument("--outputFolder", action='store', dest="outputFolder", default="", help="Output folder" )
+    parser.add_argument('-l', '--lumi', action='store', type=float, default=0., help='Luminosity, example: 1.' )
 
     try: args = parser.parse_args()
     except:
@@ -642,8 +648,6 @@ if __name__ == '__main__':
     else: variables = { k:v for (k,v) in variables.items() if k.startswith('Jet_') }
 
     sysUncert = [] if args.noUnc else [ '_jesTotal', '_jer', '_pu' ]
-    if args.process.startswith('data'): args.selfClosure = True     ### stupid trick
-
 
     dataFile = {}
     sigFiles = {}
@@ -656,8 +660,8 @@ if __name__ == '__main__':
             sys.exit(0)
 
         for ivar in variables.keys():
-            dataFile[ivar+'_2017'] = ROOT.TFile.Open( args.inputFolder+'/Plots/'+args.selection.split('_')[1]+'/Unfold/2017/'+ivar+'/'+args.process+'/outputHistograms_QCD_HT2000toInf.root' )
-            dataFile[ivar+'_2018'] = ROOT.TFile.Open( args.inputFolder+'/Plots/'+args.selection.split('_')[1]+'/Unfold/2018/'+ivar+'/'+args.process+'/outputHistograms_QCD_HT2000toInf.root' )
+            dataFile[ivar+'_2017'] = ROOT.TFile.Open( args.inputFolder+'/Plots/'+args.selection.split('_')[1]+'/Unfold/2017/'+ivar+'/'+args.process+'/outputHistograms_QCD_'+( 'HT2000toInf' if args.QCDHT else 'Pt_3200toInf' )+'.root' )
+            dataFile[ivar+'_2018'] = ROOT.TFile.Open( args.inputFolder+'/Plots/'+args.selection.split('_')[1]+'/Unfold/2018/'+ivar+'/'+args.process+'/outputHistograms_QCD_'+( 'HT2000toInf' if args.QCDHT else 'Pt_3200toInf' )+'.root' )
 
     #### Single year unfolding runs on skimmers
     else:
@@ -667,9 +671,9 @@ if __name__ == '__main__':
                 if not checkDict( isam, dictSamples )[args.year]['skimmerHisto'].endswith('root'): continue
                 if args.selection.startswith('_dijet'):
                     if args.QCDHT:
-                        qcdHTSample = True if args.selfClosure else False
+                        qcdHTSample = True if args.process.startswith('MCSelfClosure') else False
                     else:
-                        qcdHTSample = False if args.selfClosure else True
+                        qcdHTSample = False if args.process.startswith('MCSelfClosure') else True
                     if not qcdHTSample and isam.startswith('QCD_Pt') and isam.endswith('pythia8'):
                         dataFile[isam.split('_Tune')[0]] = [
                                         ROOT.TFile.Open( checkDict( isam, dictSamples )[args.year]['skimmerHisto'] ),
@@ -687,7 +691,8 @@ if __name__ == '__main__':
                                 ]
         else:
             dataFile['data'] = [ ROOT.TFile.Open(checkDict( ('JetHT' if args.selection.startswith("_dijet") else 'SingleMuon'), dictSamples )[args.year]['skimmerHisto']) ]
-        args.lumi = checkDict( ('JetHT' if args.selection.startswith("_dijet") else 'SingleMuon'), dictSamples )[args.year]['lumi']
+        for iy in ( ['2017', '2018'] if args.year.startswith('all') else [ args.year ] ):
+            args.lumi = args.lumi + checkDict( ( 'JetHT' if args.selection.startswith('dijet') else 'SingleMuon' ), dictSamples )[iy]['lumi']
 
         if args.selection.startswith(('_W', '_top')):
             for isam in dictSamples:

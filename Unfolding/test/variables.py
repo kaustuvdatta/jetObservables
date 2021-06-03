@@ -23,11 +23,11 @@ for ijet in [ ('Jet1', 'Outer' ), ('Jet2', 'Central') ]:
 		'label' : ijet[1]+' AK8 jet #tau_{1}^{0.5}',
 		'alignLeg' : 'right'
 		}
-    nSubVariables[ ijet[0]+'_tau_0p5_2' ] = {
-		'bins' :  np.concatenate( ( np.array([ 0, 0.1 ]), np.arange( 0.14, 0.54, 0.04 ), np.array([ .7 ]) ) ),
-		'label' : ijet[1]+' AK8 jet #tau_{2}^{0.5}',
-		'alignLeg' : 'right'
-		}
+#    nSubVariables[ ijet[0]+'_tau_0p5_2' ] = {
+#		'bins' :  np.concatenate( ( np.array([ 0, 0.1 ]), np.arange( 0.14, 0.54, 0.04 ), np.array([ .7 ]) ) ),
+#		'label' : ijet[1]+' AK8 jet #tau_{2}^{0.5}',
+#		'alignLeg' : 'right'
+#		}
     nSubVariables[ ijet[0]+'_tau_0p5_3' ] = {
 		#'bins' :  np.concatenate( ( np.array([ 0, 0.1 ]), np.arange( 0.125, 0.463, 0.026 ), np.array([ .6 ]) ) ),
 		'bins' :  np.concatenate( ( np.array([ 0, 0.1 ]), np.arange( 0.13, 0.43, 0.03 ), np.array([ .6 ]) ) ),

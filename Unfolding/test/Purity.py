@@ -36,7 +36,7 @@ def runPurity( bkgFiles, variables, sel ):
 
     for ivar in variables:
 
-        outputDir='Plots/'+args.selection.split('_')[1]+'/Purity/'+args.year+'/'+ivar+'/'
+        outputDir=args.outputFolder+'Plots/'+args.selection.split('_')[1]+'/Purity/'+args.year+'/'+ivar+'/'
         if not os.path.exists(outputDir): os.makedirs(outputDir)
 
         dictGraph = {}
@@ -133,6 +133,7 @@ if __name__ == '__main__':
     parser.add_argument('-y', '--year', action='store', default='2017', help='Year: 2016, 2017, 2018.' )
     parser.add_argument("-v", "--version", action='store', dest="version", default="v00", help="Version" )
     parser.add_argument('-e', '--ext', action='store', default='png', help='Extension of plots.' )
+    parser.add_argument("--outputFolder", action='store', dest="outputFolder", default="", help="Output folder" )
 
     try: args = parser.parse_args()
     except:

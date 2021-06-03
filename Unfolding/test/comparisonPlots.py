@@ -34,15 +34,16 @@ def makePlots( name, ext='png', outputDir='Plots/' ):
                     'unfold' : dictFiles[ivar].Get( 'unfoldHisto'+ivar ),
                     'unfoldwoUnc' : dictFiles[ivar].Get( 'unfoldHistowoUnc'+ivar ),
                     'fold' : dictFiles[ivar].Get( 'foldHisto'+ivar ),
-                    'gen' : dictFiles[ivar].Get( 'gen'+ivar+'_'+args.selection+'_Rebin' ),
-                    'reco' : dictFiles[ivar].Get( 'reco'+ivar+'_nom_'+args.selection+'_Rebin_GenBin' ),
+                    'gen' : dictFiles[ivar].Get( mainQCD+'_accepgen'+ivar+'_'+args.selection ),
+                    'reco' : dictFiles[ivar].Get( mainQCD+'_reco'+ivar+'_nom_'+args.selection ),
                     'data'+secondQCD : dictFiles[ivar+secondQCD].Get( 'dataMinusBkgsGenBin' ),
                     'unfold'+secondQCD : dictFiles[ivar+secondQCD].Get( 'unfoldHisto'+ivar ),
                     'unfoldwoUnc'+secondQCD : dictFiles[ivar+secondQCD].Get( 'unfoldHistowoUnc'+ivar ),
                     'fold'+secondQCD : dictFiles[ivar+secondQCD].Get( 'foldHisto'+ivar ),
-                    'gen'+secondQCD : dictFiles[ivar+secondQCD].Get( 'gen'+ivar+'_'+args.selection+'_Rebin' ),
-                    'reco'+secondQCD : dictFiles[ivar+secondQCD].Get( 'reco'+ivar+'_nom_'+args.selection+'_Rebin_GenBin' )
+                    'gen'+secondQCD : dictFiles[ivar+secondQCD].Get( secondQCD+'_accepgen'+ivar+'_'+args.selection ),
+                    'reco'+secondQCD : dictFiles[ivar+secondQCD].Get( secondQCD+'_reco'+ivar+'_nom_'+args.selection )
                     }
+            print(dictHistos)
             numBins = numBins + dictHistos[ivar]['data'].GetNbinsX()
 
             ############################################
@@ -237,7 +238,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-p', '--proc', action='store', default='MCClosure', dest='process', help='Process to draw, example: data, MCClosure, MCSelfClosure.' )
     parser.add_argument('-s', '--selection', action='store', default='dijetSel', help='Selection: dijetSel, WSel, topSel.' )
-    parser.add_argument('-v', '--version', action='store', default='v0', help='Version: v01, v02.' )
+    parser.add_argument('-v', '--version', action='store', default='v02', help='Version: v01, v02.' )
     parser.add_argument('-y', '--year', action='store', default='2017', help='Year: 2016, 2017, 2018.' )
     #parser.add_argument('-l', '--lumi', action='store', type=float, default=41530., help='Luminosity, example: 1.' )
     parser.add_argument('-e', '--ext', action='store', default='png', help='Extension of plots.' )
