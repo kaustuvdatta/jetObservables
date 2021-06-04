@@ -19,9 +19,7 @@ ROOT.gROOT.ForceStyle()
 tdrStyle.setTDRStyle()
 ROOT.gStyle.SetOptStat(0)
 
-selection = {}
-#selection['SL_presel'] = [ 'nlep > 0', 'nJets > 3', 'nDeepCSVM > 1' ]
-
+colors = [ 2, 4, 6, 8, 9, 28, 30, 42, 13 ]
 canvas = {}
 
 ##########################################################
@@ -91,6 +89,68 @@ def plotSimpleComparison( inFile1, sample, inFile2, sample2, name, rebinX=1, xmi
     if ext.startswith('pdf'):
         canvas[name].SaveAs( outputDir+outName.replace('pdf', 'png') )
     #del can
+
+#####################################################
+#####################################################
+def plotData( name, xmin, xmax, rebinX, axisX='', axisY='', labX=0.92, labY=0.50, log=False,
+                      addRatioFit=False, Norm=False, ext='png', outputDir='Plots/', legendAlignment='right' ):
+    """"For dijets, make plots only for data"""
+
+    outputFileName = name+'_dataPlots_'+args.version+'.'+args.ext
+    print('Processing.......', outputFileName)
+
+    legend=ROOT.TLegend(0.60,0.65,0.90,0.90)
+    legend.SetFillStyle(0)
+    legend.SetTextSize(0.03)
+
+    tmpdataHistos = OrderedDict()
+    dummy = 1
+    triggerList = [ 'AK8PFJet80', 'AK8PFJet140', 'AK8PFJet200', 'AK8PFJet260', 'AK8PFJet320', 'AK8PFJet400', 'AK8PFJet450', 'AK8PFJet500' ]
+    for dataSamples in dataFile.keys():
+        yearLabel = dataSamples.split('data')[1]
+        if args.selection.startswith('dijet'):
+            for it in list(reversed(triggerList)):
+            #for it in checkDict( 'JetHT', dictSamples )[yearLabel]['triggerList']:
+                tmpdataHistos[ it+dataSamples ] = dataFile[dataSamples].Get( 'jetObservables/'+name.replace( args.selection, it+'_'+args.selection ) )
+                tmpdataHistos[ it+dataSamples ].Scale( checkDict( 'JetHT', dictSamples )[yearLabel]['triggerList'][it] )
+                if isinstance(rebinX, int): tmpdataHistos[ it+dataSamples ] = tmpdataHistos[ it+dataSamples ].Rebin( rebinX )
+                if name.startswith('nPV'): tmpdataHistos[ it+dataSamples ].Scale( 1./tmpdataHistos[ it+dataSamples ].Integral() )
+                tmpdataHistos[ it+dataSamples ].SetLineColor( colors[dummy] )
+                tmpdataHistos[ it+dataSamples ].SetLineWidth( 2 )
+                legend.AddEntry( tmpdataHistos[ it+dataSamples ], it, 'lep' )
+                dummy = dummy+1
+        else:
+            tmpdataHistos[ dataSamples ] = dataFile[yearLabel].Get( 'jetObservables/'+name )
+
+    stackHisto = ROOT.THStack('stackHisto'+name, 'stack'+name)
+    for i in tmpdataHistos: stackHisto.Add( tmpdataHistos[i] )
+    binWidth = tmpdataHistos[next(iter(tmpdataHistos))].GetBinWidth(1)
+
+
+    #tdrStyle.SetPadRightMargin(0.05)
+    canvas[name] = ROOT.TCanvas('c1'+name, 'c1'+name,  10, 10, 750, 500 )
+    if log:
+        canvas[name].SetLogy()
+        outName = outputFileName.replace('Plots','Plots_Log')
+    else: outName = outputFileName
+    if name.startswith('nPV'): stackHisto.Draw('histe nostack')
+    else: stackHisto.Draw('histe')
+    stackHisto.GetYaxis().SetTitleOffset(0.90)
+    if log: stackHisto.SetMinimum(1)
+    if xmax and xmin: stackHisto.GetXaxis().SetRangeUser( xmin, xmax )
+    if not axisY: stackHisto.GetYaxis().SetTitle( 'Events / '+str(binWidth) )
+    if axisX: stackHisto.GetXaxis().SetTitle( axisX )
+    legend.Draw()
+
+    CMS_lumi.cmsTextOffset = 0.0
+    CMS_lumi.relPosX = 0.13
+    CMS_lumi.CMS_lumi(canvas[name], 4, 0)
+
+    canvas[name].SaveAs( outputDir+'/'+outName )
+    if ext.startswith('pdf'):
+        canvas[name].SaveAs( outputDir+'/'+outName.replace('pdf', 'png') )
+    #del can
+
 
 ######################################################
 def plotSysComparison( nomHisto, upHisto, downHisto, outputName, syst, labelX='', log=False, version='', ext='png', year='2017', outputDir='Plots/' ):
@@ -317,7 +377,6 @@ def plotSignalBkg( name, xmin, xmax, rebinX, axisX='', axisY='', labX=0.92, labY
     hBkg.Draw("histe same")
     stackHisto.Draw('histe same')
 
-    CMS_lumi.extraText = " Preliminary"
     CMS_lumi.CMS_lumi( pad1, 4, 0)
     legend.Draw()
 
@@ -480,14 +539,18 @@ if __name__ == '__main__':
 
     outputDir = args.outputFolder+'Plots/'+args.selection+'/'+('Resolution' if args.process.startswith('reso') else 'Basic')+'/'+args.year
     if not os.path.exists(outputDir): os.makedirs(outputDir)
-    CMS_lumi.extraText = "Simulation Preliminary"
+    CMS_lumi.extraText = "Preliminary" if args.process.startswith(('data', 'bkgData')) else "Simulation Preliminary"
     CMS_lumi.lumi_13TeV = ('#leq' if args.selection.startswith('dijet') else '')+str( round( (args.lumi/1000.), 2 ) )+" fb^{-1}, 13 TeV"+('' if args.year.startswith('all') else ", "+args.year )
 
     plotList = [
+            [ 'data', 'nPVs_only', 'Number of Primary Vertex', 0., 100., 2, 'right' ],
+            [ 'data', 'LeadJetAK8_pt_only', 'Leading AK8 jet pt [GeV]', 100, 1500, 2, 'right' ] ,
+            [ 'data', 'LeadJetAK8_eta_only', 'Leading AK8 jet eta [GeV]', 100, 1500, 2, 'right' ] ,
+            [ 'data', 'recoJet1_sortedPt_pt_', 'Leading AK8 jet pt [GeV]', 100, 1000, 1, 'right' ] ,
             [ 'bkgData', 'nPVs', 'Number of Primary Vertex', 0., 100., 2, 'right' ],
             [ 'bkgData', 'recoPtAsym', 'pT Asymmetry', 0., .4, 2, 'right' ],
             [ 'bkgData', 'recoDeltaPhi', '#Delta #Phi(  j1, j2 )', 1., 3.5, 2, 'right' ],
-            [ 'bkgData', 'recoJet1_sortedPt_pt', 'Leading AK8 jet pt [GeV]', 100, 600, 2, 'right' ] ,
+            [ 'bkgData', 'recoJet1_sortedPt_pt', 'Leading AK8 jet pt [GeV]', 100, 1500, 2, 'right' ] ,
             [ 'bkgData', 'recoJet1_sortedPt_eta', 'Leading AK8 jet #eta', -3., 3., 2, 'right' ] ,
             [ 'bkgData', 'recoJet1_sortedPt_phi', 'Leading AK8 jet #Phi', -3.14, 3.14, 5, 'right' ] ,
             [ 'bkgData', 'recoJet1_sortedPt_mass', 'Leading AK8 jet mass [GeV]', 0, 200, 1, 'right' ] ,
@@ -523,6 +586,9 @@ if __name__ == '__main__':
                             log=args.log, axisX=i[1], legendAlignment=i[5], outputDir=outputDir, ext=args.ext)
         elif ( 'resol' in args.process ):
             plotResolution( i[0]+'_'+args.selection, i[2], i[3], i[4],
+                            log=args.log, axisX=i[1], Norm=args.norm, legendAlignment=i[5], outputDir=outputDir, ext=args.ext)
+        elif ( 'data' in args.process ):
+            plotData( i[0]+args.selection, i[2], i[3], i[4],
                             log=args.log, axisX=i[1], Norm=args.norm, legendAlignment=i[5], outputDir=outputDir, ext=args.ext)
         elif ( 'simple' in args.process ):
             plotSimpleComparison(
