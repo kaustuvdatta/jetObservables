@@ -20,16 +20,17 @@ dbsPhys03 = DbsApi('https://cmsweb.cern.ch/dbs/prod/phys03/DBSReader')
 def computeGenWeights( inputFiles, genEventSumw = 0, genEventSumw2 = 0, genEventCount = 0 ):
     """docstring for computeGenWeights"""
 
-    executor = concurrent.futures.ThreadPoolExecutor()
+    #executor = concurrent.futures.ThreadPoolExecutor()
     notProcessedFiles = []
     for i, fi in enumerate(inputFiles):
         try:
-            bl = uproot.open(fi, executor=executor)['Runs']
+            #bl = uproot.open(fi, executor=executor)['Runs']
+            bl = uproot.open(fi)['Runs']
             genEventSumw += bl.array("genEventSumw")[0]
             genEventSumw2 += bl.array("genEventSumw2")[0]
             genEventCount += bl.array("genEventCount")[0]
             print("file",i,genEventSumw)
-        except OSError:
+        except (OSError, IOError) as e:
             notProcessedFiles.append(fi)
             print('file not processed',fi)
             continue
@@ -85,7 +86,8 @@ if __name__ == '__main__':
             fileDictList = ( dbsPhys03 if jsample.endswith('USER') else dbsGlobal).listFiles(dataset=jsample,validFileOnly=1)
             # DBS client returns a list of dictionaries, but we want a list of Logical File Names
             #allfiles = [ {"root://cms-xrd-global.cern.ch/"+dic['logical_file_name']: "Runs"} for dic in fileDictList ]
-            allfiles = [ prefix+dic['logical_file_name'] for dic in fileDictList ]
+            allfiles = [ prefix+dic['logical_file_name'] for dic in fileDictList  ]
+            #allfiles = [ prefix+dic['logical_file_name'] for dic in fileDictList if 'nanoskim_1' in dic['logical_file_name'] ]
         print ("dataset %s has %d files" % (jsample, len(allfiles)))
 
         computeGenWeights( allfiles )
