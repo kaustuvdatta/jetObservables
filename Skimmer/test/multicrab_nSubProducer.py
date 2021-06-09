@@ -4,6 +4,7 @@ This is a small script that submits a config over many datasets
 """
 import os
 from optparse import OptionParser
+from datasets import dictSamples, checkDict
 
 def make_list(option, opt, value, parser):
     setattr(parser.values, option.dest, value.split(','))
@@ -38,7 +39,7 @@ mv python $CMSSW_BASE/python
 echo Found Proxy in: $X509_USER_PROXY
 ls
 echo "python {pythonFile} --sample {datasets} --selection {selection}"
-python {pythonFile} --sample {datasets} --selection {selection}
+python {pythonFile} --sample {datasets} --selection {selection} --year {year} --runEra {runEra}
 fi
     '''
     open('runPostProc'+options.datasets+'.sh', 'w').write(BASH_SCRIPT.format(**options.__dict__))
@@ -66,15 +67,12 @@ def submitJobs( job, inputFiles, unitJobs ):
     config.JobType.allowUndistributedCMSSW = True
 
     config.section_("Data")
-    #config.Data.publication = True
-    #config.Data.publishDBS = 'phys03'
     config.Data.inputDBS = 'phys03'
-    config.Data.ignoreLocality = True
+    #config.Data.ignoreLocality = True
 
     config.section_("Site")
     config.Site.storageSite = options.storageSite
-    config.Site.whitelist = ['T1_US_FNAL','T2_CH_CSCS','T3_US_FNALLPC' ]
-    #config.Site.blacklist = ['T2_US_Florida','T3_TW_*','T2_BR_*','T2_GR_Ioannina','T2_BR_SPRACE','T2_RU_IHEP','T2_PL_Swierk','T2_KR_KNU','T3_TW_NTU_HEP']
+    #config.Site.whitelist = ['T1_US_FNAL','T2_CH_CSCS','T3_US_FNALLPC' ]
 
 
     def submit(config):
@@ -85,18 +83,23 @@ def submitJobs( job, inputFiles, unitJobs ):
             print hte.headers
 
 
-    requestname = 'jetObservables_Skimmer_'+ job + '_' +options.version
-    print requestname
     config.JobType.scriptExe = 'runPostProc'+options.datasets+'.sh'
     config.JobType.inputFiles = [ options.pythonFile ,'haddnano.py', 'keep_and_drop.txt']
     config.JobType.sendPythonFolder  = True
 
-    if job.startswith(('Single', 'JetHT')): config.Data.lumiMask = '/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions17/13TeV/Legacy_2017/Cert_294927-306462_13TeV_UL2017_Collisions17_GoldenJSON.txt'
+    if job.startswith(('UL17_Single', 'UL17_JetHT', 'JetHT', 'SingleMuon')):
+        if options.year.startswith('2017'): config.Data.lumiMask = '/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions17/13TeV/Legacy_2017/Cert_294927-306462_13TeV_UL2017_Collisions17_GoldenJSON.txt'
+        elif options.year.startswith('2018'): config.Data.lumiMask = '/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions18/13TeV/Legacy_2018/Cert_314472-325175_13TeV_Legacy2018_Collisions18_JSON.txt'
     #config.Data.userInputFiles = inputFiles
     config.Data.inputDataset = inputFiles
+
     config.Data.splitting = 'EventAwareLumiBased' if job.startswith('QCD_Pt') else 'FileBased'
     #config.Data.splitting = 'Automatic'
     #config.Data.splitting = 'FileBased'
+
+    #config.Data.splitting = 'EventAwareLumiBased' if job.startswith('QCD_Pt') else 'FileBased'
+    #config.Data.splitting = 'Automatic'
+    config.Data.splitting = 'FileBased'
     config.Data.unitsPerJob = unitJobs
     #config.Data.outputPrimaryDataset = job
 
@@ -104,16 +107,24 @@ def submitJobs( job, inputFiles, unitJobs ):
     config.JobType.outputFiles = [ 'jetObservables_nanoskim.root', 'jetObservables_histograms.root']
     config.Data.outLFNDirBase = '/store/user/'+os.environ['USER']+'/jetObservables/'
 
+    requestname = 'jetObservables_Skimmer_'+ job.replace('_','').replace('-','')+'_'+options.year + '_' +options.version
+    print requestname
     if len(requestname) > 100: requestname = (requestname[:95-len(requestname)])
+    if os.path.isdir('crab_projects/crab_'+requestname):
+        print '|-------> JOB '+requestname+' has already a folder. Please remove it.'
+        os.remove('runPostProc'+options.datasets+'.sh')
+        return False
+
     print 'requestname = ', requestname
     config.General.requestName = requestname
-    config.Data.outputDatasetTag = requestname
+    config.Data.outputDatasetTag = 'Run'+inputFiles.split('Run')[1].split('AOD')[0]+'AOD_jetObservables_Skimmer_'+options.version+('EXT'+job.split('EXT')[1] if 'EXT' in job else '')
     print 'Submitting ' + config.General.requestName + ', dataset = ' + job
     print 'Configuration :'
     print config
     submit(config)
     #try : submit(config)
     #except : print 'Not submitted.'
+    os.remove('runPostProc'+options.datasets+'.sh')
 
 
 
@@ -143,6 +154,11 @@ if __name__ == '__main__':
             help=("Version of output"),
             )
     parser.add_option(
+            "-y", "--year",
+            dest="year", default="2017",
+            help=("Version of output"),
+            )
+    parser.add_option(
             "-s", "--selection",
             dest="selection", default="Wtop",
             help=("Selection: dijet, Wtop"),
@@ -152,6 +168,12 @@ if __name__ == '__main__':
             dest="pythonFile", default="jetObservables_nSubProducer.py",
             help=("python file to run"),
             )
+    parser.add_option(
+            '--runEra',
+            action="store",
+            help="Run era for data",
+            default="B"
+    )
 
 
     (options, args) = parser.parse_args()
@@ -313,17 +335,28 @@ if __name__ == '__main__':
     dictSamples['QCD_Pt2400to3200'] = [ '/QCD_Pt_2400to3200_TuneCUETP8M1_13TeV_pythia8/algomez-QCDPt2400to3200TuneCUETP8M113TeVpythia8RunIISummer16MiniAODv3-PUMoriond1794XmcRun2-dafc15ff64439ee3efd0c8e48ce3e57e/USER', 1 ]
     dictSamples['QCD_Pt3200toInf'] = ['/QCD_Pt_3200toInf_TuneCUETP8M1_13TeV_pythia8/algomez-QCDPt3200toInfTuneCUETP8M113TeVpythia8RunIISummer16MiniAODv3-PUMoriond1794XmcRun2-dafc15ff64439ee3efd0c8e48ce3e57e/USER', 1 ]
     '''
+
     processingSamples = {}
-    if 'all' in options.datasets:
-        for sam in dictSamples: processingSamples[ sam ] = dictSamples[ sam ]
-    else:
-        for sam in dictSamples:
-            if sam.startswith( options.datasets ): processingSamples[ sam ] = dictSamples[ sam ]
+    for sam in dictSamples:
+        if sam.startswith( options.datasets ) | options.datasets.startswith('all'):
+            if sam.startswith(('JetHT', 'SingleMuon')):
+                for iera in checkDict( sam, dictSamples )[options.year]['nanoAOD']:
+                    processingSamples[ sam+'Run'+options.year+iera ] = [ checkDict( sam, dictSamples )[options.year]['nanoAOD'][iera], 1 ]
+                    options.runEra = iera
+            else:
+                tmpList = checkDict( sam, dictSamples )[options.year]['nanoAOD']
+                processingSamples[ sam ] = [ tmpList[0], 1 ]
+                if len(tmpList)>1:
+                    for iext in range(1,len(tmpList)):
+                        processingSamples[ sam+'EXT'+str(iext) ] = [ tmpList[iext], 1 ]
 
     if len(processingSamples)==0: print 'No sample found. \n Have a nice day :)'
 
     for isam in processingSamples:
 
+        if not processingSamples[isam][0]:
+            print(' Sample ',isam,' does not have nanoAOD stored in datasets.py. Continuing with the next')
+            continue
         #if isam.startswith('QCD') or isam.startswith('JetHT'): options.selection = 'dijet'
         #else: options.selection = 'Wtop'
 

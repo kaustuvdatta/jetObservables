@@ -1,0 +1,32 @@
+#### myWD is just to be completely sure where are you running stuff
+myWD = $ENV(PWD)
+universe    =  vanilla
+arguments   =  $(dataset) $(year)
+executable  =  $(myWD)/submit_computeGenWeights.sh
+log         =  $(myWD)/logComputGenWeights/condor.log
+error       =  $(myWD)/logComputGenWeights/condor_$(dataset)_$(year)_$(Process).err
+output      =  $(myWD)/logComputGenWeights/condor_$(dataset)_$(year)_$(Process).out
+initialdir  = $(myWD)
+getenv      =  True
++JobFlavour = "workday"
+queue dataset year from(
+        QCD_Pt_170      2017
+        QCD_Pt_300      2017
+        QCD_Pt_470      2017
+        QCD_Pt_600      2017
+        QCD_Pt_800      2017
+        QCD_Pt_1000     2017
+        QCD_Pt_1400     2017
+        QCD_Pt_1800     2017
+        QCD_Pt_2400     2017
+        QCD_Pt_3200     2017
+        QCD_HT100       2017
+        QCD_HT200       2017
+        QCD_HT300       2017
+        QCD_HT500       2017
+        QCD_HT700       2017
+        QCD_HT1000      2017
+        QCD_HT1500      2017
+        QCD_HT2000      2017
+        )
+

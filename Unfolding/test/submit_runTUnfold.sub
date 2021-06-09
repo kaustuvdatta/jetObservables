@@ -1,0 +1,27 @@
+myWD = $ENV(PWD)
+universe    =  vanilla
+executable  =  $(myWD)/submit_runTUnfold.sh
+arguments   =  $(tau)
+log         =  $(myWD)/condorlogs/log_condorJob_$(ClusterId).log
+error       =  $(myWD)/condorlogs/log_condorJob_$(ClusterId)-$(ProcId)-$(tau).err
+output      =  $(myWD)/condorlogs/log_condorJob_$(ClusterId)-$(ProcId)-$(tau).out
+initialdir  = $(myWD)
+getenv      =  True
++JobFlavour = "workday"
+queue tau from (
+    tau21
+    tau32
+    tau_0p5_1
+    tau_0p5_2
+    tau_0p5_3
+    tau_0p5_4
+    tau_1_1
+    tau_1_2
+    tau_1_3
+    tau_1_4
+    tau_2_1
+    tau_2_2
+    tau_2_3
+    tau_2_4
+        ) 
+

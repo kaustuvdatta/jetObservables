@@ -4,6 +4,8 @@ This is a small script that submits a config over many datasets
 """
 import os
 from optparse import OptionParser
+sys.path.insert(0,'../../Skimmer/test/')
+from datasets import checkDict, dictSamples
 
 def submitJobs( job, inputFiles, unitJobs ):
 
@@ -48,7 +50,8 @@ def submitJobs( job, inputFiles, unitJobs ):
     requestname = 'jetObservables_triggerEfficiencies_'+ job + '_' +options.version
     print requestname
 
-    if job.startswith(('Single', 'JetHT')): config.Data.lumiMask = '/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions17/13TeV/Legacy_2017/Cert_294927-306462_13TeV_UL2017_Collisions17_GoldenJSON.txt'
+    if job.split('Run')[1].startswith('2017'): config.Data.lumiMask = '/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions17/13TeV/Legacy_2017/Cert_294927-306462_13TeV_UL2017_Collisions17_GoldenJSON.txt'
+    elif job.split('Run')[1].startswith('2018'): config.Data.lumiMask = '/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions18/13TeV/Legacy_2018/Cert_314472-325175_13TeV_Legacy2018_Collisions18_JSON.txt'
     config.Data.inputDataset = inputFiles
     config.Data.splitting = 'Automatic'
     #config.Data.unitsPerJob = unitJobs
@@ -105,26 +108,15 @@ if __name__ == '__main__':
     (options, args) = parser.parse_args()
 
 
-    dictSamples = {}
-
-    dictSamples['JetHT_Run2017B'] = [ '/JetHT/Run2017B-UL2017_MiniAODv2-v1/MINIAOD', 1 ]
-    dictSamples['JetHT_Run2017C'] = [ '/JetHT/Run2017C-UL2017_MiniAODv2-v1/MINIAOD', 1 ]
-    dictSamples['JetHT_Run2017D'] = [ '/JetHT/Run2017D-UL2017_MiniAODv2-v1/MINIAOD', 1 ]
-    dictSamples['JetHT_Run2017E'] = [ '/JetHT/Run2017E-UL2017_MiniAODv2-v1/MINIAOD', 1 ]
-    dictSamples['JetHT_Run2017F'] = [ '/JetHT/Run2017F-UL2017_MiniAODv2-v1/MINIAOD', 1 ]
-
     processingSamples = {}
-    if 'all' in options.datasets:
-        for sam in dictSamples: processingSamples[ sam ] = dictSamples[ sam ]
-    else:
-        for sam in dictSamples:
-            if sam.startswith( options.datasets ): processingSamples[ sam ] = dictSamples[ sam ]
+    for sam in dictSamples:
+        if sam.startswith( options.datasets ) | options.datasets.startswith('all'):
+            if sam.startswith(('JetHT')):
+                for iera in checkDict( sam, dictSamples )[options.year]['miniAOD']:
+                    processingSamples[ sam+'Run'+options.year+iera ] = [ checkDict( sam, dictSamples )[options.year]['miniAOD'][iera], 1 ]
+
 
     if len(processingSamples)==0: print 'No sample found. \n Have a nice day :)'
 
     for isam in processingSamples:
-
-        if '2017' in isam: options.year = '2017'
-        options.datasets = isam
-
         submitJobs( isam, processingSamples[isam][0], processingSamples[isam][1] )

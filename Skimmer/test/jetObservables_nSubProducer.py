@@ -13,7 +13,7 @@ from PhysicsTools.NanoAODTools.postprocessing.framework.eventloop import Module
 #this takes care of converting the input files from CRAB
 from PhysicsTools.NanoAODTools.postprocessing.framework.crabhelper import inputFiles,runsAndLumis
 
-from PhysicsTools.NanoAODTools.postprocessing.modules.common.puWeightProducer import puWeight_2016, puAutoWeight_2016, puWeight_2017, puAutoWeight_2017
+from PhysicsTools.NanoAODTools.postprocessing.modules.common.puWeightProducer import puAutoWeight_2016, puAutoWeight_2017, puAutoWeight_2018
 from PhysicsTools.NanoAODTools.postprocessing.modules.btv.btagSFProducer import btagSF2016, btagSF2017
 from PhysicsTools.NanoAODTools.postprocessing.modules.jme.jetmetHelperRun2 import *
 
@@ -43,6 +43,12 @@ parser.add_argument(
     '--oFile',
     action="store",
     help="Output file (for condor)",
+    default=""
+)
+parser.add_argument(
+    '--runEra',
+    action="store",
+    help="Run era for data",
     default=""
 )
 parser.add_argument(
@@ -78,7 +84,7 @@ METFilters = "( (Flag_goodVertices==1) && (Flag_globalSuperTightHalo2016Filter==
 if not isMC: METFilters = METFilters + ' && (Flag_eeBadScFilter==1)'
 
 if args.selection.startswith('dijet'):
-    Triggers =  '( (HLT_PFJet80==1) || (HLT_PFJet140==1) || (HLT_PFJet200==1) || (HLT_PFJet260==1) || (HLT_PFJet320==1) || (HLT_PFJet400==1) || (HLT_PFJet450==1) || (HLT_PFJet500==1) || (HLT_PFJet550==1) )'
+    Triggers =  '( (HLT_AK8PFJet80==1) || (HLT_AK8PFJet140==1) || (HLT_AK8PFJet200==1) || (HLT_AK8PFJet260==1) || (HLT_AK8PFJet320==1) || (HLT_AK8PFJet400==1) || (HLT_AK8PFJet450==1) || (HLT_AK8PFJet500==1) || (HLT_AK8PFJet550==1) )'
 else:
     Triggers = '(HLT_Mu50==1)'
 #if args.year.startswith('2016'): Triggers = ...
@@ -131,13 +137,21 @@ LeptonSF = {
 
 
 #### Modules to run
+
 if not args.selection.startswith('dijet'): jetmetCorrector = createJMECorrector(isMC=isMC, applySmearing=False, dataYear='UL'+args.year, jesUncert="All")
 fatJetCorrector = createJMECorrector(isMC=isMC, applySmearing=False, dataYear='UL'+args.year, jesUncert="All", jetType = "AK8PFPuppi")
 
+if not args.selection.startswith('dijet'):
+    jetmetCorrector = createJMECorrector(isMC=isMC, applySmearing=False, dataYear='UL'+args.year, jesUncert="All", runPeriod=args.runEra )
+fatJetCorrector = createJMECorrector(isMC=isMC, applySmearing=False, dataYear='UL'+args.year, jesUncert="All", jetType = "AK8PFPuppi", runPeriod=args.runEra)
+
+
 modulesToRun = []
+modulesToRun.append( fatJetCorrector() )
+if not args.selection.startswith('dijet'): modulesToRun.append( jetmetCorrector() )
 if isMC:
     if args.year=='2018':
-        modulesToRun.append( puWeight_2018() )
+        modulesToRun.append( puAutoWeight_2018() )
         print "###Running with btag SF calc.###"
         if not args.selection.startswith('dijet'): modulesToRun.append( btagSF2018() )
     if args.year=='2017':
@@ -145,19 +159,14 @@ if isMC:
         print "###Running with btag SF calc.###"
         if not args.selection.startswith('dijet'): modulesToRun.append( btagSF2017() )
     if args.year=='2016':
-        modulesToRun.append( puWeight_2016() )
+        modulesToRun.append( puAutoWeight_2016() )
         print "Running with btag SF calc."
         if not args.selection.startswith('dijet'): modulesToRun.append( btagSF2016() )
-modulesToRun.append( fatJetCorrector() )
-if not args.selection.startswith('dijet'): modulesToRun.append( jetmetCorrector() )
 
 # our module
 if args.selection.startswith('dijet'):
-    if args.local: triggerFile = "../../TriggerEfficiencies/test/Rootfiles/triggerEfficiencies_histograms_MiniAOD_JetHTRun2017ALL.root"
-    #if args.local: triggerFile = "/eos/home-a/algomez/tmpFiles/jetObservables/triggerPrescales/triggerEfficiencies_histograms_MiniAOD_JetHTRun2017B.pkl"
-    else: triggerFile = 'triggerEfficiencies_histograms_MiniAOD_JetHTRun2017B.pkl'
     from jetObservables.Skimmer.nSubProducer_dijetSel import nSubProd
-    modulesToRun.append( nSubProd( sysSource=systSources, leptonSF=LeptonSF[args.year], isMC=isMC, triggerFile=triggerFile ) )
+    modulesToRun.append( nSubProd( sysSource=systSources, leptonSF=LeptonSF[args.year], isMC=isMC, year=args.year ) )
 else:
     from jetObservables.Skimmer.nSubProducer_WTaggingNormTest import nSubProd #WtopSel import nSubProd
     modulesToRun.append( nSubProd( sysSource=systSources, leptonSF=LeptonSF[args.year], isMC=isMC ) )

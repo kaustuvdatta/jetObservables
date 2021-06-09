@@ -12,7 +12,6 @@ cmsrel  CMSSW_10_6_5
 cd  CMSSW_10_6_5/src
 cmsenv
 git cms-addpkg GeneratorInterface/Core
-git clone https://github.com/UBParker/NanoAODJMAR.git PhysicsTools/NanoAODJMAR
 git clone https://github.com/cms-nanoAOD/nanoAOD-tools.git PhysicsTools/NanoAODTools
 git clone https://github.com/cms-jet/NanoAODJMARTools.git PhysicsTools/NanoAODJMARTools
 git clone https://github.com/alefisico/jetObservables.git -b 106X jetObservables/

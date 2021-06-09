@@ -3,40 +3,50 @@
 
 #!/usr/bin/env python
 import argparse, os, shutil, sys
-from ROOT import *
 import ROOT
-from datasets import *
 from array import array
 import numpy as np
 from DrawHistogram import plotSimpleComparison
 sys.path.insert(0,'../python/')
 import CMS_lumi as CMS_lumi
 import tdrstyle as tdrstyle
+sys.path.insert(0,'../../Skimmer/test/')
+from datasets import checkDict, dictSamples
+
 ####gReset()
-gROOT.SetBatch()
-gROOT.ForceStyle()
+ROOT.gROOT.SetBatch()
+ROOT.gROOT.ForceStyle()
 tdrstyle.setTDRStyle()
-gStyle.SetOptStat(0)
+ROOT.gStyle.SetOptStat(0)
 
 colorPallete = [ 0, 2, 4, 8, 12, 28, 30 ]
 
-def runPurity( sigFiles, variables, sel ):
+def runPurity( bkgFiles, variables, sel ):
     """docstring for createDataCards"""
 
     ### Getting input histos
-    signalHistos = loadHistograms( sigFiles, variables, sel )
-    print signalHistos
+    signalHistos = loadHistograms( bkgFiles, variables, sel )
+    if args.selection.startswith('_dijet'):
+        tmpHistos = { k:v for (k,v) in signalHistos.items() if 'Inf' in k }
+        for ih in tmpHistos:
+            for jh in signalHistos:
+                if (jh.endswith('0'+ih.split('Inf')[1])) and not ('Inf' in jh ):
+                    tmpHistos[ih].Add( signalHistos[jh].Clone() )
+        signalHistos = tmpHistos
 
     for ivar in variables:
 
+        outputDir=args.outputFolder+'Plots/'+args.selection.split('_')[1]+'/Purity/'+args.year+'/'+ivar+'/'
+        if not os.path.exists(outputDir): os.makedirs(outputDir)
+
         dictGraph = {}
-        legend=TLegend(0.15,0.80,0.90,0.90)
+        legend=ROOT.TLegend(0.15,0.80,0.90,0.90)
         legend.SetFillStyle(0)
         legend.SetTextSize(0.03)
         legend.SetNColumns( len(variables[ivar][0]) )
-        multigraph = TMultiGraph()
+        multigraph = ROOT.TMultiGraph()
 
-        print '|------> Computing purity '+ivar
+        print ('|------> Computing purity '+ivar )
         dummy=1
         for ihisto in signalHistos:
             if ivar in ihisto:
@@ -57,12 +67,12 @@ def runPurity( sigFiles, variables, sel ):
                 stability = np.nan_to_num( recoBins/(recoBins+genBins) )     #### it is flipped to make it percentage
 
 
-                dictGraph[ 'purGraph_'+ihisto ] = TGraphErrors( signalHistos[ihisto].GetNbinsX(), array( 'd', binCenters ), array( 'd', purity ), array( 'd', binWidths ), array( 'd', [0]*len(binWidths) ) )
+                dictGraph[ 'purGraph_'+ihisto ] = ROOT.TGraphErrors( signalHistos[ihisto].GetNbinsX(), array( 'd', binCenters ), array( 'd', purity ), array( 'd', binWidths ), array( 'd', [0]*len(binWidths) ) )
                 dictGraph[ 'purGraph_'+ihisto ].SetLineWidth(2)
                 dictGraph[ 'purGraph_'+ihisto ].SetLineColor(colorPallete[dummy])
                 legend.AddEntry( dictGraph[ 'purGraph_'+ihisto ], 'Purity Bin '+str(signalHistos[ihisto].GetXaxis().GetBinWidth(1)), 'l' )
 
-                dictGraph[ 'staGraph_'+ihisto ] = TGraphErrors( signalHistos[ihisto].GetNbinsX(), array( 'd', binCenters ), array( 'd', stability ), array( 'd', binWidths ), array( 'd', [0]*len(binWidths) ) )
+                dictGraph[ 'staGraph_'+ihisto ] = ROOT.TGraphErrors( signalHistos[ihisto].GetNbinsX(), array( 'd', binCenters ), array( 'd', stability ), array( 'd', binWidths ), array( 'd', [0]*len(binWidths) ) )
                 dictGraph[ 'staGraph_'+ihisto ].SetLineWidth(2)
                 dictGraph[ 'staGraph_'+ihisto ].SetLineStyle(2)
                 dictGraph[ 'staGraph_'+ihisto ].SetLineColor(colorPallete[dummy])
@@ -83,18 +93,17 @@ def runPurity( sigFiles, variables, sel ):
 
         legend.Draw()
         CMS_lumi.extraText = "Simulation Preliminary"
-        #CMS_lumi.lumi_13TeV = str( round( (lumi/1000.), 2 ) )+" fb^{-1}, 13 TeV, 2016"
-        CMS_lumi.lumi_13TeV = "13 TeV, 2016"
+        CMS_lumi.lumi_13TeV = "13 TeV, "+args.year
         CMS_lumi.relPosX = 0.11
         CMS_lumi.CMS_lumi(canvas, 4, 0)
 
-        textBox=TLatex()
+        textBox=ROOT.TLatex()
         textBox.SetNDC()
         textBox.SetTextSize(0.04)
         textBox.SetTextFont(62) ### 62 is bold, 42 is normal
         textBox.DrawLatex(0.65, 0.75, sel.split('Sel')[0].split('_')[1]+' Selection' )
 
-        canvas.SaveAs('Plots/'+ivar+sel+'_Purity_'+args.version+'.png')
+        canvas.SaveAs(outputDir+ivar+sel+'_Purity_'+args.version+'.'+args.ext)
 
 ##########################################################################
 def loadHistograms( samples, variables, sel ):
@@ -102,39 +111,14 @@ def loadHistograms( samples, variables, sel ):
 
     allHistos = {}
     for var in variables:
+        ih = 'resp'+var+'_nom'+sel
         for isam in samples:
-            ih = 'respJet'+var+'_nom'+sel
             tmpHisto = samples[isam][0].Get( 'jetObservables/'+ih )
+            tmpHisto.Scale( samples[isam][1]['XS'] / samples[isam][1][args.year]['nGenWeights'] )
             for ibin in variables[var][0]:
-                if isinstance(ibin, int):
-                    allHistos[isam+'_'+ih+str(ibin)] = tmpHisto.Clone()
-                    allHistos[isam+'_'+ih+str(ibin)].SetName('Rebin_'+str(ibin))
-                    allHistos[isam+'_'+ih+str(ibin)].Rebin2D( ibin, ibin )
-                else:
-                    #### fancy way to create variable binning TH2D
-                    ##### IT IS NOT USED IN THIS SCRIPT YET
-                    tmpHisto = TH2F( allHistos[isam+'_'+ih].GetName()+isam+"_Rebin", allHistos[isam+'_'+ih].GetName()+isam+"_Rebin", len(variables[var])-1, array( 'd', variables[var]), len(variables[var])-1, array( 'd', variables[var]) )
-
-                    tmpArrayContent = np.zeros((len(variables[var]), len(variables[var])))
-                    tmpArrayError = np.zeros((len(variables[var]), len(variables[var])))
-
-                    for biny in range( 1, allHistos[isam+'_'+ih].GetNbinsY()+1 ):
-                        by = allHistos[isam+'_'+ih].GetYaxis().GetBinCenter( biny )
-                        for binx in range( 1, allHistos[isam+'_'+ih].GetNbinsX()+1 ):
-                            bx = allHistos[isam+'_'+ih].GetXaxis().GetBinCenter(binx)
-                            for iY in range( len(variables[var])-1 ):
-                                for iX in range( len(variables[var])-1 ):
-                                    if (by<variables[var][iY+1] and by>variables[var][iY]) and (bx<variables[var][iX+1] and bx>variables[var][iX]):
-                                        jbin = allHistos[isam+'_'+ih].GetBin(binx,biny)
-                                        tmpArrayContent[iX][iY] = tmpArrayContent[iX][iY] + allHistos[isam+'_'+ih].GetBinContent( jbin )
-                                        tmpArrayContent[iX][iY] = tmpArrayContent[iX][iY] + TMath.Power( allHistos[isam+'_'+ih].GetBinError( jbin ), 2 )
-
-                    for biny in range( 1, tmpHisto.GetNbinsY()+1 ):
-                        for binx in range( 1, tmpHisto.GetNbinsX()+1 ):
-                            tmpHisto.SetBinContent( tmpHisto.GetBin(binx,biny), tmpArrayContent[binx-1][biny-1] )
-
-                    allHistos[isam+'_'+ih] = tmpHisto
-
+                allHistos[isam+'_'+ih+str(ibin)] = tmpHisto.Clone()
+                allHistos[isam+'_'+ih+str(ibin)].SetName(tmpHisto.GetName()+isam+'_Rebin_'+str(ibin))
+                allHistos[isam+'_'+ih+str(ibin)].Rebin2D( ibin, ibin )
 
     return allHistos
 
@@ -145,37 +129,43 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("-p", "--process", action='store', dest="process", default="data", help="Process to unfold: data or MC." )
-    parser.add_argument("-s", "--selection", action='store', dest="selection", default="_topSel", help="Selection to unfold: _dijetSel, _WSel, _topSel" )
-    ##parser.add_argument("-r", "--runCombine", action='store_true', dest="runCombine", help="Run combine (true)" )
-    parser.add_argument('-l', '--lumi', action='store', type=float, default=35920., help='Luminosity, example: 1.' )
+    parser.add_argument("-s", "--selection", action='store', dest="selection", default="_dijetSel", help="Selection to unfold: _dijetSel, _WSel, _topSel" )
+    parser.add_argument('-y', '--year', action='store', default='2017', help='Year: 2016, 2017, 2018.' )
     parser.add_argument("-v", "--version", action='store', dest="version", default="v00", help="Version" )
+    parser.add_argument('-e', '--ext', action='store', default='png', help='Extension of plots.' )
+    parser.add_argument("--outputFolder", action='store', dest="outputFolder", default="", help="Output folder" )
 
     try: args = parser.parse_args()
     except:
         parser.print_help()
         sys.exit(0)
 
-    inputFolder='Rootfiles/'+args.version
-    dataFile = {}
-    if args.process.startswith('MC'): dataFile['data'] = [ TFile( inputFolder+'/jetObservables_histograms_TT_TuneCUETP8M2T4_13TeV-powheg-pythia8.root' ), 'Data', 'kBlack' ]
-    else: dataFile['data'] = [ TFile( inputFolder+'/jetObservables_histograms_SingleMuonRun2016ALL.root' ), 'Data', 'kBlack' ]
-
-    sigFiles = {}
-    sigFiles['TTJets'] = [ TFile( inputFolder+'/jetObservables_histograms_TTJets_TuneCUETP8M1_13TeV-madgraphMLM-pythia8.root'), 'ttbar (madgraph)', 'kBlue' ]
-    #sigFiles['TT'] = [ TFile( inputFolder+'/jetObservables_histograms_TT_TuneCUETP8M2T4_13TeV-powheg-pythia8.root'), 'ttbar (madgraph)', 'kBlue' ]
-
     bkgFiles = {}
-    bkgFiles['ST_s-channel_4f_InclusiveDecays'] = [ TFile( inputFolder+'/jetObservables_histograms_ST_s-channel_4f_InclusiveDecays_13TeV-amcatnlo-pythia8.root' ), 'Single top', 'kMagenta' ]
-    bkgFiles['ST_t-channel_antitop'] = [ TFile( inputFolder+'/jetObservables_histograms_ST_t-channel_antitop_4f_inclusiveDecays_13TeV-powhegV2-madspin-pythia8_TuneCUETP8M1.root' ), 'Single top', 'kMagenta' ]
-    bkgFiles['ST_t-channel_top'] = [ TFile( inputFolder+'/jetObservables_histograms_ST_t-channel_top_4f_inclusiveDecays_13TeV-powhegV2-madspin-pythia8_TuneCUETP8M1.root' ), 'Single top', 'kMagenta' ]
-    bkgFiles['ST_tW_antitop'] = [ TFile( inputFolder+'/jetObservables_histograms_ST_tW_antitop_5f_inclusiveDecays_13TeV-powheg-pythia8_TuneCUETP8M2T4.root' ), 'Single top', 'kMagenta' ]
-    bkgFiles['ST_tW_top'] = [ TFile( inputFolder+'/jetObservables_histograms_ST_tW_top_5f_inclusiveDecays_13TeV-powheg-pythia8_TuneCUETP8M2T4.root' ), 'Single top', 'kMagenta' ]
-    bkgFiles['WJets'] = [ TFile( inputFolder+'/jetObservables_histograms_WJetsToLNu_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8.root' ), 'WJets', 'kCyan' ]
-    ##bkgFiles[] = [ '', TFile( inputFolder+'/jetObservables_histograms_'+ibkg+'.root' ), '', 'kMagenta' ]
+    for isam in dictSamples:
+        if not checkDict( isam, dictSamples )[args.year]['skimmerHisto'].endswith('root'): continue
+        #if isam.startswith('QCD_Pt') and isam.endswith('pythia8'):
+        if isam.startswith('QCD_HT'):
+            bkgFiles[isam.split('_Tune')[0]] = [
+                            ROOT.TFile.Open( checkDict( isam, dictSamples )[args.year]['skimmerHisto'] ),
+                            checkDict( isam, dictSamples )
+                        ]
 
     variables = {}
-    variables[ 'Tau21' ] = [ [ 20, 10, 5, 2 ], 'Leading AK8 jet #tau_{21}' ]  #### original bin width is 0.1, rebinning means 0.1 times number in list
+    for ijet in [ ('Jet1', 'Outer'), ('Jet2', 'Central') ]:
+        variables[ ijet[0]+'_tau21' ] = [ [ 20, 10, 5, 2 ], ijet[1]+' AK8 jet #tau_{21}' ]  #### original bin width is 0.1, rebinning means 0.1 times number in list
+        variables[ ijet[0]+'_tau32' ] = [ [ 20, 10, 5, 2 ], ijet[1]+' AK8 jet #tau_{32}' ]
+        variables[ ijet[0]+'_tau_0p5_1' ] = [ [ 40, 20, 10, 4 ], ijet[1]+' AK8 jet #tau_{1}^{0.5}' ]
+        variables[ ijet[0]+'_tau_0p5_2' ] = [ [ 100, 50, 25, 10 ], ijet[1]+' AK8 jet #tau_{2}^{0.5}' ]
+        variables[ ijet[0]+'_tau_0p5_3' ] = [ [ 100, 50, 25, 10 ], ijet[1]+' AK8 jet #tau_{3}^{0.5}' ]
+        variables[ ijet[0]+'_tau_0p5_4' ] = [ [ 100, 50, 25, 10 ], ijet[1]+' AK8 jet #tau_{4}^{0.5}' ]
+        variables[ ijet[0]+'_tau_1_1' ] = [ [ 40, 20, 10, 4 ], ijet[1]+' AK8 jet #tau_{1}^{1}' ]
+        variables[ ijet[0]+'_tau_1_2' ] = [ [ 200, 100, 50, 25 ], ijet[1]+' AK8 jet #tau_{2}^{1}' ]
+        variables[ ijet[0]+'_tau_1_3' ] = [ [ 200, 100, 50, 25 ], ijet[1]+' AK8 jet #tau_{3}^{1}' ]
+        variables[ ijet[0]+'_tau_1_4' ] = [ [ 200, 100, 50, 25 ], ijet[1]+' AK8 jet #tau_{4}^{1}' ]
+        variables[ ijet[0]+'_tau_2_1' ] = [ [ 40, 20, 10, 4 ], ijet[1]+' AK8 jet #tau_{1}^{2}' ]
+        variables[ ijet[0]+'_tau_2_2' ] = [ [ 200, 100, 50, 25 ], ijet[1]+' AK8 jet #tau_{2}^{2}' ]
+        variables[ ijet[0]+'_tau_2_3' ] = [ [ 200, 100, 50, 25 ], ijet[1]+' AK8 jet #tau_{3}^{2}' ]
+        variables[ ijet[0]+'_tau_2_4' ] = [ [ 200, 100, 50, 25 ], ijet[1]+' AK8 jet #tau_{4}^{2}' ]
 
-    runPurity( sigFiles, variables, args.selection )
+    runPurity( bkgFiles, variables, args.selection )
 
