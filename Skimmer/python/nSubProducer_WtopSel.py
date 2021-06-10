@@ -45,8 +45,8 @@ class nSubProd(Module):
 
         ### Cuts for selections
         self.minLeadAK8JetPtW = 200.
-        self.minSDMassW = 60.#60.   ### looser to pick low bins
-        self.maxSDMassW = 120.#120.  ### looser to pick higher bins
+        self.minSDMassW = 60.#60.#   ### looser to pick low bins
+        self.maxSDMassW = 120.#120.#  ### looser to pick higher bins
         self.minLeadAK8JetPtTop= 350.
         self.minSDMassTop = 140.
         self.METCutWtop = 50.
@@ -309,30 +309,36 @@ class nSubProd(Module):
     #############################################################################
     def leptonSF(self, lepton, leptonP4 ):
 
-        if lepton.startswith("muon"): leptonP4eta = abs(leptonP4.eta)
-        else: leptonP4eta = leptonP4.eta
+        leptonP4eta = abs(leptonP4.eta)
+        leptonP = ROOT.TMath.Sqrt(leptonP4.p4().Px()**2 + leptonP4.p4().Py()**2 + leptonP4.p4().Pz()**2)
 
         SFFileTrigger = ROOT.TFile( os.environ['CMSSW_BASE']+"/src/jetObservables/Skimmer/data/leptonSF/"+self.leptonSFhelper[lepton]['Trigger'][0] )
         histoSFTrigger = SFFileTrigger.Get( self.leptonSFhelper[lepton]['Trigger'][1] )
-        SFTrigger = histoSFTrigger.GetBinContent( histoSFTrigger.GetXaxis().FindBin( leptonP4.pt ), histoSFTrigger.GetYaxis().FindBin( leptonP4eta ) )
+        SFTrigger = histoSFTrigger.GetBinContent( histoSFTrigger.GetXaxis().FindBin( leptonP4eta ), histoSFTrigger.GetYaxis().FindBin( leptonP4.pt ) )
 
         SFFileID = ROOT.TFile( os.environ['CMSSW_BASE']+"/src/jetObservables/Skimmer/data/leptonSF/"+self.leptonSFhelper[lepton]['ID'][0] )
         histoSFID = SFFileID.Get( self.leptonSFhelper[lepton]['ID'][1] )
-        histoSFID_X = histoSFID.GetXaxis().FindBin( leptonP4.pt if self.leptonSFhelper[lepton]['ID'][2] else leptonP4eta )
-        histoSFID_Y = histoSFID.GetYaxis().FindBin( leptonP4eta if self.leptonSFhelper[lepton]['ID'][2] else leptonP4.pt )
+        histoSFID_X = histoSFID.GetXaxis().FindBin( leptonP4eta)
+        histoSFID_Y = histoSFID.GetYaxis().FindBin( leptonP4.pt )
         SFID = histoSFID.GetBinContent( histoSFID_X, histoSFID_Y )
         SFID = SFID if SFID>0 else 1
 
-        if self.year.startswith('2016') and lepton.startswith("muon"): leptonP4eta = leptonP4.eta    #### stupid fix for the stupid SF file
         SFFileISO = ROOT.TFile( os.environ['CMSSW_BASE']+"/src/jetObservables/Skimmer/data/leptonSF/"+self.leptonSFhelper[lepton]['ISO'][0] )
         histoSFISO = SFFileISO.Get( self.leptonSFhelper[lepton]['ISO'][1] )
-        histoSFISO_X = histoSFISO.GetXaxis().FindBin( leptonP4.pt if self.leptonSFhelper[lepton]['ISO'][2] else leptonP4eta )
-        histoSFISO_Y = histoSFISO.GetYaxis().FindBin( leptonP4eta if self.leptonSFhelper[lepton]['ISO'][2] else leptonP4.pt )
+        histoSFISO_X = histoSFISO.GetXaxis().FindBin( leptonP4eta )
+        histoSFISO_Y = histoSFISO.GetYaxis().FindBin( leptonP4.pt )
         SFISO = histoSFISO.GetBinContent( histoSFISO_X, histoSFISO_Y )
         SFISO = SFISO if SFISO>0 else 1
+        
+        SFFileRecoEff = ROOT.TFile( os.environ['CMSSW_BASE']+"/src/jetObservables/Skimmer/data/leptonSF/"+self.leptonSFhelper[lepton]['RecoEff'][0] )
+        histoSFRecoEff = SFFileRecoEff.Get( self.leptonSFhelper[lepton]['RecoEff'][1] )
+        histoSFRecoEff_X = histoSFRecoEff.GetXaxis().FindBin( leptonP4eta )
+        histoSFRecoEff_Y = histoSFRecoEff.GetYaxis().FindBin( leptonP )
+        SFRecoEff = histoSFRecoEff.GetBinContent( histoSFRecoEff_X, histoSFRecoEff_Y )
+        SFRecoEff = SFRecoEff if SFRecoEff>0 else 1
 
         #print (SFTrigger * SFID * SFISO), SFTrigger , SFID , SFISO, leptonP4.pt, leptonP4.eta
-        return [SFTrigger , SFID , SFISO]
+        return [SFTrigger , SFID , SFISO, SFRecoEff]
 
 
     #############################################################################
@@ -356,7 +362,7 @@ class nSubProd(Module):
         recoJet = OrderedDict()
         if passRecoSel:  #### Detector level dist.
 
-            recoJet['Jet'] = self.createNsubBasis( selRecoJets[0], event, 'PFCands' )    ### it will be use in the entire IF
+            recoJet['Jet'] = self.createNsubBasis( selRecoJets[0], event, 'PFCands' )    ### it will be use in the entire IF #new=PFCands old = JetPFCands 
 
             self.recoLevel = self.recoLevel+1       #### counting ALL the recoLevel
             if iRecoSel.startswith('_W'):           #### counting recoLevelW
@@ -376,7 +382,10 @@ class nSubProd(Module):
                         if sysUnc.startswith('_pu'):
                             WEIGHT = event.genWeight * self.leptonWeight * getattr( event, 'puWeight'+sysUnc.split('pu')[1] )
                             getattr( self, 'reco'+iRJ+'_pt'+sysUnc+iRecoSel ).Fill( getattr(ireco['jet'], 'pt_nom' ), WEIGHT )
-                            getattr( self, 'reco'+iRJ+'_mass'+sysUnc+iRecoSel ).Fill( getattr(ireco['jet'], 'msoftdrop_nom' ), WEIGHT )
+                            if iRecoSel.startswith('_W'): 
+   	                         getattr( self, 'reco'+iRJ+'_mass'+sysUnc+iRecoSel ).Fill( (getattr(ireco['jet'], 'msoftdrop_nom' )), WEIGHT)#' )*(1.-getattr(ireco['jet'], 'rawFactor'))*getattr(ireco['jet'], 'corr_JEC')*getattr(ireco['jet'], 'msoftdrop_corr_JMR')*getattr(ireco['jet'], 'msoftdrop_corr_JMS' )*getattr(ireco['jet'], 'msoftdrop_corr_PUPPI' )), WEIGHT )
+                            elif iRecoSel.startswith('_top'): 
+           	        	getattr( self, 'reco'+iRJ+'_mass'+sysUnc+iRecoSel ).Fill( (getattr(ireco['jet'], 'msoftdrop_nom' )/getattr(ireco['jet'], 'msoftdrop_corr_PUPPI' )), WEIGHT)#' )*(1.-getattr(ireco['jet'], 'rawFactor'))*getattr(ireco['jet'], 'corr_JEC')*getattr(ireco['jet'], 'msoftdrop_corr_JMR')*getattr(ireco['jet'], 'msoftdrop_corr_JMS' )), WEIGHT )
                         else:
                             getattr( self, 'reco'+iRJ+'_pt'+sysUnc+iRecoSel ).Fill( getattr(ireco['jet'], 'pt'+sysUnc ), WEIGHT )
                             getattr( self, 'reco'+iRJ+'_mass'+sysUnc+iRecoSel ).Fill( getattr(ireco['jet'], 'msoftdrop'+sysUnc ), WEIGHT )
@@ -393,7 +402,7 @@ class nSubProd(Module):
                 if passGenSel:  ##### go to matrix
                     self.response= self.response+1
 
-                    genJet['Jet'] = self.createNsubBasis( selGenJets[0], event, 'GenCands' )
+                    genJet['Jet'] = self.createNsubBasis( selGenJets[0], event, 'GenCands'  ) #new = GenCands, old = GenJetCands
 
                     if ( iGenSel==iRecoSel ):
                         if iRecoSel.startswith('_W'): self.responseW = self.responseW+1
@@ -432,7 +441,10 @@ class nSubProd(Module):
                                     if sysUnc.startswith('_pu'):
                                         WEIGHT = event.genWeight * self.leptonWeight * getattr( event, 'puWeight'+sysUnc.split('pu')[1] )
                                         getattr( self, 'truereco'+iRJ+'_pt'+sysUnc+iRecoSel ).Fill( getattr(ireco['jet'], 'pt_nom' ), WEIGHT )
-                                        getattr( self, 'truereco'+iRJ+'_mass'+sysUnc+iRecoSel ).Fill( getattr(ireco['jet'], 'msoftdrop_nom' ), WEIGHT )
+                                        if iRecoSel.startswith('_W'): 
+   	                         	    getattr( self, 'truereco'+iRJ+'_mass'+sysUnc+iRecoSel ).Fill( (getattr(ireco['jet'], 'msoftdrop_nom' )), WEIGHT)#' )*(1.-getattr(ireco['jet'], 'rawFactor'))*getattr(ireco['jet'], 'corr_JEC')*getattr(ireco['jet'], 'msoftdrop_corr_JMR')*getattr(ireco['jet'], 'msoftdrop_corr_JMS' )*getattr(ireco['jet'], 'msoftdrop_corr_PUPPI' )), WEIGHT )
+                            		elif iRecoSel.startswith('_top'): 
+           	        		    getattr( self, 'truereco'+iRJ+'_mass'+sysUnc+iRecoSel ).Fill( (getattr(ireco['jet'], 'msoftdrop_nom' )/getattr(ireco['jet'], 'msoftdrop_corr_PUPPI' )), WEIGHT)#' )*(1.-getattr(ireco['jet'], 'rawFactor'))*getattr(ireco['jet'], 'corr_JEC')*getattr(ireco['jet'], 'msoftdrop_corr_JMR')*getattr(ireco['jet'], 'msoftdrop_corr_JMS' )), WEIGHT )
                                     else:
                                         getattr( self, 'truereco'+iRJ+'_pt'+sysUnc+iRecoSel ).Fill( getattr(ireco['jet'], 'pt'+sysUnc ), WEIGHT )
                                         getattr( self, 'truereco'+iRJ+'_mass'+sysUnc+iRecoSel ).Fill( getattr(ireco['jet'], 'msoftdrop'+sysUnc ), WEIGHT )
@@ -481,7 +493,10 @@ class nSubProd(Module):
                                 if sysUnc.startswith('_pu'):
                                     WEIGHT = event.genWeight * self.leptonWeight * getattr( event, 'puWeight'+sysUnc.split('pu')[1] )
                                     getattr( self, 'fakereco'+iRJ+'_pt'+sysUnc+iRecoSel ).Fill( getattr(ireco['jet'], 'pt_nom' ), WEIGHT )
-                                    getattr( self, 'fakereco'+iRJ+'_mass'+sysUnc+iRecoSel ).Fill( getattr(ireco['jet'], 'msoftdrop_nom' ), WEIGHT )
+                                    if iRecoSel.startswith('_W'): 
+                                    	getattr( self, 'fakereco'+iRJ+'_mass'+sysUnc+iRecoSel ).Fill( (getattr(ireco['jet'], 'msoftdrop_nom' )), WEIGHT)#*(1.-getattr(ireco['jet'], 'rawFactor'))*getattr(ireco['jet'], 'corr_JEC')*getattr(ireco['jet'], 'msoftdrop_corr_JMR')*getattr(ireco['jet'], 'msoftdrop_corr_JMS' )*getattr(ireco['jet'], 'msoftdrop_corr_PUPPI' )), WEIGHT )
+                                    elif iRecoSel.startswith('_top'): 
+                                    	getattr( self, 'fakereco'+iRJ+'_mass'+sysUnc+iRecoSel ).Fill( (getattr(ireco['jet'], 'msoftdrop_nom' )/getattr(ireco['jet'], 'msoftdrop_corr_PUPPI' )), WEIGHT)#' )*(1.-getattr(ireco['jet'], 'rawFactor'))*getattr(ireco['jet'], 'corr_JEC')*getattr(ireco['jet'], 'msoftdrop_corr_JMR')*getattr(ireco['jet'], 'msoftdrop_corr_JMS' )), WEIGHT )
                                 else:
                                     getattr( self, 'fakereco'+iRJ+'_pt'+sysUnc+iRecoSel ).Fill( getattr(ireco['jet'], 'pt'+sysUnc ), WEIGHT )
                                     getattr( self, 'fakereco'+iRJ+'_mass'+sysUnc+iRecoSel ).Fill( getattr(ireco['jet'], 'msoftdrop'+sysUnc ), WEIGHT )
@@ -497,7 +512,7 @@ class nSubProd(Module):
         else:  #### Misses
             self.miss = self.miss+1
 
-            genJet['Jet'] = self.createNsubBasis( selGenJets[0], event, 'GenCands' )
+            genJet['Jet'] = self.createNsubBasis( selGenJets[0], event, 'GenCands' ) #GenJetCands
 
             if passGenSel:
                 if iGenSel.startswith('_W'): self.missW = self.missW+1
@@ -552,11 +567,12 @@ class nSubProd(Module):
         electrons = list(Collection(event, 'Electron'))
         muons = list(Collection(event, 'Muon'))
         jets = list(Collection(event, 'Jet'))
-        met = Object(event, 'MET')
-
+	met = Object(event, 'MET')
+        
+      
         #### Lepton selection
         recoElectrons  = [x for x in electrons if x.pt > self.minLooseElectronPt and x.cutBased >= 2 and ((self.range1ElectronEta[0]<abs(x.eta)<self.range1ElectronEta[1]) or (self.range2ElectronEta[0]<abs(x.eta)<self.range2ElectronEta[1]))] #only loose selection for e
-        recoMuons = [x for x in muons if x.pt > self.minTightMuonPt and abs(x.p4().Eta()) < self.maxMuonEta and x.pfIsoId>=2 and x.tightId and abs(x.dxy)<0.2 and abs(x.dz)<0.5 and x.miniPFRelIso_all<0.10] # applying tight selection on muons already here since we only veto for loose muons and loose electrons in event
+        recoMuons = [x for x in muons if x.pt > self.minTightMuonPt and x.looseId and abs(x.p4().Eta()) < self.maxMuonEta and x.pfIsoId>=2 and x.tightId and abs(x.dxy)<0.2 and abs(x.dz)<0.5 and x.miniPFRelIso_all<0.10] # applying tight selection on muons already here since we only veto for loose muons and loose electrons in event
 
         recoElectrons.sort(key=lambda x:x.pt, reverse=True)
         recoMuons.sort(key=lambda x:x.pt,reverse=True)
@@ -571,22 +587,24 @@ class nSubProd(Module):
         ##################################################
 
         #### Basic AK8 jet selection
-        recoAK8jets = [ x for x in AK8jets if x.pt_nom > self.minAK8JetPt and abs(x.eta) < self.maxJetAK8Eta and (x.jetId & 2)]
+        recoAK8jets = [ x for x in AK8jets if x.pt > self.minAK8JetPt and abs(x.eta) < self.maxJetAK8Eta and (x.jetId >= 2) and x.tau1>0 and x.tau2>0 ]
         AK8HT = sum( [ x.pt for x in recoAK8jets ] )
-        recoAK8jets.sort(key=lambda x:x.pt_nom,reverse=True)
+        recoAK8jets.sort(key=lambda x:x.pt,reverse=True)
         ##################################################
 
         #### Basic AK4 b-jet cand. selection
-        recoAK4bjets = [ x for x in jets if x.pt > self.minJetPt and abs(x.p4().Eta()) < self.maxJetEta and x.btagDeepFlavB > self.minBDisc and (x.jetId & 2)]
+        recoAK4bjets = [ x for x in jets if x.pt > self.minJetPt and abs(x.p4().Eta()) < self.maxJetEta and x.btagDeepFlavB > self.minBDisc and (x.jetId >= 2)]
         recoAK4bjets.sort(key=lambda x:x.pt,reverse=True)
-
+        
+           
+                
         ##################################################
 
         #### Weight #########
         if self.isMC:
             if len(recoMuons)>0: leptonWeights= self.leptonSF( "muon", recoMuons[0] )
-            else: leptonWeights = [0, 0, 0]
-        else: leptonWeights = [1, 1, 1]
+            else: leptonWeights = [0, 0, 0, 0]
+        else: leptonWeights = [1, 1, 1, 1.]
 
         if self.isMC:
             weight = event.puWeight * event.genWeight * np.prod(leptonWeights)
@@ -658,7 +676,7 @@ class nSubProd(Module):
         passSel = False
         iSel = None
 
-        passSel, iSel = self.WtopSelection( False, event, recoMuons, recoElectrons, recoAK4bjets, recoAK8jets, MET )
+        passSel, iSel = self.WtopSelection( False, event, recoMuons, recoElectrons, recoAK4bjets, recoAK8jets, MET)
 
         reweight = self.totalWeight #called this 'reweight' since the weight here should now include b-tag event weights
         #### Creating Nsub basis, filling histos and creating branches IF passSel
@@ -717,7 +735,7 @@ class nSubProd(Module):
         ##################################################
 
         #### Basic AK8 jet selection
-        genAK8jets = [ x for x in genJetsAK8 if x.pt > self.minAK8JetPt and abs(x.eta) < self.maxJetAK8Eta ]
+        genAK8jets = [ x for x in genJetsAK8 if x.pt > self.minAK8JetPt and abs(x.eta) < self.maxJetAK8Eta]
         genAK8HT = sum( [ x.pt for x in genAK8jets ] )
         genAK8jets.sort(key=lambda x:x.pt,reverse=True)
         ##################################################
@@ -797,38 +815,63 @@ class nSubProd(Module):
         return passSel, iSel, genMuons, genElectrons, genAK4bjets, genAK8jets, genMET
 
     #############################################################################
-    def WtopSelection( self, isGen, event, muons, electrons, AK4bjets, AK8jets, MET ):
+    def WtopSelection( self, isGen, event, muons, electrons, AK4bjets, AK8jets, MET):#, met_collection ):
 
-        if (len(muons)==1) and (len(electrons) == 0) and (len(AK8jets)>0) and (len(AK4bjets)>1) and (MET.Pt()>self.METCutWtop):
-            ### removing ak4 jets inside leadAK8 jet and ennsuring angular separation from tight muon
-            for bjet in AK4bjets:
-                if abs(bjet.p4().DeltaPhi(muons[0].p4())<2.) or AK8jets[0].p4().DeltaR( bjet.p4() )<0.8 : AK4bjets.remove(bjet)
-            #TODO: discuss with Ale
-            if len(AK4bjets)>2: AK4bjets=AK4bjets[0:2]
+        if (len(muons)==1) and (len(electrons)== 0) and (len(AK8jets)>0) and (len(AK4bjets)>=1) and (MET.Pt()>self.METCutWtop):                
+            leptWpT=muons[0].p4()+MET
+            if leptWpT.Pt()>self.minLeptonicWPt:
+                
+                #AK4bjets = [x for x in AK4bjets if abs(x.p4().DeltaPhi(muons[0].p4()))<2.]# and x.p4().DeltaR( muons[0].p4() )>0.4 and (muons[0].p4().DeltaR( x.p4() )<1.5)]
+                AK4bjets = [x for x in AK4bjets if abs(x.p4().DeltaPhi(muons[0].p4()))<2. and AK8jets[0].p4().DeltaR( x.p4() )>0.8 and x.p4().DeltaR( muons[0].p4() )>0.4 and (muons[0].p4().DeltaR( x.p4() )<np.pi/2.)] 
+                
+                if (len(AK8jets)>0) and (len(AK4bjets)>=1) and (len(AK4bjets)<3) and abs(AK8jets[0].p4().DeltaPhi(muons[0].p4()))>2.:
+                    if not isGen:
+                        if self.isMC:
+                            bTagSFs =  [x.btagSF_deepjet_M for x in AK4bjets]
+                            self.btagweight =  self.getBTagWeight(nBTagged=len(AK4bjets), jet_SFs=bTagSFs)
+                        else: self.btagweight = 1
+
+                        self.out.fillBranch("btagWeight", self.btagweight)
+                        self.totalWeight = self.totalWeight*self.btagweight
+                    jetMass = AK8jets[0].mass if isGen else AK8jets[0].msoftdrop_nom#(AK8jets[0].msoftdrop*(1.-AK8jets[0].rawFactor)*AK8jets[0].corr_JEC*AK8jets[0].msoftdrop_corr_JMR*AK8jets[0].msoftdrop_corr_JMS*AK8jets[0].msoftdrop_corr_PUPPI)
+                    
+                    if ((jetMass<self.maxSDMassW) and (jetMass>self.minSDMassW)) and (AK8jets[0].pt>self.minLeadAK8JetPtW):
+                        return True, '_WSel' 
+
+                    elif (jetMass/ (1 if isGen else AK8jets[0].msoftdrop_corr_PUPPI) > self.minSDMassTop) and (AK8jets[0].pt>self.minLeadAK8JetPtTop): 
+                    	return True, '_topSel'
+                    else: return False, None
+                else: return False, None 
+            else: return False, None 
+        else: return False, None
+        
+        '''                
+        if (len(muons)==1) and (len(electrons) == 0) and (len(AK8jets)>0) and (len(AK4bjets)>=1) and (len(AK4bjets)<3) and (metval>self.METCutWtop):
+
+            leptWpT=muons[0].p4()+MET
+            
             if not isGen:
                 if self.isMC:
-                    bTagSFs =  [x.btagSF_deepjet_M for x in AK4bjets]
-                    self.btagweight = self.getBTagWeight(nBTagged=len(AK4bjets), jet_SFs=bTagSFs)
+                    #bTagSFs =  [x.btagSF_deepjet_M for x in AK4bjets]
+                    self.btagweight = 1.##self.getBTagWeight(nBTagged=len(AK4bjets), jet_SFs=bTagSFs)
                 else: self.btagweight = 1
+
                 self.out.fillBranch("btagWeight", self.btagweight)
                 self.totalWeight = self.totalWeight*self.btagweight
             ##################################################
+
             #keep a handle on btag multiplicity
-            ### defining muon isolation and leptonic top
-            muonIso = []
-            leptonicTop = []
-            for bjet in AK4bjets:
-                if bjet.p4().DeltaR( muons[0].p4() )<0.4: muonIso.append( False )
-                if (muons[0].p4().DeltaR( bjet.p4() )>0.4) and (muons[0].p4().DeltaR( bjet.p4() )<1.5): leptonicTop.append( True )
-            if all(muonIso) and ((MET+muons[0].p4()).Pt()>self.minLeptonicWPt) and any(leptonicTop) and (AK8jets[0].p4().DeltaR(muons[0].p4())>0.8) and (len(AK4bjets)>=1): #change to >=1 since we only have 1 explicit b after removing b's overlapping with ak8's in the merged top case  
+            if (leptWpT.Pt()>self.minLeptonicWPt) and (len(AK8jets)>0) and (len(AK4bjets)>=1):
                 jetMass = AK8jets[0].mass if isGen else AK8jets[0].msoftdrop
-                if (jetMass<self.maxSDMassW) and (jetMass>self.minSDMassW) and (AK8jets[0].pt>self.minLeadAK8JetPtW): return True, '_WSel'
-                elif (jetMass>self.minSDMassTop) and (AK8jets[0].pt>self.minLeadAK8JetPtTop): return True, '_topSel'
+                if(AK8jets[0].pt>self.minLeadAK8JetPtW): 
+                    print (AK8jets[0].pt,AK4bjets[0].pt,event.event,event.luminosityBlock,isGen)
+                    return True, '_WSel' #(jetMass<self.maxSDMassW) and (jetMass>self.minSDMassW) and (AK8jets[0].pt>self.minLeadAK8JetPtW): return True, '_WSel'
+                #elif (jetMass>self.minSDMassTop) and (AK8jets[0].pt>self.minLeadAK8JetPtTop): return True, '_topSel'
                 else: return False, None
             else: return False, None
 
         else: return False, None
-
+        '''
     #############################################################################
     def createNsubBasis(self, AK8jet, event, PFCollection ):
         '''Generic, taking a AK8 jet and computing Nsub basis from PFCollection'''

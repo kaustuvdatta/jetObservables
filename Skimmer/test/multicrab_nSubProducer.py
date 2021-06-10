@@ -63,7 +63,7 @@ def submitJobs( job, inputFiles, unitJobs ):
     config.section_("JobType")
     config.JobType.pluginName = 'Analysis'
     config.JobType.psetName = 'PSet.py'
-    config.JobType.maxMemoryMB = 2400
+    config.JobType.maxMemoryMB = 3000
     config.JobType.allowUndistributedCMSSW = True
 
     config.section_("Data")
@@ -92,6 +92,11 @@ def submitJobs( job, inputFiles, unitJobs ):
         elif options.year.startswith('2018'): config.Data.lumiMask = '/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions18/13TeV/Legacy_2018/Cert_314472-325175_13TeV_Legacy2018_Collisions18_JSON.txt'
     #config.Data.userInputFiles = inputFiles
     config.Data.inputDataset = inputFiles
+
+    config.Data.splitting = 'EventAwareLumiBased' if job.startswith('QCD_Pt') else 'FileBased'
+    #config.Data.splitting = 'Automatic'
+    #config.Data.splitting = 'FileBased'
+
     #config.Data.splitting = 'EventAwareLumiBased' if job.startswith('QCD_Pt') else 'FileBased'
     #config.Data.splitting = 'Automatic'
     config.Data.splitting = 'FileBased'
