@@ -109,7 +109,7 @@ class nSubProd(Module):
         self.kinematic_labels = ["_pt", "_eta", "_phi", "_mass"]
         self.nJet = [ 'Jet' ]
 
-        ### Uncerstinties
+        ### Uncertainties
         self.sysSource = ['_nom'] + [ isys+i for i in [ 'Up', 'Down' ] for isys in sysSource if not isys.endswith('nom') ]
         ## JES from https://twiki.cern.ch/twiki/bin/view/CMS/JECUncertaintySources#Main_uncertainties_2016_80X
         self.JESLabels = [ "Total" ]
