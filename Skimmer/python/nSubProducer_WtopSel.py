@@ -309,30 +309,36 @@ class nSubProd(Module):
     #############################################################################
     def leptonSF(self, lepton, leptonP4 ):
 
-        if lepton.startswith("muon"): leptonP4eta = abs(leptonP4.eta)
-        else: leptonP4eta = leptonP4.eta
+        leptonP4eta = abs(leptonP4.eta)
+        leptonP = ROOT.TMath.Sqrt(leptonP4.p4().Px()**2 + leptonP4.p4().Py()**2 + leptonP4.p4().Pz()**2)
 
         SFFileTrigger = ROOT.TFile( os.environ['CMSSW_BASE']+"/src/jetObservables/Skimmer/data/leptonSF/"+self.leptonSFhelper[lepton]['Trigger'][0] )
         histoSFTrigger = SFFileTrigger.Get( self.leptonSFhelper[lepton]['Trigger'][1] )
-        SFTrigger = histoSFTrigger.GetBinContent( histoSFTrigger.GetXaxis().FindBin( leptonP4.pt ), histoSFTrigger.GetYaxis().FindBin( leptonP4eta ) )
+        SFTrigger = histoSFTrigger.GetBinContent( histoSFTrigger.GetXaxis().FindBin( leptonP4eta ), histoSFTrigger.GetYaxis().FindBin( leptonP4.pt ) )
 
         SFFileID = ROOT.TFile( os.environ['CMSSW_BASE']+"/src/jetObservables/Skimmer/data/leptonSF/"+self.leptonSFhelper[lepton]['ID'][0] )
         histoSFID = SFFileID.Get( self.leptonSFhelper[lepton]['ID'][1] )
-        histoSFID_X = histoSFID.GetXaxis().FindBin( leptonP4.pt if self.leptonSFhelper[lepton]['ID'][2] else leptonP4eta )
-        histoSFID_Y = histoSFID.GetYaxis().FindBin( leptonP4eta if self.leptonSFhelper[lepton]['ID'][2] else leptonP4.pt )
+        histoSFID_X = histoSFID.GetXaxis().FindBin( leptonP4eta)
+        histoSFID_Y = histoSFID.GetYaxis().FindBin( leptonP4.pt )
         SFID = histoSFID.GetBinContent( histoSFID_X, histoSFID_Y )
         SFID = SFID if SFID>0 else 1
 
-        if self.year.startswith('2016') and lepton.startswith("muon"): leptonP4eta = leptonP4.eta    #### stupid fix for the stupid SF file
         SFFileISO = ROOT.TFile( os.environ['CMSSW_BASE']+"/src/jetObservables/Skimmer/data/leptonSF/"+self.leptonSFhelper[lepton]['ISO'][0] )
         histoSFISO = SFFileISO.Get( self.leptonSFhelper[lepton]['ISO'][1] )
-        histoSFISO_X = histoSFISO.GetXaxis().FindBin( leptonP4.pt if self.leptonSFhelper[lepton]['ISO'][2] else leptonP4eta )
-        histoSFISO_Y = histoSFISO.GetYaxis().FindBin( leptonP4eta if self.leptonSFhelper[lepton]['ISO'][2] else leptonP4.pt )
+        histoSFISO_X = histoSFISO.GetXaxis().FindBin( leptonP4eta )
+        histoSFISO_Y = histoSFISO.GetYaxis().FindBin( leptonP4.pt )
         SFISO = histoSFISO.GetBinContent( histoSFISO_X, histoSFISO_Y )
         SFISO = SFISO if SFISO>0 else 1
+        
+        SFFileRecoEff = ROOT.TFile( os.environ['CMSSW_BASE']+"/src/jetObservables/Skimmer/data/leptonSF/"+self.leptonSFhelper[lepton]['RecoEff'][0] )
+        histoSFRecoEff = SFFileRecoEff.Get( self.leptonSFhelper[lepton]['RecoEff'][1] )
+        histoSFRecoEff_X = histoSFRecoEff.GetXaxis().FindBin( leptonP4eta )
+        histoSFRecoEff_Y = histoSFRecoEff.GetYaxis().FindBin( leptonP )
+        SFRecoEff = histoSFRecoEff.GetBinContent( histoSFRecoEff_X, histoSFRecoEff_Y )
+        SFRecoEff = SFRecoEff if SFRecoEff>0 else 1
 
         #print (SFTrigger * SFID * SFISO), SFTrigger , SFID , SFISO, leptonP4.pt, leptonP4.eta
-        return [SFTrigger , SFID , SFISO]
+        return [SFTrigger , SFID , SFISO, SFRecoEff]
 
 
     #############################################################################
@@ -597,8 +603,8 @@ class nSubProd(Module):
         #### Weight #########
         if self.isMC:
             if len(recoMuons)>0: leptonWeights= self.leptonSF( "muon", recoMuons[0] )
-            else: leptonWeights = [0, 0, 0]
-        else: leptonWeights = [1, 1, 1]
+            else: leptonWeights = [0, 0, 0, 0]
+        else: leptonWeights = [1, 1, 1, 1.]
 
         if self.isMC:
             weight = event.puWeight * event.genWeight * np.prod(leptonWeights)

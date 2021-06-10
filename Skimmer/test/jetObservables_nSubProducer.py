@@ -97,54 +97,32 @@ systSources = [ '_jesTotal', '_jer', '_pu' ] if isMC else []
 
 ### Lepton scale factors
 LeptonSF = {
-    '2016' : {
-        'muon' : {
-            'Trigger' : [ "EfficienciesAndSF_RunBtoF.root", "IsoMu24_OR_IsoTkMu24_PtEtaBins/pt_abseta_ratio" ],
-            'ID' : [ "MuonID_2016_RunBCDEF_SF_ID.root", "NUM_TightID_DEN_genTracks_eta_pt", False ],       ### True: X:pt Y:eta
-            'ISO' : [ "MuonID_2016_RunBCDEF_SF_ISO.root", "NUM_TightRelIso_DEN_TightIDandIPCut_eta_pt", True ],
-        },
-        'electron' : {
-            'Trigger' : [ "TriggerSF_Run2016All_v1.root", "Ele27_WPTight_Gsf" ],
-            'ID' : [ "2016LegacyReReco_ElectronTight_Fall17V2.root", "EGamma_SF2D", False ],
-            'ISO' : [ "EGM2D_BtoH_GT20GeV_RecoSF_Legacy2016.root", "EGamma_SF2D", False ],
-        },
-    },
+    
     '2017' : {
         'muon' : {
-            'Trigger' : [ "EfficienciesAndSF_RunBtoF_Nov17Nov2017.root", "Mu50_PtEtaBins/pt_abseta_ratio" ],
-            'ID' : [ "Efficiencies_muon_generalTracks_Z_Run2017_UL_ID.root", "NUM_TightID_DEN_TrackerMuons_abseta_pt", False ],
-            'ISO' : [ "Efficiencies_muon_generalTracks_Z_Run2017_UL_ISO.root", "NUM_TightRelIso_DEN_TightIDandIPCut_abseta_pt", False ],
+            'Trigger' : [ "MuonSF_ULFinal.root", "UL17_Trigger", False ],
+            'ID' : [ "MuonSF_ULFinal.root", "UL17_ID", False ],
+            'ISO' : [ "MuonSF_ULFinal.root", "UL17_ISO", False ],
+            'RecoEff' : [ "MuonSF_ULFinal.root", "UL17_Reco", False ],
         },
-        'electron' : {
-            'Trigger' : [ "SingleEG_JetHT_Trigger_Scale_Factors_ttHbb_Data_MC_v5.0.histo.root", "SFs_ele_pt_ele_sceta_ele28_ht150_OR_ele35_2017BCDEF" ],
-            'ID' : [ "egammaEffi.txt_EGM2D_runBCDEF_passingRECO.root", "EGamma_SF2D", False ],
-            'ISO' : [ "2017_ElectronTight.root", "EGamma_SF2D", False ],
-        },
+        
     },
     '2018' : {
         'muon' : {
-            'Trigger' : [ "EfficienciesAndSF_2018Data_AfterMuonHLTUpdate.root", "Mu50_OR_OldMu100_OR_TkMu100_PtEtaBins/pt_abseta_ratio" ],
-            'ID' : [ "Efficiencies_muon_generalTracks_Z_Run2018_UL_ID.root", "NUM_TightID_DEN_TrackerMuons_abseta_pt", False ],
-            'ISO' : [ "Efficiencies_muon_generalTracks_Z_Run2018_UL_ISO.root", "NUM_TightRelIso_DEN_TightIDandIPCut_abseta_pt", False ],
+            'Trigger' : [ "MuonSF_ULFinal.root", "UL18_Trigger", False ],
+            'ID' : [ "MuonSF_ULFinal.root", "UL18_ID", False ],
+            'ISO' : [ "MuonSF_ULFinal.root", "UL18_ISO", False ],
+            'RecoEff' : [ "MuonSF_ULFinal.root", "UL18_Reco", False ],
         },
-        'electron' : {
-            'Trigger' : [ "SingleEG_JetHT_Trigger_Scale_Factors_ttHbb_Data_MC_v5.0.root", "SFs_ele_pt_ele_sceta_ele28_ht150_OR_ele35_2017BCDEF" ],
-            'ID' : [ "egammaEffi.txt_EGM2D_updatedAll.root", "EGamma_SF2D", False ],
-            'ISO' : [ "2018_ElectronTight.root", "EGamma_SF2D", False ],
-        },
+        
     },
 }
 
 
 #### Modules to run
-
-if not args.selection.startswith('dijet'): jetmetCorrector = createJMECorrector(isMC=isMC, applySmearing=False, dataYear='UL'+args.year, jesUncert="All")
-fatJetCorrector = createJMECorrector(isMC=isMC, applySmearing=False, dataYear='UL'+args.year, jesUncert="All", jetType = "AK8PFPuppi")
-
 if not args.selection.startswith('dijet'):
     jetmetCorrector = createJMECorrector(isMC=isMC, applySmearing=False, dataYear='UL'+args.year, jesUncert="All", runPeriod=args.runEra )
 fatJetCorrector = createJMECorrector(isMC=isMC, applySmearing=False, dataYear='UL'+args.year, jesUncert="All", jetType = "AK8PFPuppi", runPeriod=args.runEra)
-
 
 modulesToRun = []
 modulesToRun.append( fatJetCorrector() )
@@ -168,7 +146,7 @@ if args.selection.startswith('dijet'):
     from jetObservables.Skimmer.nSubProducer_dijetSel import nSubProd
     modulesToRun.append( nSubProd( sysSource=systSources, leptonSF=LeptonSF[args.year], isMC=isMC, year=args.year ) )
 else:
-    from jetObservables.Skimmer.nSubProducer_WTaggingNormTest import nSubProd #WtopSel import nSubProd
+    from jetObservables.Skimmer.nSubProducer_WtopSel import nSubProd
     modulesToRun.append( nSubProd( sysSource=systSources, leptonSF=LeptonSF[args.year], isMC=isMC ) )
 
 
@@ -191,3 +169,8 @@ p1=PostProcessor(
 p1.run()
 print "DONE"
 #if not args.local: os.system("ls -lR")
+
+
+
+
+
