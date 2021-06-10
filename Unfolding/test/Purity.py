@@ -104,6 +104,8 @@ def runPurity( bkgFiles, variables, sel ):
         textBox.DrawLatex(0.65, 0.75, sel.split('Sel')[0].split('_')[1]+' Selection' )
 
         canvas.SaveAs(outputDir+ivar+sel+'_Purity_'+args.version+'.'+args.ext)
+        if args.ext.startswith('pdf'):
+            canvas.SaveAs(outputDir+ivar+sel+'_Purity_'+args.version+'.png')
 
 ##########################################################################
 def loadHistograms( samples, variables, sel ):
@@ -139,14 +141,15 @@ if __name__ == '__main__':
     except:
         parser.print_help()
         sys.exit(0)
+    args.inputFolder = os.environ['CMSSW_BASE']+'/src/jetObservables/Unfolding/test/Rootfiles/'
 
     bkgFiles = {}
     for isam in dictSamples:
         if not checkDict( isam, dictSamples )[args.year]['skimmerHisto'].endswith('root'): continue
-        #if isam.startswith('QCD_Pt') and isam.endswith('pythia8'):
-        if isam.startswith('QCD_HT'):
+        if isam.startswith('QCD_Pt_'):
+        #if isam.startswith('QCD_HT'):
             bkgFiles[isam.split('_Tune')[0]] = [
-                            ROOT.TFile.Open( checkDict( isam, dictSamples )[args.year]['skimmerHisto'] ),
+                            ROOT.TFile.Open( args.inputFolder+checkDict( isam, dictSamples )[args.year]['skimmerHisto'] ),
                             checkDict( isam, dictSamples )
                         ]
 

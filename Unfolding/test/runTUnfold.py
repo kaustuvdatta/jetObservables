@@ -31,10 +31,6 @@ def runTUnfold( dataFile, sigFiles, bkgFiles, variables, sel, sysUncert ):
         outputDir=args.outputFolder+'Plots/'+sel.split('_')[1]+'/Unfold/'+args.year+'/'+ivar+'/'+args.process+'/'
         if not os.path.exists(outputDir): os.makedirs(outputDir)
 
-        ### labels
-        signalLabel = ( 'QCD_HT2000toInf' if args.QCDHT else 'QCD_Pt_3200toInf' ) if sel.startswith('_dijet') else next(iter(sigFiles))
-        altSignalLabel = ( 'QCD_Pt_3200toInf' if args.QCDHT else 'QCD_HT2000toInf' ) if sel.startswith('_dijet') else next(iter(sigFiles))
-
         if args.year.startswith('all'):
             print 'resp'+ivar+'_nom'+sel+signalLabel+'_Rebin'
             signalHistos = {
@@ -71,19 +67,18 @@ def runTUnfold( dataFile, sigFiles, bkgFiles, variables, sel, sysUncert ):
 
         else:
             print('|-------> Running single year '+args.year)
-            tmpSigLabel = ( 'QCD_HT' if args.QCDHT else 'QCD_Pt' ) if sel.startswith('_dijet') else next(iter(sigFiles))
-            tmp2SigLabel = ( 'QCD_Pt' if args.QCDHT else 'QCD_HT' ) if sel.startswith('_dijet') else next(iter(sigFiles))
             ### Getting input histos
-            mainSigFiles = { k:v for (k,v) in sigFiles.items() if k.startswith(tmpSigLabel)  }
+            mainSigFiles = { k:v for (k,v) in sigFiles.items() if k.startswith(signalLabelBegin)  }
             signalHistos = loadHistograms( mainSigFiles, ivar, sel, sysUnc=sysUncert )
-            tmp2SigFiles = { k:v for (k,v) in sigFiles.items() if k.startswith(tmp2SigLabel)  }
+            tmp2SigFiles = { k:v for (k,v) in sigFiles.items() if k.startswith(altSignalLabelBegin)  }
             altSignalHistos = loadHistograms( tmp2SigFiles, ivar, sel, sysUnc=[], respOnly=True)
             if args.process.startswith("MC"):
                 if args.process.startswith('MCSelfClosure'):
-                    dataHistos = { 'data'+k.split(('Inf' if sel.startswith('_dijet') else 'Leptonic'))[1] : v for (k,v) in signalHistos.items() if 'reco' in k }
+                    dataHistos = { 'data_reco'+k.split(('_reco' if sel.startswith('_dijet') else 'Leptonic'))[1] : v for (k,v) in signalHistos.items() if 'reco' in k }
                 else:
-                    dataHistos = loadHistograms( dataFile, ivar, sel, isMC=True, addGenInfo=False )
-                    dataHistos = { 'data'+k.split('Inf')[1] : v for (k,v) in dataHistos.items() if 'reco' in k }
+                    dataHistos = loadHistograms( tmp2SigFiles, ivar, sel, isMC=True, addGenInfo=False )
+                    dataHistos = { 'data_reco'+k.split('_reco')[1] : v for (k,v) in dataHistos.items() if 'reco' in k }
+                    print(dataHistos)
             else:
                 dataHistos = loadHistograms( dataFile, ivar, sel, isMC= False )
             bkgHistos = loadHistograms( bkgFiles, ivar, sel, sysUnc=[]) if args.process.startswith('data') else {}
@@ -122,15 +117,19 @@ def runTUnfold( dataFile, sigFiles, bkgFiles, variables, sel, sysUncert ):
             plotSimpleComparison( dataHistos['data_reco'+ivar+'_nom'+sel].Clone(), 'data', allHistos[ 'allMCHisto' ], 'allBkgs', ivar+'_from'+('Data' if args.process.startswith('data') else 'MC')+'_'+signalLabel+"_nom", rebinX=variables[ivar]['bins'], version=sel+'_'+args.version, outputDir=outputDir )
 
             ######## Adding missgen to overflow and underflow
-    #        for ibin in range( 1, signalHistos[signalLabel+'_missgen'+ivar+sel].GetNbinsX()+1 ):
-    #            signalHistos[signalLabel+'_resp'+ivar+'_nom'+sel].SetBinContent(  signalHistos[signalLabel+'_resp'+ivar+'_nom'+sel].GetBin( 0, ibin ), signalHistos[signalLabel+'_missgen'+ivar+sel].GetBinContent(ibin) )
-    #            signalHistos[signalLabel+'_resp'+ivar+'_nom'+sel].SetBinError(  signalHistos[signalLabel+'_resp'+ivar+'_nom'+sel].GetBin( 0, ibin ), signalHistos[signalLabel+'_missgen'+ivar+sel].GetBinError(ibin) )
-    #            signalHistos[signalLabel+'_resp'+ivar+'_nom'+sel].SetBinContent(  signalHistos[signalLabel+'_resp'+ivar+'_nom'+sel].GetBin( -1, ibin ), signalHistos[signalLabel+'_missgen'+ivar+sel].GetBinContent(ibin) )
-    #            signalHistos[signalLabel+'_resp'+ivar+'_nom'+sel].SetBinError(  signalHistos[signalLabel+'_resp'+ivar+'_nom'+sel].GetBin( -1, ibin ), signalHistos[signalLabel+'_missgen'+ivar+sel].GetBinError(ibin) )
-    #            for sys in sysUncert:
-    #                for upDown in [ 'Up', 'Down' ]:
-    #                    signalHistos[signalLabel+'_resp'+ivar+sys+upDown+sel].SetBinContent(  signalHistos[signalLabel+'_resp'+ivar+sys+upDown+sel].GetBin( ibin, 0 ), signalHistos[signalLabel+'_missgen'+ivar+sel].GetBinContent(ibin) )
-    #                    signalHistos[signalLabel+'_resp'+ivar+sys+upDown+sel].SetBinContent(  signalHistos[signalLabel+'_resp'+ivar+sys+upDown+sel].GetBin( ibin, -1 ), signalHistos[signalLabel+'_missgen'+ivar+sel].GetBinContent(ibin) )
+            for ibin in range( 1, signalHistos[signalLabel+'_missgen'+ivar+sel].GetNbinsX()+1 ):
+                signalHistos[signalLabel+'_resp'+ivar+'_nom'+sel].SetBinContent(  signalHistos[signalLabel+'_resp'+ivar+'_nom'+sel].GetBin( 0, ibin ), signalHistos[signalLabel+'_missgen'+ivar+sel].GetBinContent(ibin) )
+                signalHistos[signalLabel+'_resp'+ivar+'_nom'+sel].SetBinError(  signalHistos[signalLabel+'_resp'+ivar+'_nom'+sel].GetBin( 0, ibin ), signalHistos[signalLabel+'_missgen'+ivar+sel].GetBinError(ibin) )
+                signalHistos[signalLabel+'_resp'+ivar+'_nom'+sel].SetBinContent(  signalHistos[signalLabel+'_resp'+ivar+'_nom'+sel].GetBin( -1, ibin ), signalHistos[signalLabel+'_missgen'+ivar+sel].GetBinContent(ibin) )
+                signalHistos[signalLabel+'_resp'+ivar+'_nom'+sel].SetBinError(  signalHistos[signalLabel+'_resp'+ivar+'_nom'+sel].GetBin( -1, ibin ), signalHistos[signalLabel+'_missgen'+ivar+sel].GetBinError(ibin) )
+                altSignalHistos[altSignalLabel+'_resp'+ivar+'_nom'+sel].SetBinContent(  altSignalHistos[altSignalLabel+'_resp'+ivar+'_nom'+sel].GetBin( 0, ibin ), altSignalHistos[altSignalLabel+'_missgen'+ivar+sel].GetBinContent(ibin) )
+                altSignalHistos[altSignalLabel+'_resp'+ivar+'_nom'+sel].SetBinError(  altSignalHistos[altSignalLabel+'_resp'+ivar+'_nom'+sel].GetBin( 0, ibin ), altSignalHistos[altSignalLabel+'_missgen'+ivar+sel].GetBinError(ibin) )
+                altSignalHistos[altSignalLabel+'_resp'+ivar+'_nom'+sel].SetBinContent(  altSignalHistos[altSignalLabel+'_resp'+ivar+'_nom'+sel].GetBin( -1, ibin ), altSignalHistos[altSignalLabel+'_missgen'+ivar+sel].GetBinContent(ibin) )
+                altSignalHistos[altSignalLabel+'_resp'+ivar+'_nom'+sel].SetBinError(  altSignalHistos[altSignalLabel+'_resp'+ivar+'_nom'+sel].GetBin( -1, ibin ), altSignalHistos[altSignalLabel+'_missgen'+ivar+sel].GetBinError(ibin) )
+                #for sys in sysUncert:
+                #    for upDown in [ 'Up', 'Down' ]:
+                #        signalHistos[signalLabel+'_resp'+ivar+sys+upDown+sel].SetBinContent(  signalHistos[signalLabel+'_resp'+ivar+sys+upDown+sel].GetBin( ibin, 0 ), signalHistos[signalLabel+'_missgen'+ivar+sel].GetBinContent(ibin) )
+                #        signalHistos[signalLabel+'_resp'+ivar+sys+upDown+sel].SetBinContent(  signalHistos[signalLabel+'_resp'+ivar+sys+upDown+sel].GetBin( ibin, -1 ), signalHistos[signalLabel+'_missgen'+ivar+sel].GetBinContent(ibin) )
 
             ####### Cross check response matrix
             tmpGenHisto = signalHistos[signalLabel+'_resp'+ivar+'_nom'+sel].ProjectionX()
@@ -224,16 +223,17 @@ def runTUnfold( dataFile, sigFiles, bkgFiles, variables, sel, sysUncert ):
                     can2DNorm.SaveAs(outputDir+ivar+'_from'+('Data' if args.process.startswith('data') else 'MC')+'_'+signalLabel+sel+sys+upDown+'Normalized_responseMatrix'+args.version+'.'+args.ext)
 
             #### adding model uncertainty
-            print('modelUnc')
-            tunfolder.AddSysError(
-                                altSignalHistos[altSignalLabel+'_resp'+ivar+'_nom'+sel],
-                                'modelUncTotal',
-                                ROOT.TUnfold.kHistMapOutputHoriz,
-                                ROOT.TUnfoldSys.kSysErrModeMatrix, #### kSysErrModeMatrix the histogram sysError corresponds to an alternative response matrix. kSysErrModeShift the content of the histogram sysError are the absolute shifts of the response matrix. kSysErrModeRelative the content of the histogram sysError specifies the relative uncertainties
-                                )
-            can2DNorm = ROOT.TCanvas(ivar+'can2DNormAltSignal', ivar+'can2DNormAltSignal', 750, 500 )
-            altSignalHistos[altSignalLabel+'_resp'+ivar+'_nom'+sel].Draw("colz")
-            can2DNorm.SaveAs(outputDir+ivar+'_from'+('Data' if args.process.startswith('data') else 'MC')+'_'+altSignalLabel+sel+'Normalized_alt_responseMatrix'+args.version+'.'+args.ext)
+            if not args.process.startswith('MCSelfClosure'):
+                print('modelUnc')
+                tunfolder.AddSysError(
+                                    altSignalHistos[altSignalLabel+'_resp'+ivar+'_nom'+sel],
+                                    'modelUncTotal',
+                                    ROOT.TUnfold.kHistMapOutputHoriz,
+                                    ROOT.TUnfoldSys.kSysErrModeMatrix, #### kSysErrModeMatrix the histogram sysError corresponds to an alternative response matrix. kSysErrModeShift the content of the histogram sysError are the absolute shifts of the response matrix. kSysErrModeRelative the content of the histogram sysError specifies the relative uncertainties
+                                    )
+                can2DNorm = ROOT.TCanvas(ivar+'can2DNormAltSignal', ivar+'can2DNormAltSignal', 750, 500 )
+                altSignalHistos[altSignalLabel+'_resp'+ivar+'_nom'+sel].Draw("colz")
+                can2DNorm.SaveAs(outputDir+ivar+'_from'+('Data' if args.process.startswith('data') else 'MC')+'_'+altSignalLabel+sel+'Normalized_alt_responseMatrix'+args.version+'.'+args.ext)
 
         ###### Running the unfolding
         print '|------> TUnfolding doUnfold:'
@@ -278,8 +278,9 @@ def runTUnfold( dataFile, sigFiles, bkgFiles, variables, sel, sysUncert ):
             allHistos[ 'unfoldHistoSysUnc'+ivar ].Reset()
             #allHistos[ 'unfoldHistoSysUnc'+ivar ].SetLineStyle(2)
 
-            uncerUnfoldHisto[ivar+'_modelUncTotal'] = tunfolder.GetDeltaSysSource(sys+upDown, "unfoldHisto_"+ivar+"modelUncshift", "-1#sigma")
-            allHistos[ 'unfoldHistoSysUnc'+ivar ].Add( uncerUnfoldHisto[ivar+'_modelUncTotal'].Clone() )
+            if not args.process.startswith('MCSelfClosure'):
+                uncerUnfoldHisto[ivar+'_modelUncTotal'] = tunfolder.GetDeltaSysSource(sys+upDown, "unfoldHisto_"+ivar+"modelUncshift", "-1#sigma")
+                allHistos[ 'unfoldHistoSysUnc'+ivar ].Add( uncerUnfoldHisto[ivar+'_modelUncTotal'].Clone() )
             for sys in sysUncert:
                 for upDown in [ 'Up', 'Down' ]:
                     print sys+upDown
@@ -353,7 +354,7 @@ def loadHistograms( samples, var, sel, sysUnc=[], isMC=True, addGenInfo=True, re
     for isam in samples:
         tmpList = [ 'reco'+var+syst+sel for syst in SYSUNC ]
         if isMC and addGenInfo: tmpList = tmpList + [ 'gen'+var+sel, 'missgen'+var+sel, 'accepgen'+var+sel, 'truereco'+var+'_nom'+sel, 'fakereco'+var+'_nom'+sel ] + [ 'resp'+var+syst+sel for syst in SYSUNC ]
-        if respOnly: tmpList = [ 'resp'+var+syst+sel for syst in SYSUNC ]
+        if respOnly: tmpList = [ 'resp'+var+syst+sel for syst in SYSUNC ] + [ 'missgen'+var+sel ]
         for ih in tmpList:
             print 'Processing '+isam+' '+ih
             if isMC:
@@ -621,7 +622,8 @@ if __name__ == '__main__':
     parser.add_argument("-p", "--process", action='store', dest="process", default="data", help="Process to unfold: data or MC." )
     parser.add_argument("-s", "--selection", action='store', dest="selection", default="_dijetSel", help="Selection to unfold: _dijetSel, _WSel, _topSel" )
     parser.add_argument("--only", action='store', dest="only", default="", help="Submit only one variable" )
-    parser.add_argument("--QCDHT", action='store_true', dest="QCDHT", default=False, help="For dijet sel, signal QCD is HT or not" )
+    parser.add_argument("--main", action='store', dest="main", choices=['Ptbin', 'HTbin', 'herwig'], default='Ptbin', help="For dijet sel, main signal QCD" )
+    parser.add_argument("--alt", action='store', dest="alt", choices=['Ptbin', 'HTbin', 'herwig'], default='herwig', help="For dijet sel, alternative signal QCD" )
     parser.add_argument("--noUnc", action='store_true', dest="noUnc", default=False, help="Run without Unc " )
     ##parser.add_argument("-r", "--runCombine", action='store_true', dest="runCombine", help="Run combine (true)" )
     parser.add_argument("-v", "--version", action='store', dest="version", default="v00", help="Version" )
@@ -637,6 +639,7 @@ if __name__ == '__main__':
         parser.print_help()
         sys.exit(0)
 
+    #### define variables
     if args.only:
         filterVariables = { k:v for (k,v) in nSubVariables.items() if k.endswith(args.only)  }
         if len(filterVariables)>0 : variables = filterVariables
@@ -647,8 +650,36 @@ if __name__ == '__main__':
     if args.selection.startswith('_dijet'): variables = { k:v for (k,v) in variables.items() if k.startswith(('Jet1', 'Jet2')) }
     else: variables = { k:v for (k,v) in variables.items() if k.startswith('Jet_') }
 
+    #### syst
     sysUncert = [] if args.noUnc else [ '_jesTotal', '_jer', '_pu' ]
 
+    #### Define main and alt signals
+    if args.selection.startswith('_dijet'):
+        if args.main.startswith('Ptbin'):
+            signalLabelBegin = 'QCD_Pt_'
+            signalLabel = 'QCD_Pt_3200toInf'
+        elif args.main.startswith('HTbin'):
+            signalLabelBegin = 'QCD_HT'
+            signalLabel = 'QCD_HT2000toInf'
+        elif args.main.startswith('herwig'):
+            signalLabelBegin = 'QCD_Pt-'
+            signalLabel = 'QCD_Pt-150to3000'
+        if args.alt.startswith('Ptbin'):
+            altSignalLabelBegin = 'QCD_Pt_'
+            altSignalLabel = 'QCD_Pt_3200toInf'
+        elif args.alt.startswith('HTbin'):
+            altSignalLabelBegin = 'QCD_HT'
+            altSignalLabel = 'QCD_HT2000toInf'
+        elif args.alt.startswith('herwig'):
+            altSignalLabelBegin = 'QCD_Pt-'
+            altSignalLabel = 'QCD_Pt-150to3000'
+    else:
+        signalLabelBegin = 'dummy'
+        signalLabel = 'dummy'
+        altSignalLabelBegin = 'dummy'
+        altSignalLabel = 'dummy'
+
+    #### Files
     dataFile = {}
     sigFiles = {}
     bkgFiles = {}
@@ -660,37 +691,14 @@ if __name__ == '__main__':
             sys.exit(0)
 
         for ivar in variables.keys():
-            dataFile[ivar+'_2017'] = ROOT.TFile.Open( args.inputFolder+'/Plots/'+args.selection.split('_')[1]+'/Unfold/2017/'+ivar+'/'+args.process+'/outputHistograms_QCD_'+( 'HT2000toInf' if args.QCDHT else 'Pt_3200toInf' )+'.root' )
-            dataFile[ivar+'_2018'] = ROOT.TFile.Open( args.inputFolder+'/Plots/'+args.selection.split('_')[1]+'/Unfold/2018/'+ivar+'/'+args.process+'/outputHistograms_QCD_'+( 'HT2000toInf' if args.QCDHT else 'Pt_3200toInf' )+'.root' )
+            dataFile[ivar+'_2017'] = ROOT.TFile.Open( args.inputFolder+'/Plots/'+args.selection.split('_')[1]+'/Unfold/2017/'+ivar+'/'+args.process+'/outputHistograms_'+signalLabel+'.root' )
+            dataFile[ivar+'_2018'] = ROOT.TFile.Open( args.inputFolder+'/Plots/'+args.selection.split('_')[1]+'/Unfold/2018/'+ivar+'/'+args.process+'/outputHistograms_'+signalLabel+'.root' )
 
     #### Single year unfolding runs on skimmers
     else:
         print('|------> Running single year')
-        if args.process.startswith('MC'):
-            for isam in dictSamples:
-                if not checkDict( isam, dictSamples )[args.year]['skimmerHisto'].endswith('root'): continue
-                if args.selection.startswith('_dijet'):
-                    if args.QCDHT:
-                        qcdHTSample = True if args.process.startswith('MCSelfClosure') else False
-                    else:
-                        qcdHTSample = False if args.process.startswith('MCSelfClosure') else True
-                    if not qcdHTSample and isam.startswith('QCD_Pt') and isam.endswith('pythia8'):
-                        dataFile[isam.split('_Tune')[0]] = [
-                                        ROOT.TFile.Open( checkDict( isam, dictSamples )[args.year]['skimmerHisto'] ),
-                                        checkDict( isam, dictSamples )
-                                    ]
-                    if qcdHTSample and isam.startswith('QCD_HT'):
-                        dataFile[isam.split('_Tune')[0]] = [
-                                        ROOT.TFile.Open( checkDict( isam, dictSamples )[args.year]['skimmerHisto'] ),
-                                        checkDict( isam, dictSamples )
-                                    ]
-                else:
-                    dataFile['data'] = [
-                                    ROOT.TFile.Open( checkDict( 'TTJets_TuneCP5_13TeV-amcatnloFXFX-pythia8', dictSamples )[args.year]['skimmerHisto'] ),
-                                    checkDict( 'TTJets_TuneCP5_13TeV-amcatnloFXFX-pythia8', dictSamples )
-                                ]
-        else:
-            dataFile['data'] = [ ROOT.TFile.Open(checkDict( ('JetHT' if args.selection.startswith("_dijet") else 'SingleMuon'), dictSamples )[args.year]['skimmerHisto']) ]
+        args.inputFolder = os.environ['CMSSW_BASE']+'/src/jetObservables/Unfolding/test/Rootfiles/'
+        if args.process.startswith('data'): dataFile['data'] = [ ROOT.TFile.Open(args.inputFolder+checkDict( ('JetHT' if args.selection.startswith("_dijet") else 'SingleMuon'), dictSamples )[args.year]['skimmerHisto']) ]
         for iy in ( ['2017', '2018'] if args.year.startswith('all') else [ args.year ] ):
             args.lumi = args.lumi + checkDict( ( 'JetHT' if args.selection.startswith('dijet') else 'SingleMuon' ), dictSamples )[iy]['lumi']
 
@@ -698,21 +706,27 @@ if __name__ == '__main__':
             for isam in dictSamples:
                 if isam.startswith(('ST', 'W', 'Z', 'TTTo2L2Nu')):
                     bkgFiles[isam.split('_Tune')[0]] = [
-                                    ROOT.TFile.Open( checkDict( isam, dictSamples )[args.year]['skimmerHisto'] ),
+                                    ROOT.TFile.Open( args.inputFolder+checkDict( isam, dictSamples )[args.year]['skimmerHisto'] ),
                                     checkDict( isam, dictSamples )
                                 ]
 
         if args.selection.startswith('_dijet'):
             for isam in dictSamples:
+                if 'MuEnriched' in isam: continue
                 if not checkDict( isam, dictSamples )[args.year]['skimmerHisto'].endswith('root'): continue
-                if isam.startswith('QCD') and isam.endswith('pythia8'):
+                if isam.startswith( signalLabelBegin ):
                     sigFiles[isam.split('_Tune')[0]] = [
-                                    ROOT.TFile.Open( checkDict( isam, dictSamples )[args.year]['skimmerHisto'] ),
+                                    ROOT.TFile.Open( args.inputFolder+checkDict( isam, dictSamples )[args.year]['skimmerHisto'] ),
+                                    checkDict( isam, dictSamples )
+                                ]
+                if isam.startswith( altSignalLabelBegin ) and not ( altSignalLabel.startswith( signalLabel ) ):
+                    sigFiles[isam.split('_Tune')[0]] = [
+                                    ROOT.TFile.Open( args.inputFolder+checkDict( isam, dictSamples )[args.year]['skimmerHisto'] ),
                                     checkDict( isam, dictSamples )
                                 ]
         else:
             sigFiles['TToSemiLeptonic'] = [
-                            ROOT.TFile.Open( checkDict( 'TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8', dictSamples )[args.year]['skimmerHisto'] ),
+                            ROOT.TFile.Open( args.inputFolder+checkDict( 'TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8', dictSamples )[args.year]['skimmerHisto'] ),
                             checkDict( 'TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8', dictSamples )
                         ]
 
