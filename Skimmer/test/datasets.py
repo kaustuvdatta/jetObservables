@@ -21,15 +21,15 @@ dictSamples = {
                 'F': '/JetHT/algomez-Run2017F-UL2017_MiniAODv2-v1_PFNanoAOD-aeb179a6519d272d4336b9926381baad/USER',
                 },
             'skimmerHisto' : '/afs/cern.ch/work/a/algomez/jetObservables/CMSSW_10_6_14/src/jetObservables/Unfolding/test/Rootfiles/jetObservables_histograms_JetHT2017ALL.root',
-            'lumi' : 41473.09,
+            'lumi' : 41527.74,
             'triggerList' : {
                 'AK8PFJet80' : 16419.91,
                 'AK8PFJet140' : 1560.15,
                 'AK8PFJet200' : 219.70,
                 'AK8PFJet260' : 88.43,
-                'AK8PFJet320' : 33.83,
-                'AK8PFJet400' : 5.40,
-                'AK8PFJet450' : 4.4,
+                'AK8PFJet320' : 33.827,
+                'AK8PFJet400' : 5.404,
+                'AK8PFJet450' : 4.299,
                 'AK8PFJet500' : 1.,
                 }
             },
@@ -47,7 +47,7 @@ dictSamples = {
                 'D' : '/JetHT/algomez-Run2018D-UL2018_MiniAODv2-v1_PFNanoAOD-690f1d1c4f2456484a2616002f2d2b6d/USER',
                 },
             'skimmerHisto' : '/afs/cern.ch/work/a/algomez/jetObservables/CMSSW_10_6_14/src/jetObservables/Unfolding/test/Rootfiles/jetObservables_histograms_JetHT2018ALL.root',
-            'lumi' : 59830.000,
+            'lumi' : 58918.895,
             'triggerList' : {
                 'AK8PFJet80' : 27585.68,
                 'AK8PFJet140' : 1268.74,
@@ -62,27 +62,27 @@ dictSamples = {
         'color': ROOT.kWhite
     },
 
-    'QCD_Pt-15to7000_TuneCH3_Flat_13TeV_herwig7' : {
-        '2017' :  {
-            'miniAOD' : [ '/QCD_Pt-15to7000_TuneCH3_Flat_13TeV_herwig7/RunIISummer19UL17MiniAODv2-106X_mc2017_realistic_v9-v1/MINIAODSIM' ],
-            'nanoAOD' : [ '/QCD_Pt-15to7000_TuneCH3_Flat_13TeV_herwig7/algomez-RunIISummer19UL17PFNanoAOD-106X_mc2017_realistic_v9-v1-7a1edb72314467730e458def0bc98536/USER' ],
-            'skimmer' : [ '/QCD_Pt-15to7000_TuneCH3_Flat_13TeV_herwig7/algomez-RunIISummer19UL17PFNanoAOD_jetObservables_Skimmer_v03-7a1edb72314467730e458def0bc98536/USER' ],
-            'skimmerHisto' : '/afs/cern.ch/work/a/algomez/jetObservables/CMSSW_10_6_14/src/jetObservables/Unfolding/test/Rootfiles/jetObservables_histograms_QCDPt15to7000_herwig_UL2017.root',
-            'nevents' : 19710200.,
-            'nGenWeights' : 397097.833,
-            },
-        '2018' :  {
-            'miniAOD' : [ '/QCD_Pt-15to7000_TuneCH3_Flat_13TeV_herwig7/RunIISummer19UL18MiniAODv2-106X_upgrade2018_realistic_v16_L1v1-v1/MINIAODSIM' ],
-            'nanoAOD' : [ '/QCD_Pt-15to7000_TuneCH3_Flat_13TeV_herwig7/algomez-RunIISummer19UL18PFNanoAOD-106X_upgrade2018_realistic_v16_L1v1-v1-fff189d3e67d18da8f7301eb2c0e2940/USER' ],
-            'skimmer' : [ '/QCD_Pt-15to7000_TuneCH3_Flat_13TeV_herwig7/algomez-RunIISummer19UL18PFNanoAOD_jetObservables_Skimmer_v03p2-fff189d3e67d18da8f7301eb2c0e2940/USER' ],
-            'skimmerHisto' : '/afs/cern.ch/work/a/algomez/jetObservables/CMSSW_10_6_14/src/jetObservables/Unfolding/test/Rootfiles/jetObservables_histograms_QCDPt15to7000_herwig_UL2018.root',
-            'nevents' : 18744500.,
-            'nGenWeights' : 375606.55,
-            },
-        'XS' : 7.417e+08,
-        'label' : 'QCD Herwig7',
-        'color': ROOT.kOrange
-    },
+#    'QCD_Pt-15to7000_TuneCH3_Flat_13TeV_herwig7' : {
+#        '2017' :  {
+#            'miniAOD' : [ '/QCD_Pt-15to7000_TuneCH3_Flat_13TeV_herwig7/RunIISummer19UL17MiniAODv2-106X_mc2017_realistic_v9-v1/MINIAODSIM' ],
+#            'nanoAOD' : [ '/QCD_Pt-15to7000_TuneCH3_Flat_13TeV_herwig7/algomez-RunIISummer19UL17PFNanoAOD-106X_mc2017_realistic_v9-v1-7a1edb72314467730e458def0bc98536/USER' ],
+#            'skimmer' : [ '/QCD_Pt-15to7000_TuneCH3_Flat_13TeV_herwig7/algomez-RunIISummer19UL17PFNanoAOD_jetObservables_Skimmer_v03-7a1edb72314467730e458def0bc98536/USER' ],
+#            'skimmerHisto' : '/afs/cern.ch/work/a/algomez/jetObservables/CMSSW_10_6_14/src/jetObservables/Unfolding/test/Rootfiles/jetObservables_histograms_QCDPt15to7000_herwig_UL2017.root',
+#            'nevents' : 12718100.,
+#            'nGenWeights' : 53765.806,
+#            },
+#        '2018' :  {
+#            'miniAOD' : [ '/QCD_Pt-15to7000_TuneCH3_Flat_13TeV_herwig7/RunIISummer19UL18MiniAODv2-106X_upgrade2018_realistic_v16_L1v1-v1/MINIAODSIM' ],
+#            'nanoAOD' : [ '/QCD_Pt-15to7000_TuneCH3_Flat_13TeV_herwig7/algomez-RunIISummer19UL18PFNanoAOD-106X_upgrade2018_realistic_v16_L1v1-v1-fff189d3e67d18da8f7301eb2c0e2940/USER' ],
+#            'skimmer' : [ '/QCD_Pt-15to7000_TuneCH3_Flat_13TeV_herwig7/algomez-RunIISummer19UL18PFNanoAOD_jetObservables_Skimmer_v03p2-fff189d3e67d18da8f7301eb2c0e2940/USER' ],
+#            'skimmerHisto' : '/afs/cern.ch/work/a/algomez/jetObservables/CMSSW_10_6_14/src/jetObservables/Unfolding/test/Rootfiles/jetObservables_histograms_QCDPt15to7000_herwig_UL2018.root',
+#            'nevents' : 18744500.,
+#            'nGenWeights' : 375606.55,
+#            },
+#        'XS' : 7.417e+08,
+#        'label' : 'QCD Herwig7',
+#        'color': ROOT.kOrange
+#    },
 
 
     'QCD_Pt-150to3000_TuneCH3_FlatPower7_13TeV-herwig7' : {
@@ -90,7 +90,7 @@ dictSamples = {
             'miniAOD' : [ '/QCD_Pt-150to3000_TuneCH3_FlatPower7_13TeV-herwig7/RunIISummer19UL17MiniAODv2-106X_mc2017_realistic_v9-v1/MINIAODSIM' ],
             'nanoAOD' : [ '/QCD_Pt-150to3000_TuneCH3_FlatPower7_13TeV-herwig7/algomez-RunIISummer19UL17PFNanoAOD-106X_mc2017_realistic_v9-v1-7a1edb72314467730e458def0bc98536/USER' ],
             'skimmer' : [ '/QCD_Pt-150to3000_TuneCH3_FlatPower7_13TeV-herwig7/algomez-RunIISummer19UL17PFNanoAOD_jetObservables_Skimmer_v03p2-7a1edb72314467730e458def0bc98536/USER' ],
-            'skimmerHisto' : '',
+            'skimmerHisto' : '/afs/cern.ch/work/a/algomez/jetObservables/CMSSW_10_6_14/src/jetObservables/Unfolding/test/Rootfiles/jetObservables_histograms_QCDPt150to3000_herwig_UL2017.root',
             'nevents' : 19880000.,
             'nGenWeights' :397097.833,
             },
@@ -98,11 +98,12 @@ dictSamples = {
             'miniAOD' : [ '/QCD_Pt-150to3000_TuneCH3_FlatPower7_13TeV-herwig7/RunIISummer19UL18MiniAODv2-106X_upgrade2018_realistic_v16_L1v1-v1/MINIAODSIM' ],
             'nanoAOD' : [ '/QCD_Pt-150to3000_TuneCH3_FlatPower7_13TeV-herwig7/algomez-RunIISummer19UL18PFNanoAOD-106X_upgrade2018_realistic_v16_L1v1-v1-fff189d3e67d18da8f7301eb2c0e2940/USER' ],
             'skimmer' : [ '/QCD_Pt-150to3000_TuneCH3_FlatPower7_13TeV-herwig7/algomez-RunIISummer19UL18PFNanoAOD_jetObservables_Skimmer_v03p1-fff189d3e67d18da8f7301eb2c0e2940/USER' ],
+            'skimmerHisto' : '/afs/cern.ch/work/a/algomez/jetObservables/CMSSW_10_6_14/src/jetObservables/Unfolding/test/Rootfiles/jetObservables_histograms_QCDPt150to3000_herwig_UL2018.root',
             'nevents' : 6649600.,
             'nGenWeights' : 28765.923,
             },
         'XS' : 8.637e+03, ## for 2018 1.086e+04
-        'label' : 'QCD Herwig7 FlatPower',
+        'label' : 'QCD Herwig7',
         'color': ROOT.kPink
     },
 
@@ -185,7 +186,7 @@ dictSamples = {
             'miniAOD' : [ '/QCD_Pt_600to800_TuneCP5_13TeV_pythia8/RunIISummer20UL18MiniAODv2-106X_upgrade2018_realistic_v16_L1v1-v1/MINIAODSIM' ],
             'nanoAOD' : [ '/QCD_Pt_600to800_TuneCP5_13TeV_pythia8/algomez-RunIISummer20UL18PFNanoAOD-106X_upgrade2018_realistic_v16_L1v1-v1-fff189d3e67d18da8f7301eb2c0e2940/USER' ],
             'skimmer' : [ '/QCD_Pt_600to800_TuneCP5_13TeV_pythia8/algomez-RunIISummer20UL18PFNanoAOD_jetObservables_Skimmer_v03p1-fff189d3e67d18da8f7301eb2c0e2940/USER' ],
-            'skimmerHisto' : '/afs/cern.ch/work/a/algomez/jetObservables/CMSSW_10_6_14/src/jetObservables/Unfolding/test/Rootfiles/jetObservables_histograms_QCDPt600to800_UL2018.root',
+            'skimmerHisto' :  '/afs/cern.ch/work/a/algomez/jetObservables/CMSSW_10_6_14/src/jetObservables/Unfolding/test/Rootfiles/jetObservables_histograms_QCDPt600to800_UL2018.root',
             'nevents' : 65300000.,
             'nGenWeights' : 65300001.492,
             },
@@ -346,7 +347,7 @@ dictSamples = {
             'nGenWeights' : 70101398.0,
             },
         'XS' : 2.362e+07,
-        'label' : 'QCD madgraphMLM' ,
+        'label' : 'QCD MG5+Pythia8' ,
         'color': ROOT.kMagenta
     },
 
@@ -370,7 +371,7 @@ dictSamples = {
             'nGenWeights' : 22793054.0,
             },
         'XS' : 1.555e+06,
-        'label' : 'QCD madgraphMLM' ,
+        'label' : 'QCD MG5+Pythia8' ,
         'color': ROOT.kMagenta
     },
 
@@ -394,7 +395,7 @@ dictSamples = {
             'nGenWeights' : 55102146.0,
             },
         'XS' : 3.243e+05,
-        'label' : 'QCD madgraphMLM' ,
+        'label' : 'QCD MG5+Pythia8' ,
         'color': ROOT.kMagenta
     },
 
@@ -418,7 +419,7 @@ dictSamples = {
             'nGenWeights' : 51866729.0,
             },
         'XS' : 3.048e+04,
-        'label' : 'QCD madgraphMLM' ,
+        'label' : 'QCD MG5+Pythia8' ,
         'color': ROOT.kMagenta
     },
 
@@ -442,7 +443,7 @@ dictSamples = {
             'nGenWeights' : 47028925.0,
             },
         'XS' : 6.433e+03,
-        'label' : 'QCD madgraphMLM' ,
+        'label' : 'QCD MG5+Pythia8' ,
         'color': ROOT.kMagenta
     },
 
@@ -466,7 +467,7 @@ dictSamples = {
             'nGenWeights' : 15589003.0,
             },
         'XS' : 1.116e+03,
-        'label' : 'QCD madgraphMLM' ,
+        'label' : 'QCD MG5+Pythia8' ,
         'color': ROOT.kMagenta
     },
 
@@ -490,7 +491,7 @@ dictSamples = {
             'nGenWeights' : 9825850.0,
             },
         'XS' : 1.081e+02,
-        'label' : 'QCD madgraphMLM' ,
+        'label' : 'QCD MG5+Pythia8' ,
         'color': ROOT.kMagenta
     },
 
@@ -514,7 +515,7 @@ dictSamples = {
             'nGenWeights' : 4484780.0,
             },
         'XS' : 2.193e+01,
-        'label' : 'QCD madgraphMLM' ,
+        'label' : 'QCD MG5+Pythia8' ,
         'color': ROOT.kMagenta
     },
 
