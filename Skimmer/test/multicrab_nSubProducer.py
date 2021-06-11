@@ -42,7 +42,7 @@ echo "python {pythonFile} --sample {datasets} --selection {selection}"
 python {pythonFile} --sample {datasets} --selection {selection} --year {year} --runEra {runEra}
 fi
     '''
-    open('runPostProc'+options.datasets+'.sh', 'w').write(BASH_SCRIPT.format(**options.__dict__))
+    open('runPostProc'+options.datasets+options.year+'.sh', 'w').write(BASH_SCRIPT.format(**options.__dict__))
 
 
 def submitJobs( job, inputFiles, unitJobs ):
@@ -83,7 +83,7 @@ def submitJobs( job, inputFiles, unitJobs ):
             print hte.headers
 
 
-    config.JobType.scriptExe = 'runPostProc'+options.datasets+'.sh'
+    config.JobType.scriptExe = 'runPostProc'+options.datasets+options.year+'.sh'
     config.JobType.inputFiles = [ options.pythonFile ,'haddnano.py', 'keep_and_drop.txt']
     config.JobType.sendPythonFolder  = True
 
@@ -112,7 +112,7 @@ def submitJobs( job, inputFiles, unitJobs ):
     if len(requestname) > 100: requestname = (requestname[:95-len(requestname)])
     if os.path.isdir('crab_projects/crab_'+requestname):
         print '|-------> JOB '+requestname+' has already a folder. Please remove it.'
-        os.remove('runPostProc'+options.datasets+'.sh')
+        os.remove('runPostProc'+options.datasets+options.year+'.sh')
         return False
 
     print 'requestname = ', requestname
@@ -124,7 +124,7 @@ def submitJobs( job, inputFiles, unitJobs ):
     submit(config)
     #try : submit(config)
     #except : print 'Not submitted.'
-    os.remove('runPostProc'+options.datasets+'.sh')
+    os.remove('runPostProc'+options.datasets+options.year+'.sh')
 
 
 
