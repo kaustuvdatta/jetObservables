@@ -530,8 +530,8 @@ if __name__ == '__main__':
             if not checkDict( isam, dictSamples )[iy]['skimmerHisto'].endswith('root'): continue
             if isam.startswith(('JetHT', 'SingleMuon')): continue
             if args.selection.startswith('dijet') and not isam.startswith('QCD'): continue
+            if args.selection.startswith('dijet') and ( 'MuEnriched' in isam ): continue
             if not args.selection.startswith('dijet') and isam.startswith('QCD'): continue
-            #if args.selection.startswith('dijet') and ('herwig' in isam): continue
             bkgFiles[isam.split('_Tune')[0]+iy] = [
                                 ROOT.TFile.Open( args.inputFolder+checkDict( isam, dictSamples )[iy]['skimmerHisto'] ),
                                 checkDict( isam, dictSamples )

@@ -74,10 +74,10 @@ def runTUnfold( dataFile, sigFiles, bkgFiles, variables, sel, sysUncert ):
             altSignalHistos = loadHistograms( tmp2SigFiles, ivar, sel, sysUnc=[], respOnly=True)
             if args.process.startswith("MC"):
                 if args.process.startswith('MCSelfClosure'):
-                    dataHistos = { 'data_reco'+k.split(('_reco' if sel.startswith('_dijet') else 'Leptonic'))[1] : v for (k,v) in signalHistos.items() if 'reco' in k }
+                    dataHistos = { 'data_reco'+k.split(('_reco' if sel.startswith('_dijet') else 'Leptonic'))[1] : v for (k,v) in signalHistos.items() if '_reco' in k }
                 else:
                     dataHistos = loadHistograms( tmp2SigFiles, ivar, sel, isMC=True, addGenInfo=False )
-                    dataHistos = { 'data_reco'+k.split('_reco')[1] : v for (k,v) in dataHistos.items() if 'reco' in k }
+                    dataHistos = { 'data_reco'+k.split('_reco')[1] : v for (k,v) in dataHistos.items() if '_reco' in k }
                     print(dataHistos)
             else:
                 dataHistos = loadHistograms( dataFile, ivar, sel, isMC= False )
@@ -117,19 +117,19 @@ def runTUnfold( dataFile, sigFiles, bkgFiles, variables, sel, sysUncert ):
             plotSimpleComparison( dataHistos['data_reco'+ivar+'_nom'+sel].Clone(), 'data', allHistos[ 'allMCHisto' ], 'allBkgs', ivar+'_from'+('Data' if args.process.startswith('data') else 'MC')+'_'+signalLabel+"_nom", rebinX=variables[ivar]['bins'], version=sel+'_'+args.version, outputDir=outputDir )
 
             ######## Adding missgen to overflow and underflow
-            for ibin in range( 1, signalHistos[signalLabel+'_missgen'+ivar+sel].GetNbinsX()+1 ):
-                signalHistos[signalLabel+'_resp'+ivar+'_nom'+sel].SetBinContent(  signalHistos[signalLabel+'_resp'+ivar+'_nom'+sel].GetBin( 0, ibin ), signalHistos[signalLabel+'_missgen'+ivar+sel].GetBinContent(ibin) )
-                signalHistos[signalLabel+'_resp'+ivar+'_nom'+sel].SetBinError(  signalHistos[signalLabel+'_resp'+ivar+'_nom'+sel].GetBin( 0, ibin ), signalHistos[signalLabel+'_missgen'+ivar+sel].GetBinError(ibin) )
-                signalHistos[signalLabel+'_resp'+ivar+'_nom'+sel].SetBinContent(  signalHistos[signalLabel+'_resp'+ivar+'_nom'+sel].GetBin( -1, ibin ), signalHistos[signalLabel+'_missgen'+ivar+sel].GetBinContent(ibin) )
-                signalHistos[signalLabel+'_resp'+ivar+'_nom'+sel].SetBinError(  signalHistos[signalLabel+'_resp'+ivar+'_nom'+sel].GetBin( -1, ibin ), signalHistos[signalLabel+'_missgen'+ivar+sel].GetBinError(ibin) )
-                altSignalHistos[altSignalLabel+'_resp'+ivar+'_nom'+sel].SetBinContent(  altSignalHistos[altSignalLabel+'_resp'+ivar+'_nom'+sel].GetBin( 0, ibin ), altSignalHistos[altSignalLabel+'_missgen'+ivar+sel].GetBinContent(ibin) )
-                altSignalHistos[altSignalLabel+'_resp'+ivar+'_nom'+sel].SetBinError(  altSignalHistos[altSignalLabel+'_resp'+ivar+'_nom'+sel].GetBin( 0, ibin ), altSignalHistos[altSignalLabel+'_missgen'+ivar+sel].GetBinError(ibin) )
-                altSignalHistos[altSignalLabel+'_resp'+ivar+'_nom'+sel].SetBinContent(  altSignalHistos[altSignalLabel+'_resp'+ivar+'_nom'+sel].GetBin( -1, ibin ), altSignalHistos[altSignalLabel+'_missgen'+ivar+sel].GetBinContent(ibin) )
-                altSignalHistos[altSignalLabel+'_resp'+ivar+'_nom'+sel].SetBinError(  altSignalHistos[altSignalLabel+'_resp'+ivar+'_nom'+sel].GetBin( -1, ibin ), altSignalHistos[altSignalLabel+'_missgen'+ivar+sel].GetBinError(ibin) )
-                #for sys in sysUncert:
-                #    for upDown in [ 'Up', 'Down' ]:
-                #        signalHistos[signalLabel+'_resp'+ivar+sys+upDown+sel].SetBinContent(  signalHistos[signalLabel+'_resp'+ivar+sys+upDown+sel].GetBin( ibin, 0 ), signalHistos[signalLabel+'_missgen'+ivar+sel].GetBinContent(ibin) )
-                #        signalHistos[signalLabel+'_resp'+ivar+sys+upDown+sel].SetBinContent(  signalHistos[signalLabel+'_resp'+ivar+sys+upDown+sel].GetBin( ibin, -1 ), signalHistos[signalLabel+'_missgen'+ivar+sel].GetBinContent(ibin) )
+#            for ibin in range( 1, signalHistos[signalLabel+'_missgen'+ivar+sel].GetNbinsX()+1 ):
+#                signalHistos[signalLabel+'_resp'+ivar+'_nom'+sel].SetBinContent(  signalHistos[signalLabel+'_resp'+ivar+'_nom'+sel].GetBin( 0, ibin ), signalHistos[signalLabel+'_missgen'+ivar+sel].GetBinContent(ibin) )
+#                signalHistos[signalLabel+'_resp'+ivar+'_nom'+sel].SetBinError(  signalHistos[signalLabel+'_resp'+ivar+'_nom'+sel].GetBin( 0, ibin ), signalHistos[signalLabel+'_missgen'+ivar+sel].GetBinError(ibin) )
+#                signalHistos[signalLabel+'_resp'+ivar+'_nom'+sel].SetBinContent(  signalHistos[signalLabel+'_resp'+ivar+'_nom'+sel].GetBin( -1, ibin ), signalHistos[signalLabel+'_missgen'+ivar+sel].GetBinContent(ibin) )
+#                signalHistos[signalLabel+'_resp'+ivar+'_nom'+sel].SetBinError(  signalHistos[signalLabel+'_resp'+ivar+'_nom'+sel].GetBin( -1, ibin ), signalHistos[signalLabel+'_missgen'+ivar+sel].GetBinError(ibin) )
+#                altSignalHistos[altSignalLabel+'_resp'+ivar+'_nom'+sel].SetBinContent(  altSignalHistos[altSignalLabel+'_resp'+ivar+'_nom'+sel].GetBin( 0, ibin ), altSignalHistos[altSignalLabel+'_missgen'+ivar+sel].GetBinContent(ibin) )
+#                altSignalHistos[altSignalLabel+'_resp'+ivar+'_nom'+sel].SetBinError(  altSignalHistos[altSignalLabel+'_resp'+ivar+'_nom'+sel].GetBin( 0, ibin ), altSignalHistos[altSignalLabel+'_missgen'+ivar+sel].GetBinError(ibin) )
+#                altSignalHistos[altSignalLabel+'_resp'+ivar+'_nom'+sel].SetBinContent(  altSignalHistos[altSignalLabel+'_resp'+ivar+'_nom'+sel].GetBin( -1, ibin ), altSignalHistos[altSignalLabel+'_missgen'+ivar+sel].GetBinContent(ibin) )
+#                altSignalHistos[altSignalLabel+'_resp'+ivar+'_nom'+sel].SetBinError(  altSignalHistos[altSignalLabel+'_resp'+ivar+'_nom'+sel].GetBin( -1, ibin ), altSignalHistos[altSignalLabel+'_missgen'+ivar+sel].GetBinError(ibin) )
+#                #for sys in sysUncert:
+#                #    for upDown in [ 'Up', 'Down' ]:
+#                #        signalHistos[signalLabel+'_resp'+ivar+sys+upDown+sel].SetBinContent(  signalHistos[signalLabel+'_resp'+ivar+sys+upDown+sel].GetBin( ibin, 0 ), signalHistos[signalLabel+'_missgen'+ivar+sel].GetBinContent(ibin) )
+#                #        signalHistos[signalLabel+'_resp'+ivar+sys+upDown+sel].SetBinContent(  signalHistos[signalLabel+'_resp'+ivar+sys+upDown+sel].GetBin( ibin, -1 ), signalHistos[signalLabel+'_missgen'+ivar+sel].GetBinContent(ibin) )
 
             ####### Cross check response matrix
             tmpGenHisto = signalHistos[signalLabel+'_resp'+ivar+'_nom'+sel].ProjectionX()
@@ -332,7 +332,7 @@ def runTUnfold( dataFile, sigFiles, bkgFiles, variables, sel, sysUncert ):
                 ihis.SetTitle(isam)
                 ihis.Write()
 
-        outputRootName = outputDir+'/outputHistograms_'+signalLabel+'.root'
+        outputRootName = outputDir+'/outputHistograms_main_'+signalLabel+'_alt_'+altSignalLabel+'.root'
         print '|------> Saving histograms in rootfile: ', outputRootName
         outputRoot = ROOT.TFile.Open( outputRootName, 'recreate' )
         renamingHistos( signalHistos )
