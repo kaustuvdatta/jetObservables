@@ -138,8 +138,7 @@ if isMC:
             modulesToRun.append( puAutoWeight_UL2017() )
             modulesToRun.append( btagSF2017() )
         else:
-            pileup = puWeightProducer( "auto", os.environ['CMSSW_BASE']+"/src/jetObservables/Skimmer/data/pileup/pileupForDijet_UL2017.root", "pu_mc", "pileup", verbose=False)
-            modulesToRun.append( pileup() )
+            modulesToRun.append( puWeightProducer( "auto", os.environ['CMSSW_BASE']+"/src/jetObservables/Skimmer/data/pileup/pileupForDijet_UL2017.root", "pu_mc", "pileup", verbose=False) )
     if args.year=='2016':
         modulesToRun.append( puAutoWeight_2016() )
         print "Running with btag SF calc."
