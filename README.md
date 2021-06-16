@@ -43,6 +43,14 @@ yoda.writeYODA( histToYoda, "outputName.yoda" )
 ``````
 Dont forget to put all the unfold histograms together in a single `yoda` file. 
 
-## Compile
+## Run routine
 
-
+To run the routine within CMSSW, one can run:
+```
+cmsRun RIVET_QCD_Pt-15To7000_TuneCUETP8M1_Flat_13TeV-pythia8_cff.py
+```
+which will create a yoda file with the outputs defined in the `XXX.c` code. To create simple plots one can run:
+```
+rivet-mkhtml file.yoda
+```
+After running this command, a folder called `rivet-plots` contains a `index.html` file with all the plots.
