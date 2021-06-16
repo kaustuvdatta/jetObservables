@@ -6,6 +6,7 @@ import argparse, os, shutil, sys
 import ROOT
 from array import array
 import numpy as np
+import yoda
 from multiprocessing import Process
 from DrawHistogram import plotSimpleComparison, plotSysComparison
 from variables import nSubVariables
@@ -51,9 +52,15 @@ def runTUnfold( dataFile, sigFiles, bkgFiles, variables, sel, sysUncert ):
                     signalHistos[ signalLabel+'_resp'+ivar+sys+upDown+sel ].Add( dataFile[ivar+'_2018'].Get(signalLabel+'_resp'+ivar+sys+upDown+sel) )
 
             altSignalHistos = {
-                altSignalLabel+'_resp'+ivar+'_nom'+sel : dataFile[ivar+'_2017'].Get(altSignalLabel+'_resp'+ivar+'_nom'+sel)
+                altSignalLabel+'_resp'+ivar+'_nom'+sel : dataFile[ivar+'_2017'].Get(altSignalLabel+'_resp'+ivar+'_nom'+sel),
+                altSignalLabel+'_recoJetfrom_resp'+ivar+'_nom'+sel : dataFile[ivar+'_2017'].Get(altSignalLabel+'_recoJetfrom_resp'+ivar+'_nom'+sel),
+                altSignalLabel+'_genJetfrom_resp'+ivar+'_nom'+sel : dataFile[ivar+'_2017'].Get(altSignalLabel+'_genJetfrom_resp'+ivar+'_nom'+sel),
+                altSignalLabel+'_missgen'+ivar+sel : dataFile[ivar+'_2017'].Get(altSignalLabel+'_missgen'+ivar+sel)
                 }
-            altSignalHistos[ altSignalLabel+'_resp'+ivar+'_nom'+sel ].Add( dataFile[ivar+'_2017'].Get(altSignalLabel+'_resp'+ivar+'_nom'+sel) )
+            altSignalHistos[ altSignalLabel+'_resp'+ivar+'_nom'+sel ].Add( dataFile[ivar+'_2018'].Get(altSignalLabel+'_resp'+ivar+'_nom'+sel) )
+            altSignalHistos[ altSignalLabel+'_recoJetfrom_resp'+ivar+'_nom'+sel ].Add( dataFile[ivar+'_2018'].Get(altSignalLabel+'_recoJetfrom_resp'+ivar+'_nom'+sel) )
+            altSignalHistos[ altSignalLabel+'_genJetfrom_resp'+ivar+'_nom'+sel ].Add( dataFile[ivar+'_2018'].Get(altSignalLabel+'_genJetfrom_resp'+ivar+'_nom'+sel) )
+            altSignalHistos[ altSignalLabel+'_missgen'+ivar+sel ].Add( dataFile[ivar+'_2018'].Get(altSignalLabel+'_missgen'+ivar+sel) )
 
             allHistos = {
                     'dataMinusBkgs' : dataFile[ivar+'_2017'].Get( 'dataMinusBkgs' ),
@@ -69,19 +76,19 @@ def runTUnfold( dataFile, sigFiles, bkgFiles, variables, sel, sysUncert ):
             print('|-------> Running single year '+args.year)
             ### Getting input histos
             mainSigFiles = { k:v for (k,v) in sigFiles.items() if k.startswith(signalLabelBegin)  }
-            signalHistos = loadHistograms( mainSigFiles, ivar, sel, sysUnc=sysUncert )
+            signalHistos = loadHistograms( mainSigFiles, ivar, sel, sysUnc=sysUncert, lumi=args.lumi, year=args.year, process=args.process, variables=variables )
             tmp2SigFiles = { k:v for (k,v) in sigFiles.items() if k.startswith(altSignalLabelBegin)  }
-            altSignalHistos = loadHistograms( tmp2SigFiles, ivar, sel, sysUnc=[], respOnly=True)
+            altSignalHistos = loadHistograms( tmp2SigFiles, ivar, sel, sysUnc=[], respOnly=True, lumi=args.lumi, year=args.year, process=args.process, variables=variables)
             if args.process.startswith("MC"):
                 if args.process.startswith('MCSelfClosure'):
                     dataHistos = { 'data_reco'+k.split(('_reco' if sel.startswith('_dijet') else 'Leptonic'))[1] : v for (k,v) in signalHistos.items() if '_reco' in k }
                 else:
-                    dataHistos = loadHistograms( tmp2SigFiles, ivar, sel, isMC=True, addGenInfo=False )
+                    dataHistos = loadHistograms( tmp2SigFiles, ivar, sel, isMC=True, addGenInfo=False, lumi=args.lumi, year=args.year, process=args.process, variables=variables )
                     dataHistos = { 'data_reco'+k.split('_reco')[1] : v for (k,v) in dataHistos.items() if '_reco' in k }
                     print(dataHistos)
             else:
-                dataHistos = loadHistograms( dataFile, ivar, sel, isMC= False )
-            bkgHistos = loadHistograms( bkgFiles, ivar, sel, sysUnc=[]) if args.process.startswith('data') else {}
+                dataHistos = loadHistograms( dataFile, ivar, sel, isMC= False, lumi=args.lumi, year=args.year, process=args.process, variables=variables )
+            bkgHistos = loadHistograms( bkgFiles, ivar, sel, sysUnc=[], lumi=args.lumi, year=args.year, process=args.process, variables=variables) if args.process.startswith('data') else {}
 
             print '|------> Unfolding '+ivar
 
@@ -344,8 +351,13 @@ def runTUnfold( dataFile, sigFiles, bkgFiles, variables, sel, sysUncert ):
         tunfolder.Write()
         outputRoot.Close()
 
+        print '|------> Saving histograms in yodafile: ', outputRootName.replace('.root', '.yoda')
+        histToYoda = [  yoda.root.to_yoda( allHistos [ 'unfoldHisto'+ivar ] ) ]
+        yoda.writeYODA( histToYoda, outputRootName.replace('.root', '.yoda') )
+
+
 ##########################################################################
-def loadHistograms( samples, var, sel, sysUnc=[], isMC=True, addGenInfo=True, respOnly=False ):
+def loadHistograms( samples, var, sel, sysUnc=[], isMC=True, addGenInfo=True, respOnly=False, lumi=1., variables={}, year='2017', process='data' ):
     """docstring for loadHistograms"""
 
     SYSUNC = [ '_nom' ] + [ s+u for u in ['Up', 'Down'] for s in sysUnc ]
@@ -360,14 +372,14 @@ def loadHistograms( samples, var, sel, sysUnc=[], isMC=True, addGenInfo=True, re
             if isMC:
                 allHistos[isam+'_'+ih] = samples[isam][0].Get( 'jetObservables/'+ih )
                 tmpIsam = 'TT' if isam.startswith('data') else isam
-                MCScale = samples[isam][1]['XS'] * args.lumi / samples[isam][1][args.year][('nGenWeights' if args.process.startswith('data') else 'nGenWeights') ]
-                if not ih.startswith('resp'): allHistos[isam+'_'+ih].Scale( MCScale )
+                MCScale = samples[isam][1]['XS'] * lumi / samples[isam][1][year][('nGenWeights' if process.startswith('data') else 'nGenWeights') ]
+                allHistos[isam+'_'+ih].Scale( MCScale )
             else:
-                if sel.startswith('_dijet') and args.process.startswith('data'):
+                if sel.startswith('_dijet') and process.startswith('data'):
                     tmpdataHistos = {}
-                    for it in checkDict( 'JetHT', dictSamples )[args.year]['triggerList']:
+                    for it in checkDict( 'JetHT', dictSamples )[year]['triggerList']:
                         tmpdataHistos[ it ] = samples[isam][0].Get( 'jetObservables/'+ih.replace( sel, '_'+it+sel ) )
-                        tmpdataHistos[ it ].Scale( checkDict( 'JetHT', dictSamples )[args.year]['triggerList'][it] )
+                        tmpdataHistos[ it ].Scale( checkDict( 'JetHT', dictSamples )[year]['triggerList'][it] )
                     allHistos[ isam+'_'+ih ] = tmpdataHistos[next(iter(tmpdataHistos))].Clone()
                     allHistos[ isam+'_'+ih ].Reset()
                     for i in tmpdataHistos: allHistos[isam+'_'+ih].Add( tmpdataHistos[i] )
@@ -429,7 +441,7 @@ def loadHistograms( samples, var, sel, sysUnc=[], isMC=True, addGenInfo=True, re
                     tmpHisto.Sumw2()
                     allHistos[isam+'_'+ih] = tmpHisto
 
-                if isMC: allHistos[isam+'_'+ih].Scale( MCScale )
+                #if isMC: allHistos[isam+'_'+ih].Scale( MCScale )
                 ##### For tests, projections directly from 2D
                 allHistos[isam+'_genJetfrom_'+ih] = allHistos[isam+'_'+ih].ProjectionY()
                 allHistos[isam+'_recoJetfrom_'+ih] = allHistos[isam+'_'+ih].ProjectionX()
@@ -691,8 +703,8 @@ if __name__ == '__main__':
             sys.exit(0)
 
         for ivar in variables.keys():
-            dataFile[ivar+'_2017'] = ROOT.TFile.Open( args.inputFolder+'/Plots/'+args.selection.split('_')[1]+'/Unfold/2017/'+ivar+'/'+args.process+'/outputHistograms_'+signalLabel+'.root' )
-            dataFile[ivar+'_2018'] = ROOT.TFile.Open( args.inputFolder+'/Plots/'+args.selection.split('_')[1]+'/Unfold/2018/'+ivar+'/'+args.process+'/outputHistograms_'+signalLabel+'.root' )
+            dataFile[ivar+'_2017'] = ROOT.TFile.Open( args.inputFolder+'/Plots/'+args.selection.split('_')[1]+'/Unfold/2017/'+ivar+'/'+args.process+'/outputHistograms_main_'+signalLabel+'_alt_'+altSignalLabel+'.root' )
+            dataFile[ivar+'_2018'] = ROOT.TFile.Open( args.inputFolder+'/Plots/'+args.selection.split('_')[1]+'/Unfold/2018/'+ivar+'/'+args.process+'/outputHistograms_main_'+signalLabel+'_alt_'+altSignalLabel+'.root' )
 
     #### Single year unfolding runs on skimmers
     else:
