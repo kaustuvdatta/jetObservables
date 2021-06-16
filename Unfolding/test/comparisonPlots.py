@@ -29,24 +29,38 @@ def makePlots( name, ext='png', outputDir='Plots/' ):
     numBins = 0
     numBinsList = [0]
     dictHistos = OrderedDict()
+    uncertDictHistos = OrderedDict()
     for ivar in nSubVariables.keys():
         if name.endswith( ivar.split('_')[0] ):
+            ###### Loading histograms
             dictHistos[ivar] = {
                     'data' : dictFiles[ivar].Get( 'dataMinusBkgsGenBin' ),
                     'unfold' : dictFiles[ivar].Get( 'unfoldHisto'+ivar ),
-                    'unfoldwoUnc' : dictFiles[ivar].Get( 'unfoldHistowoUnc'+ivar ),
+                    'cov' : dictFiles[ivar].Get( 'cov'+ivar ),
+                    'cov_uncorr_data' : dictFiles[ivar].Get( 'cov_uncorr_data_'+ivar ),
                     'fold' : dictFiles[ivar].Get( 'foldHisto'+ivar ),
                     'gen' : dictFiles[ivar].Get( signalLabel+'_accepgen'+ivar+'_'+args.selection ),
                     'reco' : dictFiles[ivar].Get( signalLabel+'_reco'+ivar+'_nom_'+args.selection ),
                     'gen'+altSignalLabel : dictFiles[ivar].Get( altSignalLabel+'_genJetfrom_resp'+ivar+'_nom_'+args.selection ),
                     'reco'+altSignalLabel : dictFiles[ivar].Get( altSignalLabel+'_recoJetfrom_resp'+ivar+'_nom_'+args.selection )
                     }
+
+            ##### making ratio uncert histos
+            uncertDictHistos[ivar] = { 'totalUnc' : dictHistos[ivar]['unfold'].Clone() }
+            uncertDictHistos[ivar][ 'totalUnc' ].Reset()
+            uncertDictHistos[ivar][ 'statUnc' ] =  uncertDictHistos[ivar][ 'totalUnc' ].Clone()
+            for ibin in range( 0, dictHistos[ivar][ 'cov' ].GetNbinsX()+1 ):
+                uncertDictHistos[ivar][ 'totalUnc' ].SetBinContent( ibin, 1 )
+                uncertDictHistos[ivar][ 'totalUnc' ].SetBinError( ibin, ROOT.TMath.Sqrt( dictHistos[ivar][ 'cov' ].GetBinContent(ibin,ibin) ) )
+                uncertDictHistos[ivar][ 'statUnc' ].SetBinContent( ibin, 1 )
+                uncertDictHistos[ivar][ 'statUnc' ].SetBinError( ibin, ROOT.TMath.Sqrt( dictHistos[ivar][ 'cov_uncorr_data' ].GetBinContent(ibin,ibin) ) )
+
+            ##### removing tau21 and tau32 from total plots
             if not ivar.endswith(('21', '32')):
                 numBins = numBins + dictHistos[ivar]['data'].GetNbinsX()
                 numBinsList.append(numBins)
 
-            ############################################
-            ## Self Clsoure
+            ##### defining what to include in each plot
             otherHistos = OrderedDict()
             mainHisto = dictHistos[ivar]['unfold']
             if args.process.startswith('MCClosure'):
@@ -75,12 +89,14 @@ def makePlots( name, ext='png', outputDir='Plots/' ):
                 otherHistos[sigPlotLabel] = dictHistos[ivar]['gen']
                 dictHistos[ivar]['gen'+altSignalLabel].Rebin(2)
                 otherHistos[altSigPlotLabel] = dictHistos[ivar]['gen'+altSignalLabel]
-            drawUnfold( ivar, mainHisto, mainHistoLabel, otherHistos, nSubVariables[ivar], outputLabel=outputLabel, outputDir=outputDir )
+            #### plotting for each variable
+            drawUnfold( ivar, mainHisto, mainHistoLabel, otherHistos, nSubVariables[ivar], uncertDictHistos[ivar], outputLabel=outputLabel, outputDir=outputDir )
 
+    ##### making combine plots
     combinePlots( name+'_'+args.selection, dictHistos, numBinsList, mainHistoLabel, otherHisto, otherHistoLabel, outputLabel, outputDir=outputDir, axisX='' )
 
 ##########################################################################
-def drawUnfold( ivar, mainHisto, mainHistoLabel, otherHistos, varInfo, outputLabel, outputDir ):
+def drawUnfold( ivar, mainHisto, mainHistoLabel, otherHistos, varInfo, uncertDictHistos, outputLabel, outputDir ):
     """docstring for drawUnfold"""
 
     outputDir=outputDir+'/'+ivar+'/'+args.process+'/'
@@ -162,6 +178,13 @@ def drawUnfold( ivar, mainHisto, mainHistoLabel, otherHistos, varInfo, outputLab
     hRatioUp.Draw('P0')
     #hRatioDown.Draw('P same')
 
+    uncertDictHistos['statUnc'].SetFillColor(ROOT.kBlue)
+    uncertDictHistos['statUnc'].SetFillStyle(3004)
+    uncertDictHistos['statUnc'].Draw('E2 same')
+    uncertDictHistos['totalUnc'].SetFillColor(ROOT.kBlack)
+    uncertDictHistos['totalUnc'].SetFillStyle(3004)
+    uncertDictHistos['totalUnc'].Draw('E2 same')
+
     can.SaveAs(outputName)
     if args.ext.startswith('pdf'):
         can.SaveAs( outputName.replace('pdf', 'png') )
@@ -228,7 +251,7 @@ def combinePlots( name, dictHistos, numBins, mainHistoLabel, otherHisto, otherHi
     ### division lines
     lines = {}
     for i in numBins[1:-1]:
-        lines[i] = ROOT.TGraph(2, array('d', [i,i]), array('d', [0, 100]) )
+        lines[i] = ROOT.TGraph(2, array('d', [i,i]), array('d', [0, 200]) )
         lines[i].SetLineColor(ROOT.kGray)
         lines[i].Draw('same')
 
@@ -284,7 +307,7 @@ if __name__ == '__main__':
     parser.add_argument('-s', '--selection', action='store', default='dijetSel', help='Selection: dijetSel, WSel, topSel.' )
     parser.add_argument('-v', '--version', action='store', default='v02', help='Version: v01, v02.' )
     parser.add_argument('-y', '--year', action='store', default='2017', help='Year: 2016, 2017, 2018.' )
-    #parser.add_argument('-l', '--lumi', action='store', type=float, default=41530., help='Luminosity, example: 1.' )
+    parser.add_argument('-l', '--lumi', action='store', type=float, default=0., help='Luminosity, example: 1.' )
     parser.add_argument('-e', '--ext', action='store', default='png', help='Extension of plots.' )
     parser.add_argument('-u', '--unc', action='store', default='JES', dest='unc',  help='Type of uncertainty' )
     parser.add_argument('-L', '--log', action='store_true', default=False, dest='log',  help='Plot in log scale (true) or not (false)' )
@@ -294,13 +317,15 @@ if __name__ == '__main__':
     parser.add_argument("--main", action='store', dest="main", choices=['Ptbin', 'HTbin', 'herwig'], default='Ptbin', help="For dijet sel, main signal QCD" )
     parser.add_argument("--alt", action='store', dest="alt", choices=['Ptbin', 'HTbin', 'herwig'], default='herwig', help="For dijet sel, alternative signal QCD" )
     parser.add_argument("--inputFolder", action='store', dest="inputFolder", default="", help="input folder" )
+    parser.add_argument("--outputFolder", action='store', dest="outputFolder", default="", help="Output folder" )
 
     try: args = parser.parse_args()
     except:
         parser.print_help()
         sys.exit(0)
 
-    args.lumi = checkDict( ( 'JetHT' if args.selection.startswith('dijet') else 'SingleMuon' ), dictSamples )[args.year]['lumi']
+    for iy in ( ['2017', '2018'] if args.year.startswith('all') else [ args.year ] ):
+        args.lumi = args.lumi + checkDict( ( 'JetHT' if args.selection.startswith('dijet') else 'SingleMuon' ), dictSamples )[iy]['lumi']
 
     #### Define main and alt signals
     if args.selection.startswith('dijet'):
@@ -333,12 +358,11 @@ if __name__ == '__main__':
     for ivar, varInfo in nSubVariables.items():
         if args.selection.startswith('dijet') and ivar.startswith(('Jet1', 'Jet2')):
             dictFiles[ivar] = ROOT.TFile.Open( args.inputFolder+'Plots/'+args.selection+'/Unfold/'+args.year+'/'+ivar+'/'+args.process+'/outputHistograms_main_'+signalLabel+'_alt_'+altSignalLabel+'.root' )
-            #dictFiles[ivar+altSignalLabel] = ROOT.TFile.Open( args.inputFolder+'Plots/'+args.selection+'/Unfold/'+args.year+'/'+ivar+'/'+args.process+'/outputHistograms_'+altSignalLabel+'.root' )
 
-    outputDir = 'Plots/'+args.selection+'/Unfold/'+args.year
+    outputDir = args.outputFolder+'Plots/'+args.selection+'/Unfold/'+args.year
     if not os.path.exists(outputDir): os.makedirs(outputDir)
     CMS_lumi.extraText = 'Preliminary' if args.process.startswith('data') else "Simulation Preliminary"
-    CMS_lumi.lumi_13TeV = ('#leq' if args.selection.startswith('dijet') else '')+str( round( (args.lumi/1000.), 2 ) )+" fb^{-1}, 13 TeV, "+args.year
+    CMS_lumi.lumi_13TeV = ('#leq' if args.selection.startswith('dijet') else '')+str( round( (args.lumi/1000.), 2 ) )+" fb^{-1}, 13 TeV, "+( '2017+2018' if args.year.startswith('all') else args.year )
 
     plotList = [ 'recoJet1', 'recoJet2' ] if args.selection.startswith('dijet') else [ 'recoJet' ]
 

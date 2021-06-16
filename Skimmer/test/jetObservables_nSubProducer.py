@@ -13,7 +13,7 @@ from PhysicsTools.NanoAODTools.postprocessing.framework.eventloop import Module
 #this takes care of converting the input files from CRAB
 from PhysicsTools.NanoAODTools.postprocessing.framework.crabhelper import inputFiles,runsAndLumis
 
-from PhysicsTools.NanoAODTools.postprocessing.modules.common.puWeightProducer import puAutoWeight_2016, puAutoWeight_2017, puAutoWeight_2018
+from PhysicsTools.NanoAODTools.postprocessing.modules.common.puWeightProducer import puWeightProducer, puAutoWeight_2016, puAutoWeight_UL2017, puAutoWeight_UL2018
 from PhysicsTools.NanoAODTools.postprocessing.modules.btv.btagSFProducer import btagSF2016, btagSF2017
 from PhysicsTools.NanoAODTools.postprocessing.modules.jme.jetmetHelperRun2 import *
 
@@ -97,7 +97,7 @@ systSources = [ '_jesTotal', '_jer', '_pu' ] if isMC else []
 
 ### Lepton scale factors
 LeptonSF = {
-    
+
     '2017' : {
         'muon' : {
             'Trigger' : [ "MuonSF_ULFinal.root", "UL17_Trigger", False ],
@@ -105,7 +105,7 @@ LeptonSF = {
             'ISO' : [ "MuonSF_ULFinal.root", "UL17_ISO", False ],
             'RecoEff' : [ "MuonSF_ULFinal.root", "UL17_Reco", False ],
         },
-        
+
     },
     '2018' : {
         'muon' : {
@@ -114,7 +114,7 @@ LeptonSF = {
             'ISO' : [ "MuonSF_ULFinal.root", "UL18_ISO", False ],
             'RecoEff' : [ "MuonSF_ULFinal.root", "UL18_Reco", False ],
         },
-        
+
     },
 }
 
@@ -129,13 +129,17 @@ modulesToRun.append( fatJetCorrector() )
 if not args.selection.startswith('dijet'): modulesToRun.append( jetmetCorrector() )
 if isMC:
     if args.year=='2018':
-        modulesToRun.append( puAutoWeight_2018() )
+        modulesToRun.append( puAutoWeight_UL2018() )
         print "###Running with btag SF calc.###"
         if not args.selection.startswith('dijet'): modulesToRun.append( btagSF2018() )
     if args.year=='2017':
-        modulesToRun.append( puAutoWeight_2017() )
         print "###Running with btag SF calc.###"
-        if not args.selection.startswith('dijet'): modulesToRun.append( btagSF2017() )
+        if not args.selection.startswith('dijet'):
+            modulesToRun.append( puAutoWeight_UL2017() )
+            modulesToRun.append( btagSF2017() )
+        else:
+            pileup = puWeightProducer( "auto", os.environ['CMSSW_BASE']+"/src/jetObservables/Skimmer/data/pileup/pileupForDijet_UL2017.root", "pu_mc", "pileup", verbose=False)
+            modulesToRun.append( pileup() )
     if args.year=='2016':
         modulesToRun.append( puAutoWeight_2016() )
         print "Running with btag SF calc."
