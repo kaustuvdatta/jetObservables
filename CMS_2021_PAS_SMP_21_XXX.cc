@@ -63,6 +63,32 @@ namespace Rivet {
       }
       book( _h_ungroomedJet0_nSub[0][1], "unfoldHistoJet2_tau_0p5_1" );
       book( _h_ungroomedJet1_nSub[0][1], "unfoldHistoJet1_tau_0p5_1" );
+      book( _h_ungroomedJet0_nSub[0][2], "unfoldHistoJet2_tau_0p5_2" );
+      book( _h_ungroomedJet1_nSub[0][2], "unfoldHistoJet1_tau_0p5_2" );
+      book( _h_ungroomedJet0_nSub[0][3], "unfoldHistoJet2_tau_0p5_3" );
+      book( _h_ungroomedJet1_nSub[0][3], "unfoldHistoJet1_tau_0p5_3" );
+      book( _h_ungroomedJet0_nSub[0][4], "unfoldHistoJet2_tau_0p5_4" );
+      book( _h_ungroomedJet1_nSub[0][4], "unfoldHistoJet1_tau_0p5_4" );
+      book( _h_ungroomedJet0_nSub[1][1], "unfoldHistoJet2_tau_1_1" );
+      book( _h_ungroomedJet1_nSub[1][1], "unfoldHistoJet1_tau_1_1" );
+      book( _h_ungroomedJet0_nSub[1][2], "unfoldHistoJet2_tau_1_2" );
+      book( _h_ungroomedJet1_nSub[1][2], "unfoldHistoJet1_tau_1_2" );
+      book( _h_ungroomedJet0_nSub[1][3], "unfoldHistoJet2_tau_1_3" );
+      book( _h_ungroomedJet1_nSub[1][3], "unfoldHistoJet1_tau_1_3" );
+      book( _h_ungroomedJet0_nSub[1][4], "unfoldHistoJet2_tau_1_4" );
+      book( _h_ungroomedJet1_nSub[1][4], "unfoldHistoJet1_tau_1_4" );
+      book( _h_ungroomedJet0_nSub[2][1], "unfoldHistoJet2_tau_2_1" );
+      book( _h_ungroomedJet1_nSub[2][1], "unfoldHistoJet1_tau_2_1" );
+      book( _h_ungroomedJet0_nSub[2][2], "unfoldHistoJet2_tau_2_2" );
+      book( _h_ungroomedJet1_nSub[2][2], "unfoldHistoJet1_tau_2_2" );
+      book( _h_ungroomedJet0_nSub[2][3], "unfoldHistoJet2_tau_2_3" );
+      book( _h_ungroomedJet1_nSub[2][3], "unfoldHistoJet1_tau_2_3" );
+      book( _h_ungroomedJet0_nSub[2][4], "unfoldHistoJet2_tau_2_4" );
+      book( _h_ungroomedJet1_nSub[2][4], "unfoldHistoJet1_tau_2_4" );
+      book( _h_ungroomedJet0_nSub21, "unfoldHistoJet2_tau21" );
+      book( _h_ungroomedJet1_nSub21, "unfoldHistoJet1_tau21" );
+      book( _h_ungroomedJet0_nSub32, "unfoldHistoJet2_tau32" );
+      book( _h_ungroomedJet1_nSub32, "unfoldHistoJet1_tau32" );
     }
 
 
@@ -115,10 +141,35 @@ namespace Rivet {
         }
       }
 
-      double j0_tau1_beta0p5 = _nsub_0p5_1(j0);
-      double j1_tau1_beta0p5 = _nsub_0p5_1(j1);
-      _h_ungroomedJet0_nSub[0][1]->fill( j0_tau1_beta0p5 );
-      _h_ungroomedJet1_nSub[0][1]->fill( j1_tau1_beta0p5 );
+      _h_ungroomedJet0_nSub[0][1]->fill( _nsub_0p5_1(j0) );
+      _h_ungroomedJet0_nSub[0][2]->fill( _nsub_0p5_2(j0) );
+      _h_ungroomedJet0_nSub[0][3]->fill( _nsub_0p5_3(j0) );
+      _h_ungroomedJet0_nSub[0][4]->fill( _nsub_0p5_4(j0) );
+      _h_ungroomedJet0_nSub[1][1]->fill( _nsub_1_1(j0) );
+      _h_ungroomedJet0_nSub[1][2]->fill( _nsub_1_2(j0) );
+      _h_ungroomedJet0_nSub[1][3]->fill( _nsub_1_3(j0) );
+      _h_ungroomedJet0_nSub[1][4]->fill( _nsub_1_4(j0) );
+      _h_ungroomedJet0_nSub[2][1]->fill( _nsub_2_1(j0) );
+      _h_ungroomedJet0_nSub[2][2]->fill( _nsub_2_2(j0) );
+      _h_ungroomedJet0_nSub[2][3]->fill( _nsub_2_3(j0) );
+      _h_ungroomedJet0_nSub[2][4]->fill( _nsub_2_4(j0) );
+      _h_ungroomedJet0_nSub21->fill( _nsub21(j0) );
+      _h_ungroomedJet0_nSub32->fill( _nsub32(j0) );
+
+      _h_ungroomedJet1_nSub[0][1]->fill( _nsub_0p5_1(j1) );
+      _h_ungroomedJet1_nSub[0][2]->fill( _nsub_0p5_2(j1) );
+      _h_ungroomedJet1_nSub[0][3]->fill( _nsub_0p5_3(j1) );
+      _h_ungroomedJet1_nSub[0][4]->fill( _nsub_0p5_4(j1) );
+      _h_ungroomedJet1_nSub[1][1]->fill( _nsub_1_1(j1) );
+      _h_ungroomedJet1_nSub[1][2]->fill( _nsub_1_2(j1) );
+      _h_ungroomedJet1_nSub[1][3]->fill( _nsub_1_3(j1) );
+      _h_ungroomedJet1_nSub[1][4]->fill( _nsub_1_4(j1) );
+      _h_ungroomedJet1_nSub[2][1]->fill( _nsub_2_1(j1) );
+      _h_ungroomedJet1_nSub[2][2]->fill( _nsub_2_2(j1) );
+      _h_ungroomedJet1_nSub[2][3]->fill( _nsub_2_3(j1) );
+      _h_ungroomedJet1_nSub[2][4]->fill( _nsub_2_4(j1) );
+      _h_ungroomedJet1_nSub21->fill( _nsub21(j1) );
+      _h_ungroomedJet1_nSub32->fill( _nsub32(j1) );
     }
 
 

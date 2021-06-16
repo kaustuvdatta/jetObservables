@@ -1,7 +1,7 @@
 # Auto generated configuration file
-# using: 
-# Revision: 1.19 
-# Source: /local/reps/CMSSW/CMSSW/Configuration/Applications/python/ConfigBuilder.py,v 
+# using:
+# Revision: 1.19
+# Source: /local/reps/CMSSW/CMSSW/Configuration/Applications/python/ConfigBuilder.py,v
 # with command line options: Configuration/GenProduction/python/ThirteenTeV/QCD_Pt-15To7000_TuneCUETP8M1_Flat_13TeV-pythia8_cff.py -s GEN --datatier=GEN-SIM --conditions auto:mc --eventcontent RAWSIM --no_exec -n 10000 --python_filename=RIVET_QCD_Pt-15To7000_TuneCUETP8M1_Flat_13TeV-pythia8_cff.py --customise=Configuration/GenProduction/rivet_customize.py
 import FWCore.ParameterSet.Config as cms
 
@@ -24,7 +24,7 @@ process.load('Configuration.StandardSequences.EndOfProcess_cff')
 process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
 
 process.maxEvents = cms.untracked.PSet(
-    input = cms.untracked.int32(10000)
+    input = cms.untracked.int32(1000)
 )
 
 # Input source
@@ -34,7 +34,7 @@ process.options = cms.untracked.PSet(
 
 )
 
-process.MessageLogger.cerr.FwkReport.reportEvery = 100  
+process.MessageLogger.cerr.FwkReport.reportEvery = 100
 
 # Production Info
 process.configurationMetadata = cms.untracked.PSet(
@@ -71,34 +71,34 @@ process.GlobalTag = GlobalTag(process.GlobalTag, 'auto:mc', '')
 process.generator = cms.EDFilter("Pythia8GeneratorFilter",
     PythiaParameters = cms.PSet(
         parameterSets = cms.vstring(
-            'pythia8CommonSettings', 
-            'pythia8CUEP8M1Settings', 
+            'pythia8CommonSettings',
+            'pythia8CUEP8M1Settings',
             'processParameters'
         ),
         processParameters = cms.vstring(
-            'HardQCD:all = on', 
-            'PhaseSpace:pTHatMin = 15', 
-            'PhaseSpace:pTHatMax = 7000', 
-            'PhaseSpace:bias2Selection = on', 
-            'PhaseSpace:bias2SelectionPow = 4.5', 
+            'HardQCD:all = on',
+            'PhaseSpace:pTHatMin = 15',
+            'PhaseSpace:pTHatMax = 7000',
+            'PhaseSpace:bias2Selection = on',
+            'PhaseSpace:bias2SelectionPow = 4.5',
             'PhaseSpace:bias2SelectionRef = 15.'
         ),
         pythia8CUEP8M1Settings = cms.vstring(
-            'Tune:pp 14', 
-            'Tune:ee 7', 
-            'MultipartonInteractions:pT0Ref=2.4024', 
-            'MultipartonInteractions:ecmPow=0.25208', 
+            'Tune:pp 14',
+            'Tune:ee 7',
+            'MultipartonInteractions:pT0Ref=2.4024',
+            'MultipartonInteractions:ecmPow=0.25208',
             'MultipartonInteractions:expPow=1.6'
         ),
         pythia8CommonSettings = cms.vstring(
-            'Tune:preferLHAPDF = 2', 
-            'Main:timesAllowErrors = 10000', 
-            'Check:epTolErr = 0.01', 
-            'Beams:setProductionScalesFromLHEF = off', 
-            'SLHA:keepSM = on', 
-            'SLHA:minMassSM = 1000.', 
-            'ParticleDecays:limitTau0 = on', 
-            'ParticleDecays:tau0Max = 10', 
+            'Tune:preferLHAPDF = 2',
+            'Main:timesAllowErrors = 10000',
+            'Check:epTolErr = 0.01',
+            'Beams:setProductionScalesFromLHEF = off',
+            'SLHA:keepSM = on',
+            'SLHA:minMassSM = 1000.',
+            'ParticleDecays:limitTau0 = on',
+            'ParticleDecays:tau0Max = 10',
             'ParticleDecays:allowPhotonRadiation = on'
         )
     ),
@@ -123,12 +123,12 @@ from PhysicsTools.PatAlgos.tools.helpers import associatePatAlgosToolsTask
 associatePatAlgosToolsTask(process)
 # filter all path with the production filter sequence
 for path in process.paths:
-	getattr(process,path)._seq = process.generator * getattr(process,path)._seq 
+	getattr(process,path)._seq = process.generator * getattr(process,path)._seq
 
 # customisation of the process.
 
 # Automatic addition of the customisation function from Configuration.GenProduction.rivet_customize
-from Configuration.GenProduction.rivet_customize import customise 
+from Configuration.GenProduction.rivet_customize import customise
 
 #call to customisation function customise imported from Configuration.GenProduction.rivet_customize
 process = customise(process)
@@ -136,8 +136,8 @@ process = customise(process)
 process.rivetAnalyzer.CrossSection = cms.double(1.991e+09)
 process.rivetAnalyzer.UseExternalWeight = cms.bool(True)  # for weighted events
 
-process.rivetAnalyzer.AnalysisNames = cms.vstring('CMS_2018_PAS_SMP_18_QGX')
-process.rivetAnalyzer.OutputFile = cms.string('qgfile.yoda') 
+process.rivetAnalyzer.AnalysisNames = cms.vstring('CMS_2021_PAS_SMP_21_XXX')
+process.rivetAnalyzer.OutputFile = cms.string('qgfile.yoda')
 
 # End of customisation functions
 

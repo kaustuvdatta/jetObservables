@@ -15,8 +15,9 @@ cd Rivet
 git remote add cms-gen ssh://git@gitlab.cern.ch:7999/cms-gen/Rivet.git
 git pull cms-gen master
 git push origin master # for those of you who forked long time ago ;)# set some paths for Rivet and LaTeX
-source rivetSetup.sh
+source Rivet/rivetSetup.sh
 scram b -j8
+wget https://raw.githubusercontent.com/cms-sw/genproductions/22cdc0aba20c34087929cef168da715dad25581a/python/rivet_customize.py  -P Configuration/GenProduction/python/
 git clone git@github.com:alefisico/jetObservables.git -b Rivet Analysis/jetObservables
 source Analysis/jetObservables/copyFiles.sh
 ```

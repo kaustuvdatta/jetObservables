@@ -9,5 +9,5 @@ cd $CMSSW_BASE/src/
 scram b -j 8
 cmsenv
 cd ${tmpDir}
-source $CMSSW_BASE/src/Rivet/rivetSetup.sh
+#source $CMSSW_BASE/src/Rivet/rivetSetup.sh
 
