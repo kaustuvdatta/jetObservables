@@ -1,12 +1,13 @@
 Name: CMS_2021_PAS_SMP_21_XXX
-Year: <Insert year of publication>
+Year: 2021
 Summary: <A one-line informative CMS_2021_PAS_SMP_21_XXX headline>
-Experiment: <Insert the experiment name>
-Collider: <Insert the collider name>
+Experiment: CMS 
+Collider: LHC
 InspireID: <Insert the Inspire ID>
 Status: UNVALIDATED NOTREENTRY NOHEPDATA SINGLEWEIGHT UNPHYSICAL
 Authors:
- - Your Name <your@email.address>
+ - Kaustuv Datta <kaustuv.datta@cern.ch>
+ - Alejandro Gomez Espinosa <alejandro.gomez@cern.ch>
 References:
  - 'Example: Eur.Phys.J. C76 (2016) no.7, 392'
  - 'Example: DOI:10.1140/epjc/s10052-016-4184-8'
@@ -16,9 +17,7 @@ References:
 #Energies: [[6500,6500]]
 #Luminosity_fb: 139.0
 Description:
-  'A brief description of what is measured and what it is useful for
-  in terms of MC testing, tuning, reinterpretation, etc. Use LaTeX
-  for maths, e.g. $\pT > 50\;\GeV$.'
+  'Measurement of nsubjetiness basis in 100 fb-1 of data collected by CMS Experiment.'
 ValidationInfo:
   'A description of the process used to validate the Rivet code against
   the original experimental analysis. Cut-flow tables and similar information
@@ -29,5 +28,5 @@ Keywords: []
 BibKey: 
 BibTeX: ''
 ToDo:
- - Implement the analysis, test it, remove this ToDo, and mark as VALIDATED :-)
+ - Update with final plots
 

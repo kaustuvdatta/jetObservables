@@ -137,7 +137,7 @@ process.rivetAnalyzer.CrossSection = cms.double(1.991e+09)
 process.rivetAnalyzer.UseExternalWeight = cms.bool(True)  # for weighted events
 
 process.rivetAnalyzer.AnalysisNames = cms.vstring('CMS_2021_PAS_SMP_21_XXX')
-process.rivetAnalyzer.OutputFile = cms.string('qgfile.yoda')
+process.rivetAnalyzer.OutputFile = cms.string('nSubjettinessfile.yoda')
 
 # End of customisation functions
 
