@@ -36,7 +36,7 @@ def runTUnfold( dataFile, sigFiles, bkgFiles, variables, sel, sysUncert ):
         altSignalLabel = ( 'QCD_Pt_3200toInf' if args.QCDHT else 'QCD_HT2000toInf' ) if sel.startswith('_dijet') else next(iter(sigFiles))
 
         if args.year.startswith('all'):
-            print 'resp'+ivar+'_nom'+sel+signalLabel+'_Rebin'
+            print ('resp'+ivar+'_nom'+sel+signalLabel+'_Rebin')
             signalHistos = {
                     signalLabel+'_resp'+ivar+'_nom'+sel : dataFile[ivar+'_2017'].Get(signalLabel+'_resp'+ivar+'_nom'+sel),
                     signalLabel+'_reco'+ivar+'_nom'+sel : dataFile[ivar+'_2017'].Get(signalLabel+'_reco'+ivar+'_nom'+sel),
@@ -88,10 +88,10 @@ def runTUnfold( dataFile, sigFiles, bkgFiles, variables, sel, sysUncert ):
                 dataHistos = loadHistograms( dataFile, ivar, sel, isMC= False )
             bkgHistos = loadHistograms( bkgFiles, ivar, sel, sysUnc=[]) if args.process.startswith('data') else {}
 
-            print '|------> Unfolding '+ivar
+            print ('|------> Unfolding '+ivar)
 
             ######## Cross check: plotting data vs all MC Scaled
-            print '|------> Cross check: plotting data vs all MC'
+            print ('|------> Cross check: plotting data vs all MC')
             allHistos = {}
             allHistos[ 'allBkgHisto' ] = dataHistos['data_reco'+ivar+'_nom'+sel].Clone()
             allHistos[ 'allBkgHisto' ].Reset()
@@ -114,7 +114,7 @@ def runTUnfold( dataFile, sigFiles, bkgFiles, variables, sel, sysUncert ):
                 allHistos[ 'allBkgHistoGenBin' ].Scale( scaleFactorGenBin )
                 for ihsig in signalHistos:
                     if ihsig.endswith(sel):
-                        print ihsig
+                        print (ihsig)
                         signalHistos[ihsig].Scale( scaleFactor )
                     if ihsig.endswith('genBin'): signalHistos[ihsig].Scale( scaleFactorGenBin )
                     #if 'resp' in ihsig: signalHistos[ihsig].Scale( 1/signalHistos[ihsig].Integral() )
@@ -157,7 +157,7 @@ def runTUnfold( dataFile, sigFiles, bkgFiles, variables, sel, sysUncert ):
             plotSimpleComparison( allHistos[ 'dataMinusBkgs' ], 'data-Bkgs', tmpHisto, 'signal true reco', ivar+'_from'+('Data' if args.process.startswith('data') else 'MC')+'_'+signalLabel+"_TestDataMinusBkgs", rebinX=1, version=sel+'_'+args.version, outputDir=outputDir )
 
         ######## Cross check: plotting response matrix
-        print '|------> Cross check: plotting response matrix for signal'
+        print ('|------> Cross check: plotting response matrix for signal')
         ROOT.gStyle.SetPadRightMargin(0.15)
         #ROOT.gStyle.SetPalette(ROOT.kGistEarth)
         #ROOT.TColor.InvertPalette()
@@ -174,7 +174,7 @@ def runTUnfold( dataFile, sigFiles, bkgFiles, variables, sel, sysUncert ):
         can2D.SaveAs(outputDir+ivar+'_from'+('Data' if args.process.startswith('data') else 'MC')+'_'+signalLabel+sel+'_responseMatrix'+args.version+'.'+args.ext)
 
         ######## TUnfold part
-        print '|------> TUnfolding starts:'
+        print ('|------> TUnfolding starts:')
 
         ##### Defining options for TUnfold
         tunfolder = ROOT.TUnfoldDensity(
@@ -186,7 +186,7 @@ def runTUnfold( dataFile, sigFiles, bkgFiles, variables, sel, sysUncert ):
                                             )
 
         ##### Defining input (data recoJet )
-        print '|------> TUnfolding adding input:'
+        print ('|------> TUnfolding adding input:')
         #tunfolder.SetInput( dataHistos[ 'data_reco'+ivar+'_nom'+sel ].Clone() )
         tunfolder.SetInput( allHistos[ 'dataMinusBkgs' ] )
 
@@ -199,7 +199,7 @@ def runTUnfold( dataFile, sigFiles, bkgFiles, variables, sel, sysUncert ):
 
         ###### Adding SYS unc
         if len(sysUncert)>0 :
-            print '|------> TUnfolding adding uncert:'
+            print ('|------> TUnfolding adding uncert:')
             for sys in sysUncert:
                 plotSysComparison( signalHistos[signalLabel+'_reco'+ivar+'_nom'+sel],
                                     signalHistos[signalLabel+'_reco'+ivar+sys+'Up'+sel],
@@ -212,7 +212,7 @@ def runTUnfold( dataFile, sigFiles, bkgFiles, variables, sel, sysUncert ):
                                     outputDir=outputDir
                                     )
                 for upDown in [ 'Up', 'Down' ]:
-                    print sys+upDown
+                    print (sys+upDown)
                     tunfolder.AddSysError(
                                         signalHistos[signalLabel+'_resp'+ivar+sys+upDown+sel],
                                         sys+upDown,
@@ -236,7 +236,7 @@ def runTUnfold( dataFile, sigFiles, bkgFiles, variables, sel, sysUncert ):
             can2DNorm.SaveAs(outputDir+ivar+'_from'+('Data' if args.process.startswith('data') else 'MC')+'_'+altSignalLabel+sel+'Normalized_alt_responseMatrix'+args.version+'.'+args.ext)
 
         ###### Running the unfolding
-        print '|------> TUnfolding doUnfold:'
+        print ('|------> TUnfolding doUnfold:')
         tunfolder.DoUnfold(0)
 
         ###### Regularization
@@ -257,7 +257,7 @@ def runTUnfold( dataFile, sigFiles, bkgFiles, variables, sel, sysUncert ):
         allHistos [ 'foldHisto'+ivar ] = tunfolder.GetFoldedOutput("folded"+ivar).Clone()
 
         #### Get various covariances
-        print '|------> TUnfolding covariances'
+        print ('|------> TUnfolding covariances')
         allHistos[ 'cov'+ivar ] = tunfolder.GetEmatrixTotal("cov"+ivar, "Covariance Matrix")
         allHistos[ 'cov_uncorr_'+ivar ] = tunfolder.GetEmatrixSysUncorr("cov_uncorr"+ivar, "Covariance Matrix from Uncorrelated Uncertainties")
         allHistos[ 'cov_uncorr_data_'+ivar ] = tunfolder.GetEmatrixInput("cov_uncorr_data"+ivar, "Covariance Matrix from Stat Uncertainties of Input Data")
@@ -273,7 +273,7 @@ def runTUnfold( dataFile, sigFiles, bkgFiles, variables, sel, sysUncert ):
         ##### Get systematic shifts of output
         uncerUnfoldHisto = {}
         if len(sysUncert)>0 :
-            print '|------> TUnfolding uncertainties:'
+            print ('|------> TUnfolding uncertainties:')
             allHistos[ 'unfoldHistoSysUnc'+ivar ] = allHistos[ 'unfoldHisto'+ivar ].Clone("unfoldHistoSysUnc")          # Syst uncertainty
             allHistos[ 'unfoldHistoSysUnc'+ivar ].Reset()
             #allHistos[ 'unfoldHistoSysUnc'+ivar ].SetLineStyle(2)
@@ -282,7 +282,7 @@ def runTUnfold( dataFile, sigFiles, bkgFiles, variables, sel, sysUncert ):
             allHistos[ 'unfoldHistoSysUnc'+ivar ].Add( uncerUnfoldHisto[ivar+'_modelUncTotal'].Clone() )
             for sys in sysUncert:
                 for upDown in [ 'Up', 'Down' ]:
-                    print sys+upDown
+                    print (sys+upDown)
                     uncerUnfoldHisto[ivar+sys+upDown] = tunfolder.GetDeltaSysSource(sys+upDown, "unfoldHisto_"+ivar+sys+upDown+"shift", "-1#sigma")
                     try: uncerUnfoldHisto[ivar+sys+upDown].SetLineStyle(1)
                     except ReferenceError: uncerUnfoldHisto.pop( ivar+sys+upDown, None )
@@ -301,7 +301,7 @@ def runTUnfold( dataFile, sigFiles, bkgFiles, variables, sel, sysUncert ):
                 allHistos[ 'unfoldHistoSysUnc'+ivar ].Add( uncerUnfoldHisto[ivar+sys+'Total'] )
 
         ###### Plot unfolding results
-        print '|------> Drawing unfold plot:'
+        print ('|------> Drawing unfold plot:')
         drawUnfold( ivar, allHistos[ 'dataMinusBkgsGenBin' ].Clone(),
                         signalHistos[ signalLabel+'_accepgen'+ivar+sel ].Clone(),
                         allHistos[ 'unfoldHisto'+ivar ].Clone(),
@@ -315,7 +315,7 @@ def runTUnfold( dataFile, sigFiles, bkgFiles, variables, sel, sysUncert ):
                         )
 
         ######### Plotting Uncertainties
-        print '|------> Drawing unfold uncertainty plot:'
+        print ('|------> Drawing unfold uncertainty plot:')
         drawUncertainties(ivar, allHistos[ 'unfoldHistoTotUnc'+ivar ],
                         ( allHistos[ 'unfoldHistoSysUnc'+ivar ].Clone() if len(sysUncert)>0  else "" ),
                         uncerUnfoldHisto,
@@ -332,7 +332,7 @@ def runTUnfold( dataFile, sigFiles, bkgFiles, variables, sel, sysUncert ):
                 ihis.Write()
 
         outputRootName = outputDir+'/outputHistograms_'+signalLabel+'.root'
-        print '|------> Saving histograms in rootfile: ', outputRootName
+        print ('|------> Saving histograms in rootfile: ', outputRootName)
         outputRoot = ROOT.TFile.Open( outputRootName, 'recreate' )
         renamingHistos( signalHistos )
         renamingHistos( altSignalHistos )
@@ -355,7 +355,7 @@ def loadHistograms( samples, var, sel, sysUnc=[], isMC=True, addGenInfo=True, re
         if isMC and addGenInfo: tmpList = tmpList + [ 'gen'+var+sel, 'missgen'+var+sel, 'accepgen'+var+sel, 'truereco'+var+'_nom'+sel, 'fakereco'+var+'_nom'+sel ] + [ 'resp'+var+syst+sel for syst in SYSUNC ]
         if respOnly: tmpList = [ 'resp'+var+syst+sel for syst in SYSUNC ]
         for ih in tmpList:
-            print 'Processing '+isam+' '+ih
+            print ('Processing '+isam+' '+ih)
             if isMC:
                 allHistos[isam+'_'+ih] = samples[isam][0].Get( 'jetObservables/'+ih )
                 tmpIsam = 'TT' if isam.startswith('data') else isam
@@ -595,7 +595,7 @@ def drawUncertainties( ivar, unfoldHistoTotUnc, unfoldHistoSysUnc, uncerUnfoldHi
         dummy=2
         for k in uncerUnfoldHisto:
             if k.endswith('Total'):
-                print k
+                print (k)
                 legend.AddEntry( uncerUnfoldHisto[k], k.split('_')[2].split('Total')[0], 'l' )
                 uncerUnfoldHisto[k].SetLineColor(dummy)
                 uncerUnfoldHisto[k].SetLineWidth(2)

@@ -157,7 +157,7 @@ def plotSysComparison( nomHisto, upHisto, downHisto, outputName, syst, labelX=''
     """docstring for plot"""
 
     outputFileName = outputName+'_'+syst+'SystPlots_'+version+'.'+ext
-    print 'Processing.......', outputFileName
+    print ('Processing.......', outputFileName)
 
     binWidth = nomHisto.GetBinWidth(1)
 
