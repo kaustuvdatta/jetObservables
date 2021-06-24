@@ -504,7 +504,7 @@ dictSamples = {
     },
     
     
-        ####### Wtop (xsecs not available on xsdb and/or not matching between xsdb and xseccalc are cross-checked with an approved analysis a la CMS AN-2018/129 )
+    ####### Wtop (xsecs not available on xsdb and/or not matching between xsdb and xseccalc are cross-checked with an approved analysis a la CMS AN-2018/129 )
     'SingleMuon' : {
         '2017' :  {
             'miniAOD' : {
@@ -515,7 +515,7 @@ dictSamples = {
                 'F' : '/SingleMuon/Run2017F-UL2017_MiniAODv2-v1/MINIAOD',
                 },
             'nanoAOD' : {
-                'B': '/SingleMuon/kadatta-Run2017B-UL2017_MiniAODv2-v1_PFNanoAOD-aeb179a6519d272d4336b9926381baad/USER',#'/SingleMuon/algomez-Run2017B-UL2017_MiniAODv2-v1_PFNanoAOD-aeb179a6519d272d4336b9926381baad/USER',
+                'B': '/SingleMuon/algomez-Run2017B-UL2017_MiniAODv2-v1_PFNanoAOD-aeb179a6519d272d4336b9926381baad/USER',
                 'C': '/SingleMuon/kadatta-Run2017C-UL2017_MiniAODv2-v1_PFNanoAOD-aeb179a6519d272d4336b9926381baad/USER',
                 'D': '/SingleMuon/kadatta-Run2017D-UL2017_MiniAODv2-v1_PFNanoAOD-aeb179a6519d272d4336b9926381baad/USER',
                 'E': '/SingleMuon/kadatta-Run2017E-UL2017_MiniAODv2-v1_PFNanoAOD-aeb179a6519d272d4336b9926381baad/USER',
@@ -560,7 +560,7 @@ dictSamples = {
             'nevents' : 1.,
             'nGenWeights' : 297902725633.38257,
             },
-        'XS' : 722.8, #some notes say 831.76?
+        'XS' : 7.591e+02, #some notes say 722.8 and a few say 831.76?
         'label' : 't#bar{t} amcatnloFXFX' ,
         'color': ROOT.kBlue
     },
@@ -626,7 +626,7 @@ dictSamples = {
             'nevents' : 1.,
             'nGenWeights' : 10484986870276.357422,
             },
-        'XS' : 5.368e+04,
+        'XS' : 5.371e+04,
         'label' : 'WJets' ,
         'color': ROOT.kOrange-2
     },
@@ -752,7 +752,7 @@ dictSamples = {
             'nevents' : 1.,
             'nGenWeights' : 7959266.140092,
             },
-        'XS' : 7.577e+01,
+        'XS' : 7.576e+01,
         'label' : 'Diboson' ,
         'color': ROOT.kPink-1
     },
@@ -773,7 +773,7 @@ dictSamples = {
             'nevents' : 1.,
             'nGenWeights' : 2000000.000000,
             },
-        'XS' : 2.748e+00,
+        'XS' : 1.210e+01,#from xsec py script, from papers/xsdb->2.748e+00,
         'label' : 'Diboson' ,
         'color': ROOT.kPink-1
     },
@@ -794,7 +794,7 @@ dictSamples = {
             'nevents' : 1.,
             'nGenWeights' : 3976000.000000,
             },
-        'XS' : 1.21e+00,
+        'XS' : 2.751e+01, #from xsec calc, and from papers->1.21e+00,
         'label' : 'Dibosons' ,
         'color': ROOT.kPink-1
     },
@@ -815,7 +815,7 @@ dictSamples = {
             'nevents' : 1.,
             'nGenWeights' : 0.,
             },
-        'XS' : 7055.0,
+        'XS' : 7.014e+03,
         'label' : 'QCD' ,
         'color': ROOT.kRed-7
     },
@@ -836,7 +836,7 @@ dictSamples = {
             'nevents' : 1.,
             'nGenWeights' : 0.,
             },
-        'XS' : 619.3,
+        'XS' : 6.205e+02,
         'label' : 'QCD' ,
         'color': ROOT.kRed-7
     },
@@ -857,7 +857,7 @@ dictSamples = {
             'nevents' : 1.,
             'nGenWeights' : 0.,
             },
-        'XS' : 59.24,
+        'XS' : 5.910e+01,
         'label' : 'QCD' ,
         'color': ROOT.kRed-7
     },
@@ -878,7 +878,7 @@ dictSamples = {
             'nevents' : 1.,
             'nGenWeights' : 0.,
             },
-        'XS' : 18.21,
+        'XS' : 1.825e+01,
         'label' : 'QCD' ,
         'color': ROOT.kRed-7
     },
@@ -899,7 +899,7 @@ dictSamples = {
             'nevents' : 1.,
             'nGenWeights' : 0.0,
             },
-        'XS' : 7055.0,
+        'XS' : 3.287e+00,#fromexsec calc, from xsdb:7055.0,
         'label' : 'QCD' ,
         'color': ROOT.kRed-7
     },
@@ -920,7 +920,7 @@ dictSamples = {
             'nevents' : 1.,
             'nGenWeights' : 0.00,
             },
-        'XS' : 1.078,
+        'XS' : 1.087e+00,
         'label' : 'QCD' ,
         'color': ROOT.kRed-7
     },
