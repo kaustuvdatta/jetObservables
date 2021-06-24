@@ -84,7 +84,7 @@ def submitJobs( job, inputFiles, unitJobs ):
 
 
     config.JobType.scriptExe = 'runPostProc'+options.datasets+'.sh'
-    config.JobType.inputFiles = [ options.pythonFile ,'haddnano.py', 'keep_and_drop.txt']
+    config.JobType.inputFiles = [ options.pythonFile ,'haddnano.py', 'keep_and_drop_dijet.txt', 'keep_and_drop.txt']
     config.JobType.sendPythonFolder  = True
 
     if job.startswith(('UL17_Single', 'UL17_JetHT', 'JetHT', 'SingleMuon')):
@@ -93,7 +93,7 @@ def submitJobs( job, inputFiles, unitJobs ):
     #config.Data.userInputFiles = inputFiles
     config.Data.inputDataset = inputFiles
 
-    config.Data.splitting = 'EventAwareLumiBased' if job.startswith('QCD_Pt') else 'FileBased'
+    #config.Data.splitting = 'EventAwareLumiBased' if job.startswith('QCD_Pt') else 'FileBased'
     #config.Data.splitting = 'Automatic'
     #config.Data.splitting = 'FileBased'
 
@@ -181,6 +181,7 @@ if __name__ == '__main__':
     processingSamples = {}
     for sam in dictSamples:
         if sam.startswith( options.datasets ) | options.datasets.startswith('all'):
+            if checkDict( sam, dictSamples )['selection'] != options.selection: continue
             if sam.startswith(('JetHT', 'SingleMuon')):
                 for iera in checkDict( sam, dictSamples )[options.year]['nanoAOD']:
                     processingSamples[ sam+'Run'+options.year+iera ] = [ checkDict( sam, dictSamples )[options.year]['nanoAOD'][iera], 1 ]

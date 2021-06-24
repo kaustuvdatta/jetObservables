@@ -93,7 +93,10 @@ else:
 
 cuts = PV + " && " + METFilters + " && " + Triggers
 
-systSources = [ '_jesTotal', '_jer', '_pu' ] if isMC else []
+systSources = ['_jesTotal', '_jer', '_puWeight'] if isMC else []   ######### NEEDS TO BE REVIEWED FOR WTOP
+if args.selection.startswith('dijet'):
+    systSources = [ '_jesTotal', '_jer', '_puWeight', '_isrWeight', '_fsrWeight', '_pdfWeight' ] if args.sample.startswith('QCD_HT') else []
+
 
 ### Lepton scale factors
 LeptonSF = {
@@ -130,11 +133,12 @@ if not args.selection.startswith('dijet'): modulesToRun.append( jetmetCorrector(
 if isMC:
     if args.year=='2018':
         modulesToRun.append( puAutoWeight_UL2018() )
-        print "###Running with btag SF calc.###"
-        if not args.selection.startswith('dijet'): modulesToRun.append( btagSF2018() )
-    if args.year=='2017':
-        print "###Running with btag SF calc.###"
         if not args.selection.startswith('dijet'):
+            print "###Running with btag SF calc.###"
+            modulesToRun.append( btagSF2018() )
+    if args.year=='2017':
+        if not args.selection.startswith('dijet'):
+            print "###Running with btag SF calc.###"
             modulesToRun.append( puAutoWeight_UL2017() )
             modulesToRun.append( btagSF2017() )
         else:
@@ -147,7 +151,7 @@ if isMC:
 # our module
 if args.selection.startswith('dijet'):
     from jetObservables.Skimmer.nSubProducer_dijetSel import nSubProd
-    modulesToRun.append( nSubProd( sysSource=systSources, leptonSF=LeptonSF[args.year], isMC=isMC, year=args.year ) )
+    modulesToRun.append( nSubProd( sysSource=systSources, isMC=isMC, year=args.year ) )
 else:
     from jetObservables.Skimmer.nSubProducer_WtopSel import nSubProd
     modulesToRun.append( nSubProd( sysSource=systSources, leptonSF=LeptonSF[args.year], isMC=isMC ) )
@@ -157,7 +161,7 @@ else:
 p1=PostProcessor(
         '.', (inputFiles() if not args.iFile else args.iFile.split(',')),
         cut          = cuts,
-        outputbranchsel   = "keep_and_drop.txt",
+        outputbranchsel   = "keep_and_drop_dijet.txt" if args.selection.startswith('dijet') else "keep_and_drop.txt",
         modules      = modulesToRun,
         provenance   = True,
         #jsonInput   = runsAndLumis(),
