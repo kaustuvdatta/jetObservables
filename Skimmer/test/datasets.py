@@ -3,7 +3,7 @@
 import ROOT
 
 dictSamples = {
-    
+    '''
     'JetHT' : {
         '2017' :  {
             'miniAOD' : {
@@ -502,7 +502,7 @@ dictSamples = {
         'label' : 'QCD MG5+Pythia8' ,
         'color': ROOT.kMagenta
     },
-    
+    '''
     
     ####### Wtop (xsecs not available on xsdb and/or not matching between xsdb and xseccalc are cross-checked with an approved analysis a la CMS AN-2018/129 )
     'SingleMuon' : {
@@ -600,7 +600,7 @@ dictSamples = {
             'miniAOD' : [ '/TTTo2L2Nu_TuneCP5_13TeV-powheg-pythia8/RunIISummer19UL18MiniAODv2-106X_upgrade2018_realistic_v16_L1v1-v1/MINIAODSIM' ],
             'nanoAOD' : [ '/TTTo2L2Nu_TuneCP5_13TeV-powheg-pythia8/kadatta-RunIISummer19UL18PFNanoAOD-106X_upgrade2018_realistic_v16_L1v1-v1-754f8ab81f6f0298c5fa7c45094d30e4/USER' ],
             'skimmer' : [ '/TTTo2L2Nu_TuneCP5_13TeV-powheg-pythia8/kadatta-RunIISummer19UL18PFNanoAOD-106X_upgrade2018_realistic_v16_L1v1-v1-754f8ab81f6f0298c5fa7c45094d30e4/USER' ],
-            'skimmerHisto' : '//TTTo2L2Nu_powheg_pythia8_2018UL.root',
+            'skimmerHisto' : 'TTTo2L2Nu_powheg_pythia8_2018UL.root',
             'nevents' : 1.,
             'nGenWeights' : 5063754431.9676,
             },
