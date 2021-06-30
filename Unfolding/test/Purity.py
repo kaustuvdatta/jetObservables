@@ -5,8 +5,9 @@
 import argparse, os, shutil, sys
 import ROOT
 from array import array
-import numpy as np
-from DrawHistogram import plotSimpleComparison
+from collections import OrderedDict
+from variables import nSubVariables
+from runTUnfold import loadHistograms
 sys.path.insert(0,'../python/')
 import CMS_lumi as CMS_lumi
 import tdrstyle as tdrstyle
@@ -21,79 +22,80 @@ ROOT.gStyle.SetOptStat(0)
 
 colorPallete = [ 0, 2, 4, 8, 12, 28, 30 ]
 
-def runPurity( bkgFiles, variables, sel ):
+def runPurity( name, bkgFiles, variables, sel ):
     """docstring for createDataCards"""
 
-    ### Getting input histos
-    signalHistos = loadHistograms( bkgFiles, variables, sel )
-    if args.selection.startswith('_dijet'):
-        tmpHistos = { k:v for (k,v) in signalHistos.items() if 'Inf' in k }
-        for ih in tmpHistos:
-            for jh in signalHistos:
-                if (jh.endswith('0'+ih.split('Inf')[1])) and not ('Inf' in jh ):
-                    tmpHistos[ih].Add( signalHistos[jh].Clone() )
-        signalHistos = tmpHistos
-
+    numBins = 0
+    numBinsList = [0]
+    dictHistos = OrderedDict()
     for ivar in variables:
-
+        if not name.endswith( ivar.split('_')[0] ): continue
+        ### Getting input histos
+        signalHistos = loadHistograms( bkgFiles, ivar, sel, sysUnc=[], lumi=1, year=args.year, process='MC', variables=variables )
         outputDir=args.outputFolder+'Plots/'+args.selection.split('_')[1]+'/Purity/'+args.year+'/'+ivar+'/'
         if not os.path.exists(outputDir): os.makedirs(outputDir)
 
-        dictGraph = {}
         legend=ROOT.TLegend(0.15,0.80,0.90,0.90)
         legend.SetFillStyle(0)
-        legend.SetTextSize(0.03)
-        legend.SetNColumns( len(variables[ivar][0]) )
-        multigraph = ROOT.TMultiGraph()
+        legend.SetTextSize(0.04)
+        legend.SetNColumns( 4 )
 
-        print ('|------> Computing purity '+ivar )
-        dummy=1
-        for ihisto in signalHistos:
-            if ivar in ihisto:
-                matrix = np.zeros((signalHistos[ihisto].GetNbinsX(),signalHistos[ihisto].GetNbinsY()))
-                binCenters = []
-                binWidths = []
-                for biny in range( 1, signalHistos[ihisto].GetNbinsY()+1 ):
-                    binCenters.append( signalHistos[ihisto].GetYaxis().GetBinCenter(biny) )
-                    binWidths.append( signalHistos[ihisto].GetYaxis().GetBinWidth(biny)/2. )
-                    for binx in range( 1, signalHistos[ihisto].GetNbinsX()+1 ):
-                        jbin = signalHistos[ihisto].GetBin(binx,biny)
-                        binCont = signalHistos[ihisto].GetBinContent(jbin)
-                        matrix[binx-1][biny-1] = binCont
-                recoBins = np.sum( matrix, axis=0 )
-                genBins = np.sum( matrix, axis=1 )
+        dictHistos[ 'acceptanceGraph_'+ivar ] = signalHistos[signalLabel+'_accepgen'+ivar+args.selection].Clone()
+        dictHistos[ 'acceptanceGraph_'+ivar ].SetLineWidth(2)
+        dictHistos[ 'acceptanceGraph_'+ivar ].SetLineColor(colorPallete[1])
+        dictHistos[ 'acceptanceGraph_'+ivar ].Divide(  signalHistos[signalLabel+'_gen'+ivar+args.selection] )
+        legend.AddEntry( dictHistos[ 'acceptanceGraph_'+ivar ], 'Acceptance', 'l' )
 
-                purity = np.nan_to_num( genBins/(recoBins+genBins) )         #### it is flipped to make it percentage
-                stability = np.nan_to_num( recoBins/(recoBins+genBins) )     #### it is flipped to make it percentage
+        dictHistos[ 'fakeGraph_'+ivar ] = signalHistos[signalLabel+'_fakereco'+ivar+'_nom'+args.selection+'_genBin'].Clone()
+        dictHistos[ 'fakeGraph_'+ivar ].SetLineWidth(2)
+        dictHistos[ 'fakeGraph_'+ivar ].SetLineColor(colorPallete[2])
+        dictHistos[ 'fakeGraph_'+ivar ].Divide(  signalHistos[signalLabel+'_reco'+ivar+'_nom'+args.selection+'_genBin'] )
+        legend.AddEntry( dictHistos[ 'fakeGraph_'+ivar ], 'Fakerate', 'l' )
 
+        #### create diagonal
+        tmpHisto = signalHistos[signalLabel+'_resp'+ivar+'_nom'+sel].Clone()
+        tmpHisto.Rebin2D( 1, 2 )
+        dictHistos[ 'purityGraph_'+ivar ] = signalHistos[signalLabel+'_reco'+ivar+'_nom'+args.selection+'_genBin'].Clone()
+        dictHistos[ 'purityGraph_'+ivar ].Reset()
+        dictHistos[ 'stabilityGraph_'+ivar ] = dictHistos[ 'purityGraph_'+ivar ].Clone()
+        for ibin in range( 1, tmpHisto.GetNbinsX()+1 ):
+            diagReco = tmpHisto.GetBinContent( tmpHisto.GetBin(ibin-1, ibin) ) + tmpHisto.GetBinContent( tmpHisto.GetBin(ibin, ibin) ) + tmpHisto.GetBinContent( tmpHisto.GetBin(ibin+1, ibin) )
+            dictHistos[ 'purityGraph_'+ivar ].SetBinContent( ibin, diagReco )
+            diagGen = tmpHisto.GetBinContent( tmpHisto.GetBin(ibin, ibin-1) ) + tmpHisto.GetBinContent( tmpHisto.GetBin(ibin, ibin) ) + tmpHisto.GetBinContent( tmpHisto.GetBin(ibin, ibin+1) )
+            dictHistos[ 'stabilityGraph_'+ivar ].SetBinContent( ibin, diagGen )
 
-                dictGraph[ 'purGraph_'+ihisto ] = ROOT.TGraphErrors( signalHistos[ihisto].GetNbinsX(), array( 'd', binCenters ), array( 'd', purity ), array( 'd', binWidths ), array( 'd', [0]*len(binWidths) ) )
-                dictGraph[ 'purGraph_'+ihisto ].SetLineWidth(2)
-                dictGraph[ 'purGraph_'+ihisto ].SetLineColor(colorPallete[dummy])
-                legend.AddEntry( dictGraph[ 'purGraph_'+ihisto ], 'Purity Bin '+str(signalHistos[ihisto].GetXaxis().GetBinWidth(1)), 'l' )
+        dictHistos[ 'purityGraph_'+ivar ].SetLineWidth(2)
+        dictHistos[ 'purityGraph_'+ivar ].SetLineColor(colorPallete[3])
+        dictHistos[ 'purityGraph_'+ivar ].Divide(  signalHistos[signalLabel+'_reco'+ivar+'_nom'+args.selection+'_genBin'] )
+        legend.AddEntry( dictHistos[ 'purityGraph_'+ivar ], 'Purity', 'l' )
 
-                dictGraph[ 'staGraph_'+ihisto ] = ROOT.TGraphErrors( signalHistos[ihisto].GetNbinsX(), array( 'd', binCenters ), array( 'd', stability ), array( 'd', binWidths ), array( 'd', [0]*len(binWidths) ) )
-                dictGraph[ 'staGraph_'+ihisto ].SetLineWidth(2)
-                dictGraph[ 'staGraph_'+ihisto ].SetLineStyle(2)
-                dictGraph[ 'staGraph_'+ihisto ].SetLineColor(colorPallete[dummy])
-                legend.AddEntry( dictGraph[ 'staGraph_'+ihisto ], 'Stability Bin '+str(signalHistos[ihisto].GetXaxis().GetBinWidth(1)), 'l' )
+        dictHistos[ 'stabilityGraph_'+ivar ].SetLineWidth(2)
+        dictHistos[ 'stabilityGraph_'+ivar ].SetLineColor(colorPallete[4])
+        dictHistos[ 'stabilityGraph_'+ivar ].Divide(  signalHistos[signalLabel+'_gen'+ivar+args.selection] )
+        legend.AddEntry( dictHistos[ 'stabilityGraph_'+ivar ], 'Stability', 'l' )
 
-                dummy=dummy+1
+        ##### removing tau21 and tau32 from total plots
+        if not ivar.endswith(('21', '32')):
+            numBins = numBins + dictHistos[ 'purityGraph_'+ivar ].GetNbinsX()
+            numBinsList.append(numBins)
 
-        for i in dictGraph: multigraph.Add( dictGraph[i]  )
+        multigraph = ROOT.THStack()
+        for i in dictHistos:
+            if i.endswith(ivar): multigraph.Add( dictHistos[i]  )
 
         ###### Plot unfolding results
+        ROOT.gStyle.SetPadRightMargin(0.05)
         canvas = ROOT.TCanvas('canvas', 'canvas', 750, 500)
 
-        multigraph.Draw("AP")
-        multigraph.GetXaxis().SetTitle( variables[ivar][1] )
+        multigraph.Draw("hist nostack")
+        multigraph.GetXaxis().SetTitle( variables[ivar]['label'] )
         multigraph.GetYaxis().SetTitle( 'Percentage' )
-        multigraph.GetYaxis().SetRangeUser( 0, 1.3 )
+        multigraph.SetMaximum( 1.1 )
         multigraph.GetYaxis().SetTitleOffset(0.8)
 
         legend.Draw()
         CMS_lumi.extraText = "Simulation Preliminary"
-        CMS_lumi.lumi_13TeV = "13 TeV, "+args.year
+        CMS_lumi.lumi_13TeV = "13 TeV, "+ ( '2017+2018' if args.year.startswith('all') else args.year )
         CMS_lumi.relPosX = 0.11
         CMS_lumi.CMS_lumi(canvas, 4, 0)
 
@@ -101,28 +103,101 @@ def runPurity( bkgFiles, variables, sel ):
         textBox.SetNDC()
         textBox.SetTextSize(0.04)
         textBox.SetTextFont(62) ### 62 is bold, 42 is normal
-        textBox.DrawLatex(0.65, 0.75, sel.split('Sel')[0].split('_')[1]+' Selection' )
+        #textBox.DrawLatex(0.65, 0.75, sel.split('Sel')[0].split('_')[1]+' Selection' )
 
-        canvas.SaveAs(outputDir+ivar+sel+'_Purity_'+args.version+'.'+args.ext)
-
-##########################################################################
-def loadHistograms( samples, variables, sel ):
-    """docstring for loadHistograms"""
-
-    allHistos = {}
-    for var in variables:
-        ih = 'resp'+var+'_nom'+sel
-        for isam in samples:
-            tmpHisto = samples[isam][0].Get( 'jetObservables/'+ih )
-            tmpHisto.Scale( samples[isam][1]['XS'] / samples[isam][1][args.year]['nGenWeights'] )
-            for ibin in variables[var][0]:
-                allHistos[isam+'_'+ih+str(ibin)] = tmpHisto.Clone()
-                allHistos[isam+'_'+ih+str(ibin)].SetName(tmpHisto.GetName()+isam+'_Rebin_'+str(ibin))
-                allHistos[isam+'_'+ih+str(ibin)].Rebin2D( ibin, ibin )
-
-    return allHistos
+        canvas.SaveAs(outputDir+ivar+'_'+signalLabel+sel+'_Purity_'+args.version+'.'+args.ext)
+        if args.ext.startswith('pdf'):
+            canvas.SaveAs(outputDir+ivar+'_'+signalLabel+sel+'_Purity_'+args.version+'.png')
 
 
+        ########## Plot response matrix
+        print '|------> Cross check: plotting response matrix for signal'
+        ROOT.gStyle.SetPadRightMargin(0.15)
+        #ROOT.gStyle.SetPalette(ROOT.kGistEarth)
+        #ROOT.TColor.InvertPalette()
+        can2D = ROOT.TCanvas(ivar+'can2D', ivar+'can2D', 750, 500 )
+        signalHistos[signalLabel+'_resp'+ivar+'_nom'+sel].GetXaxis().SetTitle('Accepted Gen '+variables[ivar]['label'])
+        signalHistos[signalLabel+'_resp'+ivar+'_nom'+sel].GetYaxis().SetTitle('True Reco '+variables[ivar]['label'])
+        signalHistos[signalLabel+'_resp'+ivar+'_nom'+sel].GetYaxis().SetTitleOffset( 0.8 )
+        signalHistos[signalLabel+'_resp'+ivar+'_nom'+sel].Draw("colz")
+        CMS_lumi.relPosX = 0.12
+        CMS_lumi.CMS_lumi(can2D, 4, 0)
+        can2D.SaveAs(outputDir+ivar+'_'+signalLabel+sel+'_responseMatrix'+args.version+'.'+args.ext)
+        if args.ext.startswith('pdf'):
+            can2D.SaveAs(outputDir+ivar+'_'+signalLabel+sel+'_responseMatrix'+args.version+'.png')
+
+    if not args.only:
+
+        outputFileName = name+'_purity_'+signalLabel+'_combinePlots_'+args.version+'.'+args.ext
+        print('Processing.......', outputFileName)
+
+        legend=ROOT.TLegend(0.20,0.80,0.60,0.90)
+        legend.SetNColumns(2)
+        legend.SetFillStyle(0)
+        legend.SetTextSize(0.06)
+
+        dictHistos['purity'] = ROOT.TH1F('purity', 'purity', numBinsList[-1], 0, numBinsList[-1])
+        legend.AddEntry( dictHistos[ 'purity' ], 'Purity', 'lep' )
+        dictHistos['stability'] = ROOT.TH1F('stability', 'stability', numBinsList[-1], 0, numBinsList[-1])
+        legend.AddEntry( dictHistos[ 'stability' ], 'Stability', 'lep' )
+
+        tmpNbin = 0
+        Xlabels = []
+        for ivar in variables:
+            if not name.endswith( ivar.split('_')[0] ): continue
+            if ivar.startswith('Jet') and not ivar.endswith(('21', '32')):
+                Xlabels.append( '#'+nSubVariables[ivar]['label'].split('#')[1] )
+                for ibin in range(1, dictHistos['purityGraph_'+ivar].GetNbinsX()+1):
+                    tmpNbin = tmpNbin+1
+                    dictHistos['purity'].SetBinContent( tmpNbin, dictHistos['purityGraph_'+ivar].GetBinContent(ibin) )
+                    dictHistos['stability'].SetBinContent( tmpNbin, dictHistos['stabilityGraph_'+ivar].GetBinContent(ibin) )
+
+        ROOT.gStyle.SetPadRightMargin(0.05)
+        #ROOT.gStyle.SetPadLeftMargin(0.08)
+        canvasoutputFileName = ROOT.TCanvas('c1purity', 'c1purity', 1400, 500 )
+        ROOT.gStyle.SetPadTickX(0)
+        #pad1.SetLogy()
+        dictHistos['purity'].GetXaxis().SetNdivisions(100)
+        dictHistos['purity'].GetYaxis().SetTitle( '#frac{1}{d#sigma} #frac{d#sigma}{d#tau_{X}}' )
+        dictHistos['purity'].GetYaxis().SetTitleSize( 0.06 )
+        dictHistos['purity'].GetYaxis().SetTitleOffset( 0.8 )
+        #dictHistos['purity'].SetMaximum( dictHistos['stability'].GetMaximum()*1.2 )
+        dictHistos['purity'].SetMaximum( 0.84 )
+        dictHistos['purity'].SetMinimum( 0.36 )
+        dictHistos['purity'].SetLineColor( ROOT.kBlack )
+        dictHistos['purity'].SetLineWidth( 2 )
+
+        dictHistos['stability'].SetLineColor( ROOT.kMagenta )
+        dictHistos['stability'].SetLineWidth( 2 )
+        dictHistos['purity'].Draw('hist')
+        dictHistos[ 'stability' ].Draw('hist same')
+
+        ### division lines
+        lines = {}
+        for i in numBinsList[1:-1]:
+            lines[i] = ROOT.TGraph(2, array('d', [i,i]), array('d', [0, 200]) )
+            lines[i].SetLineColor(ROOT.kGray)
+            lines[i].Draw('same')
+
+        CMS_lumi.lumiTextSize = 0.6
+        CMS_lumi.relPosX = 0.07
+        CMS_lumi.CMS_lumi( canvasoutputFileName, 4, 0)
+        legend.Draw()
+
+        textBox=ROOT.TLatex()
+        #textBox.SetNDC()
+        textBox.SetTextSize(0.06)
+        textBox.SetTextAlign(12)
+        textBoxList = {}
+        for i in range(1, len(numBinsList)):
+            textBoxList[i] = textBox.Clone()
+            textBoxList[i].DrawLatex(numBinsList[i-1]+(numBinsList[i]-numBinsList[i-1])/2., 0.33, Xlabels[i-1] )
+
+        outputDir=args.outputFolder+'Plots/'+args.selection.split('_')[1]+'/Purity/'+args.year+'/'
+        canvasoutputFileName.SaveAs( outputDir+'/'+outputFileName )
+        if args.ext.startswith('pdf'):
+            canvasoutputFileName.SaveAs( outputDir+'/'+outputFileName.replace('pdf', 'png') )
+        ROOT.gStyle.SetPadTickX(1)
 
 ###########################################################################
 if __name__ == '__main__':
@@ -133,39 +208,56 @@ if __name__ == '__main__':
     parser.add_argument('-y', '--year', action='store', default='2017', help='Year: 2016, 2017, 2018.' )
     parser.add_argument("-v", "--version", action='store', dest="version", default="v00", help="Version" )
     parser.add_argument('-e', '--ext', action='store', default='png', help='Extension of plots.' )
+    parser.add_argument("--only", action='store', dest="only", default="", help="Submit only one variable" )
     parser.add_argument("--outputFolder", action='store', dest="outputFolder", default="", help="Output folder" )
+    parser.add_argument("--main", action='store', dest="main", choices=['Ptbin', 'HTbin', 'herwig'], default='Ptbin', help="For dijet sel, main signal QCD" )
 
     try: args = parser.parse_args()
     except:
         parser.print_help()
         sys.exit(0)
+    args.inputFolder = os.environ['CMSSW_BASE']+'/src/jetObservables/Unfolding/test/Rootfiles/'
+
+    if args.selection.startswith('_dijet'):
+        if args.main.startswith('Ptbin'):
+            signalLabelBegin = 'QCD_Pt_'
+            signalLabel = 'QCD_Pt_3200toInf'
+        elif args.main.startswith('HTbin'):
+            signalLabelBegin = 'QCD_HT'
+            signalLabel = 'QCD_HT2000toInf'
+        elif args.main.startswith('herwig'):
+            signalLabelBegin = 'QCD_Pt-'
+            signalLabel = 'QCD_Pt-150to3000'
+    else:
+        signalLabelBegin = 'dummy'
+        signalLabel = 'dummy'
+        altSignalLabelBegin = 'dummy'
+        altSignalLabel = 'dummy'
 
     bkgFiles = {}
-    for isam in dictSamples:
-        if not checkDict( isam, dictSamples )[args.year]['skimmerHisto'].endswith('root'): continue
-        #if isam.startswith('QCD_Pt') and isam.endswith('pythia8'):
-        if isam.startswith('QCD_HT'):
-            bkgFiles[isam.split('_Tune')[0]] = [
-                            ROOT.TFile.Open( checkDict( isam, dictSamples )[args.year]['skimmerHisto'] ),
-                            checkDict( isam, dictSamples )
-                        ]
+    for iy in ( ['2017', '2018'] if args.year.startswith('all') else [ args.year ] ):
+        for isam in dictSamples:
+            if not checkDict( isam, dictSamples )[iy]['skimmerHisto'].endswith('root'): continue
+            if args.selection.startswith('_dijet') and ( 'MuEnriched' in isam ): continue
+            if isam.startswith(signalLabelBegin):
+                bkgFiles[isam.split('_Tune')[0]] = [
+                                ROOT.TFile.Open( args.inputFolder+checkDict( isam, dictSamples )[iy]['skimmerHisto'] ),
+                                checkDict( isam, dictSamples )
+                            ]
 
-    variables = {}
-    for ijet in [ ('Jet1', 'Outer'), ('Jet2', 'Central') ]:
-        variables[ ijet[0]+'_tau21' ] = [ [ 20, 10, 5, 2 ], ijet[1]+' AK8 jet #tau_{21}' ]  #### original bin width is 0.1, rebinning means 0.1 times number in list
-        variables[ ijet[0]+'_tau32' ] = [ [ 20, 10, 5, 2 ], ijet[1]+' AK8 jet #tau_{32}' ]
-        variables[ ijet[0]+'_tau_0p5_1' ] = [ [ 40, 20, 10, 4 ], ijet[1]+' AK8 jet #tau_{1}^{0.5}' ]
-        variables[ ijet[0]+'_tau_0p5_2' ] = [ [ 100, 50, 25, 10 ], ijet[1]+' AK8 jet #tau_{2}^{0.5}' ]
-        variables[ ijet[0]+'_tau_0p5_3' ] = [ [ 100, 50, 25, 10 ], ijet[1]+' AK8 jet #tau_{3}^{0.5}' ]
-        variables[ ijet[0]+'_tau_0p5_4' ] = [ [ 100, 50, 25, 10 ], ijet[1]+' AK8 jet #tau_{4}^{0.5}' ]
-        variables[ ijet[0]+'_tau_1_1' ] = [ [ 40, 20, 10, 4 ], ijet[1]+' AK8 jet #tau_{1}^{1}' ]
-        variables[ ijet[0]+'_tau_1_2' ] = [ [ 200, 100, 50, 25 ], ijet[1]+' AK8 jet #tau_{2}^{1}' ]
-        variables[ ijet[0]+'_tau_1_3' ] = [ [ 200, 100, 50, 25 ], ijet[1]+' AK8 jet #tau_{3}^{1}' ]
-        variables[ ijet[0]+'_tau_1_4' ] = [ [ 200, 100, 50, 25 ], ijet[1]+' AK8 jet #tau_{4}^{1}' ]
-        variables[ ijet[0]+'_tau_2_1' ] = [ [ 40, 20, 10, 4 ], ijet[1]+' AK8 jet #tau_{1}^{2}' ]
-        variables[ ijet[0]+'_tau_2_2' ] = [ [ 200, 100, 50, 25 ], ijet[1]+' AK8 jet #tau_{2}^{2}' ]
-        variables[ ijet[0]+'_tau_2_3' ] = [ [ 200, 100, 50, 25 ], ijet[1]+' AK8 jet #tau_{3}^{2}' ]
-        variables[ ijet[0]+'_tau_2_4' ] = [ [ 200, 100, 50, 25 ], ijet[1]+' AK8 jet #tau_{4}^{2}' ]
+    #### define variables
+    if args.only:
+        filterVariables = { k:v for (k,v) in nSubVariables.items() if k.endswith(args.only)  }
+        if len(filterVariables)>0 : variables = filterVariables
+        else:
+            print('|------> Variable not found. Have a nice day')
+            sys.exit(0)
+    else: variables = nSubVariables
+    #if args.selection.startswith('_dijet'): variables = { k:v for (k,v) in variables.items() if k.startswith(('Jet1', 'Jet2')) }
+    #else: variables = { k:v for (k,v) in variables.items() if k.startswith('Jet_') }
 
-    runPurity( bkgFiles, variables, args.selection )
+    plotList = [ 'recoJet1', 'recoJet2' ] if args.selection.startswith('_dijet') else [ 'recoJet' ]
+
+    for i in plotList:
+        runPurity( i, bkgFiles, variables, args.selection )
 

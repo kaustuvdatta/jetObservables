@@ -15,6 +15,11 @@ from PhysicsTools.NanoAODTools.postprocessing.framework.crabhelper import inputF
 
 from PhysicsTools.NanoAODTools.postprocessing.modules.common.puWeightProducer import puAutoWeight_2016, puAutoWeight_2017, puAutoWeight_2018
 from PhysicsTools.NanoAODTools.postprocessing.modules.btv.btagSFProducer import btagSF2016, btagSF2017, btagSF2018
+
+from PhysicsTools.NanoAODTools.postprocessing.modules.common.puWeightProducer import puWeightProducer, puAutoWeight_2016, puAutoWeight_UL2017, puAutoWeight_UL2018
+
+from PhysicsTools.NanoAODTools.postprocessing.modules.btv.btagSFProducer import btagSF2016, btagSF2017, btagSF2018
+
 from PhysicsTools.NanoAODTools.postprocessing.modules.jme.jetmetHelperRun2 import *
 
 import argparse
@@ -93,11 +98,14 @@ else:
 
 cuts = PV + " && " + METFilters + " && " + Triggers
 
-systSources = [ '_jesTotal', '_jer', '_pu' ] if isMC else []
+systSources = ['_jesTotal', '_jer', '_puWeight'] if isMC else []   ######### NEEDS TO BE REVIEWED FOR WTOP
+if args.selection.startswith('dijet'):
+    systSources = [ '_jesTotal', '_jer', '_puWeight', '_isrWeight', '_fsrWeight', '_pdfWeight' ] if args.sample.startswith('QCD_HT') else []
+
 
 ### Lepton scale factors
 LeptonSF = {
-    
+
     '2017' : {
         'muon' : {
             'Trigger' : [ "MuonSF_ULFinal.root", "UL17_Trigger", False ],
@@ -105,7 +113,7 @@ LeptonSF = {
             'ISO' : [ "MuonSF_ULFinal.root", "UL17_ISO", False ],
             'RecoEff' : [ "MuonSF_ULFinal.root", "UL17_Reco", False ],
         },
-        
+
     },
     '2018' : {
         'muon' : {
@@ -114,7 +122,7 @@ LeptonSF = {
             'ISO' : [ "MuonSF_ULFinal.root", "UL18_ISO", False ],
             'RecoEff' : [ "MuonSF_ULFinal.root", "UL18_Reco", False ],
         },
-        
+
     },
 }
 
@@ -129,13 +137,17 @@ modulesToRun.append( fatJetCorrector() )
 if not args.selection.startswith('dijet'): modulesToRun.append( jetmetCorrector() )
 if isMC:
     if args.year=='2018':
-        modulesToRun.append( puAutoWeight_2018() )
-        print "###Running with btag SF calc.###"
-        if not args.selection.startswith('dijet'): modulesToRun.append( btagSF2018() )
+        modulesToRun.append( puAutoWeight_UL2018() )
+        if not args.selection.startswith('dijet'):
+            print "###Running with btag SF calc.###"
+            modulesToRun.append( btagSF2018() )
     if args.year=='2017':
-        modulesToRun.append( puAutoWeight_2017() )
-        print "###Running with btag SF calc.###"
-        if not args.selection.startswith('dijet'): modulesToRun.append( btagSF2017() )
+        if not args.selection.startswith('dijet'):
+            print "###Running with btag SF calc.###"
+            modulesToRun.append( puAutoWeight_UL2017() )
+            modulesToRun.append( btagSF2017() )
+        else:
+            modulesToRun.append( puWeightProducer( "auto", os.environ['CMSSW_BASE']+"/src/jetObservables/Skimmer/data/pileup/pileupForDijet_UL2017.root", "pu_mc", "pileup", verbose=False) )
     if args.year=='2016':
         modulesToRun.append( puAutoWeight_2016() )
         print "Running with btag SF calc."
@@ -144,7 +156,7 @@ if isMC:
 # our module
 if args.selection.startswith('dijet'):
     from jetObservables.Skimmer.nSubProducer_dijetSel import nSubProd
-    modulesToRun.append( nSubProd( sysSource=systSources, leptonSF=LeptonSF[args.year], isMC=isMC, year=args.year ) )
+    modulesToRun.append( nSubProd( sysSource=systSources, isMC=isMC, year=args.year ) )
 else:
     from jetObservables.Skimmer.nSubProducer_WtopSel import nSubProd
     modulesToRun.append( nSubProd( sysSource=systSources, leptonSF=LeptonSF[args.year], isMC=isMC ) )
@@ -154,7 +166,7 @@ else:
 p1=PostProcessor(
         '.', (inputFiles() if not args.iFile else args.iFile.split(',')),
         cut          = cuts,
-        outputbranchsel   = "keep_and_drop.txt",
+        outputbranchsel   = "keep_and_drop_dijet.txt" if args.selection.startswith('dijet') else "keep_and_drop.txt",
         modules      = modulesToRun,
         provenance   = True,
         #jsonInput   = runsAndLumis(),

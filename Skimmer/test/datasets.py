@@ -5,6 +5,7 @@ import ROOT
 dictSamples = {
     '''
     'JetHT' : {
+        'selection' : 'dijet',
         '2017' :  {
             'miniAOD' : {
                 'B' : '/JetHT/Run2017B-UL2017_MiniAODv2-v1/MINIAOD',
@@ -62,7 +63,13 @@ dictSamples = {
             },
         'color': ROOT.kWhite
     },
+
 #    'QCD_Pt-15to7000_TuneCH3_Flat_13TeV_herwig7' : {
+
+
+#    'QCD_Pt-15to7000_TuneCH3_Flat_13TeV_herwig7' : {
+#        'selection' : 'dijet',
+
 #        '2017' :  {
 #            'miniAOD' : [ '/QCD_Pt-15to7000_TuneCH3_Flat_13TeV_herwig7/RunIISummer19UL17MiniAODv2-106X_mc2017_realistic_v9-v1/MINIAODSIM' ],
 #            'nanoAOD' : [ '/QCD_Pt-15to7000_TuneCH3_Flat_13TeV_herwig7/algomez-RunIISummer19UL17PFNanoAOD-106X_mc2017_realistic_v9-v1-7a1edb72314467730e458def0bc98536/USER' ],
@@ -102,6 +109,7 @@ dictSamples = {
             'nevents' : 6649600.,
             'nGenWeights' : 28765.923,
             },
+        'selection' : 'dijet',
         'XS' : 8.637e+03, ## for 2018 1.086e+04
         'label' : 'QCD Herwig7',
         'color': ROOT.kPink
@@ -124,6 +132,7 @@ dictSamples = {
             'nevents' : 28425000.0,
             'nGenWeights' : 28425000.0,
             },
+        'selection' : 'dijet',
         'XS' : 1.035e+05,
         'label' : 'QCD Pythia8',
         'color': ROOT.kBlue
@@ -146,6 +155,7 @@ dictSamples = {
             'nevents' : 55315000.,
             'nGenWeights' : 55315008.680,
             },
+        'selection' : 'dijet',
         'XS' : 6.760e+03,
         'label' : 'QCD Pythia8',
         'color': ROOT.kBlue
@@ -168,6 +178,7 @@ dictSamples = {
             'nevents' : 51191000.,
             'nGenWeights' : 51191166.543,
             },
+        'selection' : 'dijet',
         'XS' : 5.516e+02,
         'label' : 'QCD Pythia8',
         'color': ROOT.kBlue
@@ -190,6 +201,7 @@ dictSamples = {
             'nevents' : 65300000.,
             'nGenWeights' : 65300001.492,
             },
+        'selection' : 'dijet',
         'XS' : 1.564e+02,
         'label' : 'QCD Pythia8',
         'color': ROOT.kBlue
@@ -212,6 +224,7 @@ dictSamples = {
             'nevents' : 36056000.0,
             'nGenWeights' : 36056000.0,
             },
+        'selection' : 'dijet',
         'XS' : 2.624e+01,
         'label' : 'QCD Pythia8',
         'color': ROOT.kBlue
@@ -234,6 +247,7 @@ dictSamples = {
             'nevents' : 19106000.0,
             'nGenWeights' : 19106000.0,
             },
+        'selection' : 'dijet',
         'XS' : 7.477e+00,
         'label' : 'QCD Pythia8',
         'color': ROOT.kBlue
@@ -256,6 +270,7 @@ dictSamples = {
             'nevents' : 10550000.0,
             'nGenWeights' : 10550000.0,
             },
+        'selection' : 'dijet',
         'XS' : 6.423e-01,
         'label' : 'QCD Pythia8',
         'color': ROOT.kBlue
@@ -278,7 +293,8 @@ dictSamples = {
             'nevents' : 5152000.0,
             'nGenWeights' : 5152000.0,
             },
-        'XS' : 1.,
+        'selection' : 'dijet',
+        'XS' : 8.746e-02,
         'label' : 'QCD Pythia8',
         'color': ROOT.kBlue
     },
@@ -300,6 +316,7 @@ dictSamples = {
             'nevents' : 2901000.0,
             'nGenWeights' : 2901000.0,
             },
+        'selection' : 'dijet',
         'XS' : 5.233e-03,
         'label' : 'QCD Pythia8',
         'color': ROOT.kBlue
@@ -322,6 +339,7 @@ dictSamples = {
             'nevents' : 934000.0,
             'nGenWeights' : 934000.0,
             },
+        'selection' : 'dijet',
         'XS' : 1.351e-04,
         'label' : 'QCD Pythia8',
         'color': ROOT.kBlue
@@ -344,6 +362,7 @@ dictSamples = {
             'nevents' : 70101398.0,
             'nGenWeights' : 70101398.0,
             },
+        'selection' : 'dijet',
         'XS' : 2.362e+07,
         'label' : 'QCD MG5+Pythia8' ,
         'color': ROOT.kMagenta
@@ -366,6 +385,7 @@ dictSamples = {
             'nevents' : 22793054.0,
             'nGenWeights' : 22793054.0,
             },
+        'selection' : 'dijet',
         'XS' : 1.555e+06,
         'label' : 'QCD MG5+Pythia8' ,
         'color': ROOT.kMagenta
@@ -388,6 +408,7 @@ dictSamples = {
             'nevents' : 55102146.0,
             'nGenWeights' : 55102146.0,
             },
+        'selection' : 'dijet',
         'XS' : 3.243e+05,
         'label' : 'QCD MG5+Pythia8' ,
         'color': ROOT.kMagenta
@@ -410,6 +431,7 @@ dictSamples = {
             'nevents' : 51866729.0,
             'nGenWeights' : 51866729.0,
             },
+        'selection' : 'dijet',
         'XS' : 3.048e+04,
         'label' : 'QCD MG5+Pythia8' ,
         'color': ROOT.kMagenta
@@ -432,6 +454,7 @@ dictSamples = {
             'nevents' : 47028925.0,
             'nGenWeights' : 47028925.0,
             },
+        'selection' : 'dijet',
         'XS' : 6.433e+03,
         'label' : 'QCD MG5+Pythia8' ,
         'color': ROOT.kMagenta
@@ -454,6 +477,7 @@ dictSamples = {
             'nevents' : 15589003.0,
             'nGenWeights' : 15589003.0,
             },
+        'selection' : 'dijet',
         'XS' : 1.116e+03,
         'label' : 'QCD MG5+Pythia8' ,
         'color': ROOT.kMagenta
@@ -476,6 +500,7 @@ dictSamples = {
             'nevents' : 9825850.0,
             'nGenWeights' : 9825850.0,
             },
+        'selection' : 'dijet',
         'XS' : 1.081e+02,
         'label' : 'QCD MG5+Pythia8' ,
         'color': ROOT.kMagenta
@@ -498,6 +523,7 @@ dictSamples = {
             'nevents' : 4484780.0,
             'nGenWeights' : 4484780.0,
             },
+        'selection' : 'dijet',
         'XS' : 2.193e+01,
         'label' : 'QCD MG5+Pythia8' ,
         'color': ROOT.kMagenta
@@ -506,6 +532,7 @@ dictSamples = {
     
     ####### Wtop (xsecs not available on xsdb and/or not matching between xsdb and xseccalc are cross-checked with an approved analysis a la CMS AN-2018/129 )
     'SingleMuon' : {
+        'selection' : 'Wtop',
         '2017' :  {
             'miniAOD' : {
                 'B' : '/SingleMuon/Run2017B-UL2017_MiniAODv2-v1/MINIAOD',
@@ -561,6 +588,8 @@ dictSamples = {
             'nGenWeights' : 297902725633.38257,
             },
         'XS' : 7.591e+02, #some notes say 722.8 and a few say 831.76?
+        'selection' : 'Wtop',
+        'XS' : 722.8, #some notes say 831.76?
         'label' : 't#bar{t} amcatnloFXFX' ,
         'color': ROOT.kBlue
     },
@@ -583,6 +612,8 @@ dictSamples = {
             'nGenWeights' : 31378075292.893986,
             },
         'XS' : 365.34,
+        'selection' : 'Wtop',
+        'XS' : 365.24,
         'label' : 't#bar{t} powheg' ,
         'color': ROOT.kMagenta
     },
@@ -604,6 +635,7 @@ dictSamples = {
             'nevents' : 1.,
             'nGenWeights' : 5063754431.9676,
             },
+        'selection' : 'Wtop',
         'XS' : 88.29,
         'label' : 't#bar{t} DL' ,
         'color': ROOT.kCyan+1
@@ -627,6 +659,8 @@ dictSamples = {
             'nGenWeights' : 10484986870276.357422,
             },
         'XS' : 5.371e+04,
+        'selection' : 'Wtop',
+        'XS' : 5.368e+04,
         'label' : 'WJets' ,
         'color': ROOT.kOrange-2
     },
@@ -647,6 +681,7 @@ dictSamples = {
             'nevents' : 1.,
             'nGenWeights' : 64014403.924644,
             },
+        'selection' : 'Wtop',
         'XS' : 3.549e+00,
         'label' : 'Single top' ,
         'color': ROOT.kGreen+2,
@@ -668,6 +703,7 @@ dictSamples = {
             'nevents' : 1.,
             'nGenWeights' : 683747124.990000,
             },
+        'selection' : 'Wtop',
         'XS' : 1.197e+02,
         'label' : 'Single top' ,
         'color': ROOT.kGreen+2,
@@ -689,6 +725,7 @@ dictSamples = {
             'nevents' : 1.,
             'nGenWeights' : 271219283.652000,
             },
+        'selection' : 'Wtop',
         'XS' : 7.174e+01,
         'label' : 'Single top' ,
         'color': ROOT.kGreen+2,
@@ -710,6 +747,7 @@ dictSamples = {
             'nevents' : 1.,
             'nGenWeights' : 328321574.253000,
             },
+        'selection' : 'Wtop',
         'XS' : 3.245e+01,
         'label' : 'Single top' ,
         'color': ROOT.kGreen+2,
@@ -731,6 +769,7 @@ dictSamples = {
             'nevents' : 1.,
             'nGenWeights' : 296655487.557600,
             },
+        'selection' : 'Wtop',
         'XS' : 3.251e+01,
         'label' : 'Single top' ,
         'color': ROOT.kGreen+2,
@@ -753,6 +792,8 @@ dictSamples = {
             'nGenWeights' : 7959266.140092,
             },
         'XS' : 7.576e+01,
+        'selection' : 'Wtop',
+        'XS' : 7.577e+01,
         'label' : 'Diboson' ,
         'color': ROOT.kPink-1
     },
@@ -774,6 +815,8 @@ dictSamples = {
             'nGenWeights' : 2000000.000000,
             },
         'XS' : 1.210e+01,#from xsec py script, from papers/xsdb->2.748e+00,
+        'selection' : 'Wtop',
+        'XS' : 2.748e+00,
         'label' : 'Diboson' ,
         'color': ROOT.kPink-1
     },
@@ -795,6 +838,8 @@ dictSamples = {
             'nGenWeights' : 3976000.000000,
             },
         'XS' : 2.751e+01, #from xsec calc, and from papers->1.21e+00,
+        'selection' : 'Wtop',
+        'XS' : 1.21e+00,
         'label' : 'Dibosons' ,
         'color': ROOT.kPink-1
     },
@@ -816,6 +861,8 @@ dictSamples = {
             'nGenWeights' : 0.,
             },
         'XS' : 7.014e+03,
+        'selection' : 'Wtop',
+        'XS' : 7055.0,
         'label' : 'QCD' ,
         'color': ROOT.kRed-7
     },
@@ -837,6 +884,8 @@ dictSamples = {
             'nGenWeights' : 0.,
             },
         'XS' : 6.205e+02,
+        'selection' : 'Wtop',
+        'XS' : 619.3,
         'label' : 'QCD' ,
         'color': ROOT.kRed-7
     },
@@ -858,6 +907,8 @@ dictSamples = {
             'nGenWeights' : 0.,
             },
         'XS' : 5.910e+01,
+        'selection' : 'Wtop',
+        'XS' : 59.24,
         'label' : 'QCD' ,
         'color': ROOT.kRed-7
     },
@@ -879,6 +930,8 @@ dictSamples = {
             'nGenWeights' : 0.,
             },
         'XS' : 1.825e+01,
+        'selection' : 'Wtop',
+        'XS' : 18.21,
         'label' : 'QCD' ,
         'color': ROOT.kRed-7
     },
@@ -899,7 +952,9 @@ dictSamples = {
             'nevents' : 1.,
             'nGenWeights' : 0.0,
             },
-        'XS' : 3.287e+00,#fromexsec calc, from xsdb:7055.0,
+        'XS' : 3.287e+00,
+        'selection' : 'Wtop',
+        'XS' : 7055.0,
         'label' : 'QCD' ,
         'color': ROOT.kRed-7
     },
@@ -926,6 +981,13 @@ dictSamples = {
     },
     ## MC variations
     'TTToSemileptonicvar_TuneCP5_erdON_13TeV-powheg-pythia8' : {
+        'selection' : 'Wtop',
+        'XS' : 1.078,
+        'label' : 'QCD' ,
+        'color': ROOT.kRed-7
+    },
+    # MC variations
+    'TTToSemileptonic_TuneCP5_erdON_13TeV-powheg-pythia8' : {
         '2017' :  {
             'miniAOD' : [ '/TTToSemiLeptonic_TuneCP5_erdON_13TeV-powheg-pythia8/RunIISummer19UL17MiniAODv2-106X_mc2017_realistic_v9-v1/MINIAODSIM' ],
             'nanoAOD' : [ '/TTToSemiLeptonic_TuneCP5_erdON_13TeV-powheg-pythia8/kadatta-RunIISummer19UL17PFNanoAOD-106X_mc2017_realistic_v9-v1-7a1edb72314467730e458def0bc98536/USER' ],
@@ -943,6 +1005,8 @@ dictSamples = {
             'nGenWeights' : 0.,
             },
         'XS' : 365.34,
+        'selection' : 'Wtop',
+        'XS' : 365.24,
         'label' : 'CR Model (erdON)' ,
         'color': ROOT.kBlue-3
     },
@@ -965,6 +1029,8 @@ dictSamples = {
             'nGenWeights' : 0.,
             },
         'XS' : 365.34,
+        'selection' : 'Wtop',
+        'XS' : 365.24,
         'label' : 'Tune' ,
         'color': ROOT.kBlue+7
     },
@@ -988,6 +1054,8 @@ dictSamples = {
             'nGenWeights' : 0.,
             },
         'XS' : 365.34,
+        'selection' : 'Wtop',
+        'XS' : 365.24,
         'label' : 'Tune' ,
         'color': ROOT.kBlue+7
     },
@@ -1010,6 +1078,8 @@ dictSamples = {
             'nGenWeights' : 0.,
             },
         'XS' : 365.34,
+        'selection' : 'Wtop',
+        'XS' : 365.24,
         'label' : '#h_{damp}' ,
         'color': ROOT.kBlue+7
     },
@@ -1033,6 +1103,8 @@ dictSamples = {
             'nGenWeights' : 0.,
             },
         'XS' : 365.34,
+        'selection' : 'Wtop',
+        'XS' : 365.24,
         'label' : '#h_{damp}' ,
         'color': ROOT.kBlue+7
     },
