@@ -51,6 +51,7 @@ if __name__ == '__main__':
     parser.add_argument("-v", "--version", action='store', dest="version", default="v00", help="Version" )
     parser.add_argument("-l", "--local", action='store_true', help="Run local or through xrootd" )
     parser.add_argument("-y", "--year", action='store', choices=[ '2016', '2017', '2018' ],  default="2017", help="Version" )
+    parser.add_argument( '--selection', action="store", help="Event selection", choices=["dijet", "Wtop"], default="dijet" )
 
     try: args = parser.parse_args()
     except:
@@ -61,6 +62,7 @@ if __name__ == '__main__':
     processingSamples = {}
     for sam in dictSamples:
         if sam.startswith( args.datasets ) | args.datasets.startswith('all'):
+            if checkDict( sam, dictSamples )['selection'] != args.selection: continue
             processingSamples[ sam ] = checkDict( sam, dictSamples )[args.year]['skimmer'][0]
 
     if len(processingSamples)==0: print ('No sample found. \n Have a nice day :)')
