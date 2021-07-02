@@ -3,7 +3,7 @@
 import ROOT
 
 dictSamples = {
-    '''
+        
     'JetHT' : {
         'selection' : 'dijet',
         '2017' :  {
@@ -528,11 +528,11 @@ dictSamples = {
         'label' : 'QCD MG5+Pythia8' ,
         'color': ROOT.kMagenta
     },
-    '''
     
-    ####### Wtop (xsecs not available on xsdb and/or not matching between xsdb and xseccalc are cross-checked with an approved analysis a la CMS AN-2018/129 )
+    
+    ####### Wtop (xsecs not available on xsdb and/or not matching between xsdb and xsec calculation script are cross-checked with an approved analysis a la CMS AN-2018/129 )
     'SingleMuon' : {
-        'selection' : 'Wtop',
+        
         '2017' :  {
             'miniAOD' : {
                 'B' : '/SingleMuon/Run2017B-UL2017_MiniAODv2-v1/MINIAOD',
@@ -567,7 +567,8 @@ dictSamples = {
             'skimmerHisto' : 'SingleMuonAll_2018UL.root',
             'lumi' : 59816.0#56385.82159,
             },
-        'color': ROOT.kWhite
+        'color': ROOT.kWhite,
+        'selection' : 'Wtop'
     },
 
     'TTJets_TuneCP5_13TeV-amcatnloFXFX-pythia8' : {
@@ -589,7 +590,6 @@ dictSamples = {
             },
         'XS' : 7.591e+02, #some notes say 722.8 and a few say 831.76?
         'selection' : 'Wtop',
-        'XS' : 722.8, #some notes say 831.76?
         'label' : 't#bar{t} amcatnloFXFX' ,
         'color': ROOT.kBlue
     },
@@ -613,7 +613,6 @@ dictSamples = {
             },
         'XS' : 365.34,
         'selection' : 'Wtop',
-        'XS' : 365.24,
         'label' : 't#bar{t} powheg' ,
         'color': ROOT.kMagenta
     },
@@ -658,7 +657,6 @@ dictSamples = {
             'nevents' : 1.,
             'nGenWeights' : 10484986870276.357422,
             },
-        'XS' : 5.371e+04,
         'selection' : 'Wtop',
         'XS' : 5.368e+04,
         'label' : 'WJets' ,
@@ -793,7 +791,6 @@ dictSamples = {
             },
         'XS' : 7.576e+01,
         'selection' : 'Wtop',
-        'XS' : 7.577e+01,
         'label' : 'Diboson' ,
         'color': ROOT.kPink-1
     },
@@ -814,7 +811,7 @@ dictSamples = {
             'nevents' : 1.,
             'nGenWeights' : 2000000.000000,
             },
-        'XS' : 1.210e+01,#from xsec py script, from papers/xsdb->2.748e+00,
+        #'XS' : 1.210e+01,#from xsec py script, from papers/xsdb->2.748e+00,
         'selection' : 'Wtop',
         'XS' : 2.748e+00,
         'label' : 'Diboson' ,
@@ -839,7 +836,7 @@ dictSamples = {
             },
         'XS' : 2.751e+01, #from xsec calc, and from papers->1.21e+00,
         'selection' : 'Wtop',
-        'XS' : 1.21e+00,
+        #'XS' : 1.21e+00,
         'label' : 'Dibosons' ,
         'color': ROOT.kPink-1
     },
@@ -856,13 +853,12 @@ dictSamples = {
             'miniAOD' : [ '/QCD_Pt-170to300_MuEnrichedPt5_TuneCP5_13TeV_pythia8/RunIISummer19UL18MiniAODv2-106X_upgrade2018_realistic_v16_L1v1-v1/MINIAODSIM' ],
             'nanoAOD' : [ '/QCD_Pt-170to300_MuEnrichedPt5_TuneCP5_13TeV_pythia8/kadatta-RunIISummer19UL18PFNanoAOD-106X_upgrade2018_realistic_v16_L1v1-v1-6b2afb6a4ef31ee48bbd9c5b173a9b25/USER'],
             'skimmer' : [ '/QCD_Pt-170to300_MuEnrichedPt5_TuneCP5_13TeV_pythia8/kadatta-RunIISummer19UL18PFNanoAOD-106X_upgrade2018_realistic_v16_L1v1-v1-6b2afb6a4ef31ee48bbd9c5b173a9b25/USER'],
-            'skimmerHisto' : '',
+            'skimmerHisto' : 'QCD_Muen_Pt_170to300_pythia8_2018UL.root',
             'nevents' : 1.,
             'nGenWeights' : 0.,
             },
         'XS' : 7.014e+03,
         'selection' : 'Wtop',
-        'XS' : 7055.0,
         'label' : 'QCD' ,
         'color': ROOT.kRed-7
     },
@@ -879,13 +875,12 @@ dictSamples = {
             'miniAOD' : [ '/QCD_Pt-300to470_MuEnrichedPt5_TuneCP5_13TeV_pythia8/RunIISummer19UL18MiniAODv2-106X_upgrade2018_realistic_v16_L1v1-v1/MINIAODSIM' ],
             'nanoAOD' : [ '/QCD_Pt-300to470_MuEnrichedPt5_TuneCP5_13TeV_pythia8/kadatta-RunIISummer19UL18v1-106X_upgrade2018_realistic_v16_L1v1-v1-6b2afb6a4ef31ee48bbd9c5b173a9b25/USER' ],
             'skimmer' : [ '/QCD_Pt-300to470_MuEnrichedPt5_TuneCP5_13TeV_pythia8/kadatta-RunIISummer19UL18v1-106X_upgrade2018_realistic_v16_L1v1-v1-6b2afb6a4ef31ee48bbd9c5b173a9b25/USER' ],
-            'skimmerHisto' : '',
+            'skimmerHisto' : 'QCD_Muen_Pt_300to470_pythia8_2018UL.root',
             'nevents' : 1.,
             'nGenWeights' : 0.,
             },
         'XS' : 6.205e+02,
         'selection' : 'Wtop',
-        'XS' : 619.3,
         'label' : 'QCD' ,
         'color': ROOT.kRed-7
     },
@@ -902,13 +897,12 @@ dictSamples = {
             'miniAOD' : [ '/QCD_Pt-470to600_MuEnrichedPt5_TuneCP5_13TeV_pythia8/RunIISummer19UL18MiniAODv2-106X_upgrade2018_realistic_v16_L1v1-v1/MINIAODSIM' ],
             'nanoAOD' : [ '/QCD_Pt-470to600_MuEnrichedPt5_TuneCP5_13TeV_pythia8/kadatta-RunIISummer19UL18v1-106X_upgrade2018_realistic_v16_L1v1-v1-6b2afb6a4ef31ee48bbd9c5b173a9b25/USER' ],
             'skimmer' : [ '/QCD_Pt-470to600_MuEnrichedPt5_TuneCP5_13TeV_pythia8/kadatta-RunIISummer19UL18v1-106X_upgrade2018_realistic_v16_L1v1-v1-6b2afb6a4ef31ee48bbd9c5b173a9b25/USER' ],
-            'skimmerHisto' : '',
+            'skimmerHisto' : 'QCD_Muen_Pt_470to600_pythia8_2018UL.root',
             'nevents' : 1.,
             'nGenWeights' : 0.,
             },
         'XS' : 5.910e+01,
         'selection' : 'Wtop',
-        'XS' : 59.24,
         'label' : 'QCD' ,
         'color': ROOT.kRed-7
     },
@@ -925,13 +919,12 @@ dictSamples = {
             'miniAOD' : [ '/QCD_Pt-600to800_MuEnrichedPt5_TuneCP5_13TeV_pythia8/RunIISummer19UL18MiniAODv2-106X_upgrade2018_realistic_v16_L1v1-v1/MINIAODSIM' ],
             'nanoAOD' : [ '/QCD_Pt-600to800_MuEnrichedPt5_TuneCP5_13TeV_pythia8/kadatta-RunIISummer19UL18v1-106X_upgrade2018_realistic_v16_L1v1-v1-6b2afb6a4ef31ee48bbd9c5b173a9b25/USER' ],
             'skimmer' : [ '/QCD_Pt-600to800_MuEnrichedPt5_TuneCP5_13TeV_pythia8/kadatta-RunIISummer19UL18v1-106X_upgrade2018_realistic_v16_L1v1-v1-6b2afb6a4ef31ee48bbd9c5b173a9b25/USER' ],
-            'skimmerHisto' : '',
+            'skimmerHisto' : 'QCD_Muen_Pt_600to800_pythia8_2018UL.root',
             'nevents' : 1.,
             'nGenWeights' : 0.,
             },
         'XS' : 1.825e+01,
         'selection' : 'Wtop',
-        'XS' : 18.21,
         'label' : 'QCD' ,
         'color': ROOT.kRed-7
     },
@@ -948,13 +941,12 @@ dictSamples = {
             'miniAOD' : [ '/QCD_Pt-800to1000_MuEnrichedPt5_TuneCP5_13TeV_pythia8/RunIISummer19UL18MiniAODv2-106X_upgrade2018_realistic_v16_L1v1-v1/MINIAODSIM' ],
             'nanoAOD' : [ '/QCD_Pt-800to1000_MuEnrichedPt5_TuneCP5_13TeV_pythia8/kadatta-RunIISummer19UL18v1-106X_upgrade2018_realistic_v16_L1v1-v1-6b2afb6a4ef31ee48bbd9c5b173a9b25/USER' ],
             'skimmer' : [ '/QCD_Pt-800to1000_MuEnrichedPt5_TuneCP5_13TeV_pythia8/kadatta-RunIISummer19UL18v1-106X_upgrade2018_realistic_v16_L1v1-v1-6b2afb6a4ef31ee48bbd9c5b173a9b25/USER' ],
-            'skimmerHisto' : '',
+            'skimmerHisto' : 'QCD_Muen_Pt_800to1000_pythia8_2018UL.root',
             'nevents' : 1.,
             'nGenWeights' : 0.0,
             },
         'XS' : 3.287e+00,
         'selection' : 'Wtop',
-        'XS' : 7055.0,
         'label' : 'QCD' ,
         'color': ROOT.kRed-7
     },
@@ -971,23 +963,18 @@ dictSamples = {
             'miniAOD' : [ '/QCD_Pt-1000toInf_MuEnrichedPt5_TuneCP5_13TeV_pythia8/RunIISummer19UL18MiniAODv2-106X_upgrade2018_realistic_v16_L1v1-v1/MINIAODSIM' ],
             'nanoAOD' : [ '/QCD_Pt-1000toInf_MuEnrichedPt5_TuneCP5_13TeV_pythia8/kadatta-RunIISummer19UL18v1-106X_upgrade2018_realistic_v16_L1v1-v1-6b2afb6a4ef31ee48bbd9c5b173a9b25/USER' ],
             'skimmer' : [ '/QCD_Pt-1000toInf_MuEnrichedPt5_TuneCP5_13TeV_pythia8/kadatta-RunIISummer19UL18v1-106X_upgrade2018_realistic_v16_L1v1-v1-6b2afb6a4ef31ee48bbd9c5b173a9b25/USER' ],
-            'skimmerHisto' : '',
+            'skimmerHisto' : 'QCD_Muen_Pt_1000toInf_pythia8_2018UL.root',
             'nevents' : 1.,
             'nGenWeights' : 0.00,
             },
         'XS' : 1.087e+00,
-        'label' : 'QCD' ,
-        'color': ROOT.kRed-7
-    },
-    ## MC variations
-    'TTToSemileptonicvar_TuneCP5_erdON_13TeV-powheg-pythia8' : {
         'selection' : 'Wtop',
-        'XS' : 1.078,
         'label' : 'QCD' ,
         'color': ROOT.kRed-7
     },
+    
     # MC variations
-    'TTToSemileptonic_TuneCP5_erdON_13TeV-powheg-pythia8' : {
+    'varTTToSemileptonic_TuneCP5_erdON_13TeV-powheg-pythia8' : {
         '2017' :  {
             'miniAOD' : [ '/TTToSemiLeptonic_TuneCP5_erdON_13TeV-powheg-pythia8/RunIISummer19UL17MiniAODv2-106X_mc2017_realistic_v9-v1/MINIAODSIM' ],
             'nanoAOD' : [ '/TTToSemiLeptonic_TuneCP5_erdON_13TeV-powheg-pythia8/kadatta-RunIISummer19UL17PFNanoAOD-106X_mc2017_realistic_v9-v1-7a1edb72314467730e458def0bc98536/USER' ],
@@ -1006,12 +993,11 @@ dictSamples = {
             },
         'XS' : 365.34,
         'selection' : 'Wtop',
-        'XS' : 365.24,
         'label' : 'CR Model (erdON)' ,
         'color': ROOT.kBlue-3
     },
 
-    'TTToSemileptonicvar_TuneCP5down_13TeV-powheg-pythia8' : {
+    'varTTToSemileptonic_TuneCP5down_13TeV-powheg-pythia8' : {
         '2017' :  {
             'miniAOD' : [ '/TTToSemiLeptonic_TuneCP5down_13TeV-powheg-pythia8/RunIISummer19UL17MiniAODv2-106X_mc2017_realistic_v9-v1/MINIAODSIM' ],
             'nanoAOD' : [ '/TTToSemiLeptonic_TuneCP5down_13TeV-powheg-pythia8/kadatta-RunIISummer19UL17PFNanoAOD-106X_mc2017_realistic_v9-v1-7a1edb72314467730e458def0bc98536/USER' ],
@@ -1030,13 +1016,12 @@ dictSamples = {
             },
         'XS' : 365.34,
         'selection' : 'Wtop',
-        'XS' : 365.24,
         'label' : 'Tune' ,
         'color': ROOT.kBlue+7
     },
 
 
-    'TTToSemileptonicvar_TuneCP5up_13TeV-powheg-pythia8' : {
+    'varTTToSemileptonic_TuneCP5up_13TeV-powheg-pythia8' : {
         '2017' :  {
             'miniAOD' : [ '/TTToSemiLeptonic_TuneCP5down_13TeV-powheg-pythia8/RunIISummer19UL17MiniAODv2-106X_mc2017_realistic_v9-v1/MINIAODSIM' ],
             'nanoAOD' : [ '/TTToSemiLeptonic_TuneCP5up_13TeV-powheg-pythia8/kadatta-RunIISummer19UL17PFNanoAOD-106X_mc2017_realistic_v9-v1-7a1edb72314467730e458def0bc98536/USER' ],
@@ -1055,12 +1040,11 @@ dictSamples = {
             },
         'XS' : 365.34,
         'selection' : 'Wtop',
-        'XS' : 365.24,
         'label' : 'Tune' ,
         'color': ROOT.kBlue+7
     },
 
-    'TTToSemileptonicvar_hdampDOWN_TuneCP5_13TeV-powheg-pythia8' : {
+    'varTTToSemileptonic_hdampDOWN_TuneCP5_13TeV-powheg-pythia8' : {
         '2017' :  {
             'miniAOD' : [ '/TTToSemiLeptonic_hdampDOWN_TuneCP5_13TeV-powheg-pythia8/RunIISummer19UL17MiniAODv2-106X_mc2017_realistic_v9-v1/MINIAODSIM' ],
             'nanoAOD' : [ '/TTToSemiLeptonic_hdampDOWN_TuneCP5_13TeV-powheg-pythia8/kadatta-RunIISummer19UL17PFNanoAOD-106X_mc2017_realistic_v9-v1-7a1edb72314467730e458def0bc98536/USER' ],
@@ -1079,13 +1063,12 @@ dictSamples = {
             },
         'XS' : 365.34,
         'selection' : 'Wtop',
-        'XS' : 365.24,
         'label' : '#h_{damp}' ,
         'color': ROOT.kBlue+7
     },
 
 
-    'TTToSemileptonicvar_hdampUP_TuneCP5_13TeV-powheg-pythia8' : {
+    'varTTToSemileptonic_hdampUP_TuneCP5_13TeV-powheg-pythia8' : {
         '2017' :  {
             'miniAOD' : [ '/TTToSemiLeptonic_hdampUP_TuneCP5_13TeV-powheg-pythia8/RunIISummer19UL17MiniAODv2-106X_mc2017_realistic_v9-v1/MINIAODSIM' ],
             'nanoAOD' : [ '/TTToSemiLeptonic_hdampUP_TuneCP5_13TeV-powheg-pythia8/kadatta-RunIISummer19UL17PFNanoAOD-106X_mc2017_realistic_v9-v1-7a1edb72314467730e458def0bc98536/USER' ],
@@ -1104,10 +1087,197 @@ dictSamples = {
             },
         'XS' : 365.34,
         'selection' : 'Wtop',
-        'XS' : 365.24,
         'label' : '#h_{damp}' ,
         'color': ROOT.kBlue+7
     },
+    
+    'varTTToSemiLeptonic_mtop166p5_TuneCP5_13TeV-powheg-pythia8' : {
+        '2017' :  {
+            'miniAOD' : [ '/TTToSemiLeptonic_mtop166p5_TuneCP5_13TeV-powheg-pythia8/RunIISummer19UL17MiniAODv2-106X_mc2017_realistic_v9-v1/MINIAODSIM' ],
+            'nanoAOD' : [ '/TTToSemiLeptonic_mtop166p5_TuneCP5_13TeV-powheg-pythia8/kadatta-RunIISummer19UL17PFNanoAOD-106X_mc2017_realistic_v9-v1-7a1edb72314467730e458def0bc98536/USER' ],
+            'skimmer' : [ '/TTToSemiLeptonic_mtop166p5_TuneCP5_13TeV-powheg-pythia8/kadatta-RunIISummer19UL17PFNanoAOD-106X_mc2017_realistic_v9-v1-7a1edb72314467730e458def0bc98536/USER' ],
+            'skimmerHisto' : 'TTToSemiLeptonic_mtop166p5_powheg_pythia8_2017UL.root',
+            'nevents' : 1.,
+            'nGenWeights' : 0.,
+            },
+        '2018' :  {
+            'miniAOD' : [ '/TTToSemiLeptonic_mtop166p5_TuneCP5_13TeV-powheg-pythia8/RunIISummer19UL18MiniAODv2-106X_upgrade2018_realistic_v16_L1v1-v1/MINIAODSIM' ],
+            'nanoAOD' : [ '/TTToSemiLeptonic_mtop166p5_TuneCP5_13TeV-powheg-pythia8/kadatta-RunIISummer19UL18PFNanoAOD-106X_upgrade2018_realistic_v16_L1v1-v1-754f8ab81f6f0298c5fa7c45094d30e4/USER' ],
+            'skimmer' : [ '/TTToSemiLeptonic_mtop166p5_TuneCP5_13TeV-powheg-pythia8/kadatta-RunIISummer19UL18PFNanoAOD-106X_upgrade2018_realistic_v16_L1v1-v1-754f8ab81f6f0298c5fa7c45094d30e4/USER' ],
+            'skimmerHisto' : 'TTToSemiLeptonic_mtop166p5_powheg_pythia8_2018UL.root',
+            'nevents' : 1.,
+            'nGenWeights' : 0.,
+            },
+        'XS' : 365.34,
+        'selection' : 'Wtop',
+        'label' : '#m_{top}=166.5' ,
+        'color': ROOT.kBlue+7
+    },
+    
+    'varTTToSemiLeptonic_mtop169p5_TuneCP5_13TeV-powheg-pythia8' : {
+        '2017' :  {
+            'miniAOD' : [ '/TTToSemiLeptonic_mtop169p5_TuneCP5_13TeV-powheg-pythia8/RunIISummer19UL17MiniAODv2-106X_mc2017_realistic_v9-v1/MINIAODSIM' ],
+            'nanoAOD' : [ '/TTToSemiLeptonic_mtop169p5_TuneCP5_13TeV-powheg-pythia8/kadatta-RunIISummer19UL17PFNanoAOD-106X_mc2017_realistic_v9-v1-7a1edb72314467730e458def0bc98536/USER' ],
+            'skimmer' : [ '/TTToSemiLeptonic_mtop169p5_TuneCP5_13TeV-powheg-pythia8/kadatta-RunIISummer19UL17PFNanoAOD-106X_mc2017_realistic_v9-v1-7a1edb72314467730e458def0bc98536/USER' ],
+            'skimmerHisto' : 'TTToSemiLeptonic_mtop169p5_powheg_pythia8_2017UL.root',
+            'nevents' : 1.,
+            'nGenWeights' : 0.,
+            },
+        '2018' :  {
+            'miniAOD' : [ '/TTToSemiLeptonic_mtop169p5_TuneCP5_13TeV-powheg-pythia8/RunIISummer19UL18MiniAODv2-106X_upgrade2018_realistic_v16_L1v1-v1/MINIAODSIM' ],
+            'nanoAOD' : [ '/TTToSemiLeptonic_mtop169p5_TuneCP5_13TeV-powheg-pythia8/kadatta-RunIISummer19UL18PFNanoAOD-106X_upgrade2018_realistic_v16_L1v1-v1-754f8ab81f6f0298c5fa7c45094d30e4/USER' ],
+            'skimmer' : [ '/TTToSemiLeptonic_mtop169p5_TuneCP5_13TeV-powheg-pythia8/kadatta-RunIISummer19UL18PFNanoAOD-106X_upgrade2018_realistic_v16_L1v1-v1-754f8ab81f6f0298c5fa7c45094d30e4/USER' ],
+            'skimmerHisto' : 'TTToSemiLeptonic_mtop169p5_powheg_pythia8_2018UL.root',
+            'nevents' : 1.,
+            'nGenWeights' : 0.,
+            },
+        'XS' : 365.34,
+        'selection' : 'Wtop',
+        'label' : '#m_{top}=169.5' ,
+        'color': ROOT.kBlue+7
+    },
+    
+    'varTTToSemiLeptonic_mtop171p5_TuneCP5_13TeV-powheg-pythia8' : {
+        '2017' :  {
+            'miniAOD' : [ '/TTToSemiLeptonic_mtop171p5_TuneCP5_13TeV-powheg-pythia8/RunIISummer19UL17MiniAODv2-106X_mc2017_realistic_v9-v1/MINIAODSIM' ],
+            'nanoAOD' : [ '/TTToSemiLeptonic_mtop171p5_TuneCP5_13TeV-powheg-pythia8/kadatta-RunIISummer19UL17PFNanoAOD-106X_mc2017_realistic_v9-v1-7a1edb72314467730e458def0bc98536/USER' ],
+            'skimmer' : [ '/TTToSemiLeptonic_mtop171p5_TuneCP5_13TeV-powheg-pythia8/kadatta-RunIISummer19UL17PFNanoAOD-106X_mc2017_realistic_v9-v1-7a1edb72314467730e458def0bc98536/USER' ],
+            'skimmerHisto' : 'TTToSemiLeptonic_mtop171p5_powheg_pythia8_2017UL.root',
+            'nevents' : 1.,
+            'nGenWeights' : 0.,
+            },
+        '2018' :  {
+            'miniAOD' : [ '/TTToSemiLeptonic_mtop171p5_TuneCP5_13TeV-powheg-pythia8/RunIISummer19UL18MiniAODv2-106X_upgrade2018_realistic_v16_L1v1-v1/MINIAODSIM' ],
+            'nanoAOD' : [ '/TTToSemiLeptonic_mtop171p5_TuneCP5_13TeV-powheg-pythia8/kadatta-RunIISummer19UL18PFNanoAOD-106X_upgrade2018_realistic_v16_L1v1-v1-754f8ab81f6f0298c5fa7c45094d30e4/USER' ],
+            'skimmer' : [ '/TTToSemiLeptonic_mtop171p5_TuneCP5_13TeV-powheg-pythia8/kadatta-RunIISummer19UL18PFNanoAOD-106X_upgrade2018_realistic_v16_L1v1-v1-754f8ab81f6f0298c5fa7c45094d30e4/USER' ],
+            'skimmerHisto' : 'TTToSemiLeptonic_mtop171p5_powheg_pythia8_2018UL.root',
+            'nevents' : 1.,
+            'nGenWeights' : 0.,
+            },
+        'XS' : 365.34,
+        'selection' : 'Wtop',
+        'label' : '#m_{top}=171.5' ,
+        'color': ROOT.kBlue+7
+    },
+    
+    'varTTToSemiLeptonic_mtop173p5_TuneCP5_13TeV-powheg-pythia8' : {
+        '2017' :  {
+            'miniAOD' : [ '/TTToSemiLeptonic_mtop173p5_TuneCP5_13TeV-powheg-pythia8/RunIISummer19UL17MiniAODv2-106X_mc2017_realistic_v9-v1/MINIAODSIM' ],
+            'nanoAOD' : [ '/TTToSemiLeptonic_mtop173p5_TuneCP5_13TeV-powheg-pythia8/kadatta-RunIISummer19UL17PFNanoAOD-106X_mc2017_realistic_v9-v1-7a1edb72314467730e458def0bc98536/USER' ],
+            'skimmer' : [ '/TTToSemiLeptonic_mtop173p5_TuneCP5_13TeV-powheg-pythia8/kadatta-RunIISummer19UL17PFNanoAOD-106X_mc2017_realistic_v9-v1-7a1edb72314467730e458def0bc98536/USER' ],
+            'skimmerHisto' : 'TTToSemiLeptonic_mtop173p5_powheg_pythia8_2017UL.root',
+            'nevents' : 1.,
+            'nGenWeights' : 0.,
+            },
+        '2018' :  {
+            'miniAOD' : [ '/TTToSemiLeptonic_mtop173p5_TuneCP5_13TeV-powheg-pythia8/RunIISummer19UL18MiniAODv2-106X_upgrade2018_realistic_v16_L1v1-v1/MINIAODSIM' ],
+            'nanoAOD' : [ '/TTToSemiLeptonic_mtop173p5_TuneCP5_13TeV-powheg-pythia8/kadatta-RunIISummer19UL18PFNanoAOD-106X_upgrade2018_realistic_v16_L1v1-v1-754f8ab81f6f0298c5fa7c45094d30e4/USER' ],
+            'skimmer' : [ '/TTToSemiLeptonic_mtop173p5_TuneCP5_13TeV-powheg-pythia8/kadatta-RunIISummer19UL18PFNanoAOD-106X_upgrade2018_realistic_v16_L1v1-v1-754f8ab81f6f0298c5fa7c45094d30e4/USER' ],
+            'skimmerHisto' : 'TTToSemiLeptonic_mtop173p5_powheg_pythia8_2018UL.root',
+            'nevents' : 1.,
+            'nGenWeights' : 0.,
+            },
+        'XS' : 365.34,
+        'selection' : 'Wtop',
+        'label' : '#m_{top}=173.5' ,
+        'color': ROOT.kBlue+7
+    },
+    
+    'varTTToSemiLeptonic_mtop175p5_TuneCP5_13TeV-powheg-pythia8' : {
+        '2017' :  {
+            'miniAOD' : [ '/TTToSemiLeptonic_mtop175p5_TuneCP5_13TeV-powheg-pythia8/RunIISummer19UL17MiniAODv2-106X_mc2017_realistic_v9-v1/MINIAODSIM' ],
+            'nanoAOD' : [ '/TTToSemiLeptonic_mtop175p5_TuneCP5_13TeV-powheg-pythia8/kadatta-RunIISummer19UL17PFNanoAOD-106X_mc2017_realistic_v9-v1-7a1edb72314467730e458def0bc98536/USER' ],
+            'skimmer' : [ '/TTToSemiLeptonic_mtop175p5_TuneCP5_13TeV-powheg-pythia8/kadatta-RunIISummer19UL17PFNanoAOD-106X_mc2017_realistic_v9-v1-7a1edb72314467730e458def0bc98536/USER' ],
+            'skimmerHisto' : 'TTToSemiLeptonic_mtop175p5_powheg_pythia8_2017UL.root',
+            'nevents' : 1.,
+            'nGenWeights' : 0.,
+            },
+        '2018' :  {
+            'miniAOD' : [ '/TTToSemiLeptonic_mtop175p5_TuneCP5_13TeV-powheg-pythia8/RunIISummer19UL18MiniAODv2-106X_upgrade2018_realistic_v16_L1v1-v1/MINIAODSIM' ],
+            'nanoAOD' : [ '/TTToSemiLeptonic_mtop175p5_TuneCP5_13TeV-powheg-pythia8/kadatta-RunIISummer19UL18PFNanoAOD-106X_upgrade2018_realistic_v16_L1v1-v1-754f8ab81f6f0298c5fa7c45094d30e4/USER' ],
+            'skimmer' : [ '/TTToSemiLeptonic_mtop175p5_TuneCP5_13TeV-powheg-pythia8/kadatta-RunIISummer19UL18PFNanoAOD-106X_upgrade2018_realistic_v16_L1v1-v1-754f8ab81f6f0298c5fa7c45094d30e4/USER' ],
+            'skimmerHisto' : 'TTToSemiLeptonic_mtop175p5_powheg_pythia8_2018UL.root',
+            'nevents' : 1.,
+            'nGenWeights' : 0.,
+            },
+        'XS' : 365.34,
+        'selection' : 'Wtop',
+        'label' : '#m_{top}=175.5' ,
+        'color': ROOT.kBlue+7
+    },
+    
+     'varTTToSemiLeptonic_TuneCP5CR1_13TeV-powheg-pythia8' : {
+        '2017' :  {
+            'miniAOD' : [ '/TTToSemiLeptonic_TuneCP5CR1_13TeV-powheg-pythia8/RunIISummer19UL17MiniAODv2-106X_mc2017_realistic_v9-v1/MINIAODSIM' ],
+            'nanoAOD' : [ '/TTToSemiLeptonic_TuneCP5CR1_13TeV-powheg-pythia8/kadatta-RunIISummer19UL17PFNanoAOD-106X_mc2017_realistic_v9-v1-7a1edb72314467730e458def0bc98536/USER' ],
+            'skimmer' : [ '/TTToSemiLeptonic_TuneCP5CR1_13TeV-powheg-pythia8/kadatta-RunIISummer19UL17PFNanoAOD-106X_mc2017_realistic_v9-v1-7a1edb72314467730e458def0bc98536/USER' ],
+            'skimmerHisto' : 'TTToSemiLeptonic_TuneCP5CR1_powheg_pythia8_2017UL.root',
+            'nevents' : 1.,
+            'nGenWeights' : 0.,
+            },
+        '2018' :  {
+            'miniAOD' : [ '/TTToSemiLeptonic_TuneCP5CR1_13TeV-powheg-pythia8/RunIISummer19UL18MiniAODv2-106X_upgrade2018_realistic_v16_L1v1-v1/MINIAODSIM' ],
+            'nanoAOD' : [ '/TTToSemiLeptonic_TuneCP5CR1_13TeV-powheg-pythia8/kadatta-RunIISummer19UL18PFNanoAOD-106X_upgrade2018_realistic_v16_L1v1-v1-754f8ab81f6f0298c5fa7c45094d30e4/USER'],
+            'skimmer' : [ '/TTToSemiLeptonic_TuneCP5CR1_13TeV-powheg-pythia8/kadatta-RunIISummer19UL18PFNanoAOD-106X_upgrade2018_realistic_v16_L1v1-v1-754f8ab81f6f0298c5fa7c45094d30e4/USER' ],
+            'skimmerHisto' : 'TTToSemiLeptonic_TuneCP5CR1_powheg_pythia8_2018UL.root',
+            'nevents' : 1.,
+            'nGenWeights' : 0.,
+            },
+        'XS' : 365.34,
+        'selection' : 'Wtop',
+        'label' : 'CR' ,
+        'color': ROOT.kBlue+7
+    },
+    
+     'varTTToSemiLeptonic_TuneCP5CR2_13TeV-powheg-pythia8' : {
+        '2017' :  {
+            'miniAOD' : [ '/TTToSemiLeptonic_TuneCP5CR2_13TeV-powheg-pythia8/RunIISummer19UL17MiniAODv2-106X_mc2017_realistic_v9-v1/MINIAODSIM' ],
+            'nanoAOD' : [ '/TTToSemiLeptonic_TuneCP5CR2_13TeV-powheg-pythia8/kadatta-RunIISummer19UL17PFNanoAOD-106X_mc2017_realistic_v9-v1-7a1edb72314467730e458def0bc98536/USER' ],
+            'skimmer' : [ '/TTToSemiLeptonic_TuneCP5CR2_13TeV-powheg-pythia8/kadatta-RunIISummer19UL17PFNanoAOD-106X_mc2017_realistic_v9-v1-7a1edb72314467730e458def0bc98536/USER' ],
+            'skimmerHisto' : 'TTToSemiLeptonic_TuneCP5CR2_powheg_pythia8_2017UL.root',
+            'nevents' : 1.,
+            'nGenWeights' : 0.,
+            },
+        '2018' :  {
+            'miniAOD' : [ '/TTToSemiLeptonic_TuneCP5CR2_13TeV-powheg-pythia8/RunIISummer19UL18MiniAODv2-106X_upgrade2018_realistic_v16_L1v1-v1/MINIAODSIM' ],
+            'nanoAOD' : [ '/TTToSemiLeptonic_TuneCP5CR2_13TeV-powheg-pythia8/kadatta-RunIISummer19UL18PFNanoAOD-106X_upgrade2018_realistic_v16_L1v1-v1-754f8ab81f6f0298c5fa7c45094d30e4/USER' ],
+            'skimmer' : [ '/TTToSemiLeptonic_TuneCP5CR2_13TeV-powheg-pythia8/kadatta-RunIISummer19UL18PFNanoAOD-106X_upgrade2018_realistic_v16_L1v1-v1-754f8ab81f6f0298c5fa7c45094d30e4/USER' ],
+            'skimmerHisto' : 'TTToSemiLeptonic_TuneCP5CR2_powheg_pythia8_2018UL.root',
+            'nevents' : 1.,
+            'nGenWeights' : 0.,
+            },
+        'XS' : 365.34,
+        'selection' : 'Wtop',
+        'label' : '#m_{top}=175.5' ,
+        'color': ROOT.kBlue+7
+    },
+    
+#    'varTTToSemiLeptonic_mtop178p5_TuneCP5_13TeV-powheg-pythia8' : {
+#        '2017' :  {
+#            'miniAOD' : [ '/TTToSemiLeptonic_mtop178p5_TuneCP5_13TeV-powheg-pythia8/RunIISummer19UL17MiniAODv2-106X_mc2017_realistic_v9-v1/MINIAODSIM' ],
+#            'nanoAOD' : [ '/TTToSemiLeptonic_mtop178p5_TuneCP5_13TeV-powheg-pythia8/kadatta-RunIISummer19UL17PFNanoAOD-106X_mc2017_realistic_v9-v1-7a1edb72314467730e458def0bc98536/USER' ],
+#            'skimmer' : [ '/TTToSemiLeptonic_mtop178p5_TuneCP5_13TeV-powheg-pythia8/kadatta-RunIISummer19UL17PFNanoAOD-106X_mc2017_realistic_v9-v1-7a1edb72314467730e458def0bc98536/USER' ],
+#            'skimmerHisto' : 'TTToSemiLeptonic_mtop178p5_powheg_pythia8_2017UL.root',
+#            'nevents' : 1.,
+#            'nGenWeights' : 0.,
+#            },
+#        '2018' :  {
+#            'miniAOD' : [ '/TTToSemiLeptonic_mtop178p5_TuneCP5_13TeV-powheg-pythia8/RunIISummer19UL18MiniAODv2-106X_upgrade2018_realistic_v16_L1v1-v1/MINIAODSIM' ],
+#            'nanoAOD' : [ '/TTToSemiLeptonic_mtop178p5_TuneCP5_13TeV-powheg-pythia8/kadatta-RunIISummer19UL18PFNanoAOD-106X_upgrade2018_realistic_v16_L1v1-v1-754f8ab81f6f0298c5fa7c45094d30e4/USER' ],
+#            'skimmer' : [ '/TTToSemiLeptonic_mtop178p5_TuneCP5_13TeV-powheg-pythia8/kadatta-RunIISummer19UL18PFNanoAOD-106X_upgrade2018_realistic_v16_L1v1-v1-754f8ab81f6f0298c5fa7c45094d30e4/USER' ],
+#            'skimmerHisto' : 'TTToSemiLeptonic_mtop178p5_powheg_pythia8_2018UL.root',
+#            'nevents' : 1.,
+#            'nGenWeights' : 0.,
+#            },
+#        'XS' : 365.34,
+#        'selection' : 'Wtop',
+#        'label' : '#m_{top}=166.5' ,
+#        'color': ROOT.kBlue+7
+#    },
+
+   
+    
+
 
 }
 

@@ -18,7 +18,6 @@ echo Check if TTY
 if [ "`tty`" != "not a tty" ]; then
   echo "YOU SHOULD NOT RUN THIS IN INTERACTIVE, IT DELETES YOUR LOCAL FILES"
 else
-
 ###ls -lR .
 echo "ENV..................................."
 env
@@ -35,7 +34,6 @@ rm -rf $CMSSW_BASE/python/
 mv lib $CMSSW_BASE/lib
 mv src $CMSSW_BASE/src
 mv python $CMSSW_BASE/python
-
 echo Found Proxy in: $X509_USER_PROXY
 ls
 echo "python {pythonFile} --sample {datasets} --selection {selection}"
@@ -85,19 +83,13 @@ def submitJobs( job, inputFiles, unitJobs ):
 
     config.JobType.scriptExe = 'runPostProc'+options.datasets+options.year+'.sh'
     config.JobType.inputFiles = [ options.pythonFile ,'haddnano.py', 'keep_and_drop.txt']
-    config.JobType.scriptExe = 'runPostProc'+options.datasets+'.sh'
-    config.JobType.inputFiles = [ options.pythonFile ,'haddnano.py', 'keep_and_drop_dijet.txt', 'keep_and_drop.txt']
     config.JobType.sendPythonFolder  = True
 
-    if job.startswith(('UL17_Single', 'UL17_JetHT', 'JetHT', 'SingleMuon')):
+    if job.startswith(('UL18_Single', 'UL18_JetHT','UL17_Single', 'UL17_JetHT', 'JetHT', 'SingleMuon')):
         if options.year.startswith('2017'): config.Data.lumiMask = '/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions17/13TeV/Legacy_2017/Cert_294927-306462_13TeV_UL2017_Collisions17_GoldenJSON.txt'
         elif options.year.startswith('2018'): config.Data.lumiMask = '/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions18/13TeV/Legacy_2018/Cert_314472-325175_13TeV_Legacy2018_Collisions18_JSON.txt'
     #config.Data.userInputFiles = inputFiles
     config.Data.inputDataset = inputFiles
-
-    #config.Data.splitting = 'EventAwareLumiBased' if job.startswith('QCD_Pt') else 'FileBased'
-    #config.Data.splitting = 'Automatic'
-    #config.Data.splitting = 'FileBased'
 
     #config.Data.splitting = 'EventAwareLumiBased' if job.startswith('QCD_Pt') else 'FileBased'
     #config.Data.splitting = 'Automatic'
@@ -119,7 +111,10 @@ def submitJobs( job, inputFiles, unitJobs ):
 
     print 'requestname = ', requestname
     config.General.requestName = requestname
-    config.Data.outputDatasetTag = 'Run'+inputFiles.split('Run')[1].split('AOD')[0]+'AOD_jetObservables_Skimmer_'+options.version+('EXT'+job.split('EXT')[1] if 'EXT' in job else '')
+    if 'QCD' in job and ('470' in job or '800' in job) and options.year=='2018':
+        config.Data.outputDatasetTag = 'Run'+inputFiles.split('Run')[1].split('UL18')[0]+'UL18PFNanoAOD_jetObservables_Skimmer_'+options.version+('EXT'+job.split('EXT')[1] if 'EXT' in job else '')		    
+    else: config.Data.outputDatasetTag = 'Run'+inputFiles.split('Run')[1].split('AOD')[0]+'AOD_jetObservables_Skimmer_'+options.version+('EXT'+job.split('EXT')[1] if 'EXT' in job else '')
+
     print 'Submitting ' + config.General.requestName + ', dataset = ' + job
     print 'Configuration :'
     print config
@@ -157,8 +152,8 @@ if __name__ == '__main__':
             )
     parser.add_option(
             "-y", "--year",
-            dest="year", default="2017",
-            help=("Version of output"),
+            dest="year", default='2017',
+            help=("Sample year"),
             )
     parser.add_option(
             "-s", "--selection",
@@ -182,12 +177,13 @@ if __name__ == '__main__':
 
     processingSamples = {}
     for sam in dictSamples:
-        if sam.startswith( options.datasets ) | options.datasets.startswith('all'):
+        if 'SingleMuon' in sam or sam.startswith( options.datasets ) | options.datasets.startswith('all'):
             if checkDict( sam, dictSamples )['selection'] != options.selection: continue
-            if sam.startswith(('JetHT', 'SingleMuon')):
+            if 'SingleMuon' in sam or sam.startswith(('JetHT', 'SingleMuon')):
                 for iera in checkDict( sam, dictSamples )[options.year]['nanoAOD']:
                     processingSamples[ sam+'Run'+options.year+iera ] = [ checkDict( sam, dictSamples )[options.year]['nanoAOD'][iera], 1 ]
                     options.runEra = iera
+                    print (iera,options.runEra)
             else:
                 tmpList = checkDict( sam, dictSamples )[options.year]['nanoAOD']
                 processingSamples[ sam ] = [ tmpList[0], 1 ]

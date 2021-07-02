@@ -12,14 +12,8 @@ from PhysicsTools.NanoAODTools.postprocessing.framework.eventloop import Module
 
 #this takes care of converting the input files from CRAB
 from PhysicsTools.NanoAODTools.postprocessing.framework.crabhelper import inputFiles,runsAndLumis
-
-from PhysicsTools.NanoAODTools.postprocessing.modules.common.puWeightProducer import puAutoWeight_2016, puAutoWeight_2017, puAutoWeight_2018
-from PhysicsTools.NanoAODTools.postprocessing.modules.btv.btagSFProducer import btagSF2016, btagSF2017, btagSF2018
-
-from PhysicsTools.NanoAODTools.postprocessing.modules.common.puWeightProducer import puWeightProducer, puAutoWeight_2016, puAutoWeight_UL2017, puAutoWeight_UL2018
-
-from PhysicsTools.NanoAODTools.postprocessing.modules.btv.btagSFProducer import btagSF2016, btagSF2017, btagSF2018
-
+from PhysicsTools.NanoAODTools.postprocessing.modules.btv.btagSFProducer import btagSF2016, btagSF2017, btagSF2018, btagSF_UL2016, btagSF_UL2017, btagSF_UL2018
+from PhysicsTools.NanoAODTools.postprocessing.modules.common.puWeightProducer import puWeightProducer, puAutoWeight_UL2017, puAutoWeight_UL2018
 from PhysicsTools.NanoAODTools.postprocessing.modules.jme.jetmetHelperRun2 import *
 
 import argparse
@@ -65,7 +59,7 @@ parser.add_argument(
     '--year',
     action="store",
     help="year of data",
-    choices=["2016", "2017", "2018"],
+    choices=["2017", "2018"],
     default="2017",
     required=False
 )
@@ -81,7 +75,9 @@ args = parser.parse_args(sys.argv[1:])
 if args.sample.startswith(('/EGamma', '/Single', 'EGamma', 'Single', 'UL16_Single', '/UL16_Single', 'UL17_Single', '/UL17_Single', 'UL18_Single', '/UL18_Single', '/JetHT', 'JetHT', '/UL17_Jet', 'UL17_Jet' )) or ('EGamma' in args.iFile or 'SingleMuon' in args.iFile or ('JetHT' in args.iFile)):
     isMC = False
     print "sample is data"
-else: isMC = True
+else: 
+    isMC = True
+    print "sample is MC"
 
 ### General selections:
 PV = "(PV_npvsGood>0)"
@@ -98,11 +94,13 @@ else:
 
 cuts = PV + " && " + METFilters + " && " + Triggers
 
-systSources = ['_jesTotal', '_jer', '_puWeight'] if isMC else []   ######### NEEDS TO BE REVIEWED FOR WTOP
-if args.selection.startswith('dijet'):
-    systSources = [ '_jesTotal', '_jer', '_puWeight', '_isrWeight', '_fsrWeight', '_pdfWeight' ] if args.sample.startswith('QCD_HT') else []
-
-
+#systSources = ['_jesTotal', '_jer', '_puWeight'] if isMC else []   ######### NEEDS TO BE REVIEWED FOR WTOP
+#if args.selection.startswith('dijet'):
+if isMC:
+    systSources =  [ '_jesTotal', '_jer', '_puWeight', '_isrWeight', '_fsrWeight', '_pdfWeight' ]  if ("TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8" in args.sample or "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8" in args.iFile or "TTJets_TuneCP5_13TeV-amcatnloFXFX-pythia8" in args.sample or "TTJets_TuneCP5_13TeV-amcatnloFXFX-pythia8" in args.iFile)  else ['_jesTotal', '_jer', '_puWeight']
+    print (systSources)
+else: 
+    systSources=[]
 ### Lepton scale factors
 LeptonSF = {
 
@@ -140,14 +138,12 @@ if isMC:
         modulesToRun.append( puAutoWeight_UL2018() )
         if not args.selection.startswith('dijet'):
             print "###Running with btag SF calc.###"
-            modulesToRun.append( btagSF2018() )
+            modulesToRun.append( btagSF_UL2018() )
     if args.year=='2017':
+        modulesToRun.append( puAutoWeight_UL2017() )
         if not args.selection.startswith('dijet'):
             print "###Running with btag SF calc.###"
-            modulesToRun.append( puAutoWeight_UL2017() )
-            modulesToRun.append( btagSF2017() )
-        else:
-            modulesToRun.append( puWeightProducer( "auto", os.environ['CMSSW_BASE']+"/src/jetObservables/Skimmer/data/pileup/pileupForDijet_UL2017.root", "pu_mc", "pileup", verbose=False) )
+            modulesToRun.append( btagSF_UL2017() )
     if args.year=='2016':
         modulesToRun.append( puAutoWeight_2016() )
         print "Running with btag SF calc."
