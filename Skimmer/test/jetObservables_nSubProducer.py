@@ -72,6 +72,17 @@ parser.add_argument(
     default="Wtop",
     required=False
 )
+parser.add_argument(
+    '--onlyUnc',
+    action="store",
+    default='',
+    help="Run only specific uncertainty variations"
+)
+parser.add_argument(
+    '--onlyTrees',
+    action="store_true",
+    help="Do not save histograms, only trees"
+)
 args = parser.parse_args(sys.argv[1:])
 if args.sample.startswith(('/EGamma', '/Single', 'EGamma', 'Single', 'UL16_Single', '/UL16_Single', 'UL17_Single', '/UL17_Single', 'UL18_Single', '/UL18_Single', '/JetHT', 'JetHT', '/UL17_Jet', 'UL17_Jet' )) or ('EGamma' in args.iFile or 'SingleMuon' in args.iFile or ('JetHT' in args.iFile)):
     isMC = False
@@ -95,7 +106,9 @@ cuts = PV + " && " + METFilters + " && " + Triggers
 
 systSources = ['_jesTotal', '_jer', '_puWeight'] if isMC else []   ######### NEEDS TO BE REVIEWED FOR WTOP
 if args.selection.startswith('dijet'):
-    systSources = [ '_jesTotal', '_jer', '_puWeight', '_isrWeight', '_fsrWeight', '_pdfWeight' ] if args.sample.startswith('QCD_HT') else []
+    #systSources = [ '_puWeight', '_isrWeight', '_fsrWeight', '_pdfWeight' ] if args.sample.startswith('QCD_HT') else []
+    systSources = [ ] #'_jesTotal', '_jer', '_puWeight', '_isrWeight', '_fsrWeight', '_pdfWeight' ] if args.sample.startswith('QCD_HT') else []
+if args.onlyUnc: sysSources = [ args.onlyUnc ]
 
 
 ### Lepton scale factors
@@ -151,7 +164,7 @@ if isMC:
 # our module
 if args.selection.startswith('dijet'):
     from jetObservables.Skimmer.nSubProducer_dijetSel import nSubProd
-    modulesToRun.append( nSubProd( sysSource=systSources, isMC=isMC, year=args.year ) )
+    modulesToRun.append( nSubProd( sysSource=systSources, isMC=isMC, year=args.year, onlyUnc=args.onlyUnc, onlyTrees=args.onlyTrees ) )
 else:
     from jetObservables.Skimmer.nSubProducer_WtopSel import nSubProd
     modulesToRun.append( nSubProd( sysSource=systSources, leptonSF=LeptonSF[args.year], isMC=isMC ) )

@@ -11,10 +11,12 @@ from PhysicsTools.NanoAODTools.postprocessing.tools import *
 
 class nSubProd(Module):
 
-    def __init__(self, sysSource=[], year='2017', isMC=True):
+    def __init__(self, sysSource=[], year='2017', isMC=True, onlyUnc='', onlyTrees=False):
         self.writeHistFile=True
         self.year = year
         self.isMC = isMC
+        self.onlyUnc = onlyUnc
+        self.onlyTrees = onlyTrees
 
         self.recoLevel=0
         self.fakes=0
@@ -141,6 +143,7 @@ class nSubProd(Module):
 
         ### Uncerstinties
         self.sysSource = ['_nom'] + [ isys+i for i in [ 'Up', 'Down' ] for isys in sysSource if not isys.endswith('nom') ]
+        if onlyUnc: self.sysSource = [ onlyUnc+i for i in [ 'Up', 'Down' ] ]
         self.sysWeightList = ( '_pu', '_pdf', '_ps', '_isr', '_fsr' )
 
     #############################################################################
@@ -149,77 +152,79 @@ class nSubProd(Module):
 
         tauBins = 100
 
-        ### Booking histograms
-        self.addObject( ROOT.TH1F('cutflow_test',   ';Categories',   12, 0, 12) )
-        self.addObject( ROOT.TH1F('PUweight',   ';PUWeight',   20, 0, 2) )
-        self.addObject( ROOT.TH1F('Btagweight',   ';BtagWeight',   25, 0, 2) )
-        if not self.isMC:
-            for isel in [ '_only'+x+'_dijetSel' for x in self.triggerTable  ]:
-                self.addObject( ROOT.TH1F('nPVs'+isel,   ';number of PVs',   100, 0, 100) )
-                self.addP4Hists( 'LeadJetAK8', isel )
+        if not self.onlyTrees:
+            ### Booking histograms
+            selList = ([ '_'+x+'_dijetSel' for x in self.triggerTable  ] + [ '_'+x+'_weight_dijetSel' for x in self.triggerTable  ]) if not self.isMC else [ '_dijetSel' ]
+            if not self.onlyUnc:
+                self.addObject( ROOT.TH1F('cutflow_test',   ';Categories',   12, 0, 12) )
+                self.addObject( ROOT.TH1F('PUweight',   ';PUWeight',   20, 0, 2) )
+                self.addObject( ROOT.TH1F('Btagweight',   ';BtagWeight',   25, 0, 2) )
+                if not self.isMC:
+                    for isel in [ '_only'+x+'_dijetSel' for x in self.triggerTable  ]:
+                        self.addObject( ROOT.TH1F('nPVs'+isel,   ';number of PVs',   100, 0, 100) )
+                        self.addP4Hists( 'LeadJetAK8', isel )
 
-        #### general selection
-        selList = ([ '_'+x+'_dijetSel' for x in self.triggerTable  ] + [ '_'+x+'_weight_dijetSel' for x in self.triggerTable  ]) if not self.isMC else [ '_dijetSel' ]
-        for isel in [ '_noSelnoWeight', '_noSel' ] + selList:
-            self.addObject( ROOT.TH1F('nPVs'+isel,   ';number of PVs',   100, 0, 100) )
-            self.addObject( ROOT.TH1F('nleps'+isel,   ';number of leptons',   20, 0, 20) )
-            self.addP4Hists( 'muons', isel )
-            self.addP4Hists( 'eles', isel )
-            self.addObject( ROOT.TH1F('nAK8jets'+isel,   ';number of AK8 jets',   20, 0, 20) )
-            self.addP4Hists( 'AK8jets', isel )
-            self.addObject( ROOT.TH1F('recoPtAsym'+isel,   '; pt Asymmetry', 100, 0, 1.) )
-            self.addObject( ROOT.TH1F('recoDeltaPhi'+isel,   '; #Delta #Phi(j,j)', 100, 0, 5) )
+                #### general selection
+                for isel in [ '_noSelnoWeight', '_noSel' ] + selList:
+                    self.addObject( ROOT.TH1F('nPVs'+isel,   ';number of PVs',   100, 0, 100) )
+                    self.addObject( ROOT.TH1F('nleps'+isel,   ';number of leptons',   20, 0, 20) )
+                    self.addP4Hists( 'muons', isel )
+                    self.addP4Hists( 'eles', isel )
+                    self.addObject( ROOT.TH1F('nAK8jets'+isel,   ';number of AK8 jets',   20, 0, 20) )
+                    self.addP4Hists( 'AK8jets', isel )
+                    self.addObject( ROOT.TH1F('recoPtAsym'+isel,   '; pt Asymmetry', 100, 0, 1.) )
+                    self.addObject( ROOT.TH1F('recoDeltaPhi'+isel,   '; #Delta #Phi(j,j)', 100, 0, 5) )
 
-            self.addObject( ROOT.TH1F('leadAK8JetMatched'+isel, ';AK8 reco jet SD mass matched'+isel+' [GeV]', 500, 0, 500) )
+                    self.addObject( ROOT.TH1F('leadAK8JetMatched'+isel, ';AK8 reco jet SD mass matched'+isel+' [GeV]', 500, 0, 500) )
 
-        if self.isMC:
-            for isel in [ '_noSel' ] + selList :
-                self.addObject( ROOT.TH1F('ngenleps'+isel,   ';number of gen leptons',   20, 0, 20) )
-                self.addP4Hists( 'genmuons', isel )
-                self.addP4Hists( 'geneles', isel )
-                self.addObject( ROOT.TH1F('ngenAK8jets'+isel,   ';number of AK8 genjets',   20, 0, 20) )
-                self.addP4Hists( 'AK8genjets', isel )
-                self.addObject( ROOT.TH1F('genPtAsym'+isel,   '; pt Asymmetry', 100, 0, 1.) )
-                self.addObject( ROOT.TH1F('genDeltaPhi'+isel,   '; #Delta #Phi(j,j)', 100, 0, 5) )
+                if self.isMC:
+                    for isel in [ '_noSel' ] + selList :
+                        self.addObject( ROOT.TH1F('ngenleps'+isel,   ';number of gen leptons',   20, 0, 20) )
+                        self.addP4Hists( 'genmuons', isel )
+                        self.addP4Hists( 'geneles', isel )
+                        self.addObject( ROOT.TH1F('ngenAK8jets'+isel,   ';number of AK8 genjets',   20, 0, 20) )
+                        self.addP4Hists( 'AK8genjets', isel )
+                        self.addObject( ROOT.TH1F('genPtAsym'+isel,   '; pt Asymmetry', 100, 0, 1.) )
+                        self.addObject( ROOT.TH1F('genDeltaPhi'+isel,   '; #Delta #Phi(j,j)', 100, 0, 5) )
 
 
-        for isel in selList:
-            for iJ in self.nJet:
-                #self.addP4Hists( 'uforeco'+iJ, isel )
-                #self.addP4Hists( 'ufogen'+iJ, isel )
-                self.addP4Hists( 'reco'+iJ+'_sortedPt', isel )
-                if self.isMC: self.addP4Hists( 'gen'+iJ+'_sortedPt', isel )
-                for itype in ( [ 'gen', 'missgen', 'accepgen', 'reco', 'fakereco', 'truereco' ] if self.isMC else [ 'reco' ] ):
+            for isel in selList:
+                for iJ in self.nJet:
+                    #self.addP4Hists( 'uforeco'+iJ, isel )
+                    #self.addP4Hists( 'ufogen'+iJ, isel )
+                    self.addP4Hists( 'reco'+iJ+'_sortedPt', isel )
+                    if self.isMC: self.addP4Hists( 'gen'+iJ+'_sortedPt', isel )
+                    for itype in ( [ 'gen', 'missgen', 'accepgen', 'reco', 'fakereco', 'truereco' ] if self.isMC else [ 'reco' ] ):
 
-                    if itype.endswith('reco'):
+                        if itype.endswith('reco'):
 
-                        for sysUnc in self.sysSource:
-                            self.addP4Hists( itype+iJ, sysUnc+isel )
-                            self.addObject( ROOT.TH1F(itype+iJ+'_tau21'+sysUnc+isel, ';AK8 '+itype+' jet #tau_{21}', tauBins, 0, 1) )
-                            self.addObject( ROOT.TH1F(itype+iJ+'_tau32'+sysUnc+isel, ';AK8 '+itype+' jet #tau_{32}', tauBins, 0, 1) )
+                            for sysUnc in self.sysSource:
+                                self.addP4Hists( itype+iJ, sysUnc+isel )
+                                self.addObject( ROOT.TH1F(itype+iJ+'_tau21'+sysUnc+isel, ';AK8 '+itype+' jet #tau_{21}', tauBins, 0, 1) )
+                                self.addObject( ROOT.TH1F(itype+iJ+'_tau32'+sysUnc+isel, ';AK8 '+itype+' jet #tau_{32}', tauBins, 0, 1) )
 
-                            if itype.startswith('truereco') and self.isMC:
-                                self.addObject( ROOT.TH2F('resp'+iJ+'_tau21'+sysUnc+isel, ';AK8 accepgen jet #tau_{21};AK8 truereco jet #tau_{21}', tauBins, 0, 1, tauBins, 0, 1) )
-                                self.addObject( ROOT.TH2F('resp'+iJ+'_tau32'+sysUnc+isel, ';AK8 accepgen jet #tau_{32};AK8 truereco jet #tau_{32}', tauBins, 0, 1, tauBins, 0, 1) )
-                                if sysUnc.endswith('nom'):
-                                    self.addObject( ROOT.TH1F('resol'+iJ+'_pt'+isel, ';AK8 reco/gen jet pt', 100, 0, 2) )
-                                    self.addObject( ROOT.TH1F('resol'+iJ+'_sdmass'+isel, ';AK8 reco/gen jet SD mass', 100, 0, 2) )
-                                    self.addObject( ROOT.TH1F('resol'+iJ+'_tau21'+isel, ';AK8 reco/gen jet #tau_{21}', 100, 0, 2) )
-                                    self.addObject( ROOT.TH1F('resol'+iJ+'_tau32'+isel, ';AK8 reco/gen jet #tau_{32}', 100, 0, 2) )
+                                if itype.startswith('truereco') and self.isMC:
+                                    self.addObject( ROOT.TH2F('resp'+iJ+'_tau21'+sysUnc+isel, ';AK8 accepgen jet #tau_{21};AK8 truereco jet #tau_{21}', tauBins, 0, 1, tauBins, 0, 1) )
+                                    self.addObject( ROOT.TH2F('resp'+iJ+'_tau32'+sysUnc+isel, ';AK8 accepgen jet #tau_{32};AK8 truereco jet #tau_{32}', tauBins, 0, 1, tauBins, 0, 1) )
+                                    if sysUnc.endswith('nom'):
+                                        self.addObject( ROOT.TH1F('resol'+iJ+'_pt'+isel, ';AK8 reco/gen jet pt', 100, 0, 2) )
+                                        self.addObject( ROOT.TH1F('resol'+iJ+'_sdmass'+isel, ';AK8 reco/gen jet SD mass', 100, 0, 2) )
+                                        self.addObject( ROOT.TH1F('resol'+iJ+'_tau21'+isel, ';AK8 reco/gen jet #tau_{21}', 100, 0, 2) )
+                                        self.addObject( ROOT.TH1F('resol'+iJ+'_tau32'+isel, ';AK8 reco/gen jet #tau_{32}', 100, 0, 2) )
+
+                                for x, y in self.nSub_labels.items():
+                                    self.addObject( ROOT.TH1F(itype+iJ+x+sysUnc+isel, ';AK8 '+itype+' jet #tau', y[1], 0, y[0] ) )
+                                    if itype.startswith('reco') and self.isMC:
+                                        self.addObject( ROOT.TH2F('resp'+iJ+x+sysUnc+isel, ';AK8 gen jet '+x+';AK8 reco jet '+x, y[1], 0, y[0], y[1], 0, y[0] ) )
+                                        if sysUnc.endswith('nom'): self.addObject( ROOT.TH1F('resol'+iJ+x+isel, ';AK8 reco/gen jet '+x, 200, 0, 2) )
+                        else:
+
+                            self.addP4Hists( itype+iJ, isel )
+                            self.addObject( ROOT.TH1F(itype+iJ+'_tau21'+isel, ';AK8 '+itype+' jet #tau_{21}', tauBins, 0, 1) )
+                            self.addObject( ROOT.TH1F(itype+iJ+'_tau32'+isel, ';AK8 '+itype+' jet #tau_{32}', tauBins, 0, 1) )
 
                             for x, y in self.nSub_labels.items():
-                                self.addObject( ROOT.TH1F(itype+iJ+x+sysUnc+isel, ';AK8 '+itype+' jet #tau', y[1], 0, y[0] ) )
-                                if itype.startswith('reco') and self.isMC:
-                                    self.addObject( ROOT.TH2F('resp'+iJ+x+sysUnc+isel, ';AK8 gen jet '+x+';AK8 reco jet '+x, y[1], 0, y[0], y[1], 0, y[0] ) )
-                                    if sysUnc.endswith('nom'): self.addObject( ROOT.TH1F('resol'+iJ+x+isel, ';AK8 reco/gen jet '+x, 200, 0, 2) )
-                    else:
-
-                        self.addP4Hists( itype+iJ, isel )
-                        self.addObject( ROOT.TH1F(itype+iJ+'_tau21'+isel, ';AK8 '+itype+' jet #tau_{21}', tauBins, 0, 1) )
-                        self.addObject( ROOT.TH1F(itype+iJ+'_tau32'+isel, ';AK8 '+itype+' jet #tau_{32}', tauBins, 0, 1) )
-
-                        for x, y in self.nSub_labels.items():
-                            self.addObject( ROOT.TH1F(itype+iJ+x+isel, ';AK8 '+itype+' jet '+x, y[1], 0, y[0] ) )
+                                self.addObject( ROOT.TH1F(itype+iJ+x+isel, ';AK8 '+itype+' jet '+x, y[1], 0, y[0] ) )
 
 
     #############################################################################
@@ -233,65 +238,68 @@ class nSubProd(Module):
     #############################################################################
     def beginFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):
 
-        tmp = inputFile.Get('Runs')
+        #tmp = inputFile.Get('Runs')
         #for i in tmp.LHEPdfSumw: print(i)
 
-        self.out = wrappedOutputTree
-        #self.out.branch('triggerWeight',  "F")
-        self.out.branch( 'totalWeight', "F" )
-        self.out.branch( 'pdfWeightUp', "F" )
-        self.out.branch( 'isrWeightUp', "F" )
-        self.out.branch( 'fsrWeightUp', "F" )
-        self.out.branch( 'puWeightUp', "F" )
-        self.out.branch( 'pdfWeightDown', "F" )
-        self.out.branch( 'isrWeightDown', "F" )
-        self.out.branch( 'fsrWeightDown', "F" )
-        self.out.branch( 'puWeightDown', "F" )
-        self.out.branch('eventCategory',  "I")
+        if self.onlyTrees:
+            self.out = wrappedOutputTree
+            #self.out.branch('triggerWeight',  "F")
+            self.out.branch('eventCategory',  "I")
+            self.out.branch( 'totalWeight', "F" )
+            if not self.onlyUnc:
+                self.out.branch( 'pdfWeightUp', "F" )
+                self.out.branch( 'isrWeightUp', "F" )
+                self.out.branch( 'fsrWeightUp', "F" )
+                self.out.branch( 'puWeightUp', "F" )
+                self.out.branch( 'pdfWeightDown', "F" )
+                self.out.branch( 'isrWeightDown', "F" )
+                self.out.branch( 'fsrWeightDown', "F" )
+                self.out.branch( 'puWeightDown', "F" )
 
-        tmplist = [ 'selRecoJets'+sys for sys in self.sysSource if not sys.startswith(self.sysWeightList) ]
-        if self.isMC: tmplist.append( 'selGenJets' )
-        for iJ in tmplist:
-            self.out.branch('n'+iJ,  'I')  ### dummy for nanoAOD Tools
-            self.out.branch(iJ+'_pt',  'F', lenVar='n'+iJ)
-            self.out.branch(iJ+'_eta',  'F', lenVar='n'+iJ)
-            self.out.branch(iJ+'_phi',  'F', lenVar='n'+iJ)
-            self.out.branch(iJ+'_mass',  'F', lenVar='n'+iJ)
-            self.out.branch(iJ+'_Tau21',  'F', lenVar='n'+iJ)
-            self.out.branch(iJ+'_Tau32',  'F', lenVar='n'+iJ)
-            self.out.branch(iJ+'_SD_Tau21',  'F', lenVar='n'+iJ)
-            self.out.branch(iJ+'_SD_Tau32',  'F', lenVar='n'+iJ)
+            tmplist = [ 'selRecoJets'+sys for sys in self.sysSource if not sys.startswith(self.sysWeightList) ]
+            if self.isMC: tmplist.append( 'selGenJets' )
+            for iJ in tmplist:
+                self.out.branch('n'+iJ,  'I')  ### dummy for nanoAOD Tools
+                self.out.branch(iJ+'_pt',  'F', lenVar='n'+iJ)
+                self.out.branch(iJ+'_eta',  'F', lenVar='n'+iJ)
+                self.out.branch(iJ+'_phi',  'F', lenVar='n'+iJ)
+                self.out.branch(iJ+'_mass',  'F', lenVar='n'+iJ)
+                self.out.branch(iJ+'_Tau21',  'F', lenVar='n'+iJ)
+                self.out.branch(iJ+'_Tau32',  'F', lenVar='n'+iJ)
+                self.out.branch(iJ+'_SD_Tau21',  'F', lenVar='n'+iJ)
+                self.out.branch(iJ+'_SD_Tau32',  'F', lenVar='n'+iJ)
 
-            for x in self.nSub_labels:
-                self.out.branch(iJ+x, 'F', lenVar='n'+iJ )
-                self.out.branch(iJ+'SD'+x, 'F', lenVar='n'+iJ )
+                for x in self.nSub_labels:
+                    self.out.branch(iJ+x, 'F', lenVar='n'+iJ )
+                    self.out.branch(iJ+'SD'+x, 'F', lenVar='n'+iJ )
         pass
 
     #############################################################################
     def endFile(self, inputFile, outputFile, inputTree, wrappedOutputTree):
 
-        if self.isMC:
-            self.genLevel = self.response+self.miss
+        if not self.onlyTrees:
+            if self.isMC and not self.onlyUnc:
+                self.genLevel = self.response+self.miss
 
-            getattr( self, 'cutflow_test' ).SetBinContent( 1, self.recoLevel )
-            getattr( self, 'cutflow_test' ).GetXaxis().SetBinLabel( 1, "allReco" )
-            getattr( self, 'cutflow_test' ).SetBinContent( 2, self.response )
-            getattr( self, 'cutflow_test' ).GetXaxis().SetBinLabel( 2, "allTrueRecoAccepGen" )
-            getattr( self, 'cutflow_test' ).SetBinContent( 3, self.fakes )
-            getattr( self, 'cutflow_test' ).GetXaxis().SetBinLabel( 3, "allFakes" )
-            getattr( self, 'cutflow_test' ).SetBinContent( 4, self.miss )
-            getattr( self, 'cutflow_test' ).GetXaxis().SetBinLabel( 4, "allMiss" )
-            getattr( self, 'cutflow_test' ).SetBinContent( 5, self.genLevel )
-            getattr( self, 'cutflow_test' ).GetXaxis().SetBinLabel( 5, "allGen" )
+                getattr( self, 'cutflow_test' ).SetBinContent( 1, self.recoLevel )
+                getattr( self, 'cutflow_test' ).GetXaxis().SetBinLabel( 1, "allReco" )
+                getattr( self, 'cutflow_test' ).SetBinContent( 2, self.response )
+                getattr( self, 'cutflow_test' ).GetXaxis().SetBinLabel( 2, "allTrueRecoAccepGen" )
+                getattr( self, 'cutflow_test' ).SetBinContent( 3, self.fakes )
+                getattr( self, 'cutflow_test' ).GetXaxis().SetBinLabel( 3, "allFakes" )
+                getattr( self, 'cutflow_test' ).SetBinContent( 4, self.miss )
+                getattr( self, 'cutflow_test' ).GetXaxis().SetBinLabel( 4, "allMiss" )
+                getattr( self, 'cutflow_test' ).SetBinContent( 5, self.genLevel )
+                getattr( self, 'cutflow_test' ).GetXaxis().SetBinLabel( 5, "allGen" )
 
-            getattr( self, 'cutflow_test' ).SetBinContent( 7, self.ufo )
-            getattr( self, 'cutflow_test' ).GetXaxis().SetBinLabel( 7, "allUfo" )
-            getattr( self, 'cutflow_test' ).SetBinContent( 8, self.ufoResponse )
-            getattr( self, 'cutflow_test' ).GetXaxis().SetBinLabel( 8, "ufoResponse" )
-            getattr( self, 'cutflow_test' ).SetBinContent( 9, self.ufoFake )
-            getattr( self, 'cutflow_test' ).GetXaxis().SetBinLabel( 9, "ufoFake" )
-            getattr( self, 'cutflow_test' ).SetBinContent( 10, self.ufoMiss )
-            getattr( self, 'cutflow_test' ).GetXaxis().SetBinLabel( 10, "ufoMiss" )
+                getattr( self, 'cutflow_test' ).SetBinContent( 7, self.ufo )
+                getattr( self, 'cutflow_test' ).GetXaxis().SetBinLabel( 7, "allUfo" )
+                getattr( self, 'cutflow_test' ).SetBinContent( 8, self.ufoResponse )
+                getattr( self, 'cutflow_test' ).GetXaxis().SetBinLabel( 8, "ufoResponse" )
+                getattr( self, 'cutflow_test' ).SetBinContent( 9, self.ufoFake )
+                getattr( self, 'cutflow_test' ).GetXaxis().SetBinLabel( 9, "ufoFake" )
+                getattr( self, 'cutflow_test' ).SetBinContent( 10, self.ufoMiss )
+                getattr( self, 'cutflow_test' ).GetXaxis().SetBinLabel( 10, "ufoMiss" )
 
 
 
@@ -326,24 +334,26 @@ class nSubProd(Module):
 
                     tmpRecoJets[sys][0] = self.createNsubBasis( selRecoJets[sys][0], event, 'PFCands' )
                     tmpRecoJets[sys][1] = self.createNsubBasis( selRecoJets[sys][1], event, 'PFCands' )
-                    getattr( self, 'recoJet1_sortedPt_pt'+iRecoSel['_nom'] ).Fill( getattr(tmpRecoJets[sys][0]['jet'], 'pt_nom' ), self.totalWeight )
-                    getattr( self, 'recoJet1_sortedPt_eta'+iRecoSel['_nom'] ).Fill( getattr(tmpRecoJets[sys][0]['jet'], 'eta' ), self.totalWeight )
-                    getattr( self, 'recoJet1_sortedPt_phi'+iRecoSel['_nom'] ).Fill( getattr(tmpRecoJets[sys][0]['jet'], 'phi' ), self.totalWeight )
-                    getattr( self, 'recoJet1_sortedPt_mass'+iRecoSel['_nom'] ).Fill( getattr(tmpRecoJets[sys][0]['jet'], 'msoftdrop_nom' ), self.totalWeight )
-                    getattr( self, 'recoJet2_sortedPt_pt'+iRecoSel['_nom'] ).Fill( getattr(tmpRecoJets[sys][1]['jet'], 'pt_nom' ), self.totalWeight )
-                    getattr( self, 'recoJet2_sortedPt_eta'+iRecoSel['_nom'] ).Fill( getattr(tmpRecoJets[sys][1]['jet'], 'eta' ), self.totalWeight )
-                    getattr( self, 'recoJet2_sortedPt_phi'+iRecoSel['_nom'] ).Fill( getattr(tmpRecoJets[sys][1]['jet'], 'phi' ), self.totalWeight )
-                    getattr( self, 'recoJet2_sortedPt_mass'+iRecoSel['_nom'] ).Fill( getattr(tmpRecoJets[sys][1]['jet'], 'msoftdrop_nom' ), self.totalWeight )
-                    if not self.isMC:
-                        tmpSel = iRecoSel['_nom'].replace('_dijet', '_weight_dijet')
-                        getattr( self, 'recoJet1_sortedPt_pt'+tmpSel ).Fill( getattr(tmpRecoJets[sys][0]['jet'], 'pt_nom' ), self.triggerWeight )
-                        getattr( self, 'recoJet1_sortedPt_eta'+tmpSel ).Fill( getattr(tmpRecoJets[sys][0]['jet'], 'eta' ), self.triggerWeight )
-                        getattr( self, 'recoJet1_sortedPt_phi'+tmpSel ).Fill( getattr(tmpRecoJets[sys][0]['jet'], 'phi' ), self.triggerWeight )
-                        getattr( self, 'recoJet1_sortedPt_mass'+tmpSel ).Fill( getattr(tmpRecoJets[sys][0]['jet'], 'msoftdrop_nom' ), self.triggerWeight )
-                        getattr( self, 'recoJet2_sortedPt_pt'+tmpSel ).Fill( getattr(tmpRecoJets[sys][1]['jet'], 'pt_nom' ), self.triggerWeight )
-                        getattr( self, 'recoJet2_sortedPt_eta'+tmpSel ).Fill( getattr(tmpRecoJets[sys][1]['jet'], 'eta' ), self.triggerWeight )
-                        getattr( self, 'recoJet2_sortedPt_phi'+tmpSel ).Fill( getattr(tmpRecoJets[sys][1]['jet'], 'phi' ), self.triggerWeight )
-                        getattr( self, 'recoJet2_sortedPt_mass'+tmpSel ).Fill( getattr(tmpRecoJets[sys][1]['jet'], 'msoftdrop_nom' ), self.triggerWeight )
+
+                    if not self.onlyTrees:
+                        getattr( self, 'recoJet1_sortedPt_pt'+iRecoSel['_nom'] ).Fill( getattr(tmpRecoJets[sys][0]['jet'], 'pt_nom' ), self.totalWeight )
+                        getattr( self, 'recoJet1_sortedPt_eta'+iRecoSel['_nom'] ).Fill( getattr(tmpRecoJets[sys][0]['jet'], 'eta' ), self.totalWeight )
+                        getattr( self, 'recoJet1_sortedPt_phi'+iRecoSel['_nom'] ).Fill( getattr(tmpRecoJets[sys][0]['jet'], 'phi' ), self.totalWeight )
+                        getattr( self, 'recoJet1_sortedPt_mass'+iRecoSel['_nom'] ).Fill( getattr(tmpRecoJets[sys][0]['jet'], 'msoftdrop_nom' ), self.totalWeight )
+                        getattr( self, 'recoJet2_sortedPt_pt'+iRecoSel['_nom'] ).Fill( getattr(tmpRecoJets[sys][1]['jet'], 'pt_nom' ), self.totalWeight )
+                        getattr( self, 'recoJet2_sortedPt_eta'+iRecoSel['_nom'] ).Fill( getattr(tmpRecoJets[sys][1]['jet'], 'eta' ), self.totalWeight )
+                        getattr( self, 'recoJet2_sortedPt_phi'+iRecoSel['_nom'] ).Fill( getattr(tmpRecoJets[sys][1]['jet'], 'phi' ), self.totalWeight )
+                        getattr( self, 'recoJet2_sortedPt_mass'+iRecoSel['_nom'] ).Fill( getattr(tmpRecoJets[sys][1]['jet'], 'msoftdrop_nom' ), self.totalWeight )
+                        if not self.isMC:
+                            tmpSel = iRecoSel['_nom'].replace('_dijet', '_weight_dijet')
+                            getattr( self, 'recoJet1_sortedPt_pt'+tmpSel ).Fill( getattr(tmpRecoJets[sys][0]['jet'], 'pt_nom' ), self.triggerWeight )
+                            getattr( self, 'recoJet1_sortedPt_eta'+tmpSel ).Fill( getattr(tmpRecoJets[sys][0]['jet'], 'eta' ), self.triggerWeight )
+                            getattr( self, 'recoJet1_sortedPt_phi'+tmpSel ).Fill( getattr(tmpRecoJets[sys][0]['jet'], 'phi' ), self.triggerWeight )
+                            getattr( self, 'recoJet1_sortedPt_mass'+tmpSel ).Fill( getattr(tmpRecoJets[sys][0]['jet'], 'msoftdrop_nom' ), self.triggerWeight )
+                            getattr( self, 'recoJet2_sortedPt_pt'+tmpSel ).Fill( getattr(tmpRecoJets[sys][1]['jet'], 'pt_nom' ), self.triggerWeight )
+                            getattr( self, 'recoJet2_sortedPt_eta'+tmpSel ).Fill( getattr(tmpRecoJets[sys][1]['jet'], 'eta' ), self.triggerWeight )
+                            getattr( self, 'recoJet2_sortedPt_phi'+tmpSel ).Fill( getattr(tmpRecoJets[sys][1]['jet'], 'phi' ), self.triggerWeight )
+                            getattr( self, 'recoJet2_sortedPt_mass'+tmpSel ).Fill( getattr(tmpRecoJets[sys][1]['jet'], 'msoftdrop_nom' ), self.triggerWeight )
                 else:
 
                     if '_nom' in tmpRecoJets.keys():
@@ -388,47 +398,48 @@ class nSubProd(Module):
                         WEIGHT = event.genWeight * getattr( event, sys.split('_')[1] )
                 else: WEIGHT =  self.totalWeight
 
-                for iRJ,ireco in recoJet.items():
+                if not self.onlyTrees:
+                    for iRJ,ireco in recoJet.items():
 
-                    if ( getattr(ireco['jet'], 'pt'+( '_nom' if sys.startswith(self.sysWeightList) else sys ) ) > self.minLeadAK8JetPtDijet ):
+                        if ( getattr(ireco['jet'], 'pt'+( '_nom' if sys.startswith(self.sysWeightList) else sys ) ) > self.minLeadAK8JetPtDijet ):
 
-                        if sys.startswith(self.sysWeightList):
-                            getattr( self, 'reco'+iRJ+'_pt'+sys+iRecoSel[sys] ).Fill( getattr(ireco['jet'], 'pt_nom' ), WEIGHT )
-                            getattr( self, 'reco'+iRJ+'_mass'+sys+iRecoSel[sys] ).Fill( getattr(ireco['jet'], 'msoftdrop_nom' ), WEIGHT )
-                        else:
-                            getattr( self, 'reco'+iRJ+'_pt'+sys+iRecoSel[sys] ).Fill( getattr(ireco['jet'], 'pt'+sys ), WEIGHT )
-                            getattr( self, 'reco'+iRJ+'_mass'+sys+iRecoSel[sys] ).Fill( getattr(ireco['jet'], 'msoftdrop'+sys ), WEIGHT )
-                        getattr( self, 'reco'+iRJ+'_eta'+sys+iRecoSel[sys] ).Fill( getattr(ireco['jet'], 'eta'), WEIGHT )
-                        getattr( self, 'reco'+iRJ+'_phi'+sys+iRecoSel[sys] ).Fill( getattr(ireco['jet'], 'phi'), WEIGHT )
-                        getattr( self, 'reco'+iRJ+'_tau21'+sys+iRecoSel[sys] ).Fill( ireco['tau21'], WEIGHT )
-                        getattr( self, 'reco'+iRJ+'_tau32'+sys+iRecoSel[sys] ).Fill( ireco['tau32'], WEIGHT )
-                        getattr( self, 'recosd'+iRJ+'_tau21'+sys+iRecoSel[sys] ).Fill( ireco['sdtau21'], WEIGHT )
-                        getattr( self, 'recosd'+iRJ+'_tau32'+sys+iRecoSel[sys] ).Fill( ireco['sdtau32'], WEIGHT )
-                        for tauN in range(1, self.maxTau+1):
-                            getattr( self, 'reco'+iRJ+'_tau_0p5_'+str(tauN)+sys+iRecoSel[sys] ).Fill( ireco['0p5'+str(tauN)], WEIGHT )
-                            getattr( self, 'reco'+iRJ+'_tau_1_'+str(tauN)+sys+iRecoSel[sys] ).Fill( ireco['1'+str(tauN)], WEIGHT )
-                            getattr( self, 'reco'+iRJ+'_tau_2_'+str(tauN)+sys+iRecoSel[sys] ).Fill( ireco['2'+str(tauN)], WEIGHT )
-                            getattr( self, 'recosd'+iRJ+'_tau_0p5_'+str(tauN)+sys+iRecoSel[sys] ).Fill( ireco['sd0p5'+str(tauN)], WEIGHT )
-                            getattr( self, 'recosd'+iRJ+'_tau_1_'+str(tauN)+sys+iRecoSel[sys] ).Fill( ireco['sd1'+str(tauN)], WEIGHT )
-                            getattr( self, 'recosd'+iRJ+'_tau_2_'+str(tauN)+sys+iRecoSel[sys] ).Fill( ireco['sd2'+str(tauN)], WEIGHT )
-
-                        if not self.isMC:
-                            tmpSel = iRecoSel[sys].replace('_dijet', '_weight_dijet')
-                            getattr( self, 'reco'+iRJ+'_pt'+sys+tmpSel ).Fill( getattr(ireco['jet'], 'pt'+sys ), self.triggerWeight )
-                            getattr( self, 'reco'+iRJ+'_mass'+sys+tmpSel ).Fill( getattr(ireco['jet'], 'msoftdrop'+sys ), self.triggerWeight )
-                            getattr( self, 'reco'+iRJ+'_eta'+sys+tmpSel ).Fill( getattr(ireco['jet'], 'eta'), self.triggerWeight )
-                            getattr( self, 'reco'+iRJ+'_phi'+sys+tmpSel ).Fill( getattr(ireco['jet'], 'phi'), self.triggerWeight )
-                            getattr( self, 'reco'+iRJ+'_tau21'+sys+tmpSel ).Fill( ireco['tau21'], self.triggerWeight )
-                            getattr( self, 'reco'+iRJ+'_tau32'+sys+tmpSel ).Fill( ireco['tau32'], self.triggerWeight )
-                            getattr( self, 'recosd'+iRJ+'_tau21'+sys+tmpSel ).Fill( ireco['sdtau21'], self.triggerWeight )
-                            getattr( self, 'recosd'+iRJ+'_tau32'+sys+tmpSel ).Fill( ireco['sdtau32'], self.triggerWeight )
+                            if sys.startswith(self.sysWeightList):
+                                getattr( self, 'reco'+iRJ+'_pt'+sys+iRecoSel[sys] ).Fill( getattr(ireco['jet'], 'pt_nom' ), WEIGHT )
+                                getattr( self, 'reco'+iRJ+'_mass'+sys+iRecoSel[sys] ).Fill( getattr(ireco['jet'], 'msoftdrop_nom' ), WEIGHT )
+                            else:
+                                getattr( self, 'reco'+iRJ+'_pt'+sys+iRecoSel[sys] ).Fill( getattr(ireco['jet'], 'pt'+sys ), WEIGHT )
+                                getattr( self, 'reco'+iRJ+'_mass'+sys+iRecoSel[sys] ).Fill( getattr(ireco['jet'], 'msoftdrop'+sys ), WEIGHT )
+                            getattr( self, 'reco'+iRJ+'_eta'+sys+iRecoSel[sys] ).Fill( getattr(ireco['jet'], 'eta'), WEIGHT )
+                            getattr( self, 'reco'+iRJ+'_phi'+sys+iRecoSel[sys] ).Fill( getattr(ireco['jet'], 'phi'), WEIGHT )
+                            getattr( self, 'reco'+iRJ+'_tau21'+sys+iRecoSel[sys] ).Fill( ireco['tau21'], WEIGHT )
+                            getattr( self, 'reco'+iRJ+'_tau32'+sys+iRecoSel[sys] ).Fill( ireco['tau32'], WEIGHT )
+                            getattr( self, 'recosd'+iRJ+'_tau21'+sys+iRecoSel[sys] ).Fill( ireco['sdtau21'], WEIGHT )
+                            getattr( self, 'recosd'+iRJ+'_tau32'+sys+iRecoSel[sys] ).Fill( ireco['sdtau32'], WEIGHT )
                             for tauN in range(1, self.maxTau+1):
-                                getattr( self, 'reco'+iRJ+'_tau_0p5_'+str(tauN)+sys+tmpSel ).Fill( ireco['0p5'+str(tauN)], self.triggerWeight )
-                                getattr( self, 'reco'+iRJ+'_tau_1_'+str(tauN)+sys+tmpSel ).Fill( ireco['1'+str(tauN)], self.triggerWeight )
-                                getattr( self, 'reco'+iRJ+'_tau_2_'+str(tauN)+sys+tmpSel ).Fill( ireco['2'+str(tauN)], self.triggerWeight )
-                                getattr( self, 'recosd'+iRJ+'_tau_0p5_'+str(tauN)+sys+tmpSel ).Fill( ireco['sd0p5'+str(tauN)], self.triggerWeight )
-                                getattr( self, 'recosd'+iRJ+'_tau_1_'+str(tauN)+sys+tmpSel ).Fill( ireco['sd1'+str(tauN)], self.triggerWeight )
-                                getattr( self, 'recosd'+iRJ+'_tau_2_'+str(tauN)+sys+tmpSel ).Fill( ireco['sd2'+str(tauN)], self.triggerWeight )
+                                getattr( self, 'reco'+iRJ+'_tau_0p5_'+str(tauN)+sys+iRecoSel[sys] ).Fill( ireco['0p5'+str(tauN)], WEIGHT )
+                                getattr( self, 'reco'+iRJ+'_tau_1_'+str(tauN)+sys+iRecoSel[sys] ).Fill( ireco['1'+str(tauN)], WEIGHT )
+                                getattr( self, 'reco'+iRJ+'_tau_2_'+str(tauN)+sys+iRecoSel[sys] ).Fill( ireco['2'+str(tauN)], WEIGHT )
+                                getattr( self, 'recosd'+iRJ+'_tau_0p5_'+str(tauN)+sys+iRecoSel[sys] ).Fill( ireco['sd0p5'+str(tauN)], WEIGHT )
+                                getattr( self, 'recosd'+iRJ+'_tau_1_'+str(tauN)+sys+iRecoSel[sys] ).Fill( ireco['sd1'+str(tauN)], WEIGHT )
+                                getattr( self, 'recosd'+iRJ+'_tau_2_'+str(tauN)+sys+iRecoSel[sys] ).Fill( ireco['sd2'+str(tauN)], WEIGHT )
+
+                            if not self.isMC:
+                                tmpSel = iRecoSel[sys].replace('_dijet', '_weight_dijet')
+                                getattr( self, 'reco'+iRJ+'_pt'+sys+tmpSel ).Fill( getattr(ireco['jet'], 'pt'+sys ), self.triggerWeight )
+                                getattr( self, 'reco'+iRJ+'_mass'+sys+tmpSel ).Fill( getattr(ireco['jet'], 'msoftdrop'+sys ), self.triggerWeight )
+                                getattr( self, 'reco'+iRJ+'_eta'+sys+tmpSel ).Fill( getattr(ireco['jet'], 'eta'), self.triggerWeight )
+                                getattr( self, 'reco'+iRJ+'_phi'+sys+tmpSel ).Fill( getattr(ireco['jet'], 'phi'), self.triggerWeight )
+                                getattr( self, 'reco'+iRJ+'_tau21'+sys+tmpSel ).Fill( ireco['tau21'], self.triggerWeight )
+                                getattr( self, 'reco'+iRJ+'_tau32'+sys+tmpSel ).Fill( ireco['tau32'], self.triggerWeight )
+                                getattr( self, 'recosd'+iRJ+'_tau21'+sys+tmpSel ).Fill( ireco['sdtau21'], self.triggerWeight )
+                                getattr( self, 'recosd'+iRJ+'_tau32'+sys+tmpSel ).Fill( ireco['sdtau32'], self.triggerWeight )
+                                for tauN in range(1, self.maxTau+1):
+                                    getattr( self, 'reco'+iRJ+'_tau_0p5_'+str(tauN)+sys+tmpSel ).Fill( ireco['0p5'+str(tauN)], self.triggerWeight )
+                                    getattr( self, 'reco'+iRJ+'_tau_1_'+str(tauN)+sys+tmpSel ).Fill( ireco['1'+str(tauN)], self.triggerWeight )
+                                    getattr( self, 'reco'+iRJ+'_tau_2_'+str(tauN)+sys+tmpSel ).Fill( ireco['2'+str(tauN)], self.triggerWeight )
+                                    getattr( self, 'recosd'+iRJ+'_tau_0p5_'+str(tauN)+sys+tmpSel ).Fill( ireco['sd0p5'+str(tauN)], self.triggerWeight )
+                                    getattr( self, 'recosd'+iRJ+'_tau_1_'+str(tauN)+sys+tmpSel ).Fill( ireco['sd1'+str(tauN)], self.triggerWeight )
+                                    getattr( self, 'recosd'+iRJ+'_tau_2_'+str(tauN)+sys+tmpSel ).Fill( ireco['sd2'+str(tauN)], self.triggerWeight )
 
                 if self.isMC:
                     if passGenSel:  ##### go to matrix
@@ -450,7 +461,7 @@ class nSubProd(Module):
                             passGenSel=False
 
 
-                        if ( iGenSel==iRecoSel[sys] ):
+                        if ( iGenSel==iRecoSel[sys] ) and not self.onlyTrees:
 
                             for (iGJ,igen), (iRJ,ireco) in zip( genJet.items(), recoJet.items() ):
 
@@ -552,33 +563,35 @@ class nSubProd(Module):
                         self.fakes = self.fakes+1
                         self.eventCategory = 2
 
-                        for iRJ,ireco in recoJet.items():
+                        if not self.onlyTrees:
+                            for iRJ,ireco in recoJet.items():
 
-                            if ( getattr(ireco['jet'], 'pt'+(sys if not sys.startswith(self.sysWeightList) else '_nom')) > self.minLeadAK8JetPtDijet ):
+                                if ( getattr(ireco['jet'], 'pt'+(sys if not sys.startswith(self.sysWeightList) else '_nom')) > self.minLeadAK8JetPtDijet ):
 
-                                if sys.startswith(self.sysWeightList):
-                                    getattr( self, 'fakereco'+iRJ+'_pt'+sys+iRecoSel[sys] ).Fill( getattr(ireco['jet'], 'pt_nom' ), WEIGHT )
-                                    getattr( self, 'fakereco'+iRJ+'_mass'+sys+iRecoSel[sys] ).Fill( getattr(ireco['jet'], 'msoftdrop_nom' ), WEIGHT )
-                                else:
-                                    getattr( self, 'fakereco'+iRJ+'_pt'+sys+iRecoSel[sys] ).Fill( getattr(ireco['jet'], 'pt'+sys ), WEIGHT )
-                                    getattr( self, 'fakereco'+iRJ+'_mass'+sys+iRecoSel[sys] ).Fill( getattr(ireco['jet'], 'msoftdrop'+sys ), WEIGHT )
-                                getattr( self, 'fakereco'+iRJ+'_eta'+sys+iRecoSel[sys] ).Fill( getattr(ireco['jet'], 'eta'), WEIGHT )
-                                getattr( self, 'fakereco'+iRJ+'_phi'+sys+iRecoSel[sys] ).Fill( getattr(ireco['jet'], 'phi'), WEIGHT )
-                                getattr( self, 'fakereco'+iRJ+'_tau21'+sys+iRecoSel[sys] ).Fill( ireco['tau21'], WEIGHT )
-                                getattr( self, 'fakereco'+iRJ+'_tau32'+sys+iRecoSel[sys] ).Fill( ireco['tau32'], WEIGHT )
-                                getattr( self, 'fakerecosd'+iRJ+'_tau21'+sys+iRecoSel[sys] ).Fill( ireco['sdtau21'], WEIGHT )
-                                getattr( self, 'fakerecosd'+iRJ+'_tau32'+sys+iRecoSel[sys] ).Fill( ireco['sdtau32'], WEIGHT )
-                                for tauN in range(1, self.maxTau+1):
-                                    getattr( self, 'fakereco'+iRJ+'_tau_0p5_'+str(tauN)+sys+iRecoSel[sys] ).Fill( ireco['0p5'+str(tauN)], WEIGHT )
-                                    getattr( self, 'fakereco'+iRJ+'_tau_1_'+str(tauN)+sys+iRecoSel[sys] ).Fill( ireco['1'+str(tauN)], WEIGHT )
-                                    getattr( self, 'fakereco'+iRJ+'_tau_2_'+str(tauN)+sys+iRecoSel[sys] ).Fill( ireco['2'+str(tauN)], WEIGHT )
-                                    getattr( self, 'fakerecosd'+iRJ+'_tau_0p5_'+str(tauN)+sys+iRecoSel[sys] ).Fill( ireco['sd0p5'+str(tauN)], WEIGHT )
-                                    getattr( self, 'fakerecosd'+iRJ+'_tau_1_'+str(tauN)+sys+iRecoSel[sys] ).Fill( ireco['sd1'+str(tauN)], WEIGHT )
-                                    getattr( self, 'fakerecosd'+iRJ+'_tau_2_'+str(tauN)+sys+iRecoSel[sys] ).Fill( ireco['sd2'+str(tauN)], WEIGHT )
+                                    if sys.startswith(self.sysWeightList):
+                                        getattr( self, 'fakereco'+iRJ+'_pt'+sys+iRecoSel[sys] ).Fill( getattr(ireco['jet'], 'pt_nom' ), WEIGHT )
+                                        getattr( self, 'fakereco'+iRJ+'_mass'+sys+iRecoSel[sys] ).Fill( getattr(ireco['jet'], 'msoftdrop_nom' ), WEIGHT )
+                                    else:
+                                        getattr( self, 'fakereco'+iRJ+'_pt'+sys+iRecoSel[sys] ).Fill( getattr(ireco['jet'], 'pt'+sys ), WEIGHT )
+                                        getattr( self, 'fakereco'+iRJ+'_mass'+sys+iRecoSel[sys] ).Fill( getattr(ireco['jet'], 'msoftdrop'+sys ), WEIGHT )
+                                    getattr( self, 'fakereco'+iRJ+'_eta'+sys+iRecoSel[sys] ).Fill( getattr(ireco['jet'], 'eta'), WEIGHT )
+                                    getattr( self, 'fakereco'+iRJ+'_phi'+sys+iRecoSel[sys] ).Fill( getattr(ireco['jet'], 'phi'), WEIGHT )
+                                    getattr( self, 'fakereco'+iRJ+'_tau21'+sys+iRecoSel[sys] ).Fill( ireco['tau21'], WEIGHT )
+                                    getattr( self, 'fakereco'+iRJ+'_tau32'+sys+iRecoSel[sys] ).Fill( ireco['tau32'], WEIGHT )
+                                    getattr( self, 'fakerecosd'+iRJ+'_tau21'+sys+iRecoSel[sys] ).Fill( ireco['sdtau21'], WEIGHT )
+                                    getattr( self, 'fakerecosd'+iRJ+'_tau32'+sys+iRecoSel[sys] ).Fill( ireco['sdtau32'], WEIGHT )
+                                    for tauN in range(1, self.maxTau+1):
+                                        getattr( self, 'fakereco'+iRJ+'_tau_0p5_'+str(tauN)+sys+iRecoSel[sys] ).Fill( ireco['0p5'+str(tauN)], WEIGHT )
+                                        getattr( self, 'fakereco'+iRJ+'_tau_1_'+str(tauN)+sys+iRecoSel[sys] ).Fill( ireco['1'+str(tauN)], WEIGHT )
+                                        getattr( self, 'fakereco'+iRJ+'_tau_2_'+str(tauN)+sys+iRecoSel[sys] ).Fill( ireco['2'+str(tauN)], WEIGHT )
+                                        getattr( self, 'fakerecosd'+iRJ+'_tau_0p5_'+str(tauN)+sys+iRecoSel[sys] ).Fill( ireco['sd0p5'+str(tauN)], WEIGHT )
+                                        getattr( self, 'fakerecosd'+iRJ+'_tau_1_'+str(tauN)+sys+iRecoSel[sys] ).Fill( ireco['sd1'+str(tauN)], WEIGHT )
+                                        getattr( self, 'fakerecosd'+iRJ+'_tau_2_'+str(tauN)+sys+iRecoSel[sys] ).Fill( ireco['sd2'+str(tauN)], WEIGHT )
 
-                if not sys.startswith(self.sysWeightList): self.fillBranches( 'selRecoJets'+sys, recoJet )
+                if self.onlyTrees and not sys.startswith(self.sysWeightList): self.fillBranches( 'selRecoJets'+sys, recoJet )
 
-        if passGenSel and not passRecoSel['_nom'] :
+        #if passGenSel and ('_nom' in passRecoSel.keys()) and not passRecoSel['_nom'] :
+        if passGenSel and not self.onlyUnc.startswith(self.sysWeightList):
             #### Misses
             self.miss = self.miss+1
             self.eventCategory = 3
@@ -593,7 +606,7 @@ class nSubProd(Module):
                 genJet['Jet1'] = tmpGenJet2
                 genJet['Jet2'] = tmpGenJet1
 
-            if passGenSel:
+            if passGenSel and not self.onlyTrees:
 
                 for iGJ,igen in genJet.items():
 
@@ -636,18 +649,20 @@ class nSubProd(Module):
                 self.ufo = self.ufo+1
                 self.eventCategory = 10
 
-            self.fillBranches( 'selGenJets', genJet )
+            if self.onlyTrees: self.fillBranches( 'selGenJets', genJet )
 
-        self.out.fillBranch( 'totalWeight', self.totalWeight )
-        self.out.fillBranch( 'pdfWeightUp', self.pdfWeightUp )
-        self.out.fillBranch( 'isrWeightUp', self.isrWeightUp )
-        self.out.fillBranch( 'fsrWeightUp', self.fsrWeightUp )
-        self.out.fillBranch( 'pdfWeightDown', self.pdfWeightDown )
-        self.out.fillBranch( 'isrWeightDown', self.isrWeightDown )
-        self.out.fillBranch( 'fsrWeightDown', self.fsrWeightDown )
-        self.out.fillBranch( 'puWeightDown', event.puWeightDown if self.isMC else 1 )
-        self.out.fillBranch( 'puWeightUp', event.puWeightUp if self.isMC else 1 )
-        self.out.fillBranch( 'eventCategory', self.eventCategory )
+        if self.onlyTrees:
+            self.out.fillBranch( 'eventCategory', self.eventCategory )
+            self.out.fillBranch( 'totalWeight', self.totalWeight )
+            if not self.onlyUnc:
+                self.out.fillBranch( 'pdfWeightUp', self.pdfWeightUp )
+                self.out.fillBranch( 'isrWeightUp', self.isrWeightUp )
+                self.out.fillBranch( 'fsrWeightUp', self.fsrWeightUp )
+                self.out.fillBranch( 'pdfWeightDown', self.pdfWeightDown )
+                self.out.fillBranch( 'isrWeightDown', self.isrWeightDown )
+                self.out.fillBranch( 'fsrWeightDown', self.fsrWeightDown )
+                self.out.fillBranch( 'puWeightDown', event.puWeightDown if self.isMC else 1 )
+                self.out.fillBranch( 'puWeightUp', event.puWeightUp if self.isMC else 1 )
         return True
 
 
@@ -677,7 +692,7 @@ class nSubProd(Module):
         deltaPhi = {}
         iSel = {}
         for sys in self.sysSource:
-            if sys.startswith(self.sysWeightList): continue
+            if sys.startswith(self.sysWeightList): sys = '_nom'
             #### Basic AK8 jet selection
             recoAK8jets[sys] = [ x for x in AK8jets if getattr( x, 'pt'+sys ) > self.minAK8JetPt and abs(x.eta) < self.maxJetAK8Eta and (x.jetId >= 2)]
             recoAK8jets[sys].sort(key=lambda x:getattr( x, 'pt'+sys ),reverse=True)
@@ -700,7 +715,7 @@ class nSubProd(Module):
                     if ( getattr(event, 'HLT_'+itrigger)==1 ):
 
                         getattr( self, 'nPVs_only'+itrigger+'_dijetSel' ).Fill( getattr( event, 'PV_npvsGood') )
-                        if len(recoAK8jets['_nom'])>0:
+                        if len(recoAK8jets['_nom'])>0 and not self.onlyTrees:
                             getattr( self, 'LeadJetAK8_pt_only'+itrigger+'_dijetSel' ).Fill( recoAK8jets['_nom'][0].pt_nom )   ### pt_nom here to ensure data process
                             getattr( self, 'LeadJetAK8_eta_only'+itrigger+'_dijetSel' ).Fill( recoAK8jets['_nom'][0].eta )
                             getattr( self, 'LeadJetAK8_phi_only'+itrigger+'_dijetSel' ).Fill( recoAK8jets['_nom'][0].phi )
@@ -748,73 +763,74 @@ class nSubProd(Module):
         #### Weight #########
         if self.isMC:
             weight = event.puWeight * event.genWeight
-            getattr( self, 'PUweight' ).Fill( event.puWeight )
+            if not self.onlyTrees and not self.onlyUnc: getattr( self, 'PUweight' ).Fill( event.puWeight )
         else:
             weight = 1 #self.triggerWeight
         self.totalWeight = weight
         ##################################################
 
-        #### Checking no selection without weights
-        getattr( self, 'nPVs_noSelnoWeight' ).Fill( getattr( event, 'PV_npvsGood') )
-        getattr( self, 'nleps_noSelnoWeight' ).Fill( nleptons )
-        for imuon in recoMuons:
-            getattr( self, 'muons_pt_noSelnoWeight' ).Fill( imuon.pt )
-            getattr( self, 'muons_eta_noSelnoWeight' ).Fill( imuon.eta )
-            getattr( self, 'muons_phi_noSelnoWeight' ).Fill( imuon.phi )
-        for iele in recoElectrons:
-            getattr( self, 'eles_pt_noSelnoWeight' ).Fill( iele.pt )
-            getattr( self, 'eles_eta_noSelnoWeight' ).Fill( iele.eta )
-            getattr( self, 'eles_phi_noSelnoWeight' ).Fill( iele.phi )
-        getattr( self, 'nAK8jets_noSelnoWeight' ).Fill( len(recoAK8jets['_nom']) )
-        for ijet in recoAK8jets['_nom']:
-            getattr( self, 'AK8jets_pt_noSelnoWeight' ).Fill( ijet.pt_nom )
-            getattr( self, 'AK8jets_eta_noSelnoWeight' ).Fill( ijet.eta )
-            getattr( self, 'AK8jets_phi_noSelnoWeight' ).Fill( ijet.phi )
-            getattr( self, 'AK8jets_mass_noSelnoWeight' ).Fill( ijet.msoftdrop_nom )
-
-        #### Checking no selection with weights
-        getattr( self, 'nPVs_noSel' ).Fill( getattr( event, 'PV_npvsGood'), weight )
-        getattr( self, 'nleps_noSel' ).Fill( nleptons, weight )
-        for imuon in recoMuons:
-            getattr( self, 'muons_pt_noSel' ).Fill( imuon.pt, weight )
-            getattr( self, 'muons_eta_noSel' ).Fill( imuon.eta, weight )
-            getattr( self, 'muons_phi_noSel' ).Fill( imuon.phi, weight )
-        for iele in recoElectrons:
-            getattr( self, 'eles_pt_noSel' ).Fill( iele.pt, weight )
-            getattr( self, 'eles_eta_noSel' ).Fill( iele.eta, weight )
-            getattr( self, 'eles_phi_noSel' ).Fill( iele.phi, weight )
-        getattr( self, 'nAK8jets_noSel' ).Fill( len(recoAK8jets['_nom']), weight )
-        for ijet in recoAK8jets['_nom']:
-            getattr( self, 'AK8jets_pt_noSel' ).Fill( ijet.pt_nom, weight )
-            getattr( self, 'AK8jets_eta_noSel' ).Fill( ijet.eta, weight )
-            getattr( self, 'AK8jets_phi_noSel' ).Fill( ijet.phi, weight )
-            getattr( self, 'AK8jets_mass_noSel' ).Fill( ijet.msoftdrop_nom, weight )
-        getattr( self, 'recoPtAsym_noSel' ).Fill( ptAsym['_nom'], weight )
-        getattr( self, 'recoDeltaPhi_noSel' ).Fill( deltaPhi['_nom'], weight )
-
-        reweight = self.totalWeight
-        #### Creating Nsub basis, filling histos and creating branches IF passSel
-        if passSel['_nom'] and iSel['_nom']:
-
-            #### Basic reco histos
-            getattr( self, 'nPVs'+iSel['_nom'] ).Fill( getattr( event, 'PV_npvsGood'), reweight )
-            getattr( self, 'nleps'+iSel['_nom'] ).Fill( len(recoMuons)+len(recoElectrons), reweight )
+        if not self.onlyTrees and not self.onlyUnc:
+            #### Checking no selection without weights
+            getattr( self, 'nPVs_noSelnoWeight' ).Fill( getattr( event, 'PV_npvsGood') )
+            getattr( self, 'nleps_noSelnoWeight' ).Fill( nleptons )
             for imuon in recoMuons:
-                getattr( self, 'muons_pt'+iSel['_nom'] ).Fill( imuon.pt, reweight )
-                getattr( self, 'muons_eta'+iSel['_nom'] ).Fill( imuon.eta, reweight )
-                getattr( self, 'muons_phi'+iSel['_nom'] ).Fill( imuon.phi, reweight )
+                getattr( self, 'muons_pt_noSelnoWeight' ).Fill( imuon.pt )
+                getattr( self, 'muons_eta_noSelnoWeight' ).Fill( imuon.eta )
+                getattr( self, 'muons_phi_noSelnoWeight' ).Fill( imuon.phi )
             for iele in recoElectrons:
-                getattr( self, 'eles_pt'+iSel['_nom'] ).Fill( iele.pt, reweight )
-                getattr( self, 'eles_eta'+iSel['_nom'] ).Fill( iele.eta, reweight )
-                getattr( self, 'eles_phi'+iSel['_nom'] ).Fill( iele.phi, reweight )
-            getattr( self, 'nAK8jets'+iSel['_nom'] ).Fill( len(recoAK8jets['_nom']), reweight )
+                getattr( self, 'eles_pt_noSelnoWeight' ).Fill( iele.pt )
+                getattr( self, 'eles_eta_noSelnoWeight' ).Fill( iele.eta )
+                getattr( self, 'eles_phi_noSelnoWeight' ).Fill( iele.phi )
+            getattr( self, 'nAK8jets_noSelnoWeight' ).Fill( len(recoAK8jets['_nom']) )
             for ijet in recoAK8jets['_nom']:
-                getattr( self, 'AK8jets_pt'+iSel['_nom'] ).Fill( ijet.pt_nom, reweight )
-                getattr( self, 'AK8jets_eta'+iSel['_nom'] ).Fill( ijet.eta, reweight )
-                getattr( self, 'AK8jets_phi'+iSel['_nom'] ).Fill( ijet.phi, reweight )
-                getattr( self, 'AK8jets_mass'+iSel['_nom'] ).Fill( ijet.msoftdrop_nom, reweight )
-            getattr( self, 'recoPtAsym'+iSel['_nom'] ).Fill( ptAsym['_nom'], reweight )
-            getattr( self, 'recoDeltaPhi'+iSel['_nom'] ).Fill( deltaPhi['_nom'], reweight )
+                getattr( self, 'AK8jets_pt_noSelnoWeight' ).Fill( ijet.pt_nom )
+                getattr( self, 'AK8jets_eta_noSelnoWeight' ).Fill( ijet.eta )
+                getattr( self, 'AK8jets_phi_noSelnoWeight' ).Fill( ijet.phi )
+                getattr( self, 'AK8jets_mass_noSelnoWeight' ).Fill( ijet.msoftdrop_nom )
+
+            #### Checking no selection with weights
+            getattr( self, 'nPVs_noSel' ).Fill( getattr( event, 'PV_npvsGood'), weight )
+            getattr( self, 'nleps_noSel' ).Fill( nleptons, weight )
+            for imuon in recoMuons:
+                getattr( self, 'muons_pt_noSel' ).Fill( imuon.pt, weight )
+                getattr( self, 'muons_eta_noSel' ).Fill( imuon.eta, weight )
+                getattr( self, 'muons_phi_noSel' ).Fill( imuon.phi, weight )
+            for iele in recoElectrons:
+                getattr( self, 'eles_pt_noSel' ).Fill( iele.pt, weight )
+                getattr( self, 'eles_eta_noSel' ).Fill( iele.eta, weight )
+                getattr( self, 'eles_phi_noSel' ).Fill( iele.phi, weight )
+            getattr( self, 'nAK8jets_noSel' ).Fill( len(recoAK8jets['_nom']), weight )
+            for ijet in recoAK8jets['_nom']:
+                getattr( self, 'AK8jets_pt_noSel' ).Fill( ijet.pt_nom, weight )
+                getattr( self, 'AK8jets_eta_noSel' ).Fill( ijet.eta, weight )
+                getattr( self, 'AK8jets_phi_noSel' ).Fill( ijet.phi, weight )
+                getattr( self, 'AK8jets_mass_noSel' ).Fill( ijet.msoftdrop_nom, weight )
+            getattr( self, 'recoPtAsym_noSel' ).Fill( ptAsym['_nom'], weight )
+            getattr( self, 'recoDeltaPhi_noSel' ).Fill( deltaPhi['_nom'], weight )
+
+            reweight = self.totalWeight
+            #### Creating Nsub basis, filling histos and creating branches IF passSel
+            if ('_nom' in iSel.keys()) and passSel['_nom'] and iSel['_nom']:
+
+                #### Basic reco histos
+                getattr( self, 'nPVs'+iSel['_nom'] ).Fill( getattr( event, 'PV_npvsGood'), reweight )
+                getattr( self, 'nleps'+iSel['_nom'] ).Fill( len(recoMuons)+len(recoElectrons), reweight )
+                for imuon in recoMuons:
+                    getattr( self, 'muons_pt'+iSel['_nom'] ).Fill( imuon.pt, reweight )
+                    getattr( self, 'muons_eta'+iSel['_nom'] ).Fill( imuon.eta, reweight )
+                    getattr( self, 'muons_phi'+iSel['_nom'] ).Fill( imuon.phi, reweight )
+                for iele in recoElectrons:
+                    getattr( self, 'eles_pt'+iSel['_nom'] ).Fill( iele.pt, reweight )
+                    getattr( self, 'eles_eta'+iSel['_nom'] ).Fill( iele.eta, reweight )
+                    getattr( self, 'eles_phi'+iSel['_nom'] ).Fill( iele.phi, reweight )
+                getattr( self, 'nAK8jets'+iSel['_nom'] ).Fill( len(recoAK8jets['_nom']), reweight )
+                for ijet in recoAK8jets['_nom']:
+                    getattr( self, 'AK8jets_pt'+iSel['_nom'] ).Fill( ijet.pt_nom, reweight )
+                    getattr( self, 'AK8jets_eta'+iSel['_nom'] ).Fill( ijet.eta, reweight )
+                    getattr( self, 'AK8jets_phi'+iSel['_nom'] ).Fill( ijet.phi, reweight )
+                    getattr( self, 'AK8jets_mass'+iSel['_nom'] ).Fill( ijet.msoftdrop_nom, reweight )
+                getattr( self, 'recoPtAsym'+iSel['_nom'] ).Fill( ptAsym['_nom'], reweight )
+                getattr( self, 'recoDeltaPhi'+iSel['_nom'] ).Fill( deltaPhi['_nom'], reweight )
 
         return passSel, iSel, recoMuons, recoElectrons, recoAK8jets
 
@@ -846,47 +862,48 @@ class nSubProd(Module):
         #### Weight
         weight = event.genWeight
 
-        #### Checking no selection
-        getattr( self, 'ngenleps_noSel' ).Fill( len(genMuons)+len(genElectrons), weight )
-        for imuon in genMuons:
-            getattr( self, 'genmuons_pt_noSel' ).Fill( imuon.pt, weight )
-            getattr( self, 'genmuons_eta_noSel' ).Fill( imuon.eta, weight )
-            getattr( self, 'genmuons_phi_noSel' ).Fill( imuon.phi, weight )
-        for iele in genElectrons:
-            getattr( self, 'geneles_pt_noSel' ).Fill( iele.pt, weight )
-            getattr( self, 'geneles_eta_noSel' ).Fill( iele.eta, weight )
-            getattr( self, 'geneles_phi_noSel' ).Fill( iele.phi, weight )
-        getattr( self, 'ngenAK8jets_noSel' ).Fill( len(genAK8jets), weight )
-        for ijet in genAK8jets:
-            getattr( self, 'AK8genjets_pt_noSel' ).Fill( ijet.pt, weight )
-            getattr( self, 'AK8genjets_eta_noSel' ).Fill( ijet.eta, weight )
-            getattr( self, 'AK8genjets_phi_noSel' ).Fill( ijet.phi, weight )
-            getattr( self, 'AK8genjets_mass_noSel' ).Fill( ijet.mass, weight )
-        getattr( self, 'genPtAsym_noSel' ).Fill( ptAsym, weight )
-        getattr( self, 'genDeltaPhi_noSel' ).Fill( deltaPhi, weight )
-
-
-        ##### Filling histograms
-        if passSel and iSel:
-
-            #### Checking nominal selection with weights
-            getattr( self, 'ngenleps'+iSel ).Fill( len(genMuons)+len(genElectrons), weight )
+        if not self.onlyTrees and not self.onlyUnc:
+            #### Checking no selection
+            getattr( self, 'ngenleps_noSel' ).Fill( len(genMuons)+len(genElectrons), weight )
             for imuon in genMuons:
-                getattr( self, 'genmuons_pt'+iSel ).Fill( imuon.pt, weight )
-                getattr( self, 'genmuons_eta'+iSel ).Fill( imuon.eta, weight )
-                getattr( self, 'genmuons_phi'+iSel ).Fill( imuon.phi, weight )
+                getattr( self, 'genmuons_pt_noSel' ).Fill( imuon.pt, weight )
+                getattr( self, 'genmuons_eta_noSel' ).Fill( imuon.eta, weight )
+                getattr( self, 'genmuons_phi_noSel' ).Fill( imuon.phi, weight )
             for iele in genElectrons:
-                getattr( self, 'geneles_pt'+iSel ).Fill( iele.pt, weight )
-                getattr( self, 'geneles_eta'+iSel ).Fill( iele.eta, weight )
-                getattr( self, 'geneles_phi'+iSel ).Fill( iele.phi, weight )
-            getattr( self, 'ngenAK8jets'+iSel ).Fill( len(genAK8jets), weight )
+                getattr( self, 'geneles_pt_noSel' ).Fill( iele.pt, weight )
+                getattr( self, 'geneles_eta_noSel' ).Fill( iele.eta, weight )
+                getattr( self, 'geneles_phi_noSel' ).Fill( iele.phi, weight )
+            getattr( self, 'ngenAK8jets_noSel' ).Fill( len(genAK8jets), weight )
             for ijet in genAK8jets:
-                getattr( self, 'AK8genjets_pt'+iSel ).Fill( ijet.pt, weight )
-                getattr( self, 'AK8genjets_eta'+iSel ).Fill( ijet.eta, weight )
-                getattr( self, 'AK8genjets_phi'+iSel ).Fill( ijet.phi, weight )
-                getattr( self, 'AK8genjets_mass'+iSel ).Fill( ijet.mass, weight )
-            getattr( self, 'genPtAsym'+iSel ).Fill( ptAsym, weight )
-            getattr( self, 'genDeltaPhi'+iSel ).Fill( deltaPhi, weight )
+                getattr( self, 'AK8genjets_pt_noSel' ).Fill( ijet.pt, weight )
+                getattr( self, 'AK8genjets_eta_noSel' ).Fill( ijet.eta, weight )
+                getattr( self, 'AK8genjets_phi_noSel' ).Fill( ijet.phi, weight )
+                getattr( self, 'AK8genjets_mass_noSel' ).Fill( ijet.mass, weight )
+            getattr( self, 'genPtAsym_noSel' ).Fill( ptAsym, weight )
+            getattr( self, 'genDeltaPhi_noSel' ).Fill( deltaPhi, weight )
+
+
+            ##### Filling histograms
+            if passSel and iSel:
+
+                #### Checking nominal selection with weights
+                getattr( self, 'ngenleps'+iSel ).Fill( len(genMuons)+len(genElectrons), weight )
+                for imuon in genMuons:
+                    getattr( self, 'genmuons_pt'+iSel ).Fill( imuon.pt, weight )
+                    getattr( self, 'genmuons_eta'+iSel ).Fill( imuon.eta, weight )
+                    getattr( self, 'genmuons_phi'+iSel ).Fill( imuon.phi, weight )
+                for iele in genElectrons:
+                    getattr( self, 'geneles_pt'+iSel ).Fill( iele.pt, weight )
+                    getattr( self, 'geneles_eta'+iSel ).Fill( iele.eta, weight )
+                    getattr( self, 'geneles_phi'+iSel ).Fill( iele.phi, weight )
+                getattr( self, 'ngenAK8jets'+iSel ).Fill( len(genAK8jets), weight )
+                for ijet in genAK8jets:
+                    getattr( self, 'AK8genjets_pt'+iSel ).Fill( ijet.pt, weight )
+                    getattr( self, 'AK8genjets_eta'+iSel ).Fill( ijet.eta, weight )
+                    getattr( self, 'AK8genjets_phi'+iSel ).Fill( ijet.phi, weight )
+                    getattr( self, 'AK8genjets_mass'+iSel ).Fill( ijet.mass, weight )
+                getattr( self, 'genPtAsym'+iSel ).Fill( ptAsym, weight )
+                getattr( self, 'genDeltaPhi'+iSel ).Fill( deltaPhi, weight )
 
         return passSel, iSel, genMuons, genElectrons, genAK8jets
 
