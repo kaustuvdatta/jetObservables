@@ -71,6 +71,20 @@ parser.add_argument(
     default="Wtop",
     required=False
 )
+
+parser.add_argument(
+    '--onlyUnc',
+    action="store",
+    default='',
+    help="Run only specific uncertainty variations"
+)
+parser.add_argument(
+    '--onlyTrees',
+    action="store_true",
+    default=False,
+    help="Do not save histograms, only trees"
+)
+
 args = parser.parse_args(sys.argv[1:])
 if args.sample.startswith(('/EGamma', '/Single', 'EGamma', 'Single', 'UL16_Single', '/UL16_Single', 'UL17_Single', '/UL17_Single', 'UL18_Single', '/UL18_Single', '/JetHT', 'JetHT', '/UL17_Jet', 'UL17_Jet' )) or ('EGamma' in args.iFile or 'SingleMuon' in args.iFile or ('JetHT' in args.iFile)):
     isMC = False
@@ -88,19 +102,23 @@ if args.selection.startswith('dijet'):
     Triggers =  '( (HLT_AK8PFJet80==1) || (HLT_AK8PFJet140==1) || (HLT_AK8PFJet200==1) || (HLT_AK8PFJet260==1) || (HLT_AK8PFJet320==1) || (HLT_AK8PFJet400==1) || (HLT_AK8PFJet450==1) || (HLT_AK8PFJet500==1) || (HLT_AK8PFJet550==1) )'
 else:
     Triggers = '(HLT_Mu50==1)'
-#if args.year.startswith('2016'): Triggers = ...
-#elif args.year.startswith('2017'): Triggers =  ...
-#elif args.year.startswith('2018'): Triggers = ...
 
 cuts = PV + " && " + METFilters + " && " + Triggers
 
-#systSources = ['_jesTotal', '_jer', '_puWeight'] if isMC else []   ######### NEEDS TO BE REVIEWED FOR WTOP
-#if args.selection.startswith('dijet'):
-if isMC:
-    systSources =  [ '_jesTotal', '_jer', '_puWeight', '_isrWeight', '_fsrWeight', '_pdfWeight' ]  if ("TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8" in args.sample or "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8" in args.iFile or "TTJets_TuneCP5_13TeV-amcatnloFXFX-pythia8" in args.sample or "TTJets_TuneCP5_13TeV-amcatnloFXFX-pythia8" in args.iFile)  else ['_jesTotal', '_jer', '_puWeight']
-    print (systSources)
-else: 
-    systSources=[]
+#if isMC:
+#    systSources =  [ '_jesTotal', '_jer', '_puWeight', '_isrWeight', '_fsrWeight' ]  if ("TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8" in args.sample or "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8" in args.iFile or "TTJets_TuneCP5_13TeV-amcatnloFXFX-pythia8" in args.sample or "TTJets_TuneCP5_13TeV-amcatnloFXFX-pythia8" in args.iFile)  else ['_jesTotal', '_jer', '_puWeight']#, '_pdfWeight'
+#    print (systSources)
+#    topweight=True
+#else: 
+#    systSources=[]
+systSources = ['_jesTotal', '_jer', '_puWeight'] if isMC else []
+topweight = False
+if args.selection.startswith('Wtop') and isMC:
+    if ("TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8" in args.sample or "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8" in args.iFile):# or "TTJets_TuneCP5_13TeV-amcatnloFXFX-pythia8" in args.sample or "TTJets_TuneCP5_13TeV-amcatnloFXFX-pythia8" in args.iFile):
+        topweight=True
+    systSources = []
+if args.onlyUnc: systSources = [ args.onlyUnc ]
+
 ### Lepton scale factors
 LeptonSF = {
 
@@ -124,56 +142,76 @@ LeptonSF = {
     },
 }
 
+#topweight=False
+#if ("TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8" in args.sample or "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8" in args.iFile or "TTJets_TuneCP5_13TeV-amcatnloFXFX-pythia8" in args.sample or "TTJets_TuneCP5_13TeV-amcatnloFXFX-pythia8" in args.iFile):
+#    topweight=True
+#    isMC=True
 
 #### Modules to run
-if not args.selection.startswith('dijet'):
-    jetmetCorrector = createJMECorrector(isMC=isMC, applySmearing=False, dataYear='UL'+args.year, jesUncert="All", runPeriod=args.runEra )
+jetmetCorrector = createJMECorrector(isMC=isMC, applySmearing=False, dataYear='UL'+args.year, jesUncert="All", runPeriod=args.runEra )
 fatJetCorrector = createJMECorrector(isMC=isMC, applySmearing=False, dataYear='UL'+args.year, jesUncert="All", jetType = "AK8PFPuppi", runPeriod=args.runEra)
 
 modulesToRun = []
 modulesToRun.append( fatJetCorrector() )
-if not args.selection.startswith('dijet'): modulesToRun.append( jetmetCorrector() )
+modulesToRun.append( jetmetCorrector() )
 if isMC:
     if args.year=='2018':
         modulesToRun.append( puAutoWeight_UL2018() )
-        if not args.selection.startswith('dijet'):
-            print "###Running with btag SF calc.###"
-            modulesToRun.append( btagSF_UL2018() )
-    if args.year=='2017':
+        modulesToRun.append( btagSF_UL2018() )
+    elif args.year=='2017':
         modulesToRun.append( puAutoWeight_UL2017() )
-        if not args.selection.startswith('dijet'):
-            print "###Running with btag SF calc.###"
-            modulesToRun.append( btagSF_UL2017() )
-    if args.year=='2016':
-        modulesToRun.append( puAutoWeight_2016() )
-        print "Running with btag SF calc."
-        if not args.selection.startswith('dijet'): modulesToRun.append( btagSF2016() )
+        modulesToRun.append( btagSF_UL2017() )
+    #if args.year=='2016':
+    #    modulesToRun.append( puAutoWeight_2016() )
+    #    modulesToRun.append( btagSF2016() )
 
 # our module
-if args.selection.startswith('dijet'):
-    from jetObservables.Skimmer.nSubProducer_dijetSel import nSubProd
-    modulesToRun.append( nSubProd( sysSource=systSources, isMC=isMC, year=args.year ) )
+#if args.selection.startswith('dijet'):
+#    from jetObservables.Skimmer.nSubProducer_dijetSel import nSubProd
+#    modulesToRun.append( nSubProd( sysSource=systSources, isMC=isMC, year=args.year ) )
+
+from jetObservables.Skimmer.nSubProducer_WtopSel_Final import nSubProd
+modulesToRun.append( nSubProd( sysSource=systSources, leptonSF=LeptonSF[args.year], isMC=isMC, topreweight=topweight, onlyUnc=args.onlyUnc, onlyTrees=args.onlyTrees  )  )
+if topweight: print ("using top reweighting")
+else: print ("Not using top reweighting")
+
+if isMC:
+    #### Make it run
+    p1=PostProcessor(
+            '.', (inputFiles() if not args.iFile else args.iFile.split(',')),
+            cut          = cuts,
+            outputbranchsel   = "keep_and_drop.txt",
+            modules      = modulesToRun,
+            provenance   = True,
+            #jsonInput   = runsAndLumis(),
+            maxEntries   = args.numEvents,
+            prefetch     = args.local,
+            longTermCache= args.local,
+            fwkJobReport = True,
+            haddFileName = "jetObservables_"+args.selection+"_nanoskim.root" if args.local else 'jetObservables_nanoskim.root',
+            histFileName = "jetObservables_"+args.selection+"_histograms.root" if args.local else 'jetObservables_histograms.root',
+            histDirName  = 'jetObservables',
+            )
+
 else:
-    from jetObservables.Skimmer.nSubProducer_WtopSel import nSubProd
-    modulesToRun.append( nSubProd( sysSource=systSources, leptonSF=LeptonSF[args.year], isMC=isMC ) )
+    #### Make it run
+    p1=PostProcessor(
+            '.', (inputFiles() if not args.iFile else args.iFile.split(',')),
+            cut          = cuts,
+            outputbranchsel   = "keep_and_drop.txt",
+            modules      = modulesToRun,
+            provenance   = True,
+            #jsonInput   = runsAndLumis(),
+            maxEntries   = args.numEvents,
+            prefetch     = args.local,
+            longTermCache= args.local,
+            fwkJobReport = True,
+            haddFileName = "jetObservables_"+args.selection+"_nanoskim_data.root" if args.local else 'jetObservables_nanoskim_data.root',
+            histFileName = "jetObservables_"+args.selection+"_histograms_data.root" if args.local else 'jetObservables_histograms_data.root',
+            histDirName  = 'jetObservables',
+            )
 
 
-#### Make it run
-p1=PostProcessor(
-        '.', (inputFiles() if not args.iFile else args.iFile.split(',')),
-        cut          = cuts,
-        outputbranchsel   = "keep_and_drop_dijet.txt" if args.selection.startswith('dijet') else "keep_and_drop.txt",
-        modules      = modulesToRun,
-        provenance   = True,
-        #jsonInput   = runsAndLumis(),
-        maxEntries   = args.numEvents,
-        prefetch     = args.local,
-        longTermCache= args.local,
-        fwkJobReport = True,
-        haddFileName = "jetObservables_"+args.selection+"_nanoskim.root" if args.local else 'jetObservables_nanoskim.root',
-        histFileName = "jetObservables_"+args.selection+"_histograms.root" if args.local else 'jetObservables_histograms.root',
-        histDirName  = 'jetObservables',
-        )
 p1.run()
 print "DONE"
 #if not args.local: os.system("ls -lR")

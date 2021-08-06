@@ -37,7 +37,8 @@ mv python $CMSSW_BASE/python
 echo Found Proxy in: $X509_USER_PROXY
 ls
 echo "python {pythonFile} --sample {datasets} --selection {selection}"
-python {pythonFile} --sample {datasets} --selection {selection} --year {year} --runEra {runEra}
+python {pythonFile} --sample {datasets} --selection {selection} --year {year} --runEra {runEra} 
+#python {pythonFile} --sample {datasets} --selection {selection} --year {year} --runEra {runEra} --onlyUnc {onlyUnc}
 fi
     '''
     open('runPostProc'+options.datasets+options.year+'.sh', 'w').write(BASH_SCRIPT.format(**options.__dict__))
@@ -61,7 +62,7 @@ def submitJobs( job, inputFiles, unitJobs ):
     config.section_("JobType")
     config.JobType.pluginName = 'Analysis'
     config.JobType.psetName = 'PSet.py'
-    config.JobType.maxMemoryMB = 3000
+    #config.JobType.maxMemoryMB = 3000
     config.JobType.allowUndistributedCMSSW = True
 
     config.section_("Data")
@@ -101,7 +102,7 @@ def submitJobs( job, inputFiles, unitJobs ):
     config.JobType.outputFiles = [ 'jetObservables_nanoskim.root', 'jetObservables_histograms.root']
     config.Data.outLFNDirBase = '/store/user/'+os.environ['USER']+'/jetObservables/'
 
-    requestname = 'jetObservables_Skimmer_'+ job.replace('_','').replace('-','')+'_'+options.year + '_' +options.version
+    requestname = 'jetObservables_Skimmer_'+ job.replace('_','').replace('-','')+options.onlyUnc+'_'+options.year + '_' +options.version
     print requestname
     if len(requestname) > 100: requestname = (requestname[:95-len(requestname)])
     if os.path.isdir('crab_projects/crab_'+requestname):
@@ -110,10 +111,11 @@ def submitJobs( job, inputFiles, unitJobs ):
         return False
 
     print 'requestname = ', requestname
+
     config.General.requestName = requestname
-    if 'QCD' in job and ('470' in job or '800' in job) and options.year=='2018':
-        config.Data.outputDatasetTag = 'Run'+inputFiles.split('Run')[1].split('UL18')[0]+'UL18PFNanoAOD_jetObservables_Skimmer_'+options.version+('EXT'+job.split('EXT')[1] if 'EXT' in job else '')		    
-    else: config.Data.outputDatasetTag = 'Run'+inputFiles.split('Run')[1].split('AOD')[0]+'AOD_jetObservables_Skimmer_'+options.version+('EXT'+job.split('EXT')[1] if 'EXT' in job else '')
+    if 'QCD' in job and ('470' in job or '800' or '1000' in job) and options.year=='2018':
+        config.Data.outputDatasetTag = 'Run'+inputFiles.split('Run')[1].split('UL18')[0]+'UL18PFNanoAOD_jetObservables_Skimmer_'+options.onlyUnc+options.version+('EXT'+job.split('EXT')[1] if 'EXT' in job else '')		    
+    else: config.Data.outputDatasetTag = 'Run'+inputFiles.split('Run')[1].split('AOD')[0]+'AOD_jetObservables_Skimmer_'+options.onlyUnc+options.version+('EXT'+job.split('EXT')[1] if 'EXT' in job else '')
 
     print 'Submitting ' + config.General.requestName + ', dataset = ' + job
     print 'Configuration :'
@@ -170,14 +172,19 @@ if __name__ == '__main__':
             action="store",
             help="Run era for data",
             default="B"
-    )
-
+            )
+    parser.add_option(
+        '--onlyUnc',
+        action="store",
+        default='',
+        help="Run only specific uncertainty variations"
+        )
 
     (options, args) = parser.parse_args()
 
     processingSamples = {}
     for sam in dictSamples:
-        if 'SingleMuon' in sam or sam.startswith( options.datasets ) | options.datasets.startswith('all'):
+        if sam.startswith( options.datasets ) | options.datasets.startswith('all'):
             if checkDict( sam, dictSamples )['selection'] != options.selection: continue
             if 'SingleMuon' in sam or sam.startswith(('JetHT', 'SingleMuon')):
                 for iera in checkDict( sam, dictSamples )[options.year]['nanoAOD']:
