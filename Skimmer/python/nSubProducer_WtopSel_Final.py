@@ -799,7 +799,7 @@ class nSubProd(Module):
             ##### Applying selection
             
             passSel[sys], iSel[sys] = self.WtopSelection( False, event, recoMuons, recoElectrons, recoAK4bjets, recoAK8jets[sys], MET, sys)
-            if passSel['_nom']: print (sys, passSel[sys], iSel[sys])
+            if passSel[sys]: print (sys, passSel[sys], iSel[sys])
             #############################
         
         #### Weight #########
@@ -825,7 +825,7 @@ class nSubProd(Module):
             itempSel = {}
             tops=[]
             antiTops=[]
-            if passSel['_nom'] and self.topreweight and iSel['_nom'].startswith('_top'):
+            if passSel[sys] and self.topreweight and iSel[sys].startswith('_top'):
                 tops =  [x for x in genParticles if x.pdgId==6 and x.statusFlags==14]
                 tops.sort(key=lambda x:getattr( x, 'pt' ), reverse=True)
                 antiTops =  [x for x in genParticles if x.pdgId==-6 and x.statusFlags==14]
@@ -838,7 +838,9 @@ class nSubProd(Module):
                     self.topreweight = math.sqrt(topSF*antitopSF)
                 else: 
                     self.topreweight = 1.#????math.sqrt(topSF*antitopSF)
-            
+            else: 
+                self.topreweight = 1.#????math.sqrt(topSF*antitopSF)
+
             
             #### Applying ALL remaining object-related weights ####
             weight = event.puWeight * event.genWeight * self.leptonWeight * self.topreweight * weight # last term includes btag weight from above

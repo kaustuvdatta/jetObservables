@@ -114,7 +114,7 @@ cuts = PV + " && " + METFilters + " && " + Triggers
 systSources = ['_jesTotal', '_jer', '_puWeight'] if isMC else []
 topweight = False
 if args.selection.startswith('Wtop') and isMC:
-    if ("TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8" in args.sample or "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8" in args.iFile):# or "TTJets_TuneCP5_13TeV-amcatnloFXFX-pythia8" in args.sample or "TTJets_TuneCP5_13TeV-amcatnloFXFX-pythia8" in args.iFile):
+    if not args.onlyUnc=='' and ("TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8" in args.sample or "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8" in args.iFile):# or "TTJets_TuneCP5_13TeV-amcatnloFXFX-pythia8" in args.sample or "TTJets_TuneCP5_13TeV-amcatnloFXFX-pythia8" in args.iFile):
         topweight=True
     systSources = []
 if args.onlyUnc: systSources = [ args.onlyUnc ]

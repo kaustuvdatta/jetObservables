@@ -37,8 +37,8 @@ mv python $CMSSW_BASE/python
 echo Found Proxy in: $X509_USER_PROXY
 ls
 echo "python {pythonFile} --sample {datasets} --selection {selection}"
-python {pythonFile} --sample {datasets} --selection {selection} --year {year} --runEra {runEra} 
-#python {pythonFile} --sample {datasets} --selection {selection} --year {year} --runEra {runEra} --onlyUnc {onlyUnc}
+#python {pythonFile} --sample {datasets} --selection {selection} --year {year} --runEra {runEra} 
+python {pythonFile} --sample {datasets} --selection {selection} --year {year} --runEra {runEra} --onlyUnc {onlyUnc}
 fi
     '''
     open('runPostProc'+options.datasets+options.year+'.sh', 'w').write(BASH_SCRIPT.format(**options.__dict__))
