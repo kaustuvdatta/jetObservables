@@ -19,7 +19,7 @@ ROOT.gROOT.ForceStyle()
 tdrStyle.setTDRStyle()
 ROOT.gStyle.SetOptStat(0)
 
-colors = [ 2, 4, 6, 8, 9, 28, 30, 42, 13 ]
+colors = [ 2, 4, 6, 8, 9, 28, 30, 42, 13, 46 ]
 canvas = {}
 
 ##########################################################
@@ -246,6 +246,7 @@ def plotSignalBkg( name, xmin, xmax, rebinX, axisX='', axisY='', labX=0.92, labY
     if len(bkgFiles) > 0:
         for bkgSamples in bkgFiles:
             yearLabel = ''.join(bkgSamples[-4:])
+            print(name, bkgSamples)
             bkgHistos[ bkgSamples ] = bkgFiles[ bkgSamples ][0].Get( 'jetObservables/'+name )
             bkgHistos[ bkgSamples ].SetTitle(bkgSamples)
             bkgHistos[ bkgSamples ].Scale( args.lumi*bkgFiles[ bkgSamples ][1]['XS'] / bkgFiles[ bkgSamples ][1][yearLabel]['nGenWeights'] )
@@ -498,7 +499,7 @@ if __name__ == '__main__':
             if not checkDict( isam, dictSamples )[iy]['skimmerHisto'].endswith('root'): continue
             if isam.startswith(('JetHT', 'SingleMuon')): continue
             if args.selection.startswith('dijet') and not checkDict( isam, dictSamples )['selection'].startswith('dijet'): continue
-            if isam.startswith('QCD_HT'): continue ###### temporary
+            #if isam.startswith('QCD_HT'): continue ###### temporary
             bkgFiles[isam.split('_Tune')[0]+iy] = [
                                 ROOT.TFile.Open( args.inputFolder+checkDict( isam, dictSamples )[iy]['skimmerHisto'] ),
                                 checkDict( isam, dictSamples )
