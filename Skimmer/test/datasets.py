@@ -542,7 +542,7 @@ dictSamples = {
                 'F' : '/SingleMuon/Run2017F-UL2017_MiniAODv2-v1/MINIAOD',
                 },
             'nanoAOD' : {
-                'B': '/SingleMuon/algomez-Run2017B-UL2017_MiniAODv2-v1_PFNanoAOD-aeb179a6519d272d4336b9926381baad/USER',
+                'B': '/SingleMuon/kadatta-Run2017B-UL2017_MiniAODv2-v1_PFNano_V2-aeb179a6519d272d4336b9926381baad/USER',
                 'C': '/SingleMuon/kadatta-Run2017C-UL2017_MiniAODv2-v1_PFNanoAOD-aeb179a6519d272d4336b9926381baad/USER',
                 'D': '/SingleMuon/kadatta-Run2017D-UL2017_MiniAODv2-v1_PFNanoAOD-aeb179a6519d272d4336b9926381baad/USER',
                 'E': '/SingleMuon/kadatta-Run2017E-UL2017_MiniAODv2-v1_PFNanoAOD-aeb179a6519d272d4336b9926381baad/USER',
@@ -559,10 +559,10 @@ dictSamples = {
                 'D' : '/SingleMuon/Run2018D-UL2018_MiniAODv2-v1/MINIAOD',
                 },
             'nanoAOD' : {
-                'A' : '/SingleMuon/kadatta-Run2018A-UL2018_MiniAODv2-v1_PFNanoAOD-690f1d1c4f2456484a2616002f2d2b6d/USER',
-                'B' : '/SingleMuon/kadatta-Run2018B-UL2018_MiniAODv2-v1_PFNanoAOD-690f1d1c4f2456484a2616002f2d2b6d/USER',
+                'A' : '/SingleMuon/kadatta-Run2018A-UL2018_MiniAODv2-v1_PFNanoV2-7c69df739076f6ca6fc3c530fd236448/USER',
+                'B' : '/SingleMuon/kadatta-Run2018B-UL2018_MiniAODv2-v1_PFNanoV2-7c69df739076f6ca6fc3c530fd236448/USER',
                 'C' : '/SingleMuon/kadatta-Run2018C-UL2018_MiniAODv2-v1_PFNanoAOD-690f1d1c4f2456484a2616002f2d2b6d/USER',
-                'D' : '/SingleMuon/kadatta-Run2018D-UL2018_MiniAODv2-v1_PFNanoAOD-690f1d1c4f2456484a2616002f2d2b6d/USER',
+                'D' : '/SingleMuon/kadatta-Run2018D-UL2018_MiniAODv2-v1_PFNanoV2-7c69df739076f6ca6fc3c530fd236448/USER',
                 },
             'skimmerHisto' : 'SingleMuonAll_2018UL.root',
             'lumi' : 59816.0#56385.82159,

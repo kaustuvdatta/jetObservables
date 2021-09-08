@@ -175,41 +175,23 @@ modulesToRun.append( nSubProd( sysSource=systSources, leptonSF=LeptonSF[args.yea
 if topweight: print ("using top reweighting")
 else: print ("Not using top reweighting")
 
-if isMC:
-    #### Make it run
-    p1=PostProcessor(
-            '.', (inputFiles() if not args.iFile else args.iFile.split(',')),
-            cut          = cuts,
-            outputbranchsel   = "keep_and_drop.txt",
-            modules      = modulesToRun,
-            provenance   = True,
-            #jsonInput   = runsAndLumis(),
-            maxEntries   = args.numEvents,
-            prefetch     = args.local,
-            longTermCache= args.local,
-            fwkJobReport = True,
-            haddFileName = "jetObservables_"+args.selection+"_nanoskim.root" if args.local else 'jetObservables_nanoskim.root',
-            histFileName = "jetObservables_"+args.selection+"_histograms.root" if args.local else 'jetObservables_histograms.root',
-            histDirName  = 'jetObservables',
-            )
 
-else:
-    #### Make it run
-    p1=PostProcessor(
-            '.', (inputFiles() if not args.iFile else args.iFile.split(',')),
-            cut          = cuts,
-            outputbranchsel   = "keep_and_drop.txt",
-            modules      = modulesToRun,
-            provenance   = True,
-            #jsonInput   = runsAndLumis(),
-            maxEntries   = args.numEvents,
-            prefetch     = args.local,
-            longTermCache= args.local,
-            fwkJobReport = True,
-            haddFileName = "jetObservables_"+args.selection+"_nanoskim_data.root" if args.local else 'jetObservables_nanoskim_data.root',
-            histFileName = "jetObservables_"+args.selection+"_histograms_data.root" if args.local else 'jetObservables_histograms_data.root',
-            histDirName  = 'jetObservables',
-            )
+#### Make it run
+p1=PostProcessor(
+    '.', (inputFiles() if not args.iFile else args.iFile.split(',')),
+    cut          = cuts,
+    outputbranchsel   = "keep_and_drop.txt",
+        modules      = modulesToRun,
+    provenance   = True,
+    #jsonInput   = runsAndLumis(),
+    maxEntries   = args.numEvents,
+    prefetch     = args.local,
+    longTermCache= args.local,
+    fwkJobReport = True,
+    haddFileName = "jetObservables_"+args.selection+"_nanoskim.root" if args.local else 'jetObservables_nanoskim.root',
+    histFileName = "jetObservables_"+args.selection+"_histograms.root" if args.local else 'jetObservables_histograms.root',
+    histDirName  = 'jetObservables',
+)
 
 
 p1.run()

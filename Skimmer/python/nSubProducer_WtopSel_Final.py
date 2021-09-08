@@ -248,7 +248,7 @@ class nSubProd(Module):
                 self.out.branch( 'puWeightDown', "F" )
         
             tmplist = [ 'selRecoJets'+sys for sys in self.sysSource if not sys.startswith(self.sysWeightList) ]
-            print ('selrecojetlist:', tmplist)
+            #print ('selrecojetlist:', tmplist)
             if self.isMC: 
                 tmplist.append( 'selGenJets' )
                 #print ("appended genjets to nano output file")
@@ -799,7 +799,7 @@ class nSubProd(Module):
             ##### Applying selection
             
             passSel[sys], iSel[sys] = self.WtopSelection( False, event, recoMuons, recoElectrons, recoAK4bjets, recoAK8jets[sys], MET, sys)
-            if passSel[sys]: print (sys, passSel[sys], iSel[sys])
+            #if passSel[sys]: print (sys, passSel[sys], iSel[sys])
             #############################
         
         #### Weight #########
