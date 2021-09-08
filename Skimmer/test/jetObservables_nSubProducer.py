@@ -71,7 +71,6 @@ parser.add_argument(
     default="Wtop",
     required=False
 )
-
 parser.add_argument(
     '--onlyUnc',
     action="store",

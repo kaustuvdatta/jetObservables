@@ -29,7 +29,7 @@ def runPurity( name, bkgFiles, variables, sel ):
     numBinsList = [0]
     dictHistos = OrderedDict()
     for ivar in variables:
-        if not name.endswith( ivar.split('_')[0] ): continue
+        if not ivar.startswith( name ): continue
         ### Getting input histos
         signalHistos = loadHistograms( bkgFiles, ivar, sel, sysUnc=[], lumi=1, year=args.year, process='MC', variables=variables )
         outputDir=args.outputFolder+'Plots/'+args.selection.split('_')[1]+'/Purity/'+args.year+'/'+ivar+'/'
@@ -59,19 +59,19 @@ def runPurity( name, bkgFiles, variables, sel ):
         dictHistos[ 'purityGraph_'+ivar ].Reset()
         dictHistos[ 'stabilityGraph_'+ivar ] = dictHistos[ 'purityGraph_'+ivar ].Clone()
         for ibin in range( 1, tmpHisto.GetNbinsX()+1 ):
-            diagReco = tmpHisto.GetBinContent( tmpHisto.GetBin(ibin-1, ibin) ) + tmpHisto.GetBinContent( tmpHisto.GetBin(ibin, ibin) ) + tmpHisto.GetBinContent( tmpHisto.GetBin(ibin+1, ibin) )
+            diagReco = tmpHisto.GetBinContent( tmpHisto.GetBin(ibin, ibin) )
             dictHistos[ 'purityGraph_'+ivar ].SetBinContent( ibin, diagReco )
-            diagGen = tmpHisto.GetBinContent( tmpHisto.GetBin(ibin, ibin-1) ) + tmpHisto.GetBinContent( tmpHisto.GetBin(ibin, ibin) ) + tmpHisto.GetBinContent( tmpHisto.GetBin(ibin, ibin+1) )
+            diagGen = tmpHisto.GetBinContent( tmpHisto.GetBin(ibin, ibin) )
             dictHistos[ 'stabilityGraph_'+ivar ].SetBinContent( ibin, diagGen )
 
         dictHistos[ 'purityGraph_'+ivar ].SetLineWidth(2)
         dictHistos[ 'purityGraph_'+ivar ].SetLineColor(colorPallete[3])
-        dictHistos[ 'purityGraph_'+ivar ].Divide(  signalHistos[signalLabel+'_reco'+ivar+'_nom'+args.selection+'_genBin'] )
+        dictHistos[ 'purityGraph_'+ivar ].Divide(  signalHistos[signalLabel+'_truereco'+ivar+'_nom'+args.selection+'_genBin'] )
         legend.AddEntry( dictHistos[ 'purityGraph_'+ivar ], 'Purity', 'l' )
 
         dictHistos[ 'stabilityGraph_'+ivar ].SetLineWidth(2)
         dictHistos[ 'stabilityGraph_'+ivar ].SetLineColor(colorPallete[4])
-        dictHistos[ 'stabilityGraph_'+ivar ].Divide(  signalHistos[signalLabel+'_gen'+ivar+args.selection] )
+        dictHistos[ 'stabilityGraph_'+ivar ].Divide(  signalHistos[signalLabel+'_accepgen'+ivar+args.selection] )
         legend.AddEntry( dictHistos[ 'stabilityGraph_'+ivar ], 'Stability', 'l' )
 
         ##### removing tau21 and tau32 from total plots
@@ -128,7 +128,7 @@ def runPurity( name, bkgFiles, variables, sel ):
 
     if not args.only:
 
-        outputFileName = name+'_purity_'+signalLabel+'_combinePlots_'+args.version+'.'+args.ext
+        outputFileName = 'reco'+name+'_purity_'+signalLabel+'_combinePlots_'+args.version+'.'+args.ext
         print('Processing.......', outputFileName)
 
         legend=ROOT.TLegend(0.20,0.80,0.60,0.90)
@@ -144,8 +144,8 @@ def runPurity( name, bkgFiles, variables, sel ):
         tmpNbin = 0
         Xlabels = []
         for ivar in variables:
-            if not name.endswith( ivar.split('_')[0] ): continue
-            if ivar.startswith('Jet') and not ivar.endswith(('21', '32')):
+            if not ivar.startswith( name ): continue
+            if ivar.startswith( ('Jet', 'sdJet' ) ) and not ivar.endswith(('21', '32')):
                 Xlabels.append( '#'+nSubVariables[ivar]['label'].split('#')[1] )
                 for ibin in range(1, dictHistos['purityGraph_'+ivar].GetNbinsX()+1):
                     tmpNbin = tmpNbin+1
@@ -162,8 +162,8 @@ def runPurity( name, bkgFiles, variables, sel ):
         dictHistos['purity'].GetYaxis().SetTitleSize( 0.06 )
         dictHistos['purity'].GetYaxis().SetTitleOffset( 0.8 )
         #dictHistos['purity'].SetMaximum( dictHistos['stability'].GetMaximum()*1.2 )
-        dictHistos['purity'].SetMaximum( 0.84 )
-        dictHistos['purity'].SetMinimum( 0.36 )
+        dictHistos['purity'].SetMaximum( 0.99 )
+        dictHistos['purity'].SetMinimum( 0.26 )
         dictHistos['purity'].SetLineColor( ROOT.kBlack )
         dictHistos['purity'].SetLineWidth( 2 )
 
@@ -191,7 +191,7 @@ def runPurity( name, bkgFiles, variables, sel ):
         textBoxList = {}
         for i in range(1, len(numBinsList)):
             textBoxList[i] = textBox.Clone()
-            textBoxList[i].DrawLatex(numBinsList[i-1]+(numBinsList[i]-numBinsList[i-1])/2., 0.33, Xlabels[i-1] )
+            textBoxList[i].DrawLatex(numBinsList[i-1]+(numBinsList[i]-numBinsList[i-1])/2., 0.22, Xlabels[i-1] )
 
         outputDir=args.outputFolder+'Plots/'+args.selection.split('_')[1]+'/Purity/'+args.year+'/'
         canvasoutputFileName.SaveAs( outputDir+'/'+outputFileName )
@@ -256,7 +256,7 @@ if __name__ == '__main__':
     #if args.selection.startswith('_dijet'): variables = { k:v for (k,v) in variables.items() if k.startswith(('Jet1', 'Jet2')) }
     #else: variables = { k:v for (k,v) in variables.items() if k.startswith('Jet_') }
 
-    plotList = [ 'recoJet1', 'recoJet2' ] if args.selection.startswith('_dijet') else [ 'recoJet' ]
+    plotList = [ 'Jet1', 'Jet2', 'sdJet1', 'sdJet2' ] if args.selection.startswith('_dijet') else [ 'Jet' ]
 
     for i in plotList:
         runPurity( i, bkgFiles, variables, args.selection )

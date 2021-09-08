@@ -37,7 +37,7 @@ mv python $CMSSW_BASE/python
 echo Found Proxy in: $X509_USER_PROXY
 ls
 echo "python {pythonFile} --sample {datasets} --selection {selection}"
-#python {pythonFile} --sample {datasets} --selection {selection} --year {year} --runEra {runEra} 
+#python {pythonFile} --sample {datasets} --selection {selection} --year {year} --runEra {runEra} --onlyTrees
 python {pythonFile} --sample {datasets} --selection {selection} --year {year} --runEra {runEra} --onlyUnc {onlyUnc}
 fi
     '''
@@ -63,6 +63,7 @@ def submitJobs( job, inputFiles, unitJobs ):
     config.JobType.pluginName = 'Analysis'
     config.JobType.psetName = 'PSet.py'
     #config.JobType.maxMemoryMB = 3000
+    #config.JobType.maxMemoryMB = 4000
     config.JobType.allowUndistributedCMSSW = True
 
     config.section_("Data")
@@ -91,14 +92,14 @@ def submitJobs( job, inputFiles, unitJobs ):
         isMC = False
         if options.year.startswith('2017'): config.Data.lumiMask = '/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions17/13TeV/Legacy_2017/Cert_294927-306462_13TeV_UL2017_Collisions17_GoldenJSON.txt'
         elif options.year.startswith('2018'): config.Data.lumiMask = '/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions18/13TeV/Legacy_2018/Cert_314472-325175_13TeV_Legacy2018_Collisions18_JSON.txt'
-    #config.Data.userInputFiles = inputFiles
     config.Data.inputDataset = inputFiles
 
     #config.Data.splitting = 'EventAwareLumiBased' if job.startswith('QCD_Pt') else 'FileBased'
     #config.Data.splitting = 'Automatic'
+    #config.Data.splitting = 'EventAwareLumiBased' #if job.startswith('QCD_HT') else 'FileBased'
+    #config.Data.unitsPerJob = 10000
     config.Data.splitting = 'FileBased'
     config.Data.unitsPerJob = unitJobs
-    #config.Data.outputPrimaryDataset = job
 
     # since the input will have no metadata information, output can not be put in DBS
     config.JobType.outputFiles = [ 'jetObservables_nanoskim.root', 'jetObservables_histograms.root']
@@ -119,6 +120,7 @@ def submitJobs( job, inputFiles, unitJobs ):
         config.Data.outputDatasetTag = 'Run'+inputFiles.split('Run')[1].split('UL18')[0]+'UL18PFNanoAOD_jetObservables_Skimmer_'+options.onlyUnc+options.version+('EXT'+job.split('EXT')[1] if 'EXT' in job else '')		    
     else: config.Data.outputDatasetTag = 'Run'+inputFiles.split('Run')[1].split('AOD')[0]+'AOD_jetObservables_Skimmer_'+options.onlyUnc+options.version+('EXT'+job.split('EXT')[1] if 'EXT' in job else '')
 
+    config.Data.outputDatasetTag = 'Run'+inputFiles.split('Run')[1].split('AOD')[0]+'AOD_jetObservables_Skimmer_'+options.onlyUnc+options.version+('EXT'+job.split('EXT')[1] if 'EXT' in job else '')
     print 'Submitting ' + config.General.requestName + ', dataset = ' + job
     print 'Configuration :'
     print config
@@ -175,12 +177,14 @@ if __name__ == '__main__':
             help="Run era for data",
             default="B"
             )
+    )
     parser.add_option(
         '--onlyUnc',
         action="store",
         default='',
         help="Run only specific uncertainty variations"
         )
+    )
 
     (options, args) = parser.parse_args()
 

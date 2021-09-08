@@ -19,7 +19,7 @@ ROOT.gROOT.ForceStyle()
 tdrStyle.setTDRStyle()
 ROOT.gStyle.SetOptStat(0)
 
-colors = [ 2, 4, 6, 8, 9, 28, 30, 42, 13 ]
+colors = [ 2, 4, 6, 8, 9, 28, 30, 42, 13, 46 ]
 canvas = {}
 
 ##########################################################
@@ -153,89 +153,59 @@ def plotData( name, xmin, xmax, rebinX, axisX='', axisY='', labX=0.92, labY=0.50
 
 
 ######################################################
-def plotSysComparison( nomHisto, upHisto, downHisto, outputName, syst, labelX='', log=False, version='', ext='png', year='2017', outputDir='Plots/' ):
+def plotSysComparison( nomHisto, dictUncHistos, outputName, labelX='', log=False, version='', ext='png', year='2017', outputDir='Plots/' ):
     """docstring for plot"""
 
     outputFileName = outputName+'_'+syst+'SystPlots_'+version+'.'+ext
     print ('Processing.......', outputFileName)
+    outputFileName = outputName+'_'+version+'.'+ext
+    print 'Processing.......', outputFileName
 
     binWidth = nomHisto.GetBinWidth(1)
 
-    legend=ROOT.TLegend(0.70,0.75,0.90,0.87)
+    legend=ROOT.TLegend(0.70,0.65,0.90,0.87)
     legend.SetFillStyle(0)
     legend.SetTextSize(0.04)
-    legend.AddEntry( nomHisto, 'Nominal' , 'l' )
-    legend.AddEntry( upHisto, syst+'Up', 'l' )
-    legend.AddEntry( downHisto, syst+'Down', 'l' )
 
-    nomHisto.SetLineColor(ROOT.kBlack)
-    nomHisto.SetLineWidth(2)
-    upHisto.SetLineColor(ROOT.kRed-4)
-    upHisto.SetLineWidth(2)
-    upHisto.SetLineStyle(2)
-    downHisto.SetLineColor(ROOT.kBlue)
-    downHisto.SetLineWidth(2)
-    downHisto.SetLineStyle(2)
+    multiGraph = ROOT.TMultiGraph()
+    gnom = ROOT.TGraphAsymmErrors()
+    gnom.Divide( nomHisto, nomHisto, 'pois' )
+    gnom.SetLineColor(ROOT.kBlack)
+    gnom.SetLineWidth(2)
+    legend.AddEntry( gnom, 'Nominal' , 'l' )
+    multiGraph.Add( gnom )
 
-    hRatioUp = ROOT.TGraphAsymmErrors()
-    hRatioUp.Divide( nomHisto, upHisto, 'pois' )
-    hRatioUp.SetLineColor(ROOT.kRed-4)
-    hRatioUp.SetLineWidth(2)
-    hRatioDown = ROOT.TGraphAsymmErrors()
-    hRatioDown.Divide( nomHisto, downHisto, 'pois' )
-    hRatioDown.SetLineColor(ROOT.kBlue)
-    hRatioDown.SetLineWidth(2)
+    dictgraph = {}
+    dummy=0
+    for ih in dictUncHistos:
+        print(ih)
+        dictgraph[ih] = ROOT.TGraphAsymmErrors()
+        dictgraph[ih].Divide( dictUncHistos[ih], nomHisto, 'pois' )
+        dictgraph[ih].SetLineColor( colors[dummy] )
+        dictgraph[ih].SetLineStyle( 2 )
+        dictgraph[ih].SetLineWidth( 2 )
+        legend.AddEntry( dictgraph[ih], ih.split('_')[1] , 'l' )
+        multiGraph.Add( dictgraph[ih] )
+        dummy=dummy+1
 
-    #tdrStyle.SetPadRightMargin(0.05)
-    #tdrStyle.SetPadLeftMargin(0.15)
-    can = ROOT.TCanvas('c1'+outputName, 'c1'+outputName,  10, 10, 750, 750 )
-    pad1 = ROOT.TPad("pad1"+outputName, "Fit",0,0.207,1.00,1.00,-1)
-    pad2 = ROOT.TPad("pad2"+outputName, "Pull",0,0.00,1.00,0.30,-1);
-    pad1.Draw()
-    pad2.Draw()
-
-    pad1.cd()
-    if log: pad1.SetLogy()
-    nomHisto.Draw("E")
-    upHisto.Draw('hist same')
-    downHisto.Draw("hist same ")
-    #hData.SetMaximum( 1.2* max( hData.GetMaximum(), hBkg.GetMaximum() )  )
-    #if 'pt' in label: hData.SetMinimum( 1 )
-    #hData.GetYaxis().SetTitleOffset(1.2)
-    #if xmax: hData.GetXaxis().SetRangeUser( xmin, xmax )
-    nomHisto.GetXaxis().SetTitle( labelX )
-    nomHisto.GetYaxis().SetTitle( 'Normalized / '+str(int(binWidth)) )
+    ROOT.gStyle.SetPadRightMargin(0.05)
+    ROOT.gStyle.SetPadLeftMargin(0.15)
+    canUnc = ROOT.TCanvas('canUnc', 'canUnc',  10, 10, 750, 500 )
+    multiGraph.GetYaxis().SetTitle( 'Ratio Unc/Nominal' )
+    multiGraph.GetXaxis().SetTitle( labelX )
+    multiGraph.SetMaximum( 1.5 )
+    multiGraph.SetMinimum( 0.5 )
+    multiGraph.Draw('ALP')
 
     CMS_lumi.cmsTextOffset = 0.0
     CMS_lumi.relPosX = 0.13
     CMS_lumi.extraText = "Simulation Preliminary"
     CMS_lumi.lumi_13TeV = "13 TeV, "+year
-    CMS_lumi.CMS_lumi(pad1, 4, 0)
+    CMS_lumi.CMS_lumi(canUnc, 4, 0)
     legend.Draw()
 
-    pad2.cd()
-    ROOT.gStyle.SetOptFit(1)
-    pad2.SetGrid()
-    pad2.SetTopMargin(0)
-    pad2.SetBottomMargin(0.3)
-    tmpPad2= pad2.DrawFrame( 0, 0.5, 1, 1.5 )
-    tmpPad2.GetXaxis().SetTitle( nomHisto.GetXaxis().GetTitle()  )
-    tmpPad2.GetYaxis().SetTitle( "Ratio to Nom" )
-    tmpPad2.GetYaxis().SetTitleOffset( 0.5 )
-    tmpPad2.GetYaxis().CenterTitle()
-    tmpPad2.SetLabelSize(0.12, 'x')
-    tmpPad2.SetTitleSize(0.12, 'x')
-    tmpPad2.SetLabelSize(0.12, 'y')
-    tmpPad2.SetTitleSize(0.12, 'y')
-    tmpPad2.SetNdivisions(505, 'x')
-    tmpPad2.SetNdivisions(505, 'y')
-    pad2.Modified()
-    #hRatioUp.SetMarkerStyle(8)
-    hRatioUp.Draw('P')
-    hRatioDown.Draw('P same')
-
-    can.SaveAs( outputDir + outputFileName )
-    del can
+    canUnc.SaveAs( outputDir + outputFileName )
+    del canUnc
 
 ##################################################
 
@@ -278,6 +248,7 @@ def plotSignalBkg( name, xmin, xmax, rebinX, axisX='', axisY='', labX=0.92, labY
     if len(bkgFiles) > 0:
         for bkgSamples in bkgFiles:
             yearLabel = ''.join(bkgSamples[-4:])
+            print(name, bkgSamples)
             bkgHistos[ bkgSamples ] = bkgFiles[ bkgSamples ][0].Get( 'jetObservables/'+name )
             bkgHistos[ bkgSamples ].SetTitle(bkgSamples)
             bkgHistos[ bkgSamples ].Scale( args.lumi*bkgFiles[ bkgSamples ][1]['XS'] / bkgFiles[ bkgSamples ][1][yearLabel]['nGenWeights'] )
@@ -529,9 +500,8 @@ if __name__ == '__main__':
         for isam in dictSamples:
             if not checkDict( isam, dictSamples )[iy]['skimmerHisto'].endswith('root'): continue
             if isam.startswith(('JetHT', 'SingleMuon')): continue
-            if args.selection.startswith('dijet') and not isam.startswith('QCD'): continue
-            if args.selection.startswith('dijet') and ( 'MuEnriched' in isam ): continue
-            if not args.selection.startswith('dijet') and isam.startswith('QCD'): continue
+            if args.selection.startswith('dijet') and not checkDict( isam, dictSamples )['selection'].startswith('dijet'): continue
+            #if isam.startswith('QCD_HT'): continue ###### temporary
             bkgFiles[isam.split('_Tune')[0]+iy] = [
                                 ROOT.TFile.Open( args.inputFolder+checkDict( isam, dictSamples )[iy]['skimmerHisto'] ),
                                 checkDict( isam, dictSamples )
