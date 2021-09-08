@@ -467,6 +467,84 @@ def plotResolution( name, xmin, xmax, rebinX, axisX='', axisY='', labX=0.92, lab
         canvas[name].SaveAs( outputDir+'/'+outName.replace('pdf', 'png') )
     #del can
 
+##################################################
+def tauComparison( name, xmin, xmax, rebinX, axisX='', axisY='', labX=0.92, labY=0.50, log=False,
+                      addRatioFit=False, Norm=False, ext='png', outputDir='Plots/', legendAlignment='right' ):
+    """function to resolution"""
+
+    outputFileName = name+'_tauComparison_'+args.version+'.'+ext
+    print('Processing.......', outputFileName)
+
+    if legendAlignment.startswith('right'): legend=ROOT.TLegend(0.60,0.75,0.90,0.90)
+    else: legend=ROOT.TLegend(0.20,0.75,0.50,0.90)
+    legend.SetFillStyle(0)
+    legend.SetTextSize(0.04)
+
+    name = '_'.join( name.split('_')[1:] )
+    bkgHistos = OrderedDict()
+    maxList = []
+    if len(bkgFiles) > 0:
+
+        for ijet in [ 'recoJet1_', 'recoJet2_' ]:
+            for bkgSamples in bkgFiles:
+                yearLabel = ''.join(bkgSamples[-4:])
+                bkgHistos[ ijet+bkgSamples ] = bkgFiles[ bkgSamples ][0].Get( 'jetObservables/'+ijet+name )
+                bkgHistos[ ijet+bkgSamples ].SetTitle(ijet+bkgSamples)
+                bkgHistos[ ijet+bkgSamples ].Scale( args.lumi*bkgFiles[ bkgSamples ][1]['XS'] / bkgFiles[ bkgSamples ][1][yearLabel]['nGenWeights'] )
+                print(bkgSamples, round(bkgHistos[ ijet+bkgSamples ].Integral(), 2) )
+                if isinstance(rebinX, int): bkgHistos[ ijet+bkgSamples ] = bkgHistos[ ijet+bkgSamples ].Rebin( rebinX )
+                else:
+                    tmpBkgHist = bkgHistos[ ijet+bkgSamples ].Clone()
+                    bkgHistos[ijet+bkgSamples] = tmpBkgHist.Rebin( len(rebinX)-1, tmpBkgHist.GetName()+"_rebinX", rebinX )
+                bkgHistos[ ijet+bkgSamples ].SetLineColor( bkgFiles[ bkgSamples ][1]['color'] )
+                bkgHistos[ ijet+bkgSamples ].SetLineWidth( 2 )
+
+    yearLabel = '2018' if args.year.startswith('all') else args.year
+    if args.selection.startswith('dijet'):
+        for ijet in [ 'recoJet1_', 'recoJet2_' ]:
+            for bkg in bkgFiles:
+                if bkg.startswith('QCD_Pt_') and not bkg.endswith('Inf'+yearLabel):
+                    bkgHistos[ijet+'QCD_Pt_3200toInf'+yearLabel].Add( bkgHistos[ijet+bkg] )
+                    bkgHistos.pop(ijet+bkg, None)
+                elif bkg.startswith('QCD_HT') and not bkg.endswith('Inf'+yearLabel):
+                    bkgHistos[ijet+'QCD_HT2000toInf'+yearLabel].Add( bkgHistos[ijet+bkg] )
+                    bkgHistos.pop(ijet+bkg, None)
+                else:
+                    legend.AddEntry( bkgHistos[ ijet+bkg ], ( 'Outer' if 'recoJet2_' in ijet else 'Central' )+' Jet', 'le' ) # if Norm else 'f' )
+
+    stackHisto = ROOT.THStack('stackHisto'+name, 'stack'+name)
+    dummy=0
+    for samples in bkgHistos:
+        bkgHistos[ samples ].Scale( 1/bkgHistos[ samples ].Integral() )
+        bkgHistos[ samples ].SetLineColor( colors[dummy]  )
+        stackHisto.Add( bkgHistos[ samples ].Clone() )
+        binWidth = bkgHistos[ samples ].GetBinWidth(1)
+        dummy = dummy+1
+
+    canvas[name] = ROOT.TCanvas('c1'+name, 'c1'+name,  10, 10, 750, 500 )
+    if log:
+        canvas[name].SetLogy()
+        outName = outputFileName.replace('_simplePlot','_Log_simplePlot')
+    else: outName = outputFileName
+
+    if xmax and xmin: stackHisto.GetXaxis().SetRangeUser( xmin, xmax )
+    #stackHisto.SetLineColor(ROOT.kRed)
+    #stackHisto2.SetLineColor(ROOT.kBlue)
+    stackHisto.Draw('nostack')
+    if not axisY: stackHisto.GetYaxis().SetTitle( 'Normalized / '+str(binWidth) )
+    stackHisto.GetYaxis().SetTitleOffset(0.90)
+    if axisX: stackHisto.GetXaxis().SetTitle( axisX.replace('Outer', '').replace('Central', '') )
+
+    CMS_lumi.lumi_13TeV = "13 TeV, "+args.year
+    CMS_lumi.relPosX = 0.11
+    CMS_lumi.CMS_lumi(canvas[name], 4, 0)
+    legend.Draw()
+
+    canvas[name].SaveAs( outputDir+'/'+outName )
+    if ext.startswith('pdf'):
+        canvas[name].SaveAs( outputDir+'/'+outName.replace('pdf', 'png') )
+    #del can
+
 ####################################
 if __name__ == '__main__':
 
@@ -501,7 +579,7 @@ if __name__ == '__main__':
             if not checkDict( isam, dictSamples )[iy]['skimmerHisto'].endswith('root'): continue
             if isam.startswith(('JetHT', 'SingleMuon')): continue
             if args.selection.startswith('dijet') and not checkDict( isam, dictSamples )['selection'].startswith('dijet'): continue
-            #if isam.startswith('QCD_HT'): continue ###### temporary
+            if args.process.startswith('tauComp') and not isam.startswith('QCD_HT'): continue
             bkgFiles[isam.split('_Tune')[0]+iy] = [
                                 ROOT.TFile.Open( args.inputFolder+checkDict( isam, dictSamples )[iy]['skimmerHisto'] ),
                                 checkDict( isam, dictSamples )
@@ -544,6 +622,7 @@ if __name__ == '__main__':
         if not args.selection.startswith('dijet') and ivar.startswith(('Jet1_','Jet2_')): continue
         plotList.append( [ 'resol', 'resol'+ivar, varInfo['label']+' reco/gen', 0., 2., 2, 'right' ] )
         plotList.append( [ 'bkgData', 'reco'+ivar+'_nom', varInfo['label'], varInfo['bins'][0], varInfo['bins'][-1], varInfo['bins'], varInfo['alignLeg'] ] )
+        if 'Jet1' in ivar: plotList.append( [ 'tauComp', 'reco'+ivar+'_nom', varInfo['label'], varInfo['bins'][0], varInfo['bins'][-1], varInfo['bins'], varInfo['alignLeg'] ] )
 
     if args.only: Plots = [ y[1:] for y in plotList if ( ( args.process in y[0] ) and ( args.only in y[1] ) )  ]
     else: Plots = [ x[1:] for x in plotList if ( ( args.process in x[0] ) )  ]
@@ -557,6 +636,9 @@ if __name__ == '__main__':
                             log=args.log, axisX=i[1], legendAlignment=i[5], outputDir=outputDir, ext=args.ext)
         elif ( 'resol' in args.process ):
             plotResolution( i[0]+'_'+args.selection, i[2], i[3], i[4],
+                            log=args.log, axisX=i[1], Norm=args.norm, legendAlignment=i[5], outputDir=outputDir, ext=args.ext)
+        elif ( 'tauComp' in args.process ):
+            tauComparison( i[0]+'_'+args.selection, i[2], i[3], i[4],
                             log=args.log, axisX=i[1], Norm=args.norm, legendAlignment=i[5], outputDir=outputDir, ext=args.ext)
         elif ( 'data' in args.process ):
             plotData( i[0]+args.selection, i[2], i[3], i[4],
