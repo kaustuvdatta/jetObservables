@@ -6,7 +6,7 @@ from array import array
 import argparse
 from collections import OrderedDict
 import numpy as np
-from variables import nSubVariables
+from variables import nSubVariables,nSubVariables_WSel,nSubVariables_topSel
 sys.path.insert(0,'../python/')
 import CMS_lumi as CMS_lumi
 import tdrstyle as tdrStyle
@@ -108,6 +108,7 @@ def plotData( name, xmin, xmax, rebinX, axisX='', axisY='', labX=0.92, labY=0.50
     triggerList = [ 'AK8PFJet80', 'AK8PFJet140', 'AK8PFJet200', 'AK8PFJet260', 'AK8PFJet320', 'AK8PFJet400', 'AK8PFJet450', 'AK8PFJet500' ]
     for dataSamples in dataFile.keys():
         yearLabel = dataSamples.split('data')[1]
+        print ("Year Label:", yearLabel)
         if args.selection.startswith('dijet'):
             for it in list(reversed(triggerList)):
             #for it in checkDict( 'JetHT', dictSamples )[yearLabel]['triggerList']:
@@ -121,6 +122,7 @@ def plotData( name, xmin, xmax, rebinX, axisX='', axisY='', labX=0.92, labY=0.50
                 dummy = dummy+1
         else:
             tmpdataHistos[ dataSamples ] = dataFile[yearLabel].Get( 'jetObservables/'+name )
+            #print (name)
 
     stackHisto = ROOT.THStack('stackHisto'+name, 'stack'+name)
     for i in tmpdataHistos: stackHisto.Add( tmpdataHistos[i] )
@@ -232,7 +234,9 @@ def plotSignalBkg( name, xmin, xmax, rebinX, axisX='', axisY='', labX=0.92, labY
                 tmpdataHistos[ it+dataSamples ] = dataFile[dataSamples].Get( 'jetObservables/'+name.replace( args.selection, it+'_'+args.selection ) )
                 tmpdataHistos[ it+dataSamples ].Scale( checkDict( 'JetHT', dictSamples )[yearLabel]['triggerList'][it] )
         else:
-            tmpdataHistos[ dataSamples ] = dataFile[yearLabel].Get( 'jetObservables/'+name )
+            print ("#########")
+            print (dataSamples, yearLabel, name)
+            tmpdataHistos[ dataSamples ] = dataFile[dataSamples].Get( 'jetObservables/'+name )
     dataHistos[ 'DATA' ] = tmpdataHistos[next(iter(tmpdataHistos))].Clone()
     dataHistos[ 'DATA' ].Reset()
     for i in tmpdataHistos: dataHistos['DATA'].Add( tmpdataHistos[i] )
@@ -256,7 +260,7 @@ def plotSignalBkg( name, xmin, xmax, rebinX, axisX='', axisY='', labX=0.92, labY
             else:
                 tmpBkgHist = bkgHistos[ bkgSamples ].Clone()
                 bkgHistos[bkgSamples] = tmpBkgHist.Rebin( len(rebinX)-1, tmpBkgHist.GetName()+"_rebinX", rebinX )
-            if bkgSamples.startswith(('ST', 'W', 'Diboson')):
+            if bkgSamples.startswith(('ST', 'W', 'QCD_MuEnriched', 'TTTo2L2Nu', 'Z')):
                 bkgHistos[ bkgSamples ].SetFillStyle( 1001 )
                 bkgHistos[ bkgSamples ].SetFillColor( bkgFiles[ bkgSamples ][1]['color'] )
             else:
@@ -283,11 +287,14 @@ def plotSignalBkg( name, xmin, xmax, rebinX, axisX='', axisY='', labX=0.92, labY
             if bkg.startswith(('WZ','ZZ')):
                 bkgHistos['WW'+yearLabel].Add( bkgHistos[bkg] )
                 bkgHistos.pop(bkg, None)
-            elif bkg.startswith('ST_t'):
+            elif bkg.startswith(('ST_t','ST_tW')):
                 bkgHistos['ST_s-channel_4f_leptonDecays'+yearLabel].Add( bkgHistos[bkg] )
                 bkgHistos.pop(bkg, None)
             elif bkg.startswith('TTTo2L2Nu'):
-                bkgHistos['TTToSemiLeptonic'+yearLabel].Add( bkgHistos[bkg] )
+                bkgHistos['TTTo2L2Nu'+yearLabel].Add( bkgHistos[bkg] )
+                bkgHistos.pop(bkg, None)
+            elif bkg.startswith('QCD_MuEnriched') and not bkg.endswith('Inf'+yearLabel):
+                bkgHistos['QCD_MuEnrichedPt5_Pt-1000toInf'+yearLabel].Add( bkgHistos[bkg] )
                 bkgHistos.pop(bkg, None)
             else:
                 legend.AddEntry( bkgHistos[ bkg ], bkgFiles[ bkg ][1]['label'], ('l' if bkg.startswith('TT') else 'f' ) )
@@ -303,7 +310,7 @@ def plotSignalBkg( name, xmin, xmax, rebinX, axisX='', axisY='', labX=0.92, labY
     for samples in bkgHistos:
         if not args.selection.startswith('dijetSel'):
             if samples.startswith('TTJets'): stackHisto.Add( bkgHistos[ samples ].Clone() )
-            elif samples.startswith('TTTo'): hBkg.Add( bkgHistos[ samples ].Clone() )
+            elif samples.startswith('TTToSemiLeptonic'): hBkg.Add( bkgHistos[ samples ].Clone() )
             else:
                 stackHisto.Add( bkgHistos[ samples ].Clone() )
                 hBkg.Add( bkgHistos[ samples ].Clone() )
@@ -341,7 +348,7 @@ def plotSignalBkg( name, xmin, xmax, rebinX, axisX='', axisY='', labX=0.92, labY
 
     #stackHisto.SetMinimum( 0.1 )
     if not args.selection.startswith('dijet'):
-        hBkg.SetLineColor( bkgFiles['TTToSemiLeptonic'][1]['color'] )
+        hBkg.SetLineColor( bkgFiles['TTToSemiLeptonic'+yearLabel][1]['color'] )
         hBkg.SetFillColor( 0 )
         hBkg.SetLineWidth(2)
 
@@ -380,12 +387,12 @@ def plotSignalBkg( name, xmin, xmax, rebinX, axisX='', axisY='', labX=0.92, labY
     else:
         hRatio = ROOT.TGraphAsymmErrors()
         hRatio.Divide( dataHistos[ 'DATA' ], hBkg, 'pois' )
-        hRatio.SetLineColor( bkgFiles['TTToSemiLeptonic'][1]['color']  )
+        hRatio.SetLineColor( bkgFiles['TTToSemiLeptonic'+yearLabel][1]['color']  )
         hRatio.SetLineWidth(2)
         hBkg2 = stackHisto.GetHistogram()
         hRatio2 = ROOT.TGraphAsymmErrors()
         hRatio2.Divide( dataHistos[ 'DATA' ], hBkg2, 'pois' )
-        hRatio2.SetLineColor( bkgFiles['TTJets'][1]['color']  )
+        hRatio2.SetLineColor( bkgFiles['TTJets'+yearLabel][1]['color']  )
         hRatio2.SetLineWidth(2)
         hRatio.Draw('P')
         hRatio2.Draw('P same')
@@ -566,7 +573,7 @@ if __name__ == '__main__':
         parser.print_help()
         sys.exit(0)
 
-    args.inputFolder = os.environ['CMSSW_BASE']+'/src/jetObservables/Unfolding/test/Rootfiles/'
+    args.inputFolder = os.environ['CMSSW_BASE']+'/src/jetObservables/Unfolding/test/Samples/'
     dictSamples = OrderedDict(dictSamples)
     VER = args.version.split('_')[1] if '_' in args.version else args.version
     dataFile = {}
@@ -574,18 +581,26 @@ if __name__ == '__main__':
     for iy in ( ['2017', '2018'] if args.year.startswith('all') else [ args.year ] ):
         dataFile['data'+iy] = ROOT.TFile.Open(args.inputFolder+checkDict( ( 'JetHT' if args.selection.startswith('dijet') else 'SingleMuon' ), dictSamples )[iy]['skimmerHisto'])
         args.lumi = args.lumi + checkDict( ( 'JetHT' if args.selection.startswith('dijet') else 'SingleMuon' ), dictSamples )[iy]['lumi']
-
+        #print (dataFile)
         for isam in dictSamples:
             if not checkDict( isam, dictSamples )[iy]['skimmerHisto'].endswith('root'): continue
             if isam.startswith(('JetHT', 'SingleMuon')): continue
             if args.selection.startswith('dijet') and not checkDict( isam, dictSamples )['selection'].startswith('dijet'): continue
             if args.process.startswith('tauComp') and not isam.startswith('QCD_HT'): continue
-            bkgFiles[isam.split('_Tune')[0]+iy] = [
+            
+            if args.selection.startswith(('W', 'top')):
+                for isam in dictSamples:
+                    if isam.startswith(('ST', 'W', 'Z', 'TT', 'QCD_MuEnriched')):
+                        bkgFiles[isam.split('_Tune')[0]+iy] = [
+                            ROOT.TFile.Open( args.inputFolder+checkDict( isam, dictSamples )[iy]['skimmerHisto'] ),
+                            checkDict( isam, dictSamples )]
+
+            else: bkgFiles[isam.split('_Tune')[0]+iy] = [
                                 ROOT.TFile.Open( args.inputFolder+checkDict( isam, dictSamples )[iy]['skimmerHisto'] ),
                                 checkDict( isam, dictSamples )
                             ]
 
-
+    print (bkgFiles.keys(), dataFile.keys())
     outputDir = args.outputFolder+'Plots/'+args.selection+'/'+('Resolution' if args.process.startswith('reso') else 'Basic')+'/'+args.year
     if not os.path.exists(outputDir): os.makedirs(outputDir)
     CMS_lumi.extraText = "Preliminary" if args.process.startswith(('data', 'bkgData')) else "Simulation Preliminary"
@@ -597,16 +612,16 @@ if __name__ == '__main__':
             [ 'data', 'LeadJetAK8_eta_only', 'Leading AK8 jet eta [GeV]', 100, 1500, 2, 'right' ] ,
             [ 'data', 'recoJet1_sortedPt_pt_', 'Leading AK8 jet pt [GeV]', 100, 1000, 1, 'right' ] ,
             [ 'bkgData', 'nPVs', 'Number of Primary Vertex', 0., 100., 2, 'right' ],
-            [ 'bkgData', 'recoPtAsym', 'pT Asymmetry', 0., .4, 2, 'right' ],
-            [ 'bkgData', 'recoDeltaPhi', '#Delta #Phi(  j1, j2 )', 1., 3.5, 2, 'left' ],
-            [ 'bkgData', 'recoJet1_sortedPt_pt', 'Leading AK8 jet pt [GeV]', 100, 1500, 5, 'right' ] ,
-            [ 'bkgData', 'recoJet1_sortedPt_eta', 'Leading AK8 jet #eta', -3., 3., 2, 'right' ] ,
-            [ 'bkgData', 'recoJet1_sortedPt_phi', 'Leading AK8 jet #Phi', -3.14, 3.14, 5, 'right' ] ,
-            [ 'bkgData', 'recoJet1_sortedPt_mass', 'Leading AK8 jet mass [GeV]', 0, 200, 1, 'right' ] ,
-            [ 'bkgData', 'recoJet2_sortedPt_pt', '2nd Leading AK8 jet pt [GeV]', 100, 1500, 5, 'right' ] ,
-            [ 'bkgData', 'recoJet2_sortedPt_eta', '2nd Leading AK8 jet #eta', -3., 3., 2, 'right' ] ,
-            [ 'bkgData', 'recoJet2_sortedPt_phi', '2nd Leading AK8 jet #Phi', -3.14, 3.14, 5, 'right' ] ,
-            [ 'bkgData', 'recoJet2_sortedPt_mass', '2nd Leading AK8 jet mass [GeV]', 0, 200, 1, 'right' ] ,
+            #[ 'bkgData', 'recoPtAsym', 'pT Asymmetry', 0., .4, 2, 'right' ],
+            #[ 'bkgData', 'recoDeltaPhi', '#Delta #Phi(  j1, j2 )', 1., 3.5, 2, 'left' ],
+            #[ 'bkgData', 'recoJet1_sortedPt_pt', 'Leading AK8 jet pt [GeV]', 100, 1500, 5, 'right' ] ,
+            #[ 'bkgData', 'recoJet1_sortedPt_eta', 'Leading AK8 jet #eta', -3., 3., 2, 'right' ] ,
+            #[ 'bkgData', 'recoJet1_sortedPt_phi', 'Leading AK8 jet #Phi', -3.14, 3.14, 5, 'right' ] ,
+            #[ 'bkgData', 'recoJet1_sortedPt_mass', 'Leading AK8 jet mass [GeV]', 0, 200, 1, 'right' ] ,
+            #[ 'bkgData', 'recoJet2_sortedPt_pt', '2nd Leading AK8 jet pt [GeV]', 100, 1500, 5, 'right' ] ,
+            #[ 'bkgData', 'recoJet2_sortedPt_eta', '2nd Leading AK8 jet #eta', -3., 3., 2, 'right' ] ,
+            #[ 'bkgData', 'recoJet2_sortedPt_phi', '2nd Leading AK8 jet #Phi', -3.14, 3.14, 5, 'right' ] ,
+            #[ 'bkgData', 'recoJet2_sortedPt_mass', '2nd Leading AK8 jet mass [GeV]', 0, 200, 1, 'right' ] ,
             ]
     if not args.selection.startswith('dijet'):
             [ 'bkgData', 'recoJet_mass_nom', 'Leading AK8 jet softdrop mass [GeV]', ( 50. if args.selection.startswith('WSel') else 130. ), ( 140. if args.selection.startswith('WSel') else 300. ), 1, 'right' ] ,
@@ -617,6 +632,10 @@ if __name__ == '__main__':
         plotList.append( [ 'bkgData', 'reco'+ijet[0]+'_eta_nom', ijet[1]+' AK8 jet eta', -3, 3, 2, 'left' ] )
         plotList.append( [ 'resol', 'resol'+ijet[0]+'_pt', ijet[1]+'AK8 jet reco/gen pt', 0., 2., 2, 'right' ] )
         plotList.append( [ 'resol', 'resol'+ijet[0]+'_sdmass', ijet[1]+'AK8 jet reco/gen sd mass', 0., 2., 2, 'right' ] )
+    if not args.selection.startswith('dijet'):
+        if args.selection.startswith('W'): nSubVariables=nSubVariables_WSel
+        elif args.selection.startswith('top'): nSubVariables=nSubVariables_topSel
+
     for ivar, varInfo in nSubVariables.items():
         if args.selection.startswith('dijet') and ivar.startswith('Jet_'): continue
         if not args.selection.startswith('dijet') and ivar.startswith(('Jet1_','Jet2_')): continue

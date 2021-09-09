@@ -160,72 +160,72 @@ nSubVariables[ 'Jet_tau21' ] = {
 
 nSubVariables_WSel = OrderedDict()
 
-nSubVariables_WSel[ '_tau_0p5_1' ] = {
+nSubVariables_WSel[ 'Jet_tau_0p5_1' ] = {
             'bins' : array('d',[0., 0.2, 0.28, 0.36, 0.44, 0.52, 0.6, 0.68, 0.76, 0.9]),
             'label' : 'Leading AK8 jet #tau_{1}^{(0.5)}',
             'alignLeg' : 'right'
             }
-nSubVariables_WSel[ '_tau_1_1' ] = {
+nSubVariables_WSel[ 'Jet_tau_1_1' ] = {
             'bins' : array('d',[0., 0.1, 0.2, 0.26, 0.32, 0.38, 0.44, 0.5, 0.6]),
             'label' : 'Leading AK8 jet #tau_{1}^{(1)}',
             'alignLeg' : 'right'
             }
-nSubVariables_WSel[ '_tau_2_1' ] = {
+nSubVariables_WSel[ 'Jet_tau_2_1' ] = {
             'bins' : array('d',[0., 0.04, 0.08, 0.12, 0.16, 0.2, 0.26, 0.32, 0.4, 0.56]),
             'label' : 'Leading AK8 jet #tau_{1}^{(2)}',
             'alignLeg' : 'right'
             }
-nSubVariables_WSel[ '_tau_0p5_2' ] = {
+nSubVariables_WSel[ 'Jet_tau_0p5_2' ] = {
             'bins' : array('d',[0., 0.14, 0.2, 0.26, 0.32, 0.4, 0.46,  0.52,  0.58, 0.66]),
             'label' : 'Leading AK8 jet #tau_{2}^{(0.5)}',
             'alignLeg' : 'right'
             }
-nSubVariables_WSel[ '_tau_1_2' ] = {
+nSubVariables_WSel[ 'Jet_tau_1_2' ] = {
             'bins' : array('d',[0., 0.05, 0.1, 0.14, 0.18, 0.22, 0.26, 0.30, 0.4]),
             'label' : 'Leading AK8 jet #tau_{2}^{(1)}',
             'alignLeg' : 'right'
             }
-nSubVariables_WSel[ '_tau_2_2' ] = {
+nSubVariables_WSel[ 'Jet_tau_2_2' ] = {
             'bins' : array('d',[0., 0.02, 0.04, 0.06, 0.08, 0.1, 0.12, 0.16, 0.2]),
             'label' : 'Leading AK8 jet #tau_{2}^{(2)}',
             'alignLeg' : 'right'
             }
-nSubVariables_WSel[ '_tau_0p5_3' ] = {
+nSubVariables_WSel[ 'Jet_tau_0p5_3' ] = {
             'bins' : array('d',[0., 0.1, 0.16, 0.22, 0.28, 0.34, 0.4, 0.46, 0.52, 0.6]),
             'label' : 'Leading AK8 jet #tau_{3}^{(0.5)}',
             'alignLeg' : 'right'
             }
-nSubVariables_WSel[ '_tau_1_3' ] = {
+nSubVariables_WSel[ 'Jet_tau_1_3' ] = {
             'bins' : array('d',[0., 0.03, 0.06, 0.09, 0.12, 0.15, 0.18, 0.21, 0.27]),
             'label' : 'Leading AK8 jet #tau_{3}^{(1)}',
             'alignLeg' : 'right'
             }
-nSubVariables_WSel[ '_tau_2_3' ] = {
+nSubVariables_WSel[ 'Jet_tau_2_3' ] = {
             'bins' : array('d',[0., 0.01, 0.02, 0.03, 0.04, 0.08, 0.12, 0.16]),
             'label' : 'Leading AK8 jet #tau_{3}^{(2)}',
             'alignLeg' : 'right'
             }
-nSubVariables_WSel[ '_tau_0p5_4' ] = {
+nSubVariables_WSel[ 'Jet_tau_0p5_4' ] = {
             'bins' : array('d',[0., 0.03, 0.06, 0.09, 0.12, 0.15, 0.18, 0.24]),
             'label' : 'Leading AK8 jet #tau_{4}^{(0.5)}',
             'alignLeg' : 'right'
             }
-nSubVariables_WSel[ '_tau_1_4' ] = {
+nSubVariables_WSel[ 'Jet_tau_1_4' ] = {
             'bins' :  array('d',[0., 0.02, 0.04, 0.08, 0.12, 0.16, 0.2, 0.25]),
             'label' : 'Leading AK8 jet #tau_{4}^{(1)}',
             'alignLeg' : 'right'
             }
-nSubVariables_WSel[ '_tau_2_4' ] = {
+nSubVariables_WSel[ 'Jet_tau_2_4' ] = {
             'bins' : array('d',[0., 0.01, 0.02, 0.03, 0.04, 0.05, 0.064]),
             'label' : 'Leading AK8 jet #tau_{4}^{(2)}',
             'alignLeg' : 'right'
             }
-nSubVariables_WSel[ '_tau21' ] = {
+nSubVariables_WSel[ 'Jet_tau21' ] = {
             'bins' : array('d',[0., 0.1, 0.18, 0.26, 0.34, 0.42, 0.5, 0.58, 0.66, 0.74, 0.87, 1.]),
             'label' : 'Leading AK8 jet #tau_{2,1}^{(1)}  (WTA #k_{T})',
             'alignLeg' : 'right'
             }
-nSubVariables_WSel[ '_tau32' ] = {
+nSubVariables_WSel[ 'Jet_tau32' ] = {
             'bins' : array('d',[0., 0.2, 0.3, 0.4, 0.48, 0.56, 0.64, 0.72, 0.8, 0.88, 1.]),
             'label' : 'Leading AK8 jet #tau_{3,2}^{(1)}  (WTA #k_{T})',
             'alignLeg' : 'right'
@@ -233,72 +233,72 @@ nSubVariables_WSel[ '_tau32' ] = {
 
 nSubVariables_topSel = OrderedDict()
 
-nSubVariables_topSel[ '_tau_0p5_1' ] = {
+nSubVariables_topSel[ 'Jet_tau_0p5_1' ] = {
             'bins' : array('d',[0., 0.2, 0.26, 0.32, 0.38, 0.44,  0.5, 0.56, 0.62, 0.68, 0.74, 0.8, 0.9]),
             'label' : 'Leading AK8 jet #tau_{1}^{(0.5)}',
             'alignLeg' : 'right'
             }
-nSubVariables_topSel[ '_tau_1_1' ] = {
+nSubVariables_topSel[ 'Jet_tau_1_1' ] = {
             'bins' : array('d',[0., 0.1, 0.16, 0.22, 0.28, 0.34, 0.4, 0.46, 0.54, 0.6, 0.7]), 
             'label' : 'Leading AK8 jet #tau_{1}^{(1)}',
             'alignLeg' : 'right'
             }
-nSubVariables_topSel[ '_tau_2_1' ] = {
+nSubVariables_topSel[ 'Jet_tau_2_1' ] = {
             'bins' : array('d',[0., 0.04, 0.08, 0.12, 0.16, 0.2, 0.24, 0.28, 0.32, 0.36, 0.42, 0.48]),
             'label' : 'Leading AK8 jet #tau_{1}^{(2)}',
             'alignLeg' : 'right'
             }
-nSubVariables_topSel[ '_tau_0p5_2' ] = {
+nSubVariables_topSel[ 'Jet_tau_0p5_2' ] = {
             'bins' : array('d',[0., 0.1, 0.16, 0.22, 0.28, 0.34, 0.4, 0.46, 0.52, 0.58, 0.64, 0.7, 0.8]),
             'label' : 'Leading AK8 jet #tau_{2}^{(0.5)',
             'alignLeg' : 'right'
             }
-nSubVariables_topSel[ '_tau_1_2' ] = {
+nSubVariables_topSel[ 'Jet_tau_1_2' ] = {
             'bins' : array('d',[0., 0.06, 0.12, 0.18, 0.24, 0.3, 0.36, 0.42, 0.48]), 
             'label' : 'Leading AK8 jet #tau_{2}^{(1)}',
             'alignLeg' : 'right'
             }
-nSubVariables_topSel[ '_tau_2_2' ] = {
+nSubVariables_topSel[ 'Jet_tau_2_2' ] = {
             'bins' : array('d',[0., 0.02, 0.04, 0.06, 0.08, 0.1, 0.12, 0.16, 0.2]),
             'label' : 'Leading AK8 jet #tau_{2}^{(2)}',
             'alignLeg' : 'right'
             }
-nSubVariables_topSel[ '_tau_0p5_3' ] = {
+nSubVariables_topSel[ 'Jet_tau_0p5_3' ] = {
             'bins' : array('d',[0.0, 0.1, 0.14, 0.18, 0.22, 0.26, 0.3, 0.34, 0.38, 0.44, 0.5, 0.6]), 
             'label' : 'Leading AK8 jet #tau_{3}^{(0.5)}',
             'alignLeg' : 'right'
             }
-nSubVariables_topSel[ '_tau_1_3' ] = {
+nSubVariables_topSel[ 'Jet_tau_1_3' ] = {
             'bins' : array('d',[0., 0.02, 0.04, 0.06, 0.08, 0.11, 0.14, 0.17, 0.2, 0.24, 0.28]),
             'label' : 'Leading AK8 jet #tau_{3}^{(1)}',
             'alignLeg' : 'right'
             }
-nSubVariables_topSel[ '_tau_2_3' ] = {
+nSubVariables_topSel[ 'Jet_tau_2_3' ] = {
             'bins' : array('d',[0., 0.01, 0.02, 0.03, 0.05, 0.06, 0.07, 0.09]), 
             'label' : 'Leading AK8 jet #tau_{3}^{(2)}',
             'alignLeg' : 'right'
             }
-nSubVariables_topSel[ '_tau_0p5_4' ] = {
+nSubVariables_topSel[ 'Jet_tau_0p5_4' ] = {
             'bins' : array('d',[0.0, 0.1, 0.16, 0.22, 0.28, 0.34, 0.42, 0.5]), 
             'label' : 'Leading AK8 jet #tau_{4}^{(0.5)}',
             'alignLeg' : 'right'
             }
-nSubVariables_topSel[ '_tau_1_4' ] = {
+nSubVariables_topSel[ 'Jet_tau_1_4' ] = {
             'bins' : array('d',[0., 0.03, 0.06, 0.09, 0.12, 0.15, 0.18, 0.21, 0.24]),
             'label' : 'Leading AK8 jet #tau_{4}^{(1)}',
             'alignLeg' : 'right'
             }
-nSubVariables_topSel[ '_tau_2_4' ] = {
+nSubVariables_topSel[ 'Jet_tau_2_4' ] = {
             'bins' : array('d',[0., 0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07]),
             'label' : 'Leading AK8 jet #tau_{4}^{(2)}',
             'alignLeg' : 'right'
             }
-nSubVariables_topSel[ '_tau21' ] = {
+nSubVariables_topSel[ 'Jet_tau21' ] = {
             'bins' : array('d',[0., 0.1, 0.18, 0.26, 0.34, 0.42, 0.5, 0.58, 0.66, 0.74, 0.82, 0.9, 1.]),
             'label' : 'Leading AK8 jet #tau_{2,1}^{(1)} (WTA #k_{T})',
             'alignLeg' : 'right'
             }
-nSubVariables_topSel[ '_tau32' ] = {
+nSubVariables_topSel[ 'Jet_tau32' ] = {
             'bins' : array('d',[0., 0.12, 0.2, 0.28, 0.36, 0.44, 0.52, 0.6, 0.68, 0.76, 0.88, 1.]),
             'label' : 'Leading AK8 jet #tau_{3,2}^{(1)} (WTA #k_{T})',
             'alignLeg' : 'right'
@@ -307,72 +307,72 @@ nSubVariables_topSel[ '_tau32' ] = {
 
 nSubVariables_WSel_test= OrderedDict()
 
-nSubVariables_WSel_test[ '_tau_0p5_1' ] = {
+nSubVariables_WSel_test[ 'Jet_tau_0p5_1' ] = {
             'bins' : array('d',[0., 0.9]),
             'label' : 'Leading AK8 jet #tau_{1}^{(0.5)}',
             'alignLeg' : 'right'
             }
-nSubVariables_WSel_test[ '_tau_1_1' ] = {
+nSubVariables_WSel_test[ 'Jet_tau_1_1' ] = {
             'bins' : array('d',[0., 0.6]),
             'label' : 'Leading AK8 jet #tau_{1}^{(1)}',
             'alignLeg' : 'right'
             }
-nSubVariables_WSel_test[ '_tau_2_1' ] = {
+nSubVariables_WSel_test[ 'Jet_tau_2_1' ] = {
             'bins' : array('d',[0., 0.56]),
             'label' : 'Leading AK8 jet #tau_{1}^{(2)}',
             'alignLeg' : 'right'
             }
-nSubVariables_WSel_test[ '_tau_0p5_2' ] = {
+nSubVariables_WSel_test[ 'Jet_tau_0p5_2' ] = {
             'bins' : array('d',[0., 0.66]),
             'label' : 'Leading AK8 jet #tau_{2}^{(0.5)}',
             'alignLeg' : 'right'
             }
-nSubVariables_WSel_test[ '_tau_1_2' ] = {
+nSubVariables_WSel_test[ 'Jet_tau_1_2' ] = {
             'bins' : array('d',[0., 0.4]),
             'label' : 'Leading AK8 jet #tau_{2}^{(1)}',
             'alignLeg' : 'right'
             }
-nSubVariables_WSel_test[ '_tau_2_2' ] = {
+nSubVariables_WSel_test[ 'Jet_tau_2_2' ] = {
             'bins' : array('d',[0., 0.2]),
             'label' : 'Leading AK8 jet #tau_{2}^{(2)}',
             'alignLeg' : 'right'
             }
-nSubVariables_WSel_test[ '_tau_0p5_3' ] = {
+nSubVariables_WSel_test[ 'Jet_tau_0p5_3' ] = {
             'bins' : array('d',[0., 0.6]),
             'label' : 'Leading AK8 jet #tau_{3}^{(0.5)}',
             'alignLeg' : 'right'
             }
-nSubVariables_WSel_test[ '_tau_1_3' ] = {
+nSubVariables_WSel_test[ 'Jet_tau_1_3' ] = {
             'bins' : array('d',[0., 0.28]),
             'label' : 'Leading AK8 jet #tau_{3}^{(1)}',
             'alignLeg' : 'right'
             }
-nSubVariables_WSel_test[ '_tau_2_3' ] = {
+nSubVariables_WSel_test[ 'Jet_tau_2_3' ] = {
             'bins' : array('d',[0., 0.16]),
             'label' : 'Leading AK8 jet #tau_{3}^{(2)}',
             'alignLeg' : 'right'
             }
-nSubVariables_WSel_test[ '_tau_0p5_4' ] = {
+nSubVariables_WSel_test[ 'Jet_tau_0p5_4' ] = {
             'bins' : array('d',[0., 0.24]),
             'label' : 'Leading AK8 jet #tau_{4}^{(0.5)}',
             'alignLeg' : 'right'
             }
-nSubVariables_WSel_test[ '_tau_1_4' ] = {
+nSubVariables_WSel_test[ 'Jet_tau_1_4' ] = {
             'bins' :  array('d',[0., 0.26]),
             'label' : 'Leading AK8 jet #tau_{4}^{(1)}',
             'alignLeg' : 'right'
             }
-nSubVariables_WSel_test[ '_tau_2_4' ] = {
+nSubVariables_WSel_test[ 'Jet_tau_2_4' ] = {
             'bins' : array('d',[0., 0.08]),
             'label' : 'Leading AK8 jet #tau_{4}^{(2)}',
             'alignLeg' : 'right'
             }
-nSubVariables_WSel_test[ '_tau21' ] = {
+nSubVariables_WSel_test[ 'Jet_tau21' ] = {
             'bins' : array('d',[0., 1.]),
             'label' : 'Leading AK8 jet #tau_{2,1}^{(1)}  (WTA #k_{T})',
             'alignLeg' : 'right'
             }
-nSubVariables_WSel_test[ '_tau32' ] = {
+nSubVariables_WSel_test[ 'Jet_tau32' ] = {
             'bins' : array('d',[0., 1.]),
             'label' : 'Leading AK8 jet #tau_{3,2}^{(1)}  (WTA #k_{T})',
             'alignLeg' : 'right'
@@ -381,72 +381,72 @@ nSubVariables_WSel_test[ '_tau32' ] = {
 
 nSubVariables_topSel_test = OrderedDict()
 
-nSubVariables_topSel_test[ '_tau_0p5_1' ] = {
+nSubVariables_topSel_test[ 'Jet_tau_0p5_1' ] = {
             'bins' : array('d',[0., 0.9]),
             'label' : 'Leading AK8 jet #tau_{1}^{(0.5)}',
             'alignLeg' : 'right'
             }
-nSubVariables_topSel_test[ '_tau_1_1' ] = {
+nSubVariables_topSel_test[ 'Jet_tau_1_1' ] = {
             'bins' : array('d',[0., 0.8]), 
             'label' : 'Leading AK8 jet #tau_{1}^{(1)}',
             'alignLeg' : 'right'
             }
-nSubVariables_topSel_test[ '_tau_2_1' ] = {
+nSubVariables_topSel_test[ 'Jet_tau_2_1' ] = {
             'bins' : array('d',[0., 0.48]),
             'label' : 'Leading AK8 jet #tau_{1}^{(2)}',
             'alignLeg' : 'right'
             }
-nSubVariables_topSel_test[ '_tau_0p5_2' ] = {
+nSubVariables_topSel_test[ 'Jet_tau_0p5_2' ] = {
             'bins' : array('d',[0., 0.8]),
             'label' : 'Leading AK8 jet #tau_{2}^{(0.5)',
             'alignLeg' : 'right'
             }
-nSubVariables_topSel_test[ '_tau_1_2' ] = {
+nSubVariables_topSel_test[ 'Jet_tau_1_2' ] = {
             'bins' : array('d',[0., 0.48]), 
             'label' : 'Leading AK8 jet #tau_{2}^{(1)}',
             'alignLeg' : 'right'
             }
-nSubVariables_topSel_test[ '_tau_2_2' ] = {
+nSubVariables_topSel_test[ 'Jet_tau_2_2' ] = {
             'bins' : array('d',[0., 0.2]),
             'label' : 'Leading AK8 jet #tau_{2}^{(2)}',
             'alignLeg' : 'right'
             }
-nSubVariables_topSel_test[ '_tau_0p5_3' ] = {
+nSubVariables_topSel_test[ 'Jet_tau_0p5_3' ] = {
             'bins' : array('d',[0.0, 0.6]), 
             'label' : 'Leading AK8 jet #tau_{3}^{(0.5)}',
             'alignLeg' : 'right'
             }
-nSubVariables_topSel_test[ '_tau_1_3' ] = {
+nSubVariables_topSel_test[ 'Jet_tau_1_3' ] = {
             'bins' : array('d',[0., 0.28]),
             'label' : 'Leading AK8 jet #tau_{3}^{(1)}',
             'alignLeg' : 'right'
             }
-nSubVariables_topSel_test[ '_tau_2_3' ] = {
+nSubVariables_topSel_test[ 'Jet_tau_2_3' ] = {
             'bins' : array('d',[0., 0.1]), 
             'label' : 'Leading AK8 jet #tau_{3}^{(2)}',
             'alignLeg' : 'right'
             }
-nSubVariables_topSel_test[ '_tau_0p5_4' ] = {
+nSubVariables_topSel_test[ 'Jet_tau_0p5_4' ] = {
             'bins' : array('d',[0.0, 0.5]), 
             'label' : 'Leading AK8 jet #tau_{4}^{(0.5)}',
             'alignLeg' : 'right'
             }
-nSubVariables_topSel_test[ '_tau_1_4' ] = {
+nSubVariables_topSel_test[ 'Jet_tau_1_4' ] = {
             'bins' : array('d',[0., 0.24]),
             'label' : 'Leading AK8 jet #tau_{4}^{(1)}',
             'alignLeg' : 'right'
             }
-nSubVariables_topSel_test[ '_tau_2_4' ] = {
+nSubVariables_topSel_test[ 'Jet_tau_2_4' ] = {
             'bins' : array('d',[0., 0.08]),
             'label' : 'Leading AK8 jet #tau_{4}^{(2)}',
             'alignLeg' : 'right'
             }
-nSubVariables_topSel_test[ '_tau21' ] = {
+nSubVariables_topSel_test[ 'Jet_tau21' ] = {
             'bins' : array('d',[0., 1.]),
             'label' : 'Leading AK8 jet #tau_{2,1}^{(1)} (WTA #k_{T})',
             'alignLeg' : 'right'
             }
-nSubVariables_topSel_test[ '_tau32' ] = {
+nSubVariables_topSel_test[ 'Jet_tau32' ] = {
             'bins' : array('d',[0., 1.]),
             'label' : 'Leading AK8 jet #tau_{3,2}^{(1)} (WTA #k_{T})',
             'alignLeg' : 'right'
