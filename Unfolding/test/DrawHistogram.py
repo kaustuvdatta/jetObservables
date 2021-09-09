@@ -6,7 +6,7 @@ from array import array
 import argparse
 from collections import OrderedDict
 import numpy as np
-from variables import nSubVariables,nSubVariables_WSel,nSubVariables_topSel
+from variables import nSubVariables, nSubVariables_WSel, nSubVariables_topSel
 sys.path.insert(0,'../python/')
 import CMS_lumi as CMS_lumi
 import tdrstyle as tdrStyle
@@ -108,7 +108,6 @@ def plotData( name, xmin, xmax, rebinX, axisX='', axisY='', labX=0.92, labY=0.50
     triggerList = [ 'AK8PFJet80', 'AK8PFJet140', 'AK8PFJet200', 'AK8PFJet260', 'AK8PFJet320', 'AK8PFJet400', 'AK8PFJet450', 'AK8PFJet500' ]
     for dataSamples in dataFile.keys():
         yearLabel = dataSamples.split('data')[1]
-        print ("Year Label:", yearLabel)
         if args.selection.startswith('dijet'):
             for it in list(reversed(triggerList)):
             #for it in checkDict( 'JetHT', dictSamples )[yearLabel]['triggerList']:
@@ -122,7 +121,6 @@ def plotData( name, xmin, xmax, rebinX, axisX='', axisY='', labX=0.92, labY=0.50
                 dummy = dummy+1
         else:
             tmpdataHistos[ dataSamples ] = dataFile[yearLabel].Get( 'jetObservables/'+name )
-            #print (name)
 
     stackHisto = ROOT.THStack('stackHisto'+name, 'stack'+name)
     for i in tmpdataHistos: stackHisto.Add( tmpdataHistos[i] )
@@ -158,8 +156,6 @@ def plotData( name, xmin, xmax, rebinX, axisX='', axisY='', labX=0.92, labY=0.50
 def plotSysComparison( nomHisto, dictUncHistos, outputName, labelX='', log=False, version='', ext='png', year='2017', outputDir='Plots/' ):
     """docstring for plot"""
 
-    outputFileName = outputName+'_'+syst+'SystPlots_'+version+'.'+ext
-    print ('Processing.......', outputFileName)
     outputFileName = outputName+'_'+version+'.'+ext
     print 'Processing.......', outputFileName
 
@@ -234,8 +230,6 @@ def plotSignalBkg( name, xmin, xmax, rebinX, axisX='', axisY='', labX=0.92, labY
                 tmpdataHistos[ it+dataSamples ] = dataFile[dataSamples].Get( 'jetObservables/'+name.replace( args.selection, it+'_'+args.selection ) )
                 tmpdataHistos[ it+dataSamples ].Scale( checkDict( 'JetHT', dictSamples )[yearLabel]['triggerList'][it] )
         else:
-            print ("#########")
-            print (dataSamples, yearLabel, name)
             tmpdataHistos[ dataSamples ] = dataFile[dataSamples].Get( 'jetObservables/'+name )
     dataHistos[ 'DATA' ] = tmpdataHistos[next(iter(tmpdataHistos))].Clone()
     dataHistos[ 'DATA' ].Reset()
@@ -607,28 +601,36 @@ if __name__ == '__main__':
     CMS_lumi.lumi_13TeV = ('#leq' if args.selection.startswith('dijet') else '')+str( round( (args.lumi/1000.), 2 ) )+" fb^{-1}, 13 TeV"+('' if args.year.startswith('all') else ", "+args.year )
 
     plotList = [
-            [ 'data', 'nPVs_only', 'Number of Primary Vertex', 0., 100., 2, 'right' ],
-            [ 'data', 'LeadJetAK8_pt_only', 'Leading AK8 jet pt [GeV]', 100, 1500, 2, 'right' ] ,
-            [ 'data', 'LeadJetAK8_eta_only', 'Leading AK8 jet eta [GeV]', 100, 1500, 2, 'right' ] ,
-            [ 'data', 'recoJet1_sortedPt_pt_', 'Leading AK8 jet pt [GeV]', 100, 1000, 1, 'right' ] ,
-            [ 'bkgData', 'nPVs', 'Number of Primary Vertex', 0., 100., 2, 'right' ],
+            [ 'data', 'nPVs', 'Number of Primary Vertices', 0., 100., 2, 'right' ],
+            #[ 'data', 'LeadJetAK8_pt_only', 'Leading AK8 jet pt/GeV', 100, 1500, 2, 'right' ] ,
+            #[ 'data', 'LeadJetAK8_eta_only', 'Leading AK8 jet eta/GeV', 100, 1500, 2, 'right' ] ,
+            #[ 'data', 'recoJet1_sortedPt_pt_', 'Leading AK8 jet pt/GeV', 100, 1000, 1, 'right' ] ,
+            [ 'bkgData', 'nPVs', 'Number of Primary Vertices', 0., 100., 2, 'right' ],
             #[ 'bkgData', 'recoPtAsym', 'pT Asymmetry', 0., .4, 2, 'right' ],
             #[ 'bkgData', 'recoDeltaPhi', '#Delta #Phi(  j1, j2 )', 1., 3.5, 2, 'left' ],
-            #[ 'bkgData', 'recoJet1_sortedPt_pt', 'Leading AK8 jet pt [GeV]', 100, 1500, 5, 'right' ] ,
+            #[ 'bkgData', 'recoJet1_sortedPt_pt', 'Leading AK8 jet pt/GeV', 100, 1500, 5, 'right' ] ,
             #[ 'bkgData', 'recoJet1_sortedPt_eta', 'Leading AK8 jet #eta', -3., 3., 2, 'right' ] ,
             #[ 'bkgData', 'recoJet1_sortedPt_phi', 'Leading AK8 jet #Phi', -3.14, 3.14, 5, 'right' ] ,
-            #[ 'bkgData', 'recoJet1_sortedPt_mass', 'Leading AK8 jet mass [GeV]', 0, 200, 1, 'right' ] ,
-            #[ 'bkgData', 'recoJet2_sortedPt_pt', '2nd Leading AK8 jet pt [GeV]', 100, 1500, 5, 'right' ] ,
+            #[ 'bkgData', 'recoJet1_sortedPt_mass', 'Leading AK8 jet mass/GeV', 0, 200, 1, 'right' ] ,
+            #[ 'bkgData', 'recoJet2_sortedPt_pt', '2nd Leading AK8 jet pt/GeV', 100, 1500, 5, 'right' ] ,
             #[ 'bkgData', 'recoJet2_sortedPt_eta', '2nd Leading AK8 jet #eta', -3., 3., 2, 'right' ] ,
             #[ 'bkgData', 'recoJet2_sortedPt_phi', '2nd Leading AK8 jet #Phi', -3.14, 3.14, 5, 'right' ] ,
-            #[ 'bkgData', 'recoJet2_sortedPt_mass', '2nd Leading AK8 jet mass [GeV]', 0, 200, 1, 'right' ] ,
+            #[ 'bkgData', 'recoJet2_sortedPt_mass', '2nd Leading AK8 jet mass/GeV', 0, 200, 1, 'right' ] ,
             ]
     if not args.selection.startswith('dijet'):
-            [ 'bkgData', 'recoJet_mass_nom', 'Leading AK8 jet softdrop mass [GeV]', ( 50. if args.selection.startswith('WSel') else 130. ), ( 140. if args.selection.startswith('WSel') else 300. ), 1, 'right' ] ,
+        plotList.append([ 'bkgData', 'recoJet_mass_nom', 'Leading AK8 jet softdrop mass/GeV', ( 50. if args.selection.startswith('WSel') else 130. ), ( 140. if args.selection.startswith('WSel') else 300. ), 1, 'right' ] ,)
+        plotList.append([ 'data', 'recoJet_mass_nom', 'Leading AK8 jet softdrop mass/GeV', ( 50. if args.selection.startswith('WSel') else 130. ), ( 140. if args.selection.startswith('WSel') else 300. ), 1, 'right' ] ,)
+        plotList.append([ 'bkgData', 'nleps', 'Number of Leptons', 0, 4, 4, 'right' ] ,)
+        plotList.append([ 'data', 'nleps', 'Number of Leptons', 0, 4, 4, 'right' ] ,)
+        plotList.append([ 'bkgData', 'muons_pt', 'p_{t} of Muons/GeV', 0., 400., 20, 'right' ] ,)
+        plotList.append([ 'data', 'muons_pt', 'p_{t} of Muons/GeV', 0., 400., 20, 'right' ] ,)
+        plotList.append([ 'bkgData', 'METPt', 'MET P_{t}/GeV', 0., 600., 30, 'right' ] ,)
+        plotList.append([ 'data', 'METPt', 'MET P_{t}/GeV', 0., 600., 30, 'right' ] ,)
+
 
     jetlabels = [ ('Jet1', 'Outer'), ('Jet2', 'Central') ] if args.selection.startswith('dijet') else [ ('Jet', 'Leading') ]
     for ijet in jetlabels:
-        plotList.append( [ 'bkgData', 'reco'+ijet[0]+'_pt_nom', ijet[1]+' AK8 jet pt [GeV]', 100, 1500, 5, 'right' ] )
+        plotList.append( [ 'bkgData', 'reco'+ijet[0]+'_pt_nom', ijet[1]+' AK8 jet pt/GeV', 100, 1500, 5, 'right' ] )
         plotList.append( [ 'bkgData', 'reco'+ijet[0]+'_eta_nom', ijet[1]+' AK8 jet eta', -3, 3, 2, 'left' ] )
         plotList.append( [ 'resol', 'resol'+ijet[0]+'_pt', ijet[1]+'AK8 jet reco/gen pt', 0., 2., 2, 'right' ] )
         plotList.append( [ 'resol', 'resol'+ijet[0]+'_sdmass', ijet[1]+'AK8 jet reco/gen sd mass', 0., 2., 2, 'right' ] )
