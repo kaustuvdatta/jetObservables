@@ -46,9 +46,10 @@ def runTUnfold( dataFile, sigFiles, bkgFiles, variables, sel, sysUncert ):
                 signalHistos[ signalLabel+'_reco'+ivar+'_nom'+sel ].Add( dataFile[ivar+'_2018'].Get(signalLabel+'_reco'+ivar+'_nom'+sel) )
                 signalHistos[ signalLabel+'_accepgen'+ivar+sel ].Add( dataFile[ivar+'_2018'].Get(signalLabel+'_accepgen'+ivar+sel) )
                 signalHistos[ signalLabel+'_reco'+ivar+'_nom'+sel+'_genBin' ].Add( dataFile[ivar+'_2018'].Get(signalLabel+'_reco'+ivar+'_nom'+sel+'_genBin') )
+            
             for sys in sysUncert:
                 for upDown in [ 'Up', 'Down' ]:
-                    if sys.startswith('_model'): continue
+                    if sys.startswith(('_model', '_hdamp', '_Tune')): continue
                     signalHistos[ signalLabel+'_reco'+ivar+sys+upDown+sel ] = dataFile[ivar+'_2017'].Get(signalLabel+'_reco'+ivar+sys+upDown+sel)
                     if not args.process.startswith('MCCrossClosure'): signalHistos[ signalLabel+'_reco'+ivar+sys+upDown+sel ].Add( dataFile[ivar+'_2018'].Get(signalLabel+'_reco'+ivar+sys+upDown+sel) )
                     signalHistos[ signalLabel+'_resp'+ivar+sys+upDown+sel ] = dataFile[ivar+'_2017'].Get(signalLabel+'_resp'+ivar+sys+upDown+sel)
@@ -59,12 +60,32 @@ def runTUnfold( dataFile, sigFiles, bkgFiles, variables, sel, sysUncert ):
                 altSignalLabel+'_recoJetfrom_resp'+ivar+'_nom'+sel : dataFile[ivar+'_2017'].Get(altSignalLabel+'_recoJetfrom_resp'+ivar+'_nom'+sel),
                 altSignalLabel+'_genJetfrom_resp'+ivar+'_nom'+sel : dataFile[ivar+'_2017'].Get(altSignalLabel+'_genJetfrom_resp'+ivar+'_nom'+sel),
                 }
-
+           
             if not args.process.startswith('MCCrossClosure'):
                 altSignalHistos[ altSignalLabel+'_resp'+ivar+'_nom'+sel ].Add( dataFile[ivar+'_2018'].Get(altSignalLabel+'_resp'+ivar+'_nom'+sel) )
                 altSignalHistos[ altSignalLabel+'_recoJetfrom_resp'+ivar+'_nom'+sel ].Add( dataFile[ivar+'_2018'].Get(altSignalLabel+'_recoJetfrom_resp'+ivar+'_nom'+sel) )
                 altSignalHistos[ altSignalLabel+'_genJetfrom_resp'+ivar+'_nom'+sel ].Add( dataFile[ivar+'_2018'].Get(altSignalLabel+'_genJetfrom_resp'+ivar+'_nom'+sel) )
+            '''
+            varSignalHistos = {
+                            varSignalLabels[0]+'_resp'+ivar+'_nom'+sel : dataFile[ivar+'_2017'].Get(varSignalLabels[0]+'_resp'+ivar+'_nom'+sel),
+                            varSignalLabels[0]+'_recoJetfrom_resp'+ivar+'_nom'+sel : dataFile[ivar+'_2017'].Get(varSignalLabels[0]+'_recoJetfrom_resp'+ivar+'_nom'+sel),
+                            varSignalLabels[0]+'_genJetfrom_resp'+ivar+'_nom'+sel : dataFile[ivar+'_2017'].Get(varSignalLabels[0]+'_genJetfrom_resp'+ivar+'_nom'+sel),
+                            }
+                       
+            if not args.process.startswith('MCCrossClosure'):
+                varSignalHistos[ varSignalLabels[0]+'_resp'+ivar+'_nom'+sel ].Add( dataFile[ivar+'_2018'].Get(varSignalLabels[0]+'_resp'+ivar+'_nom'+sel) )
+                varSignalHistos[ varSignalLabels[0]+'_recoJetfrom_resp'+ivar+'_nom'+sel ].Add( dataFile[ivar+'_2018'].Get(varSignalLabels[0]+'_recoJetfrom_resp'+ivar+'_nom'+sel) )
+                varSignalHistos[ varSignalLabels[0]+'_genJetfrom_resp'+ivar+'_nom'+sel ].Add( dataFile[ivar+'_2018'].Get(varSignalLabels[0]+'_genJetfrom_resp'+ivar+'_nom'+sel) )
 
+            for v in varSignalLabels[1:]:
+                varSignalHistos[ v+'_resp'+ivar+'_nom'+sel ].Add( dataFile[ivar+'_2017'].Get(v+'_resp'+ivar+'_nom'+sel) )
+                varSignalHistos[ v+'_recoJetfrom_resp'+ivar+'_nom'+sel ].Add( dataFile[ivar+'_2017'].Get(v+'_recoJetfrom_resp'+ivar+'_nom'+sel) )
+                varSignalHistos[ v+'_genJetfrom_resp'+ivar+'_nom'+sel ].Add( dataFile[ivar+'_2017'].Get(v+'_genJetfrom_resp'+ivar+'_nom'+sel) )
+                if not args.process.startswith('MCCrossClosure'):
+                    varSignalHistos[ v+'_resp'+ivar+'_nom'+sel ].Add( dataFile[ivar+'_2018'].Get(v+'_resp'+ivar+'_nom'+sel) )
+                    varSignalHistos[ v+'_recoJetfrom_resp'+ivar+'_nom'+sel ].Add( dataFile[ivar+'_2018'].Get(v+'_recoJetfrom_resp'+ivar+'_nom'+sel) )
+                    varSignalHistos[ v+'_genJetfrom_resp'+ivar+'_nom'+sel ].Add( dataFile[ivar+'_2018'].Get(v+'_genJetfrom_resp'+ivar+'_nom'+sel) )
+            '''
             allHistos = {
                     'dataMinusBkgs' : dataFile[ivar+'_2017'].Get( 'dataMinusBkgs' ),
                     'dataMinusBkgsGenBin' : dataFile[ivar+'_2017'].Get( 'dataMinusBkgsGenBin' )
@@ -84,19 +105,24 @@ def runTUnfold( dataFile, sigFiles, bkgFiles, variables, sel, sysUncert ):
             print('|-------> Running single year '+args.year)
             ### Getting input histos
             mainSigFiles = { k:v for (k,v) in sigFiles.items() if k.startswith(signalLabelBegin)  }
-            signalHistos = loadHistograms( mainSigFiles, ivar, sel, sysUnc=[ isys for isys in  sysUncert if not isys.startswith('_model') ], lumi=args.lumi, year=args.year, process=args.process, variables=variables )
+            signalHistos = loadHistograms( mainSigFiles, ivar, sel, sysUnc=[ isys for isys in  sysUncert if not isys.startswith(('_model', '_hdamp', '_Tune')) ], lumi=args.lumi, year=args.year, process=args.process, variables=variables )
             print ("Signal histograms:", signalHistos)
             tmp2SigFiles = { k:v for (k,v) in sigFiles.items() if k.startswith(altSignalLabelBegin)  }
             altSignalHistos = loadHistograms( tmp2SigFiles, ivar, sel, sysUnc=[], respOnly=True, lumi=args.lumi, year=args.year, process=args.process, variables=variables)
+            tmp3SigFiles = { k:v for (k,v) in sigFiles.items() if k.startswith(varSignalLabelBegin)  }
+            varSignalHistos = loadHistograms( tmp3SigFiles, ivar, sel, sysUnc=[], respOnly=True, lumi=args.lumi, year=args.year, process=args.process, variables=variables)
+
             if args.process.startswith("MC"):
                 if args.process.startswith('MCSelfClosure'):
                     dataHistos = { 'data_reco'+k.split(('_reco' if sel.startswith('_dijet') else 'Leptonic'))[1] : v for (k,v) in signalHistos.items() if '_reco' in k }
                 else:
                     dataHistos = loadHistograms( tmp2SigFiles, ivar, sel, isMC=True, addGenInfo=False, lumi=args.lumi, year=args.year, process=args.process, variables=variables )
                     dataHistos = { 'data_reco'+k.split('_reco')[1] : v for (k,v) in dataHistos.items() if '_reco' in k }
-                    print(dataHistos)
+                    
             else:
                 dataHistos = loadHistograms( dataFile, ivar, sel, isMC= False, lumi=args.lumi, year=args.year, process=args.process, variables=variables )
+            print("Data histos", dataHistos.keys())
+
             bkgHistos = loadHistograms( bkgFiles, ivar, sel, sysUnc=[], lumi=args.lumi, year=args.year, process=args.process, variables=variables) if args.process.startswith('data') else {}
 
             ####### Fix fake and true reco
@@ -113,6 +139,7 @@ def runTUnfold( dataFile, sigFiles, bkgFiles, variables, sel, sysUncert ):
             ######## Cross check: plotting data vs all MC Scaled
             print ('|------> Cross check: plotting data vs all MC')
             allHistos = {}
+            print (dataHistos.keys())
             allHistos[ 'allBkgHisto' ] = dataHistos['data_reco'+ivar+'_nom'+sel].Clone()
             allHistos[ 'allBkgHisto' ].Reset()
             allHistos[ 'allBkgHistoGenBin' ] = dataHistos['data_reco'+ivar+'_nom'+sel+'_genBin'].Clone()
@@ -230,7 +257,7 @@ def runTUnfold( dataFile, sigFiles, bkgFiles, variables, sel, sysUncert ):
                 print '|------> TUnfolding adding uncert:'
                 dictUncHistos = {}
                 for sys in sysUncert:
-                    if not sys.startswith('_model'):
+                    if sys.startswith(('_puWeight','_jesTotal','_jer')):
                         dictUncHistos[sys+' Up'] = signalHistos[signalLabel+'_reco'+ivar+sys+'Up'+sel].Clone()
                         dictUncHistos[sys+' Down'] = signalHistos[signalLabel+'_reco'+ivar+sys+'Down'+sel].Clone()
                         for upDown in [ 'Up', 'Down' ]:
@@ -246,7 +273,7 @@ def runTUnfold( dataFile, sigFiles, bkgFiles, variables, sel, sysUncert ):
                             can2DNorm.SaveAs(outputDir+ivar+'_from'+('Data' if args.process.startswith('data') else 'MC')+'_'+signalLabel+sel+sys+upDown+'Normalized_responseMatrix'+args.version+'.'+args.ext)
 
                     #### adding model uncertainty
-                    else:
+                    elif sys.startswith(('_model')):
                         #if not args.process.startswith('MCSelfClosure'):
                         print('modelUnc')
                         tunfolder.AddSysError(
@@ -259,6 +286,62 @@ def runTUnfold( dataFile, sigFiles, bkgFiles, variables, sel, sysUncert ):
                         altSignalHistos[altSignalLabel+'_resp'+ivar+'_nom'+sel].Draw("colz")
                         can2DNorm.SaveAs(outputDir+ivar+'_from'+('Data' if args.process.startswith('data') else 'MC')+'_'+altSignalLabel+sel+'Normalized_alt_responseMatrix'+args.version+'.'+args.ext)
 
+                    #### adding model variation uncertainties
+                    #varSignalLabels = ['varTTToSemileptonic_TuneCP5_erdON', 'varTTToSemileptonic_TuneCP5CR1', 'varTTToSemileptonic_TuneCP5CR2', 
+                    #       'varTTToSemileptonic_TuneCP5Up','varTTToSemileptonic_TuneCP5Down','varTTToSemileptonic_hdampUp', 'varTTToSemileptonic_hdampDown', 
+                    #       'varTTToSemileptonic_mtop166p5', 'varTTToSemileptonic_mtop169p5', 'varTTToSemileptonic_mtop171p5', 'varTTToSemileptonic_mtop173p5', 'varTTToSemileptonic_mtop175p5']
+                    
+                    elif sys.startswith('_hdamp'):
+                        #if not args.process.startswith('MCSelfClosure'):
+                        print('hdampUnc')
+                        #dictUncHistos[sys+' Up'] = signalHistos[signalLabel+'_reco'+ivar+sys+'Up'+sel].Clone()
+                        #dictUncHistos[sys+' Down'] = signalHistos[signalLabel+'_reco'+ivar+sys+'Down'+sel].Clone()
+                        tunfolder.AddSysError(
+                                            varSignalHistos['varTTToSemileptonic_hdampUp'+'_resp'+ivar+'_nom'+sel],
+                                            'hdampUp',
+                                            ROOT.TUnfold.kHistMapOutputHoriz,
+                                            ROOT.TUnfoldSys.kSysErrModeMatrix, #### kSysErrModeMatrix the histogram sysError corresponds to an alternative response matrix. kSysErrModeShift the content of the histogram sysError are the absolute shifts of the response matrix. kSysErrModeRelative the content of the histogram sysError specifies the relative uncertainties
+                                            )
+                        can2DNorm = ROOT.TCanvas(ivar+'can2DNorm'+'hdampUp', ivar+'can2DNorm'+'hdampUp', 750, 500 )
+                        varSignalHistos['varTTToSemileptonic_hdampUp'+'_resp'+ivar+'_nom'+sel].Draw("colz")
+                        can2DNorm.SaveAs(outputDir+ivar+'_from'+('Data' if args.process.startswith('data') else 'MC')+'_'+'TTToSemileptonic_hdampUp'+'_resp'+sel+'Normalized_responseMatrix'+args.version+'.'+args.ext)
+                        
+                        tunfolder.AddSysError(
+                                            varSignalHistos['varTTToSemileptonic_hdampDown'+'_resp'+ivar+'_nom'+sel],
+                                            'hdampDown',
+                                            ROOT.TUnfold.kHistMapOutputHoriz,
+                                            ROOT.TUnfoldSys.kSysErrModeMatrix, #### kSysErrModeMatrix the histogram sysError corresponds to an alternative response matrix. kSysErrModeShift the content of the histogram sysError are the absolute shifts of the response matrix. kSysErrModeRelative the content of the histogram sysError specifies the relative uncertainties
+                                            )
+                        can2DNorm = ROOT.TCanvas(ivar+'can2DNorm'+'hdampDown', ivar+'can2DNorm'+'hdampDown', 750, 500 )
+                        varSignalHistos['varTTToSemileptonic_hdampDown'+'_resp'+ivar+'_nom'+sel].Draw("colz")
+                        can2DNorm.SaveAs(outputDir+ivar+'_from'+('Data' if args.process.startswith('data') else 'MC')+'_'+'TTToSemileptonic_hdampDown'+'_resp'+sel+'Normalized_responseMatrix'+args.version+'.'+args.ext)
+
+                    elif sys.startswith('_Tune'):
+                        #if not args.process.startswith('MCSelfClosure'):
+                        print('TuneUnc')
+                        #dictUncHistos[sys+' Up'] = signalHistos[signalLabel+'_reco'+ivar+sys+'Up'+sel].Clone()
+                        #dictUncHistos[sys+' Down'] = signalHistos[signalLabel+'_reco'+ivar+sys+'Down'+sel].Clone()
+                        tunfolder.AddSysError(
+                                            varSignalHistos['varTTToSemileptonic_TuneCP5Up'+'_resp'+ivar+'_nom'+sel],
+                                            'TuneCP5Up',
+                                            ROOT.TUnfold.kHistMapOutputHoriz,
+                                            ROOT.TUnfoldSys.kSysErrModeMatrix, #### kSysErrModeMatrix the histogram sysError corresponds to an alternative response matrix. kSysErrModeShift the content of the histogram sysError are the absolute shifts of the response matrix. kSysErrModeRelative the content of the histogram sysError specifies the relative uncertainties
+                                            )
+                        can2DNorm = ROOT.TCanvas(ivar+'can2DNorm'+'TuneCP5Up', ivar+'can2DNorm'+'TuneCP5Up', 750, 500 )
+                        varSignalHistos['varTTToSemileptonic_TuneCP5Up'+'_resp'+ivar+'_nom'+sel].Draw("colz")
+                        can2DNorm.SaveAs(outputDir+ivar+'_from'+('Data' if args.process.startswith('data') else 'MC')+'_'+'TTToSemileptonic_TuneCP5Up'+'_resp'+sel+'Normalized_responseMatrix'+args.version+'.'+args.ext)
+                        
+                        tunfolder.AddSysError(
+                                            varSignalHistos['varTTToSemileptonic_TuneCP5Down'+'_resp'+ivar+'_nom'+sel],
+                                            'TuneCP5Down',
+                                            ROOT.TUnfold.kHistMapOutputHoriz,
+                                            ROOT.TUnfoldSys.kSysErrModeMatrix, #### kSysErrModeMatrix the histogram sysError corresponds to an alternative response matrix. kSysErrModeShift the content of the histogram sysError are the absolute shifts of the response matrix. kSysErrModeRelative the content of the histogram sysError specifies the relative uncertainties
+                                            )
+                        can2DNorm = ROOT.TCanvas(ivar+'can2DNorm'+'TuneCP5Down', ivar+'can2DNorm'+'TuneCP5Down', 750, 500 )
+                        varSignalHistos['varTTToSemileptonic_TuneCP5Down'+'_resp'+ivar+'_nom'+sel].Draw("colz")
+                        can2DNorm.SaveAs(outputDir+ivar+'_from'+('Data' if args.process.startswith('data') else 'MC')+'_'+'TTToSemileptonic_TuneCP5Down'+'_resp'+sel+'Normalized_responseMatrix'+args.version+'.'+args.ext)
+                        
+
                 #### Making unc plot
                 plotSysComparison( signalHistos[signalLabel+'_reco'+ivar+'_nom'+sel].Clone(),
                                     dictUncHistos,
@@ -269,136 +352,138 @@ def runTUnfold( dataFile, sigFiles, bkgFiles, variables, sel, sysUncert ):
                                     outputDir=outputDir
                                     )
 
-        ###### Running the unfolding
-        print '|------> TUnfolding doUnfold:'
-        tunfolder.DoUnfold(0)
+            ###### Running the unfolding
+            print '|------> TUnfolding doUnfold:'
+            tunfolder.DoUnfold(0)
 
-        ###### Regularization
-#        nScan=50
-#        tauMin=0.0
-#        tauMax=0.0
-#        iBest=0
-#
-#        logTauX = ROOT.MakeNullPointer(ROOT.TSpline)
-#        logTauY = ROOT.MakeNullPointer(ROOT.TSpline)
-#        lCurve = ROOT.MakeNullPointer(ROOT.TGraph)
-#        ## this method scans the parameter tau and finds the kink in the L curve finally, the unfolding is done for the best choice of tau
-#        tunfolder.ScanLcurve(nScan,tauMin,tauMax,lCurve,logTauX,logTauY)
-        #########################
+            ###### Regularization
+    #        nScan=50
+    #        tauMin=0.0
+    #        tauMax=0.0
+    #        iBest=0
+    #
+    #        logTauX = ROOT.MakeNullPointer(ROOT.TSpline)
+    #        logTauY = ROOT.MakeNullPointer(ROOT.TSpline)
+    #        lCurve = ROOT.MakeNullPointer(ROOT.TGraph)
+    #        ## this method scans the parameter tau and finds the kink in the L curve finally, the unfolding is done for the best choice of tau
+    #        tunfolder.ScanLcurve(nScan,tauMin,tauMax,lCurve,logTauX,logTauY)
+            #########################
 
-        ##### Get output of unfolding
-        allHistos [ 'unfoldHisto'+ivar ] = tunfolder.GetOutput("unfoldHisto"+ivar).Clone()
-        allHistos [ 'foldHisto'+ivar ] = tunfolder.GetFoldedOutput("folded"+ivar).Clone()
-        
-        #### Get Probability matrix
-        allHistos[ 'probaMatrix'+ivar ] = tunfolder.GetProbabilityMatrix('probaMatrix'+ivar).Clone()
-
-        #### Get various covariances
-        print '|------> TUnfolding covariances'
-        allHistos[ 'cov'+ivar ] = tunfolder.GetEmatrixTotal("cov"+ivar, "Covariance Matrix")
-        allHistos[ 'cov_uncorr_'+ivar ] = tunfolder.GetEmatrixSysUncorr("cov_uncorr"+ivar, "Covariance Matrix from Uncorrelated Uncertainties")
-        allHistos[ 'cov_uncorr_data_'+ivar ] = tunfolder.GetEmatrixInput("cov_uncorr_data"+ivar, "Covariance Matrix from Stat Uncertainties of Input Data")
-        #### cov = cov_uncorr + cov_uncorr_data + other uncertaitnies
-        #### stat = cov_uncorr + cov_uncorr_data
-        
-        uncerUnfoldHisto = OrderedDict()
-        allHistos[ 'unfoldHistowoUnc'+ivar ] = allHistos[ 'unfoldHisto'+ivar ].Clone()        # Unfolding and stat unc
-        allHistos[ 'unfoldHistoStatUnc'+ivar ] = allHistos[ 'unfoldHisto'+ivar ].Clone("unfoldHistoStatUnc")        # Unfolding and stat unc
-        allHistos[ 'unfoldHistoTotUnc'+ivar ] = allHistos[ 'unfoldHisto'+ivar ].Clone("unfoldHistoTotUnc")          # Total uncertainty
-        uncerUnfoldHisto[ivar+'_StatTotal'] = allHistos[ 'unfoldHistoTotUnc'+ivar ].Clone(ivar+'_StatTotal')
-        uncerUnfoldHisto[ivar+'_StatTotal'].Reset()
-        uncerUnfoldHisto[ivar+'_Data statTotal'] = uncerUnfoldHisto[ivar+'_StatTotal'].Clone(ivar+'_InputStatTotal')
-        uncerUnfoldHisto[ivar+'_Resp. Matrix statTotal'] = uncerUnfoldHisto[ivar+'_StatTotal'].Clone(ivar+'_UncorUncerTotal')
-        allHistos[ 'unfoldHistoOnlyStatUnc'+ivar ] = uncerUnfoldHisto[ivar+'_StatTotal'].Clone('unfoldHistoOnlyStatUnc'+ivar)  # only err for ratio
-        for ibin in range( 0, allHistos[ 'unfoldHisto'+ivar ].GetNbinsX()+1 ):
-            unc_tot = ROOT.TMath.Sqrt( allHistos[ 'cov'+ivar ].GetBinContent(ibin,ibin) )
-            allHistos[ 'unfoldHistoTotUnc'+ivar ].SetBinContent(ibin, unc_tot )
-            allHistos[ 'unfoldHisto'+ivar ].SetBinError(ibin, unc_tot )
-            stat_tot = ROOT.TMath.Sqrt(allHistos[ 'cov_uncorr_data_'+ivar ].GetBinContent(ibin,ibin) + allHistos[ 'cov_uncorr_'+ivar ].GetBinContent(ibin,ibin))
-            uncerUnfoldHisto[ivar+'_StatTotal'].SetBinContent(ibin, stat_tot)
-            allHistos[ 'unfoldHistoOnlyStatUnc'+ivar ].SetBinContent( ibin, 1 )
-            allHistos[ 'unfoldHistoOnlyStatUnc'+ivar ].SetBinError( ibin, stat_tot/allHistos[ 'unfoldHistoOnlyStatUnc'+ivar ].GetBinWidth(ibin) )
-            uncerUnfoldHisto[ivar+'_Data statTotal'].SetBinContent(ibin, ROOT.TMath.Sqrt(allHistos[ 'cov_uncorr_data_'+ivar ].GetBinContent(ibin,ibin)))
-            uncerUnfoldHisto[ivar+'_Resp. Matrix statTotal'].SetBinContent(ibin, ROOT.TMath.Sqrt(allHistos[ 'cov_uncorr_'+ivar ].GetBinContent(ibin,ibin)))
+            ##### Get output of unfolding
+            allHistos [ 'unfoldHisto'+ivar ] = tunfolder.GetOutput("unfoldHisto"+ivar).Clone()
+            allHistos [ 'foldHisto'+ivar ] = tunfolder.GetFoldedOutput("folded"+ivar).Clone()
             
-        ##### Get systematic shifts of output
-        if len(sysUncert)>0 :
-            print '|------> TUnfolding uncertainties:'
+            #### Get Probability matrix
+            allHistos[ 'probaMatrix'+ivar ] = tunfolder.GetProbabilityMatrix('probaMatrix'+ivar).Clone()
 
-            for sys in sysUncert:
-                if not sys.startswith('_model'):
-                    for upDown in [ 'Up', 'Down' ]:
-                        print sys+upDown
-                        uncerUnfoldHisto[ivar+sys+upDown] = tunfolder.GetDeltaSysSource(sys+upDown, "unfoldHisto_"+ivar+sys+upDown+"shift", "-1#sigma")
-                        try: uncerUnfoldHisto[ivar+sys+upDown].SetLineStyle(1)
-                        except ReferenceError: uncerUnfoldHisto.pop( ivar+sys+upDown, None )
+            #### Get various covariances
+            print '|------> TUnfolding covariances'
+            allHistos[ 'cov'+ivar ] = tunfolder.GetEmatrixTotal("cov"+ivar, "Covariance Matrix")
+            allHistos[ 'cov_uncorr_'+ivar ] = tunfolder.GetEmatrixSysUncorr("cov_uncorr"+ivar, "Covariance Matrix from Uncorrelated Uncertainties")
+            allHistos[ 'cov_uncorr_data_'+ivar ] = tunfolder.GetEmatrixInput("cov_uncorr_data"+ivar, "Covariance Matrix from Stat Uncertainties of Input Data")
+            #### cov = cov_uncorr + cov_uncorr_data + other uncertaitnies
+            #### stat = cov_uncorr + cov_uncorr_data
+            
+            uncerUnfoldHisto = OrderedDict()
+            allHistos[ 'unfoldHistowoUnc'+ivar ] = allHistos[ 'unfoldHisto'+ivar ].Clone()        # Unfolding and stat unc
+            allHistos[ 'unfoldHistoStatUnc'+ivar ] = allHistos[ 'unfoldHisto'+ivar ].Clone("unfoldHistoStatUnc")        # Unfolding and stat unc
+            allHistos[ 'unfoldHistoTotUnc'+ivar ] = allHistos[ 'unfoldHisto'+ivar ].Clone("unfoldHistoTotUnc")          # Total uncertainty
+            uncerUnfoldHisto[ivar+'_StatTotal'] = allHistos[ 'unfoldHistoTotUnc'+ivar ].Clone(ivar+'_StatTotal')
+            uncerUnfoldHisto[ivar+'_StatTotal'].Reset()
+            uncerUnfoldHisto[ivar+'_Data statTotal'] = uncerUnfoldHisto[ivar+'_StatTotal'].Clone(ivar+'_InputStatTotal')
+            uncerUnfoldHisto[ivar+'_Resp. Matrix statTotal'] = uncerUnfoldHisto[ivar+'_StatTotal'].Clone(ivar+'_UncorUncerTotal')
+            allHistos[ 'unfoldHistoOnlyStatUnc'+ivar ] = uncerUnfoldHisto[ivar+'_StatTotal'].Clone('unfoldHistoOnlyStatUnc'+ivar)  # only err for ratio
+            for ibin in range( 0, allHistos[ 'unfoldHisto'+ivar ].GetNbinsX()+1 ):
+                unc_tot = ROOT.TMath.Sqrt( allHistos[ 'cov'+ivar ].GetBinContent(ibin,ibin) )
+                allHistos[ 'unfoldHistoTotUnc'+ivar ].SetBinContent(ibin, unc_tot )
+                allHistos[ 'unfoldHisto'+ivar ].SetBinError(ibin, unc_tot )
+                stat_tot = ROOT.TMath.Sqrt(allHistos[ 'cov_uncorr_data_'+ivar ].GetBinContent(ibin,ibin) + allHistos[ 'cov_uncorr_'+ivar ].GetBinContent(ibin,ibin))
+                uncerUnfoldHisto[ivar+'_StatTotal'].SetBinContent(ibin, stat_tot)
+                allHistos[ 'unfoldHistoOnlyStatUnc'+ivar ].SetBinContent( ibin, 1 )
+                allHistos[ 'unfoldHistoOnlyStatUnc'+ivar ].SetBinError( ibin, stat_tot/allHistos[ 'unfoldHistoOnlyStatUnc'+ivar ].GetBinWidth(ibin) )
+                uncerUnfoldHisto[ivar+'_Data statTotal'].SetBinContent(ibin, ROOT.TMath.Sqrt(allHistos[ 'cov_uncorr_data_'+ivar ].GetBinContent(ibin,ibin)))
+                uncerUnfoldHisto[ivar+'_Resp. Matrix statTotal'].SetBinContent(ibin, ROOT.TMath.Sqrt(allHistos[ 'cov_uncorr_'+ivar ].GetBinContent(ibin,ibin)))
+                
+            ##### Get systematic shifts of output
+            if len(sysUncert)>0 :
+                print '|------> TUnfolding uncertainties:'
 
-                    # Create total uncertainty and sys uncertainty plots.
-                    uncerUnfoldHisto[ivar+sys.upper()+'Total'] = allHistos[ 'unfoldHisto'+ivar ].Clone()       # Syst uncertainty
-                    uncerUnfoldHisto[ivar+sys.upper()+'Total'].Reset()
-                    for i in xrange( 0, allHistos[ 'unfoldHisto'+ivar ].GetNbinsX() + 1):
-                        try: yup = abs( uncerUnfoldHisto[ivar+sys+'Up'].GetBinContent(i) )
-                        except KeyError: yup = 0
-                        try: ydn = abs( uncerUnfoldHisto[ivar+sys+'Down'].GetBinContent(i) )
-                        except KeyError: ydn = 0
-                        dy = ROOT.TMath.Sqrt( (yup**2 + ydn**2) )
-                        uncerUnfoldHisto[ivar+sys.upper()+'Total'].SetBinContent( i, dy )
+                for sys in sysUncert:
+                    if not sys.startswith('_model'):
+                        for upDown in [ 'Up', 'Down' ]:
+                            print sys+upDown
+                            uncerUnfoldHisto[ivar+sys+upDown] = tunfolder.GetDeltaSysSource(sys+upDown, "unfoldHisto_"+ivar+sys+upDown+"shift", "-1#sigma")
+                            try: uncerUnfoldHisto[ivar+sys+upDown].SetLineStyle(1)
+                            except ReferenceError: uncerUnfoldHisto.pop( ivar+sys+upDown, None )
 
-                else:
-                    #if not args.process.startswith('MCSelfClosure'):
-                    uncerUnfoldHisto[ivar+'_Physics ModelTotal'] = allHistos[ 'unfoldHisto'+ivar ].Clone(ivar+'_modelUncTotal')
-                    uncerUnfoldHisto[ivar+'_Physics ModelTotal'].Reset()
-                    tmpModelHisto = tunfolder.GetDeltaSysSource('modelUncTotal', "unfoldHisto_"+ivar+"modelUncshift", "-1#sigma")
-                    for i in xrange( 0, tmpModelHisto.GetNbinsX() + 1):
-                        uncerUnfoldHisto[ivar+'_Physics ModelTotal'].SetBinContent( i, abs(tmpModelHisto.GetBinContent(i)) )
-                    print('_modelUncTotal')
+                        # Create total uncertainty and sys uncertainty plots.
+                        uncerUnfoldHisto[ivar+sys.upper()+'Total'] = allHistos[ 'unfoldHisto'+ivar ].Clone()       # Syst uncertainty
+                        uncerUnfoldHisto[ivar+sys.upper()+'Total'].Reset()
+                        for i in xrange( 0, allHistos[ 'unfoldHisto'+ivar ].GetNbinsX() + 1):
+                            try: yup = abs( uncerUnfoldHisto[ivar+sys+'Up'].GetBinContent(i) )
+                            except KeyError: yup = 0
+                            try: ydn = abs( uncerUnfoldHisto[ivar+sys+'Down'].GetBinContent(i) )
+                            except KeyError: ydn = 0
+                            dy = ROOT.TMath.Sqrt( (yup**2 + ydn**2) )
+                            uncerUnfoldHisto[ivar+sys.upper()+'Total'].SetBinContent( i, dy )
 
-        ###### Plot unfolding results
-        print '|------> Drawing unfold plot:'
-        drawUnfold( ivar, allHistos[ 'dataMinusBkgsGenBin' ].Clone(),
-                        signalHistos[ signalLabel+'_accepgen'+ivar+sel ].Clone(),
-                        allHistos[ 'unfoldHisto'+ivar ].Clone(),
-                        allHistos[ 'unfoldHistowoUnc'+ivar ].Clone(),
-                        tunfolder.GetFoldedOutput("folded"+ivar).Clone(),
-                        signalHistos[ signalLabel+'_reco'+ivar+'_nom'+sel+'_genBin' ].Clone(),
-                        allHistos[ 'unfoldHistoOnlyStatUnc'+ivar ].Clone(),
-                        variables[ivar]['label'],
-                        variables[ivar]['bins'][-1],
-                        variables[ivar]['alignLeg'],
-                        outputDir+ivar+sel+'_from'+('Data' if args.process.startswith('data') else 'MC')+signalLabel+(''.join(sysUncert))+'_Tunfold_'+args.version+'.'+args.ext
-                        )
+                    elif sys.startswith('_model'):
+                        #if not args.process.startswith('MCSelfClosure'):
+                        uncerUnfoldHisto[ivar+'_Physics ModelTotal'] = allHistos[ 'unfoldHisto'+ivar ].Clone(ivar+'_modelUncTotal')
+                        uncerUnfoldHisto[ivar+'_Physics ModelTotal'].Reset()
+                        tmpModelHisto = tunfolder.GetDeltaSysSource('modelUncTotal', "unfoldHisto_"+ivar+"modelUncshift", "-1#sigma")
+                        for i in xrange( 0, tmpModelHisto.GetNbinsX() + 1):
+                            uncerUnfoldHisto[ivar+'_Physics ModelTotal'].SetBinContent( i, abs(tmpModelHisto.GetBinContent(i)) )
+                        print('_modelUncTotal')
 
-        ######### Plotting Uncertainties
-        print '|------> Drawing unfold uncertainty plot:'
-        drawUncertainties(ivar, allHistos[ 'unfoldHistoTotUnc'+ivar ],
-                        uncerUnfoldHisto,
-                        variables[ivar]['label'],
-                        variables[ivar]['alignLeg'],
-                        outputDir+ivar+sel+'_from'+('Data' if args.process.startswith('data') else 'MC')+(''.join(sysUncert))+'_Tunfold_UNC_'+args.version+'.'+args.ext
-                        )
 
-        ######### Saving Histograms
-        def renamingHistos( dictHistos ):
-            for isam, ihis in dictHistos.items():
-                ihis.SetName(isam)
-                ihis.SetTitle(isam)
-                ihis.Write()
 
-        outputRootName = outputDir+'/outputHistograms_main_'+signalLabel+'_alt_'+altSignalLabel+'.root'
-        print '|------> Saving histograms in rootfile: ', outputRootName
-        outputRoot = ROOT.TFile.Open( outputRootName, 'recreate' )
-        renamingHistos( signalHistos )
-        renamingHistos( altSignalHistos )
-        renamingHistos( dataHistos )
-        renamingHistos( bkgHistos )
-        renamingHistos( allHistos )
-        renamingHistos( uncerUnfoldHisto )
-        tunfolder.Write()
-        outputRoot.Close()
+            ###### Plot unfolding results
+            print '|------> Drawing unfold plot:'
+            drawUnfold( ivar, allHistos[ 'dataMinusBkgsGenBin' ].Clone(),
+                            signalHistos[ signalLabel+'_accepgen'+ivar+sel ].Clone(),
+                            allHistos[ 'unfoldHisto'+ivar ].Clone(),
+                            allHistos[ 'unfoldHistowoUnc'+ivar ].Clone(),
+                            tunfolder.GetFoldedOutput("folded"+ivar).Clone(),
+                            signalHistos[ signalLabel+'_reco'+ivar+'_nom'+sel+'_genBin' ].Clone(),
+                            allHistos[ 'unfoldHistoOnlyStatUnc'+ivar ].Clone(),
+                            variables[ivar]['label'],
+                            variables[ivar]['bins'][-1],
+                            variables[ivar]['alignLeg'],
+                            outputDir+ivar+sel+'_from'+('Data' if args.process.startswith('data') else 'MC')+signalLabel+(''.join(sysUncert))+'_Tunfold_'+args.version+'.'+args.ext
+                            )
 
-        print '|------> Saving histograms in yodafile: ', outputRootName.replace('.root', '.yoda')
-        histToYoda = [  yoda.root.to_yoda( allHistos [ 'unfoldHisto'+ivar ] ) ]
-        yoda.writeYODA( histToYoda, outputRootName.replace('.root', '.yoda') )
+            ######### Plotting Uncertainties
+            print '|------> Drawing unfold uncertainty plot:'
+            drawUncertainties(ivar, allHistos[ 'unfoldHistoTotUnc'+ivar ],
+                            uncerUnfoldHisto,
+                            variables[ivar]['label'],
+                            variables[ivar]['alignLeg'],
+                            outputDir+ivar+sel+'_from'+('Data' if args.process.startswith('data') else 'MC')+(''.join(sysUncert))+'_Tunfold_UNC_'+args.version+'.'+args.ext
+                            )
+
+            ######### Saving Histograms
+            def renamingHistos( dictHistos ):
+                for isam, ihis in dictHistos.items():
+                    ihis.SetName(isam)
+                    ihis.SetTitle(isam)
+                    ihis.Write()
+
+            outputRootName = outputDir+'/outputHistograms_main_'+signalLabel+'_alt_'+altSignalLabel+'.root'
+            print '|------> Saving histograms in rootfile: ', outputRootName
+            outputRoot = ROOT.TFile.Open( outputRootName, 'recreate' )
+            renamingHistos( signalHistos )
+            renamingHistos( altSignalHistos )
+            renamingHistos( dataHistos )
+            renamingHistos( bkgHistos )
+            renamingHistos( allHistos )
+            renamingHistos( uncerUnfoldHisto )
+            tunfolder.Write()
+            outputRoot.Close()
+
+            print '|------> Saving histograms in yodafile: ', outputRootName.replace('.root', '.yoda')
+            histToYoda = [  yoda.root.to_yoda( allHistos [ 'unfoldHisto'+ivar ] ) ]
+            yoda.writeYODA( histToYoda, outputRootName.replace('.root', '.yoda') )
 
 
 ##########################################################################
@@ -414,7 +499,7 @@ def loadHistograms( samples, var, sel, sysUnc=[], isMC=True, addGenInfo=True, re
         #if isMC and addGenInfo: tmpList = tmpList + [ 'gen'+var+sel, 'missgen'+var+sel, 'accepgen'+var+sel, 'truereco'+var+'_nom'+sel, 'fakereco'+var+'_nom'+sel ] + [ 'resp'+var+syst+sel for syst in SYSUNC ]
         if respOnly: tmpList = [ 'resp'+var+syst+sel for syst in SYSUNC ] #+ [ 'missgen'+var+sel ]
         for ih in tmpList:
-            print ('Processing '+isam+' '+ih)
+            print 'Processing '+isam+' '+ih
             if isMC:
                 allHistos[isam+'_'+ih] = samples[isam][0].Get( 'jetObservables/'+ih )
                 tmpIsam = 'TT' if isam.startswith('data') else isam
@@ -501,7 +586,6 @@ def loadHistograms( samples, var, sel, sysUnc=[], isMC=True, addGenInfo=True, re
     if len(tmpHistos)>0: allHistos = tmpHistos
 
     return allHistos
-
 
 ##########################################################################
 def drawUnfold( ivar, dataJetHisto, genJetHisto, unfoldHisto, unfoldHistowoUnc, foldHisto, recoJetHisto, ratioUncHisto, labelX, maxX, tlegendAlignment, outputName ):
@@ -819,8 +903,10 @@ if __name__ == '__main__':
     else: variables = { k:v for (k,v) in variables.items() if k.startswith('Jet_') }
 
     #### syst
-    sysUncert = [] if (args.noUnc or args.process.startswith('MCSelfClosure')) else [ '_jesTotal', '_jer', '_puWeight', '_isrWeight', '_fsrWeight', '_model' ]
-
+    if args.selection.startswith('_dijet'): sysUncert = [] if (args.noUnc or args.process.startswith('MCSelfClosure')) else [ '_jesTotal', '_jer', '_puWeight', '_isrWeight', '_fsrWeight', '_model' ]
+    elif args.selection.startswith('_W'): sysUncert = [] if (args.noUnc or args.process.startswith('MCSelfClosure')) else [ '_model', '_hdamp', '_Tune' ] #'_jesTotal', '_jer', '_puWeight', '_isrWeight', '_fsrWeight',
+    elif args.selection.startswith('_top'): sysUncert = [] if (args.noUnc or args.process.startswith('MCSelfClosure')) else [ '_model']#, '_hdamp', '_Tune', '_CR', '_mtop' ] #'_jesTotal', '_jer', '_puWeight', '_isrWeight', '_fsrWeight',
+    
     #### Define main and alt signals
     if args.selection.startswith('_dijet'):
         if args.main.startswith('Ptbin'):
@@ -837,15 +923,20 @@ if __name__ == '__main__':
             altSignalLabel = 'QCD_Pt_3200toInf'
         elif args.alt.startswith('HTbin'):
             altSignalLabelBegin = 'QCD_HT'
-            altSignalLabel = 'QCD_HT2000toInf'
+            altSignalLabel = 'QCD_HT2000toInf' 
         elif args.alt.startswith('herwig'):
             altSignalLabelBegin = 'QCD_Pt-'
             altSignalLabel = 'QCD_Pt-150to3000'
     else:
-        signalLabelBegin = 'TTToSemileptonic_powheg_pythia8_'
-        signalLabel = 'TTToSemileptonic_powheg_pythia8'
-        altSignalLabelBegin = 'TTJets_'
-        altSignalLabel = 'TTJets_amcatnloFXFX-pythia8'
+        signalLabel = 'TTToSemiLeptonic'
+        signalLabelBegin = 'TTToSemiLeptonic'
+        varSignalLabelBegin = 'varTTToSemileptonic_'
+        varSignalLabels = ['varTTToSemileptonic_TuneCP5Up','varTTToSemileptonic_TuneCP5Down','varTTToSemileptonic_hdampUp', 'varTTToSemileptonic_hdampDown', 
+                            #'varTTToSemileptonic_TuneCP5_erdON', 'varTTToSemileptonic_TuneCP5CR1', 'varTTToSemileptonic_TuneCP5CR2', 
+                            #'varTTToSemileptonic_mtop166p5', 'varTTToSemileptonic_mtop169p5', 'varTTToSemileptonic_mtop171p5', 'varTTToSemileptonic_mtop173p5', 'varTTToSemileptonic_mtop175p5'
+                          ]
+        altSignalLabelBegin = 'TTJets'
+        altSignalLabel = 'TTJets'
 
     #### Files
     dataFile = {}
@@ -893,14 +984,26 @@ if __name__ == '__main__':
                                     checkDict( isam, dictSamples )
                                 ]
         else:
-            sigFiles['TToSemiLeptonic'] = [
+            sigFiles['TTToSemiLeptonic'] = [
                             ROOT.TFile.Open( args.inputFolder+checkDict( 'TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8', dictSamples )[args.year]['skimmerHisto'] ),
                             checkDict( 'TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8', dictSamples )
                         ]
-            print ("Signal files:", sigFiles.keys())
-            print ("Background files:", bkgFiles.keys())
+            sigFiles['TTJets'] = [
+                            ROOT.TFile.Open( args.inputFolder+checkDict( 'TTJets_TuneCP5_13TeV-amcatnloFXFX-pythia8', dictSamples )[args.year]['skimmerHisto'] ),
+                            checkDict( 'TTJets_TuneCP5_13TeV-amcatnloFXFX-pythia8', dictSamples )
+                        ]
 
-    print ( dataFile, sigFiles, bkgFiles, variables, args.selection, sysUncert )
+            for isam in dictSamples:
+                if isam.startswith( varSignalLabelBegin ) :
+                    sigFiles[isam.split('_13TeV')[0]] = [
+                                        ROOT.TFile.Open( args.inputFolder+checkDict( isam, dictSamples )[args.year]['skimmerHisto'] ),
+                                        checkDict( isam, dictSamples )
+                                    ]
+
+            #print ("Signal files:", sigFiles.keys())
+            #print ("Background files:", bkgFiles.keys())
+
+    #print ( dataFile, sigFiles, bkgFiles, variables, args.selection, sysUncert )
 
     p = Process( target=runTUnfold, args=( dataFile, sigFiles, bkgFiles, variables, args.selection, sysUncert ) )
     p.start()
