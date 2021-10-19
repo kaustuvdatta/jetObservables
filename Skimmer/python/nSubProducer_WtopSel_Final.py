@@ -10,7 +10,7 @@ from PhysicsTools.NanoAODTools.postprocessing.tools import *
 
 class nSubProd(Module):
 
-    def __init__(self, sysSource=[], leptonSF={}, year='2017', isMC=True, topreweight=False, onlyUnc='', onlyTrees=False):
+    def __init__(self, sysSource=[], leptonSF={}, year='2017', isMC=True, topreweight=False, onlyUnc='_nom', onlyTrees=False):
         self.writeHistFile=True
         self.leptonSFhelper = leptonSF
         print(self.leptonSFhelper)
@@ -75,7 +75,7 @@ class nSubProd(Module):
 
         self.totalWeight = 1.
         self.btaggingWeight = 1.
-        self.topreweight = topreweight 
+        self.topreweight = 1.
         self.pdfWeightUp = 0
         self.isrWeightUp = 0
         self.fsrWeightUp = 0
@@ -125,9 +125,10 @@ class nSubProd(Module):
 
         ### Uncertainties
         self.sysSource = ['_nom'] + [ isys+i for i in [ 'Up', 'Down' ] for isys in sysSource if not isys.endswith('nom') ]
-        if onlyUnc: self.sysSource = [ onlyUnc+i for i in [ 'Up', 'Down' ] ]
+        if onlyUnc and not onlyUnc.endswith('nom'): self.sysSource = [ onlyUnc+i for i in [ 'Up', 'Down' ] ]
+        else: self.sysSource = ['_nom']
         print ("Sys sources:", self.sysSource)
-        self.sysWeightList = ( '_pu',  '_ps', '_isr', '_fsr' )#'_pdf', 
+        self.sysWeightList = ( '_pu', '_pdf',  '_ps', '_isr', '_fsr')
         print ("Sys weight listL", self.sysWeightList)
     #############################################################################
     def beginJob(self, histFile, histDirName):
@@ -238,11 +239,11 @@ class nSubProd(Module):
             self.out.branch('top_pTreweight_SF',  "F")
         
             if not self.onlyUnc:
-                #self.out.branch( 'pdfWeightUp', "F" )
+                self.out.branch( 'pdfWeightUp', "F" )
                 self.out.branch( 'isrWeightUp', "F" )
                 self.out.branch( 'fsrWeightUp', "F" )
                 self.out.branch( 'puWeightUp', "F" )
-                #self.out.branch( 'pdfWeightDown', "F" )
+                self.out.branch( 'pdfWeightDown', "F" )
                 self.out.branch( 'isrWeightDown', "F" )
                 self.out.branch( 'fsrWeightDown', "F" )
                 self.out.branch( 'puWeightDown', "F" )
@@ -437,12 +438,12 @@ class nSubProd(Module):
 
                 if sys.startswith(self.sysWeightList):
                     ##### PDF does not work
-                    #if sys.endswith('pdfWeightUp'):
-                    #    self.pdfWeightUp = getattr( event, 'LHEPdfWeight' )[0]
-                    #    WEIGHT = event.genWeight * self.pdfWeightUp
-                    #elif sys.endswith('pdfWeightDown'):
-                    #    self.pdfWeightDown = (getattr( event, 'LHEPdfWeight' )[0] )
-                    #    WEIGHT = event.genWeight * self.pdfWeightDown
+                    if sys.endswith('pdfWeightUp'):
+                        self.pdfWeightUp = getattr( event, 'LHEPdfWeight' )[0]
+                        WEIGHT = event.genWeight * self.pdfWeightUp
+                    elif sys.endswith('pdfWeightDown'):
+                        self.pdfWeightDown = (getattr( event, 'LHEPdfWeight' )[1] )
+                        WEIGHT = event.genWeight * self.pdfWeightDown
                     if sys.endswith('isrWeightDown'):
                         self.isrWeightDown = getattr( event, 'PSWeight' )[0]
                         WEIGHT = event.genWeight * self.isrWeightDown
@@ -521,7 +522,7 @@ class nSubProd(Module):
                             passGenSel=False
 
 
-                        if passGenSel and iGenSel==iRecoSel[sys] and not self.onlyTrees:
+                        if (iGenSel==iRecoSel[sys]) and not self.onlyTrees:
                         #    print ("yayx3!", iGenSel, iRecoSel[sys] , sys )
 
                             for (iGJ,igen), (iRJ,ireco) in zip( genJet.items(), recoJet.items() ):
@@ -638,6 +639,7 @@ class nSubProd(Module):
                         elif iRecoSel[sys].startswith('_top'): self.fakestop = self.fakestop+1
                         else: self.ufoFake = self.ufoFake+1
                         self.eventCategory = 2
+                        
                         if not self.onlyTrees:
                             for iRJ,ireco in recoJet.items():
                                 if iRecoSel[sys].startswith('_W'):           #### counting recoLevelW
@@ -721,8 +723,8 @@ class nSubProd(Module):
 
             else:
                 self.ufo = self.ufo+1
-                if iGenSel.startswith('_W'): self.ufosW = self.ufosW+1
-                elif iGenSel.startswith('_top'): self.ufostop = self.ufostop+1
+                if iGenSel.startswith('_W'): self.ufoW = self.ufoW+1
+                elif iGenSel.startswith('_top'): self.ufotop = self.ufotop+1
                 else: print('Weird ufo', iRecoSel[sys])
                 self.eventCategory = 10
 
@@ -736,10 +738,10 @@ class nSubProd(Module):
             self.out.fillBranch( 'top_pTreweight_SF', self.topreweight )
 
             if not self.onlyUnc:
-                #self.out.fillBranch( 'pdfWeightUp', self.pdfWeightUp )
+                self.out.fillBranch( 'pdfWeightUp', self.pdfWeightUp )
                 self.out.fillBranch( 'isrWeightUp', self.isrWeightUp )
                 self.out.fillBranch( 'fsrWeightUp', self.fsrWeightUp )
-                #self.out.fillBranch( 'pdfWeightDown', self.pdfWeightDown )
+                self.out.fillBranch( 'pdfWeightDown', self.pdfWeightDown )
                 self.out.fillBranch( 'isrWeightDown', self.isrWeightDown )
                 self.out.fillBranch( 'fsrWeightDown', self.fsrWeightDown )
                 self.out.fillBranch( 'puWeightDown', event.puWeightDown if self.isMC else 1 )
@@ -761,7 +763,8 @@ class nSubProd(Module):
         
         #### Lepton selection
         recoElectrons  = [x for x in electrons if x.pt > self.minLooseElectronPt and x.cutBased >= 2 and ((self.range1ElectronEta[0]<abs(x.eta)<self.range1ElectronEta[1]) or (self.range2ElectronEta[0]<abs(x.eta)<self.range2ElectronEta[1]))] #only loose selection for e
-        recoMuons = [x for x in muons if x.pt > self.minTightMuonPt and x.looseId and abs(x.p4().Eta()) < self.maxMuonEta and x.pfIsoId>=2 and x.tightId and abs(x.dxy)<0.2 and abs(x.dz)<0.5 and x.miniPFRelIso_all<0.10] # applying tight selection on muons already here since we only veto for loose muons and loose electrons in event
+        recoMuons = [x for x in muons if x.pt > self.minTightMuonPt and abs(x.p4().Eta()) < self.maxMuonEta and x.tightId and abs(x.dxy)<0.2 and abs(x.dz)<0.5 and x.isGlobal and x.highPtId and x.tkRelIso<0.3] #and x.highPurity  applying tight selection on muons already here since we only veto for loose muons and loose electrons in event
+
 
         recoElectrons.sort(key=lambda x:x.pt, reverse=True)
         recoMuons.sort(key=lambda x:x.pt,reverse=True)
@@ -775,7 +778,6 @@ class nSubProd(Module):
         MET.SetPtEtaPhiE(met.pt, 0., met.phi, met.sumEt)
         ##################################################
 
-        
         #### Basic AK4 b-jet cand. selection
         recoAK4bjets = [ x for x in jets if x.pt > self.minJetPt and abs(x.p4().Eta()) < self.maxJetEta and x.btagDeepFlavB > self.minBDisc and (x.jetId >= 2)]
         recoAK4bjets.sort(key=lambda x:x.pt,reverse=True)
@@ -820,6 +822,7 @@ class nSubProd(Module):
         #### ############## #####
 
 
+
         if self.isMC:
             #### Top pT reweighting #####
             itempSel = {}
@@ -833,17 +836,20 @@ class nSubProd(Module):
                 
                 if (len(tops)>0 and len(antiTops)>0):
                     #print ("top reweighting going on", iSel['_nom'])
-                    topSF = math.exp(0.0615 - 0.0005 * tops[0].pt) 
-                    antitopSF = math.exp(0.0615 - 0.0005 * antiTops[0].pt)
+                    if tops[0].pt<500.: topSF = math.exp(0.0615 - 0.0005 * tops[0].pt) 
+                    else: topSF = math.exp(0.0615 - 0.0005 * 500.) 
+                    if antiTops[0].pt<500.: antitopSF = math.exp(0.0615 - 0.0005 * antiTops[0].pt)
+                    else: antitopSF = math.exp(0.0615 - 0.0005 * 500.)
                     self.topreweight = math.sqrt(topSF*antitopSF)
                 else: 
                     self.topreweight = 1.#????math.sqrt(topSF*antitopSF)
-            else: 
-                self.topreweight = 1.#????math.sqrt(topSF*antitopSF)
+            #self.out.fillBranch("top_pTreweight_SF", self.topreweight)
 
             
+
             #### Applying ALL remaining object-related weights ####
-            weight = event.puWeight * event.genWeight * self.leptonWeight * self.topreweight * weight # last term includes btag weight from above
+            if passSel[sys] and iSel[sys].startswith('_top'): weight = event.puWeight * event.genWeight * self.leptonWeight * self.topreweight * weight # last term includes btag weight updated in WtopSel function
+            elif passSel[sys] and iSel[sys].startswith('_W'): weight = event.puWeight * event.genWeight * self.leptonWeight * weight # last term includes btag weight updated in WtopSel function
             #print ("All weights:", self.totalWeight, event.puWeight , event.genWeight , self.btaggingWeight, self.leptonWeight , self.topreweight)
             
             if not self.onlyTrees and not self.onlyUnc:

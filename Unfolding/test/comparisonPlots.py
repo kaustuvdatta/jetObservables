@@ -6,7 +6,7 @@ from array import array
 import argparse
 from collections import OrderedDict
 import numpy as np
-from variables import nSubVariables
+from variables import nSubVariables, nSubVariables_WSel, nSubVariables_topSel
 sys.path.insert(0,'../python/')
 import CMS_lumi as CMS_lumi
 import tdrstyle as tdrStyle
@@ -38,6 +38,8 @@ def makePlots( name, ext='png', outputDir='Plots/' ):
         if args.only and not ivar.startswith( args.only ): continue
         if name.endswith( ivar.split('_')[0] ):
             ###### Loading histograms
+            print (name, ivar)
+            if not args.only and ivar.endswith(('21','32')): continue
             dictHistos[ivar] = {
                     'data' : dictFiles[ivar].Get( 'dataMinusBkgsGenBin' ),
                     'unfold' : dictFiles[ivar].Get( 'unfoldHisto'+ivar ),
@@ -137,12 +139,13 @@ def makePlots( name, ext='png', outputDir='Plots/' ):
             draw2D( ivar, dictHistos[ivar]['cov'], nSubVariables[ivar], outputLabel=outputLabel+'_covMatrix', outputDir=outputDir, addCorrelation=True )
             draw2D( ivar, dictHistos[ivar]['probaMatrix'], nSubVariables[ivar], outputLabel=outputLabel+'_probaMatrix', outputDir=outputDir, addCorrelation=True, addCondition=True )
             drawUnfold( ivar, mainHisto, mainHistoLabel, otherHistos, nSubVariables[ivar], uncertDictHistos[ivar], outputLabel=outputLabel, outputDir=outputDir )
-            if args.process.startswith('data'):
-                ratioDict[ivar] = bottomLineTest( ivar, mainHisto, mainHistoLabel, dictHistos[ivar]['reco'], dictHistos[ivar]['gen'], dictHistos[ivar]['cov'], nSubVariables[ivar], outputLabel=outputLabel, outputDir=outputDir )
+            #if args.process.startswith('data'):
+            #    ratioDict[ivar] = bottomLineTest( ivar, mainHisto, mainHistoLabel, dictHistos[ivar]['reco'], dictHistos[ivar]['gen'], dictHistos[ivar]['cov'], nSubVariables[ivar], outputLabel=outputLabel, outputDir=outputDir )
 
     ##### making combine plots
     if not args.only:
         combinePlots( name+'_'+args.selection, dictHistos, numBinsList, mainHistoLabel, otherHisto, otherHistoLabel, outputLabel, outputDir=outputDir, axisX='' )
+        combinePlotsMean( name+'_'+args.selection, dictHistos, numBinsList, mainHistoLabel, otherHisto, otherHistoLabel, outputLabel, outputDir=outputDir, axisX='' )
         if ratioDict:
             combineRatioPlots(name+'_'+args.selection, ratioDict, numBinsList, outputLabel, outputDir=outputDir, axisX='')
 
@@ -264,6 +267,8 @@ def drawUnfold( ivar, mainHisto, mainHistoLabel, otherHistos, varInfo, uncertDic
     selText.SetNDC()
     selText.SetTextFont(42)
     if args.selection.startswith("dijet"): seltext = ( 'Central' if 'Central' in varInfo['label']  else 'Outer' )+' dijet region'
+    elif args.selection.startswith("W"): seltext = ' boosted W region'
+    elif args.selection.startswith("top"): seltext = ' boosted top region'
     selText.DrawLatex( ( 0.2 if varInfo['alignLeg'].startswith('right') else 0.7 ), 0.85, seltext )
 
     legend.Draw()
@@ -439,7 +444,7 @@ def drawUncertainties( ivar, unfoldHistoTotUnc, uncerUnfoldHisto, labelX, tlegen
     dummy=0
     for k in uncerUnfoldHisto:
         if k.endswith('Total') and not k.endswith(('StatTotal')):
-            print k
+            print (k)
             legend.AddEntry( uncerUnfoldHisto[k], k.split('_')[-1].split('Total')[0].replace('TOTAL', '').replace('WEIGHT', ''), 'l' )
             uncerUnfoldHisto[k].SetLineColor(colors[dummy])
             uncerUnfoldHisto[k].SetLineWidth(2)
@@ -472,8 +477,7 @@ def drawUncertainties( ivar, unfoldHistoTotUnc, uncerUnfoldHisto, labelX, tlegen
 
     canUnc.SaveAs(outputName)
 
-
-##################################################
+###########################################################################
 def combinePlots( name, dictHistos, numBins, mainHistoLabel, otherHisto, otherHistoLabel, outputLabel, axisX='', outputDir='Plots/'):
     """docstring for combinePlots"""
 
@@ -593,6 +597,148 @@ def combinePlots( name, dictHistos, numBins, mainHistoLabel, otherHisto, otherHi
         canvas[outputFileName].SaveAs( outputDir+'/'+outputFileName.replace('pdf', 'png') )
     del canvas[outputFileName]
     ROOT.gStyle.SetPadTickX(1)
+
+##################################################
+def combinePlotsMean( name, dictHistos, numBins, mainHistoLabel, otherHisto, otherHistoLabel, outputLabel, axisX='', outputDir='Plots/'):
+    """docstring for combinePlots"""
+
+    outputFileName = name+'_'+outputLabel+'_combinePlotsMean_'+args.version+'.'+args.ext
+    if args.log: outputFileName = outputFileName.replace('Plots','Plots_Log')
+    print('Processing.......', outputFileName)
+
+    canvas = ROOT.TCanvas('canmean', 'canmean',  10, 10, 750, 750 )
+    ROOT.gStyle.SetPadRightMargin(0.05)
+    ROOT.gStyle.SetPadLeftMargin(0.15)
+    pad1 = ROOT.TPad("pad1", "Main",0.,0.330,1.00,1.00,-1)
+    pad2 = ROOT.TPad("pad2", "Ratio",0,0.00,1.00,0.270,-1);
+    pad1.Draw()
+    pad2.Draw()
+    #canvas.Draw()
+
+    pad1.cd()
+
+    legend=ROOT.TLegend(0.60,0.65,0.90,0.88)
+    legend.SetFillStyle(0)
+    legend.SetTextSize(0.06)
+    
+    hMean = ROOT.TGraphErrors()
+    dictHistos['combDataMean'] = hMean.Clone()
+    dictHistos['combUnfoldMean'] = hMean.Clone()
+    legend.AddEntry( dictHistos[ 'combDataMean' ], mainHistoLabel, 'lep' )
+    legend.AddEntry( dictHistos[ 'combUnfoldMean' ], otherHistoLabel, 'lep' )
+    if args.runMLU:
+        dictHistos['combMLUMean'] = dictHistos['combUnfoldMean'].Clone()
+        legend.AddEntry( dictHistos[ 'combMLUMean' ], 'MLU', 'lep' )
+
+    Xlabels = []
+    
+    bins = np.arange(0,13,1)
+    binc = 0
+    hRatio = ROOT.TGraphErrors()
+    if args.runMLU: hRatioMLU = ROOT.TGraphErrors()
+
+
+    for ivar,ih in dictHistos.items():
+        if ivar.startswith('Jet') and not ivar.endswith(('21', '32')):
+            Xlabels.append( '#'+nSubVariables[ivar]['label'].split('#')[1] )
+            print (Xlabels[binc], bins[binc], ih[otherHisto].GetMean())
+            dictHistos['combDataMean'].SetPoint( int(bins[binc]), bins[binc], ih[otherHisto].GetMean() )
+            dictHistos['combDataMean'].SetPointError( int(bins[binc]), 0., ih[otherHisto].GetMeanError() )
+            dictHistos['combUnfoldMean'].SetPoint( int(bins[binc]), bins[binc], ih['unfold'].GetMean() )
+            dictHistos['combUnfoldMean'].SetPointError( int(bins[binc]), 0., ih['unfold'].GetMeanError() )
+            hRatio.SetPoint(int(bins[binc]), bins[binc], ih[otherHisto].GetMean()/ih['unfold'].GetMean())
+            if args.runMLU:
+                dictHistos['combMLUMean'].SetPoint( int(bins[binc]), bins[binc], ih['MLU'].GetMean() )
+                dictHistos['combMLUMean'].SetPointError( int(bins[binc]), 0., ih['MLU'].GetMeanError() )
+                hRatioMLU.SetPoint(int(bins[binc]), bins[binc], ih[otherHisto].GetMean()/ih['MLU'].GetMean())
+            binc+=1
+
+    #pad1.SetLogy()
+    #dictHistos['combData'].GetXaxis().SetNdivisions(100)
+    dictHistos['combDataMean'].GetYaxis().SetTitle( 'Mean {#tau_{X}}' )
+    dictHistos['combDataMean'].GetYaxis().SetTitleSize( 0.06 )
+    dictHistos['combDataMean'].GetYaxis().SetTitleOffset( 0.6 )
+    #dictHistos['combData'].SetMaximum( dictHistos['combUnfold'].GetMaximum()*1.2 )
+    #dictHistos['combData'].SetMinimum( 0.001 )
+    dictHistos['combDataMean'].SetLineColor( ROOT.kBlack )
+    dictHistos['combDataMean'].SetLineWidth( 2 )
+
+    dictHistos['combUnfoldMean'].SetLineColor( ROOT.kMagenta )
+    dictHistos['combUnfoldMean'].SetLineWidth( 2 )
+    
+
+
+    selText = textBox.Clone()
+    selText.SetNDC()
+    selText.SetTextFont(42)
+    if args.selection.startswith("dijet"): seltext = ( 'Central' if 'Central' in varInfo['label']  else 'Outer' )+' dijet region'
+    elif args.selection.startswith("W"): seltext = ' boosted W region'
+    elif args.selection.startswith("top"): seltext = ' boosted top region'
+    selText.DrawLatex( 0.2, 0.85, seltext )
+
+    dictHistos['combDataMean'].Draw('pe')
+    dictHistos[ 'combUnfoldMean' ].Draw('pe same')
+    if args.runMLU:
+        dictHistos['combMLUMean'].SetLineColor( 8 )
+        dictHistos['combMLUMean'].SetLineWidth( 2 )
+        dictHistos[ 'combMLUMean' ].Draw('pe same')
+    pad1.Update()
+
+    legend.Draw()
+    CMS_lumi.relPosX = 0.12
+    CMS_lumi.lumiTextSize = 0.5
+    CMS_lumi.CMS_lumi(pad1, 4, 0)
+    pad1.Update()
+    pad1.Draw()
+
+    pad2.cd()
+    ROOT.gStyle.SetOptFit(1)
+    pad2.SetGrid()
+    #pad2.SetGridy()
+    pad2.SetTopMargin(0)
+    pad2.SetBottomMargin(0.2)
+    #pad2.GetXaxis().SetTitle( varInfo['label'] )
+    '''
+    xax = hRatio.GetXaxis()
+    print (xax)
+    binc=0
+    while bins[binc] < len(Xlabels):
+        #print (binc)
+        bin_index = xax.FindBin(bins[binc])
+        xax.SetBinLabel(bin_index,Xlabels[binc])
+        binc+=1
+    pad2.Modified()
+    #pad2.Update()
+    '''
+
+    tmppad2= pad2.DrawFrame(0,0.0,12,0.6)
+    tmppad2.GetYaxis().SetTitle( "Data/Unfold" )
+    tmppad2.GetYaxis().SetTitleOffset( 0.5 )
+    tmppad2.GetYaxis().CenterTitle()
+    tmppad2.SetLabelSize(0.12, 'x')
+    tmppad2.SetTitleSize(0.12, 'x')
+    tmppad2.SetLabelSize(0.12, 'y')
+    tmppad2.SetTitleSize(0.12, 'y')
+    pad2.Modified()
+    pad2.Update() 
+
+    hRatio.SetMarkerStyle(8)
+    hRatio.Draw('P0')
+    if args.runMLU:
+        #hRatioMLU = ROOT.TGraphAsymmErrors()
+        #hRatioMLU.Divide( dictHistos['combMLUMean'], dictHistos[ 'combDataMean' ], 'pois' )
+        hRatioMLU.SetMarkerStyle(8)
+        hRatioMLU.SetMarkerColor( 8 )
+        hRatioMLU.Draw('P0 same')
+        hRatio.Draw('P0 same')
+    
+    canvas.SaveAs( outputDir+'/'+outputFileName )
+    if args.ext.startswith('pdf'):
+        canvas.SaveAs( outputDir+'/'+outputFileName.replace('pdf', 'png') )
+    del canvas
+    #ROOT.gStyle.SetPadTickX(1)
+    #ROOT.gStyle.SetPadRightMargin(0.09)     ## reseating
+    #ROOT.gStyle.SetPadLeftMargin(0.12)
 
 ##################################################
 def combineRatioPlots( name, ratioDicts, numBins, outputLabel, axisX='', outputDir='Plots/'):
@@ -810,10 +956,14 @@ if __name__ == '__main__':
     parser.add_argument("--outputFolder", action='store', dest="outputFolder", default="", help="Output folder" )
     parser.add_argument("-r", "--runMLU", action='store_true', default=False, help="Run max likelihood unfold (combine)" )
 
+    
     try: args = parser.parse_args()
     except:
         parser.print_help()
         sys.exit(0)
+
+    if args.selection.startswith('W'): nSubVariables = nSubVariables_WSel
+    elif args.selection.startswith('top'): nSubVariables = nSubVariables_topSel
 
     for iy in ( ['2017', '2018'] if args.year.startswith('all') else [ args.year ] ):
         args.lumi = args.lumi + checkDict( ( 'JetHT' if args.selection.startswith('dijet') else 'SingleMuon' ), dictSamples )[iy]['lumi']
@@ -844,14 +994,31 @@ if __name__ == '__main__':
             altSigPlotLabel = 'Herwig7'
             altSignalLabelBegin = 'QCD_Pt-'
             altSignalLabel = 'QCD_Pt-150to3000'
-
+    else:
+        signalLabel = 'TTToSemiLeptonic'
+        sigPlotLabel = 'Powheg+Pythia8'
+        signalLabelBegin = 'TTToSemiLeptonic'
+        varSignalLabelBegin = 'varTTToSemileptonic_'
+        varSignalLabels = ['varTTToSemileptonic_TuneCP5Up','varTTToSemileptonic_TuneCP5Down','varTTToSemileptonic_hdampUp', 'varTTToSemileptonic_hdampDown', 
+                            #'varTTToSemileptonic_TuneCP5_erdON', 
+                           'varTTToSemileptonic_TuneCP5CR1', 'varTTToSemileptonic_TuneCP5CR2', 'varTTToSemileptonic_mtop166p5', 
+                           'varTTToSemileptonic_mtop169p5', 'varTTToSemileptonic_mtop171p5', 'varTTToSemileptonic_mtop173p5', 'varTTToSemileptonic_mtop175p5'
+                          ]
+        altSignalLabelBegin = 'TTJets'
+        altSigPlotLabel = 'aMC@NLO-FXFX+Pythia8'
+        altSignalLabel = 'TTJets'
+    
+    if args.selection.startswith('W'): nSubVariables = nSubVariables_WSel
+    elif args.selection.startswith('top'): nSubVariables = nSubVariables_topSel
     dictFiles = OrderedDict()
     for ivar, varInfo in nSubVariables.items():
-        if args.selection.startswith('dijet') and ivar.startswith(('Jet1', 'Jet2')):
-            if args.only and not ivar.startswith( args.only ): continue
-            dictFiles[ivar] = ROOT.TFile.Open( args.inputFolder+'Plots/'+args.selection+'/Unfold/'+args.year+'/'+ivar+'/'+args.process+'/outputHistograms_main_'+signalLabel+'_alt_'+altSignalLabel+'.root' )
-            if args.runMLU:
-                dictFiles[ivar+'Combine'] = ROOT.TFile.Open( 'Plots/'+args.selection+'/Unfold/'+args.year+'/'+ivar+'/'+args.process+'/higgsCombine'+ivar+'_from'+signalLabel+'.MultiDimFit.mH120.root' )
+        if ivar.endswith (('_tau21', '_tau32')): continue
+        #if args.selection.startswith('dijet') and ivar.startswith(('Jet1', 'Jet2')):
+        if args.only and not ivar.startswith( args.only ): continue
+        dictFiles[ivar] = ROOT.TFile.Open( args.inputFolder+'Plots/'+args.selection+'/Unfold/'+args.year+'/'+ivar+'/'+args.process+'/outputHistograms_main_'+signalLabel+'_alt_'+altSignalLabel+'.root' )
+        print (ivar, dictFiles[ivar])
+        if args.runMLU:
+            dictFiles[ivar+'Combine'] = ROOT.TFile.Open( 'Plots/'+args.selection+'/Unfold/'+args.year+'/'+ivar+'/'+args.process+'/higgsCombine'+ivar+'_from'+signalLabel+'.MultiDimFit.mH120.root' )
 
     outputDir = args.outputFolder+'Plots/'+args.selection+'/Unfold/'+args.year
     if not os.path.exists(outputDir): os.makedirs(outputDir)
@@ -859,6 +1026,6 @@ if __name__ == '__main__':
     CMS_lumi.lumi_13TeV = ('#leq' if args.selection.startswith('dijet') else '')+str( round( (args.lumi/1000.), 2 ) )+" fb^{-1} (13 TeV)" if args.process.startswith('data') else "13 TeV, "+( '2017+2018' if args.year.startswith('all') else args.year )
 
     plotList = [ 'recoJet1', 'recoJet2' ] if args.selection.startswith('dijet') else [ 'recoJet' ]
-
+    #print dictFiles
     for i in plotList:
         makePlots( i, outputDir=outputDir)

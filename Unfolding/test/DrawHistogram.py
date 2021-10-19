@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#print!/usr/bin/env python
 
 import ROOT
 import time, os, math, sys, copy
@@ -19,7 +19,7 @@ ROOT.gROOT.ForceStyle()
 tdrStyle.setTDRStyle()
 ROOT.gStyle.SetOptStat(0)
 
-colors = [ 2, 4, 6, 8, 9, 28, 30, 42, 13, 46 ]
+colors = [2, 4, 6, 8, 9, 12, 28, 30, 42, 13, 40, 46, 3, 24, 26, 41, 45, 48, 49, 37, 38, 33, 17]
 canvas = {}
 
 ##########################################################
@@ -157,7 +157,7 @@ def plotSysComparison( nomHisto, dictUncHistos, outputName, labelX='', log=False
     """docstring for plot"""
 
     outputFileName = outputName+'_'+version+'.'+ext
-    print 'Processing.......', outputFileName
+    print ('Processing.......', outputFileName)
 
     binWidth = nomHisto.GetBinWidth(1)
 
@@ -264,7 +264,7 @@ def plotSignalBkg( name, xmin, xmax, rebinX, axisX='', axisY='', labX=0.92, labY
 
     #### Merging samples
     yearLabel = '2018' if args.year.startswith('all') else args.year
-    for bkg in bkgHistos:
+    for bkg in list(bkgHistos.keys()):
         if args.selection.startswith('dijet'):
             if bkg.startswith('QCD_Pt_') and not bkg.endswith('Inf'+yearLabel):
                 bkgHistos['QCD_Pt_3200toInf'+yearLabel].Add( bkgHistos[bkg] )
@@ -290,6 +290,22 @@ def plotSignalBkg( name, xmin, xmax, rebinX, axisX='', axisY='', labX=0.92, labY
             elif bkg.startswith('QCD_MuEnriched') and not bkg.endswith('Inf'+yearLabel):
                 bkgHistos['QCD_MuEnrichedPt5_Pt-1000toInf'+yearLabel].Add( bkgHistos[bkg] )
                 bkgHistos.pop(bkg, None)
+
+            elif args.year.startswith('all'):
+                if bkg.startswith(('WZ','ZZ')):
+                    bkgHistos['WW2018'].Add( bkgHistos[bkg] )
+                    bkgHistos.pop(bkg, None)
+                elif bkg.startswith(('ST_t','ST_tW')):
+                    bkgHistos['ST_s-channel_4f_leptonDecays2018'].Add( bkgHistos[bkg] )
+                    bkgHistos.pop(bkg, None)
+                elif bkg.startswith('TTTo2L2Nu2018'):
+                    bkgHistos['TTTo2L2Nu'+yearLabel].Add( bkgHistos[bkg] )
+                    bkgHistos.pop(bkg, None)
+                elif bkg.startswith('QCD_MuEnriched') and not bkg.endswith('Inf'+yearLabel):
+                    bkgHistos['QCD_MuEnrichedPt5_Pt-1000toInf'+yearLabel].Add( bkgHistos[bkg] )
+                    bkgHistos.pop(bkg, None)
+                else:
+                    legend.AddEntry( bkgHistos[ bkg ], bkgFiles[ bkg ][1]['label'], ('l' if bkg.startswith('TT') else 'f' ) )
             else:
                 legend.AddEntry( bkgHistos[ bkg ], bkgFiles[ bkg ][1]['label'], ('l' if bkg.startswith('TT') else 'f' ) )
 
@@ -308,14 +324,15 @@ def plotSignalBkg( name, xmin, xmax, rebinX, axisX='', axisY='', labX=0.92, labY
             else:
                 stackHisto.Add( bkgHistos[ samples ].Clone() )
                 hBkg.Add( bkgHistos[ samples ].Clone() )
+
         else:
             bkgHistos[samples].Scale( dataHistos['DATA'].Integral()/bkgHistos[samples].Integral() )
             bkgHistos[samples].Scale( 1/bkgHistos[samples].Integral(), 'width' )
             stackHisto.Add( bkgHistos[samples].Clone() )
-            ratioDict[samples] = ROOT.TGraphAsymmErrors()
-            ratioDict[samples].Divide( dataHistos[ 'DATA' ].Clone(), bkgHistos[samples].Clone(), 'pois' )
-            ratioDict[samples].SetLineColor( bkgFiles[samples][1]['color']  )
-            ratioDict[samples].SetLineWidth(2)
+        ratioDict[samples] = ROOT.TGraphAsymmErrors()
+        ratioDict[samples].Divide( dataHistos[ 'DATA' ].Clone(), bkgHistos[samples].Clone(), 'pois' )
+        ratioDict[samples].SetLineColor( bkgFiles[samples][1]['color']  )
+        ratioDict[samples].SetLineWidth(2)
 
     canvas[outputFileName] = ROOT.TCanvas('c1'+name, 'c1'+name,  10, 10, 750, 750 )
     ROOT.gStyle.SetPadRightMargin(0.05)
@@ -388,8 +405,8 @@ def plotSignalBkg( name, xmin, xmax, rebinX, axisX='', axisY='', labX=0.92, labY
         hRatio2.Divide( dataHistos[ 'DATA' ], hBkg2, 'pois' )
         hRatio2.SetLineColor( bkgFiles['TTJets'+yearLabel][1]['color']  )
         hRatio2.SetLineWidth(2)
-        hRatio.Draw('P')
-        hRatio2.Draw('P same')
+        hRatio.Draw('PE')
+        hRatio2.Draw('PE same')
 
     canvas[outputFileName].SaveAs( outputDir+'/'+outputFileName )
     if ext.startswith('pdf'):
@@ -413,6 +430,7 @@ def plotResolution( name, xmin, xmax, rebinX, axisX='', axisY='', labX=0.92, lab
     maxList = []
     if len(bkgFiles) > 0:
         for bkgSamples in bkgFiles:
+            if not args.selection.startswith('dijet') and not (bkgSamples.startswith('TTToSemi')): continue
             yearLabel = ''.join(bkgSamples[-4:])
             bkgHistos[ bkgSamples ] = bkgFiles[ bkgSamples ][0].Get( 'jetObservables/'+name )
             bkgHistos[ bkgSamples ].SetTitle(bkgSamples)
@@ -436,6 +454,16 @@ def plotResolution( name, xmin, xmax, rebinX, axisX='', axisY='', labX=0.92, lab
                 bkgHistos.pop(bkg, None)
             else:
                 legend.AddEntry( bkgHistos[ bkg ], bkgFiles[ bkg ][1]['label'], 'le' ) # if Norm else 'f' )
+        else:
+            if not (bkgSamples.startswith('TTToSemi')): continue
+            if bkg.startswith(('TTToSemi')):
+                legend.AddEntry( bkgHistos[ bkg ], bkgFiles[ bkg ][1]['label'], ('l' if bkg.startswith('TT') else 'f' ) )                
+                bkgHistos['TTToSemiLeptonic'+yearLabel].Add( bkgHistos[bkg] )
+                bkgHistos.pop(bkg, None)
+            #elif bkg.startswith('TTJets'):
+            #    legend.AddEntry( bkgHistos[ bkg ], bkgFiles[ bkg ][1]['label'], ('l' if bkg.startswith('TT') else 'f' ) )
+            #    bkgHistos['TTJets'+yearLabel].Add( bkgHistos[bkg] )
+            #    bkgHistos.pop(bkg, None)
 
     stackHisto = ROOT.THStack('stackHisto'+name, 'stack'+name)
     for samples in bkgHistos:
@@ -567,7 +595,7 @@ if __name__ == '__main__':
         parser.print_help()
         sys.exit(0)
 
-    args.inputFolder = os.environ['CMSSW_BASE']+'/src/jetObservables/Unfolding/test/Samples/'
+    args.inputFolder = 'Samples/'
     dictSamples = OrderedDict(dictSamples)
     VER = args.version.split('_')[1] if '_' in args.version else args.version
     dataFile = {}
@@ -622,10 +650,10 @@ if __name__ == '__main__':
         plotList.append([ 'data', 'recoJet_mass_nom', 'Leading AK8 jet softdrop mass/GeV', ( 50. if args.selection.startswith('WSel') else 130. ), ( 140. if args.selection.startswith('WSel') else 300. ), 1, 'right' ] ,)
         plotList.append([ 'bkgData', 'nleps', 'Number of Leptons', 0, 4, 4, 'right' ] ,)
         plotList.append([ 'data', 'nleps', 'Number of Leptons', 0, 4, 4, 'right' ] ,)
-        plotList.append([ 'bkgData', 'muons_pt', 'p_{t} of Muons/GeV', 0., 400., 20, 'right' ] ,)
-        plotList.append([ 'data', 'muons_pt', 'p_{t} of Muons/GeV', 0., 400., 20, 'right' ] ,)
-        plotList.append([ 'bkgData', 'METPt', 'MET P_{t}/GeV', 0., 600., 30, 'right' ] ,)
-        plotList.append([ 'data', 'METPt', 'MET P_{t}/GeV', 0., 600., 30, 'right' ] ,)
+        plotList.append([ 'bkgData', 'muons_pt', 'p_{t} of Muons/GeV', 0., 1200., 10, 'right' ] ,)
+        plotList.append([ 'data', 'muons_pt', 'p_{t} of Muons/GeV', 0., 1200., 10, 'right' ] ,)
+        plotList.append([ 'bkgData', 'METPt', 'MET P_{t}/GeV', 0., 1200., 20, 'right' ] ,)
+        plotList.append([ 'data', 'METPt', 'MET P_{t}/GeV', 0., 1200., 20, 'right' ] ,)
 
 
     jetlabels = [ ('Jet1', 'Outer'), ('Jet2', 'Central') ] if args.selection.startswith('dijet') else [ ('Jet', 'Leading') ]

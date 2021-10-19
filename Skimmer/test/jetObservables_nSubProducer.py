@@ -75,7 +75,8 @@ parser.add_argument(
     '--onlyUnc',
     action="store",
     default='',
-    help="Run only specific uncertainty variations"
+    help="Run only specific uncertainty variations",
+    required=True
 )
 parser.add_argument(
     '--onlyTrees',
@@ -94,29 +95,32 @@ else:
 
 ### General selections:
 PV = "(PV_npvsGood>0)"
-METFilters = "( (Flag_goodVertices==1) && (Flag_globalSuperTightHalo2016Filter==1) && (Flag_HBHENoiseFilter==1) && (Flag_HBHENoiseIsoFilter==1) && (Flag_EcalDeadCellTriggerPrimitiveFilter==1) && (Flag_BadPFMuonFilter==1) )"
-if not isMC: METFilters = METFilters + ' && (Flag_eeBadScFilter==1)'
+METFilters = "( (Flag_goodVertices==1) && (Flag_globalSuperTightHalo2016Filter==1) && (Flag_HBHENoiseFilter==1) && (Flag_HBHENoiseIsoFilter==1) && (Flag_EcalDeadCellTriggerPrimitiveFilter==1) && (Flag_BadPFMuonFilter==1) && (Flag_eeBadScFilter==1) && (Flag_ecalBadCalibFilter==1))" #&& (Flag_BadPFMuonDzFilter==1) not working for some reason
+if not isMC: METFilters = METFilters + ''
 
 if args.selection.startswith('dijet'):
     Triggers =  '( (HLT_AK8PFJet80==1) || (HLT_AK8PFJet140==1) || (HLT_AK8PFJet200==1) || (HLT_AK8PFJet260==1) || (HLT_AK8PFJet320==1) || (HLT_AK8PFJet400==1) || (HLT_AK8PFJet450==1) || (HLT_AK8PFJet500==1) || (HLT_AK8PFJet550==1) )'
 else:
-    Triggers = '(HLT_Mu50==1)'
+    Triggers = '(HLT_Mu50==1) || (HLT_TkMu100)'
 
 cuts = PV + " && " + METFilters + " && " + Triggers
 
 #if isMC:
-#    systSources =  [ '_jesTotal', '_jer', '_puWeight', '_isrWeight', '_fsrWeight' ]  if ("TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8" in args.sample or "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8" in args.iFile or "TTJets_TuneCP5_13TeV-amcatnloFXFX-pythia8" in args.sample or "TTJets_TuneCP5_13TeV-amcatnloFXFX-pythia8" in args.iFile)  else ['_jesTotal', '_jer', '_puWeight']#, '_pdfWeight'
+#    systSources =  [ '_jesTotal', '_jer', '_puWeight', '_isrWeight', '_fsrWeight' ]  
+#if ("TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8" in args.sample or "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8" in args.iFile or "TTJets_TuneCP5_13TeV-amcatnloFXFX-pythia8" in args.sample or "TTJets_TuneCP5_13TeV-amcatnloFXFX-pythia8" in args.iFile)  else ['_jesTotal', '_jer', '_puWeight']#, '_pdfWeight'
 #    print (systSources)
 #    topweight=True
 #else: 
 #    systSources=[]
-systSources = ['_jesTotal', '_jer', '_puWeight'] if isMC else []
+systSources = ['_jesTotal', '_jer', '_puWeight', '_isrWeight', '_fsrWeight'] if isMC else []
 topweight = False
 if args.selection.startswith('Wtop') and isMC:
-    if not args.onlyUnc=='' and ("TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8" in args.sample or "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8" in args.iFile):# or "TTJets_TuneCP5_13TeV-amcatnloFXFX-pythia8" in args.sample or "TTJets_TuneCP5_13TeV-amcatnloFXFX-pythia8" in args.iFile):
+    if ("TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8" in args.sample or "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8" in args.iFile):# or "TTJets_TuneCP5_13TeV-amcatnloFXFX-pythia8" in args.sample or "TTJets_TuneCP5_13TeV-amcatnloFXFX-pythia8" in args.iFile):
         topweight=True
     systSources = []
-if args.onlyUnc: systSources = [ args.onlyUnc ]
+if args.onlyUnc and isMC: systSources = [ args.onlyUnc ]
+if not isMC: systSources=[]
+
 
 ### Lepton scale factors
 LeptonSF = {
@@ -141,10 +145,6 @@ LeptonSF = {
     },
 }
 
-#topweight=False
-#if ("TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8" in args.sample or "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8" in args.iFile or "TTJets_TuneCP5_13TeV-amcatnloFXFX-pythia8" in args.sample or "TTJets_TuneCP5_13TeV-amcatnloFXFX-pythia8" in args.iFile):
-#    topweight=True
-#    isMC=True
 
 #### Modules to run
 jetmetCorrector = createJMECorrector(isMC=isMC, applySmearing=False, dataYear='UL'+args.year, jesUncert="All", runPeriod=args.runEra )
@@ -164,13 +164,11 @@ if isMC:
     #    modulesToRun.append( puAutoWeight_2016() )
     #    modulesToRun.append( btagSF2016() )
 
-# our module
-#if args.selection.startswith('dijet'):
-#    from jetObservables.Skimmer.nSubProducer_dijetSel import nSubProd
-#    modulesToRun.append( nSubProd( sysSource=systSources, isMC=isMC, year=args.year ) )
 
-from jetObservables.Skimmer.nSubProducer_WtopSel_Final import nSubProd
-modulesToRun.append( nSubProd( sysSource=systSources, leptonSF=LeptonSF[args.year], isMC=isMC, topreweight=topweight, onlyUnc=args.onlyUnc, onlyTrees=args.onlyTrees  )  )
+
+from jetObservables.Skimmer.nSubProducer_WtopSel_Final import nSubProd #_MuCheck
+if not args.onlyUnc=='': modulesToRun.append( nSubProd( sysSource=systSources, leptonSF=LeptonSF[args.year], isMC=isMC, topreweight=topweight, onlyUnc=args.onlyUnc, onlyTrees=args.onlyTrees  )  )
+else: modulesToRun.append( nSubProd( sysSource=systSources, leptonSF=LeptonSF[args.year], isMC=isMC, topreweight=topweight, onlyTrees=args.onlyTrees  )  )
 if topweight: print ("using top reweighting")
 else: print ("Not using top reweighting")
 
@@ -187,8 +185,8 @@ p1=PostProcessor(
     prefetch     = args.local,
     longTermCache= args.local,
     fwkJobReport = True,
-    haddFileName = "jetObservables_"+args.selection+"_nanoskim.root" if args.local else 'jetObservables_nanoskim.root',
-    histFileName = "jetObservables_"+args.selection+"_histograms.root" if args.local else 'jetObservables_histograms.root',
+    haddFileName = "jetObservables_"+args.selection+args.onlyUnc+"_nanoskim.root" if args.local else 'jetObservables_nanoskim.root',
+    histFileName = "jetObservables_"+args.selection+args.onlyUnc+"_histograms.root" if args.local else 'jetObservables_histograms.root',
     histDirName  = 'jetObservables',
 )
 

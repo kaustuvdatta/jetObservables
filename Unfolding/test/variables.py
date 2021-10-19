@@ -250,7 +250,7 @@ nSubVariables_topSel[ 'Jet_tau_2_1' ] = {
             }
 nSubVariables_topSel[ 'Jet_tau_0p5_2' ] = {
             'bins' : array('d',[0., 0.1, 0.16, 0.22, 0.28, 0.34, 0.4, 0.46, 0.52, 0.58, 0.64, 0.7, 0.8]),
-            'label' : 'Leading AK8 jet #tau_{2}^{(0.5)',
+            'label' : 'Leading AK8 jet #tau_{2}^{(0.5)}',
             'alignLeg' : 'right'
             }
 nSubVariables_topSel[ 'Jet_tau_1_2' ] = {

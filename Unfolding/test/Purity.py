@@ -6,7 +6,7 @@ import argparse, os, shutil, sys
 import ROOT
 from array import array
 from collections import OrderedDict
-from variables import nSubVariables
+from variables import nSubVariables, nSubVariables_WSel, nSubVariables_topSel
 from runTUnfold import loadHistograms
 sys.path.insert(0,'../python/')
 import CMS_lumi as CMS_lumi
@@ -111,7 +111,7 @@ def runPurity( name, bkgFiles, variables, sel ):
 
 
         ########## Plot response matrix
-        print '|------> Cross check: plotting response matrix for signal'
+        print ('|------> Cross check: plotting response matrix for signal')
         ROOT.gStyle.SetPadRightMargin(0.15)
         #ROOT.gStyle.SetPalette(ROOT.kGistEarth)
         #ROOT.TColor.InvertPalette()
@@ -210,13 +210,14 @@ if __name__ == '__main__':
     parser.add_argument('-e', '--ext', action='store', default='png', help='Extension of plots.' )
     parser.add_argument("--only", action='store', dest="only", default="", help="Submit only one variable" )
     parser.add_argument("--outputFolder", action='store', dest="outputFolder", default="", help="Output folder" )
+    parser.add_argument("--inputFolder", action='store', dest="inputFolder", default="", help="Input folder" )
     parser.add_argument("--main", action='store', dest="main", choices=['Ptbin', 'HTbin', 'herwig'], default='Ptbin', help="For dijet sel, main signal QCD" )
 
     try: args = parser.parse_args()
     except:
         parser.print_help()
         sys.exit(0)
-    args.inputFolder = os.environ['CMSSW_BASE']+'/src/jetObservables/Unfolding/test/Rootfiles/'
+    #args.inputFolder = os.environ['CMSSW_BASE']+'/src/jetObservables/Unfolding/test/Rootfiles/'
 
     if args.selection.startswith('_dijet'):
         if args.main.startswith('Ptbin'):
@@ -229,10 +230,13 @@ if __name__ == '__main__':
             signalLabelBegin = 'QCD_Pt-'
             signalLabel = 'QCD_Pt-150to3000'
     else:
-        signalLabelBegin = 'dummy'
-        signalLabel = 'dummy'
-        altSignalLabelBegin = 'dummy'
-        altSignalLabel = 'dummy'
+        signalLabel = 'TTToSemiLeptonic'
+        sigPlotLabel = 'Powheg+Pythia8'
+        signalLabelBegin = 'TTToSemiLeptonic'
+        
+        altSignalLabelBegin = 'TTJets'
+        altSigPlotLabel = 'aMC@NLO-FXFX+Pythia8'
+        altSignalLabel = 'TTJets'
 
     bkgFiles = {}
     for iy in ( ['2017', '2018'] if args.year.startswith('all') else [ args.year ] ):
@@ -244,7 +248,9 @@ if __name__ == '__main__':
                                 ROOT.TFile.Open( args.inputFolder+checkDict( isam, dictSamples )[iy]['skimmerHisto'] ),
                                 checkDict( isam, dictSamples )
                             ]
-
+    if args.selection.startswith('_WSel'): nSubVariables = nSubVariables_WSel
+    elif args.selection.startswith('_topSel'): nSubVariables = nSubVariables_topSel
+    print (bkgFiles.keys())
     #### define variables
     if args.only:
         filterVariables = { k:v for (k,v) in nSubVariables.items() if k.endswith(args.only)  }
