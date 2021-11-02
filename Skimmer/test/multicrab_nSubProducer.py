@@ -63,7 +63,7 @@ def submitJobs( job, inputFiles, unitJobs ):
     config.JobType.pluginName = 'Analysis'
     config.JobType.psetName = 'PSet.py'
     config.JobType.maxMemoryMB = 2000
-    #config.JobType.maxMemoryMB = 4000
+
     config.JobType.allowUndistributedCMSSW = True
 
     config.section_("Data")
@@ -96,13 +96,13 @@ def submitJobs( job, inputFiles, unitJobs ):
 
     #config.Data.splitting = 'EventAwareLumiBased' if job.startswith('QCD_Pt') else 'FileBased'
     #config.Data.splitting = 'Automatic'
-    config.Data.splitting = 'EventAwareLumiBased' #if job.startswith('QCD_HT') else 'FileBased'
-    config.Data.unitsPerJob = 50000
-    config.Data.splitting = 'Automatic'
-    #config.Data.unitsPerJob = unitJobs
+    #config.Data.splitting = 'EventAwareLumiBased' #if job.startswith('QCD_HT') else 'FileBased'
+    #config.Data.unitsPerJob = 900
+    config.Data.splitting = 'FileBased'
+    config.Data.unitsPerJob = unitJobs
 
     # since the input will have no metadata information, output can not be put in DBS
-    config.JobType.outputFiles = [ 'jetObservables_nanoskim.root', 'jetObservables_histograms.root']
+    config.JobType.outputFiles = [ 'jetObservables_histograms.root']#'jetObservables_nanoskim.root', 
     config.Data.outLFNDirBase = '/store/user/'+os.environ['USER']+'/jetObservables/'
 
     requestname = 'jetObservables_Skimmer_'+ job.replace('_','').replace('-','')+options.onlyUnc+'_'+options.year + '_' +options.version
