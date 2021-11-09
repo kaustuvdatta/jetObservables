@@ -76,7 +76,6 @@ parser.add_argument(
     action="store",
     default='',
     help="Run only specific uncertainty variations",
-    required=True
 )
 parser.add_argument(
     '--onlyTrees',
@@ -112,12 +111,12 @@ cuts = PV + " && " + METFilters + " && " + Triggers
 #    topweight=True
 #else: 
 #    systSources=[]
-systSources = ['_jesTotal', '_jer', '_puWeight', '_isrWeight', '_fsrWeight'] if isMC else []
+systSources = ['_jesTotal', '_jer', '_puWeight', '_isrWeight', '_fsrWeight', '_pdfWeight'] if isMC else []
 topweight = False
 if args.selection.startswith('Wtop') and isMC:
     if ("TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8" in args.sample or "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8" in args.iFile):# or "TTJets_TuneCP5_13TeV-amcatnloFXFX-pythia8" in args.sample or "TTJets_TuneCP5_13TeV-amcatnloFXFX-pythia8" in args.iFile):
-        topweight = True#False
-    systSources = []
+        topweight = False#True
+    systSources = ['_jesTotal', '_jer', '_puWeight', '_isrWeight', '_fsrWeight', '_pdfWeight'] if ("TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8" in args.sample or "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8" in args.iFile) else []
 if args.onlyUnc and isMC: systSources = [ args.onlyUnc ]
 if not isMC: systSources=[]
 
@@ -167,8 +166,7 @@ if isMC:
 
 
 from jetObservables.Skimmer.nSubProducer_WtopSel_Final import nSubProd #_MuCheck
-if not args.onlyUnc=='': modulesToRun.append( nSubProd( sysSource=systSources, leptonSF=LeptonSF[args.year], isMC=isMC, topreweight=topweight, onlyUnc=args.onlyUnc, onlyTrees=args.onlyTrees  )  )
-else: modulesToRun.append( nSubProd( sysSource=systSources, leptonSF=LeptonSF[args.year], isMC=isMC, topreweight=topweight, onlyTrees=args.onlyTrees  )  )
+modulesToRun.append( nSubProd( sysSource=systSources, leptonSF=LeptonSF[args.year], isMC=isMC, topreweight=topweight, onlyUnc=args.onlyUnc, onlyTrees=args.onlyTrees  )  )
 if topweight: print ("using top reweighting")
 else: print ("Not using top reweighting")
 
