@@ -165,7 +165,7 @@ if isMC:
 
 
 
-from jetObservables.Skimmer.nSubProducer_WtopSel_Final import nSubProd #_MuCheck
+from jetObservables.Skimmer.nSubProducer_WtopSel_Final import nSubProd 
 modulesToRun.append( nSubProd( sysSource=systSources, leptonSF=LeptonSF[args.year], isMC=isMC, topreweight=topweight, onlyUnc=args.onlyUnc, onlyTrees=args.onlyTrees  )  )
 if topweight: print ("using top reweighting")
 else: print ("Not using top reweighting")

@@ -446,7 +446,7 @@ class nSubProd(Module):
 
         if not self.isMC and not passRecoSel['_nom']: return False
         
-        if self.isMC and not passGenSel and not passRecoSel['_nom']: return False
+        #if self.isMC and not passGenSel and not passRecoSel['_nom']: return False
 
         for sys in self.sysSource:
 
@@ -1141,7 +1141,7 @@ class nSubProd(Module):
                 
                 AK4bjets = [x for x in AK4bjets if abs(x.p4().DeltaPhi(muons[0].p4()))<2. and AK8jets[0].p4().DeltaR( x.p4() )>0.8 and x.p4().DeltaR( muons[0].p4() )>0.4 and (muons[0].p4().DeltaR( x.p4() )<np.pi/2.)] 
                 
-                if (len(AK8jets)>0) and (len(AK4bjets)>1) and (len(AK4bjets)<3) and abs(AK8jets[0].p4().DeltaPhi(muons[0].p4()))>2.:
+                if (len(AK8jets)>0) and (len(AK4bjets)>=1) and (len(AK4bjets)<3) and abs(AK8jets[0].p4().DeltaPhi(muons[0].p4()))>2.:
                     if not isGen:
                         if self.isMC:
                             bTagSFs =  [x.btagSF_deepjet_M for x in AK4bjets]
