@@ -908,7 +908,7 @@ class nSubProd(Module):
                     else: antitopSF = math.exp(0.0615 - 0.0005 * 500.)
 
                     self.topweight = math.sqrt(topSF*antitopSF)
-                    print ("top reweighting going on", iSel['_nom'], self.topweight, tops[0].pt, topSF, antiTops[0].pt, antitopSF)
+                    print ("top reweighting going on", iSel, self.topweight, tops[0].pt, topSF, antiTops[0].pt, antitopSF)
 
                 else: 
                     self.topweight = 1.#????math.sqrt(topSF*antitopSF)

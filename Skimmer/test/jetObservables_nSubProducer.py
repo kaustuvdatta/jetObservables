@@ -115,8 +115,8 @@ systSources = ['_jesTotal', '_jer', '_puWeight', '_isrWeight', '_fsrWeight', '_p
 topweight = False
 if args.selection.startswith('Wtop') and isMC:
     if ("TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8" in args.sample or "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8" in args.iFile):# or "TTJets_TuneCP5_13TeV-amcatnloFXFX-pythia8" in args.sample or "TTJets_TuneCP5_13TeV-amcatnloFXFX-pythia8" in args.iFile):
-        topweight = False#True
-    systSources = ['_jesTotal', '_jer', '_puWeight', '_isrWeight', '_fsrWeight', '_pdfWeight'] if ("TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8" in args.sample or "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8" in args.iFile) else []
+        topweight = True
+    systSources = [] if ("TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8" in args.sample or "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8" in args.iFile) else [] #['_jesTotal', '_jer', '_puWeight', '_isrWeight', '_fsrWeight', '_pdfWeight']
 if args.onlyUnc and isMC: systSources = [ args.onlyUnc ]
 if not isMC: systSources=[]
 
