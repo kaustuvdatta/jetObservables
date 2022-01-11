@@ -117,6 +117,9 @@ if args.selection.startswith('Wtop') and isMC:
     if ("TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8" in args.sample or "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8" in args.iFile):# or "TTJets_TuneCP5_13TeV-amcatnloFXFX-pythia8" in args.sample or "TTJets_TuneCP5_13TeV-amcatnloFXFX-pythia8" in args.iFile):
         topweight = True
     systSources = [] if ("TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8" in args.sample or "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8" in args.iFile) else [] #['_jesTotal', '_jer', '_puWeight', '_isrWeight', '_fsrWeight', '_pdfWeight']
+elif args.selection.startswith('dijet'):
+    systSources = ['_jesTotal', '_jer', '_puWeight', '_isrWeight', '_fsrWeight', '_pdfWeight' ] if args.sample.startswith('QCD_HT') else []    
+
 if args.onlyUnc and isMC: systSources = [ args.onlyUnc ]
 if not isMC: systSources=[]
 
@@ -146,29 +149,40 @@ LeptonSF = {
 
 
 #### Modules to run
-jetmetCorrector = createJMECorrector(isMC=isMC, applySmearing=False, dataYear='UL'+args.year, jesUncert="All", runPeriod=args.runEra )
+if not args.selection.startswith('dijet'):
+    jetmetCorrector = createJMECorrector(isMC=isMC, applySmearing=False, dataYear='UL'+args.year, jesUncert="All", runPeriod=args.runEra )
 fatJetCorrector = createJMECorrector(isMC=isMC, applySmearing=False, dataYear='UL'+args.year, jesUncert="All", jetType = "AK8PFPuppi", runPeriod=args.runEra)
 
 modulesToRun = []
 modulesToRun.append( fatJetCorrector() )
-modulesToRun.append( jetmetCorrector() )
+if not args.selection.startswith('dijet'): modulesToRun.append( jetmetCorrector() )
 if isMC:
     if args.year=='2018':
         modulesToRun.append( puAutoWeight_UL2018() )
-        modulesToRun.append( btagSF_UL2018() )
-    elif args.year=='2017':
-        modulesToRun.append( puAutoWeight_UL2017() )
-        modulesToRun.append( btagSF_UL2017() )
-    #if args.year=='2016':
-    #    modulesToRun.append( puAutoWeight_2016() )
-    #    modulesToRun.append( btagSF2016() )
+        if not args.selection.startswith('dijet'):
+            print "###Running with btag SF calc.###"
+            modulesToRun.append( btagSF2018() )
+    if args.year=='2017':
+        if not args.selection.startswith('dijet'):
+            print "###Running with btag SF calc.###"
+            modulesToRun.append( puAutoWeight_UL2017() )
+            modulesToRun.append( btagSF2017() )
+        else:
+            modulesToRun.append( puWeightProducer( "auto", os.environ['CMSSW_BASE']+"/src/jetObservables/Skimmer/data/pileup/pileupForDijet_UL2017.root", "pu_mc", "pileup", verbose=False) )
+    if args.year=='2016':
+        modulesToRun.append( puAutoWeight_2016() )
+        print "Running with btag SF calc."
+        if not args.selection.startswith('dijet'): modulesToRun.append( btagSF2016() )
 
-
-
-from jetObservables.Skimmer.nSubProducer_WtopSel_Final import nSubProd 
-modulesToRun.append( nSubProd( sysSource=systSources, leptonSF=LeptonSF[args.year], isMC=isMC, topreweight=topweight, onlyUnc=args.onlyUnc, onlyTrees=args.onlyTrees  )  )
-if topweight: print ("using top reweighting")
-else: print ("Not using top reweighting")
+# our module
+if args.selection.startswith('dijet'):
+    from jetObservables.Skimmer.nSubProducer_dijetSel import nSubProd
+    modulesToRun.append( nSubProd( sysSource=systSources, isMC=isMC, year=args.year, onlyUnc=args.onlyUnc, onlyTrees=args.onlyTrees ) )
+else:
+    from jetObservables.Skimmer.nSubProducer_WtopSel_Final import nSubProd 
+    modulesToRun.append( nSubProd( sysSource=systSources, leptonSF=LeptonSF[args.year], isMC=isMC, topreweight=topweight, onlyUnc=args.onlyUnc, onlyTrees=args.onlyTrees  )  )
+    if topweight: print ("using top reweighting")
+    else: print ("Not using top reweighting")
 
 
 #### Make it run

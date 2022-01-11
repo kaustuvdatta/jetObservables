@@ -1,7 +1,7 @@
 myWD = $ENV(PWD)
 universe    =  vanilla
 executable  =  $(myWD)/submit_runTUnfold.sh
-arguments   =  $(tau) $(year) /eos/home-a/algomez/JetObservables/Updates/20210610/ 
+arguments   =  $(tau) /eos/home-a/algomez/JetObservables/Updates/20211011/ 
 log         =  $(myWD)/condorlogs/log_condorJob_$(ClusterId).log
 error       =  $(myWD)/condorlogs/log_condorJob_$(ClusterId)-$(ProcId)-$(tau)-$(year).err
 output      =  $(myWD)/condorlogs/log_condorJob_$(ClusterId)-$(ProcId)-$(tau)-$(year).out
@@ -9,33 +9,32 @@ initialdir  = $(myWD)
 getenv      =  True
 +JobFlavour = "tomorrow"
 queue tau year from (
-    tau21 2017 
-    tau32 2017 
-    tau_0p5_1 2017 
-    tau_0p5_2 2017 
-    tau_0p5_3 2017 
-    tau_0p5_4 2017 
-    tau_1_1 2017 
-    tau_1_2 2017 
-    tau_1_3 2017 
-    tau_1_4 2017 
-    tau_2_1 2017 
-    tau_2_2 2017 
-    tau_2_3 2017 
-    tau_2_4 2017 
-    tau21 2018 
-    tau32 2018 
-    tau_0p5_1 2018 
-    tau_0p5_2 2018 
-    tau_0p5_3 2018 
-    tau_0p5_4 2018 
-    tau_1_1 2018 
-    tau_1_2 2018 
-    tau_1_3 2018 
-    tau_1_4 2018 
-    tau_2_1 2018 
-    tau_2_2 2018 
-    tau_2_3 2018 
-    tau_2_4 2018 
+    tau21  
+    tau32  
+    tau_0p5_1  
+    tau_0p5_2  
+    tau_0p5_3  
+    tau_0p5_4  
+    tau_1_1  
+    tau_1_2  
+    tau_1_3  
+    tau_1_4  
+    tau_2_1  
+    tau_2_2  
+    tau_2_3  
+    tau_2_4  
+#    tau21 2018 
+#    tau32 2018 
+#    tau_0p5_1 2018 
+#    tau_0p5_2 2018 
+#    tau_0p5_3 2018 
+#    tau_0p5_4 2018 
+#    tau_1_1 2018 
+#    tau_1_2 2018 
+#    tau_1_3 2018 
+#    tau_1_4 2018 
+#    tau_2_1 2018 
+#    tau_2_2 2018 
+#    tau_2_3 2018 
+#    tau_2_4 2018 
         ) 
-
