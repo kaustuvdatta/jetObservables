@@ -67,7 +67,7 @@ parser.add_argument(
     '--selection',
     action="store",
     help="Event selection",
-    choices=["dijet", "Wtop"],
+    choices=["Wtop","WSel", "topSel","dijet"],
     default="Wtop",
     required=False
 )
@@ -94,13 +94,13 @@ else:
 
 ### General selections:
 PV = "(PV_npvsGood>0)"
-METFilters = "( (Flag_goodVertices==1) && (Flag_globalSuperTightHalo2016Filter==1) && (Flag_HBHENoiseFilter==1) && (Flag_HBHENoiseIsoFilter==1) && (Flag_EcalDeadCellTriggerPrimitiveFilter==1) && (Flag_BadPFMuonFilter==1) && (Flag_eeBadScFilter==1) && (Flag_ecalBadCalibFilter==1))" #&& (Flag_BadPFMuonDzFilter==1) not working for some reason
-if not isMC: METFilters = METFilters + ''
+METFilters = "( (Flag_goodVertices==1) && (Flag_globalSuperTightHalo2016Filter==1) && (Flag_HBHENoiseFilter==1) && (Flag_HBHENoiseIsoFilter==1) && (Flag_EcalDeadCellTriggerPrimitiveFilter==1) && (Flag_BadPFMuonFilter==1)  && (Flag_ecalBadCalibFilter==1) )" #&& (Flag_BadPFMuonDzFilter==1) not working for some reason
+if not isMC: METFilters = METFilters + "&& (Flag_eeBadScFilter==1)"
 
 if args.selection.startswith('dijet'):
-    Triggers =  '( (HLT_AK8PFJet80==1) || (HLT_AK8PFJet140==1) || (HLT_AK8PFJet200==1) || (HLT_AK8PFJet260==1) || (HLT_AK8PFJet320==1) || (HLT_AK8PFJet400==1) || (HLT_AK8PFJet450==1) || (HLT_AK8PFJet500==1) || (HLT_AK8PFJet550==1) )'
+    Triggers =  "( (HLT_AK8PFJet80==1) || (HLT_AK8PFJet140==1) || (HLT_AK8PFJet200==1) || (HLT_AK8PFJet260==1) || (HLT_AK8PFJet320==1) || (HLT_AK8PFJet400==1) || (HLT_AK8PFJet450==1) || (HLT_AK8PFJet500==1) || (HLT_AK8PFJet550==1) )"
 else:
-    Triggers = '(HLT_Mu50==1) || (HLT_TkMu100)'
+    Triggers = "((HLT_Mu50==1)) "# || (HLT_TkMu100==1))'
 
 cuts = PV + " && " + METFilters + " && " + Triggers
 
@@ -113,9 +113,9 @@ cuts = PV + " && " + METFilters + " && " + Triggers
 #    systSources=[]
 systSources = ['_jesTotal', '_jer', '_puWeight', '_isrWeight', '_fsrWeight', '_pdfWeight'] if isMC else []
 topweight = False
-if args.selection.startswith('Wtop') and isMC:
+if args.selection.startswith(('W', 'top')) and isMC:
     if ("TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8" in args.sample or "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8" in args.iFile):# or "TTJets_TuneCP5_13TeV-amcatnloFXFX-pythia8" in args.sample or "TTJets_TuneCP5_13TeV-amcatnloFXFX-pythia8" in args.iFile):
-        topweight = True
+        topweight = False
     systSources = [] if ("TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8" in args.sample or "TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8" in args.iFile) else [] #['_jesTotal', '_jer', '_puWeight', '_isrWeight', '_fsrWeight', '_pdfWeight']
 elif args.selection.startswith('dijet'):
     systSources = ['_jesTotal', '_jer', '_puWeight', '_isrWeight', '_fsrWeight', '_pdfWeight' ] if args.sample.startswith('QCD_HT') else []    
@@ -149,9 +149,24 @@ LeptonSF = {
 
 
 #### Modules to run
+jesUncert = 'Merged' if any('_jes' in iunc for iunc in systSources) else 'Total'
+if jesUncert.startswith('Merged'):
+    if args.year=='2017': 
+        systSources =   ['_jesAbsolute', '_jesBBEC1', '_jesEC2', '_jesAbsolute_2017', '_jesBBEC1_2017', '_jesEC2_2017', '_jesHF_2017', '_jesRelativeSample_2017', '_jesFlavorQCD', '_jesHF', '_jesRelativeBal']
+        if not args.onlyUnc=='_jesAll': 
+            for s in systSources:
+                if s==args.onlyUnc: systSources = [s]
+    elif args.year=='2018': 
+        systSources = ['_jesAbsolute', '_jesBBEC1', '_jesEC2', '_jesAbsolute_2018', '_jesBBEC1_2018', '_jesEC2_2018', '_jesHF_2018', '_jesRelativeSample_2018', '_jesFlavorQCD', '_jesHF', '_jesRelativeBal']
+        if not args.onlyUnc=='_jesAll': 
+            for s in systSources:
+                if s==args.onlyUnc: systSources = [s]
+
+print(jesUncert, systSources)
+
 if not args.selection.startswith('dijet'):
-    jetmetCorrector = createJMECorrector(isMC=isMC, applySmearing=False, dataYear='UL'+args.year, jesUncert="All", runPeriod=args.runEra )
-fatJetCorrector = createJMECorrector(isMC=isMC, applySmearing=False, dataYear='UL'+args.year, jesUncert="All", jetType = "AK8PFPuppi", runPeriod=args.runEra)
+    jetmetCorrector = createJMECorrector(isMC=isMC, applySmearing=False, dataYear='UL'+args.year, jesUncert=jesUncert, runPeriod=args.runEra, applyHEMfix=(True if args.year.startswith('2018') else False) )
+fatJetCorrector = createJMECorrector(isMC=isMC, applySmearing=False, dataYear='UL'+args.year, jesUncert=jesUncert, jetType = "AK8PFPuppi", runPeriod=args.runEra, applyHEMfix=(True if args.year.startswith('2018') else False))
 
 modulesToRun = []
 modulesToRun.append( fatJetCorrector() )
@@ -180,7 +195,7 @@ if args.selection.startswith('dijet'):
     modulesToRun.append( nSubProd( sysSource=systSources, isMC=isMC, year=args.year, onlyUnc=args.onlyUnc, onlyTrees=args.onlyTrees ) )
 else:
     from jetObservables.Skimmer.nSubProducer_WtopSel_Final import nSubProd 
-    modulesToRun.append( nSubProd( sysSource=systSources, leptonSF=LeptonSF[args.year], isMC=isMC, topreweight=topweight, onlyUnc=args.onlyUnc, onlyTrees=args.onlyTrees  )  )
+    modulesToRun.append( nSubProd( sysSource=systSources, leptonSF=LeptonSF[args.year], isMC=isMC, topreweight=topweight, onlyUnc=args.onlyUnc, onlyTrees=args.onlyTrees, evtSelection=args.selection   )  )
     if topweight: print ("using top reweighting")
     else: print ("Not using top reweighting")
 
@@ -190,15 +205,15 @@ p1=PostProcessor(
     '.', (inputFiles() if not args.iFile else args.iFile.split(',')),
     cut          = cuts,
     outputbranchsel   = "keep_and_drop.txt",
-        modules      = modulesToRun,
+    modules      = modulesToRun,
     provenance   = True,
     #jsonInput   = runsAndLumis(),
     maxEntries   = args.numEvents,
     prefetch     = args.local,
     longTermCache= args.local,
     fwkJobReport = True,
-    haddFileName = "jetObservables_"+args.selection+args.onlyUnc+"_nanoskim.root" if args.local else 'jetObservables_nanoskim.root',
-    histFileName = "jetObservables_"+args.selection+args.onlyUnc+"_histograms.root" if args.local else 'jetObservables_histograms.root',
+    haddFileName = "jetObservables_"+args.selection+args.onlyUnc+"_withOUTLeakage_nanoskim.root" if args.local else 'jetObservables_nanoskim.root',
+    histFileName = "jetObservables_"+args.selection+args.onlyUnc+"_withOUTLeakage_histograms.root" if args.local else 'jetObservables_histograms.root',
     histDirName  = 'jetObservables',
 )
 

@@ -38,16 +38,18 @@ echo Found Proxy in: $X509_USER_PROXY
 ls
 echo "python {pythonFile} --sample {datasets} --selection {selection} --year {year}"
 #python {pythonFile} --sample {datasets} --selection {selection} --year {year} --runEra {runEra} --onlyTrees
-python {pythonFile} --sample {datasets} --selection {selection} --year {year} --runEra {runEra} --onlyUnc {onlyUnc}
+#python {pythonFile} --sample {datasets} --selection {selection} --year {year} --runEra {runEra} 
+python {pythonFile} --sample {datasets} --selection {selection} --year {year} --onlyUnc {onlyUnc} --runEra {runEra}  
 fi
     '''
-    open('runPostProc'+options.datasets+options.year+options.onlyUnc+'.sh', 'w').write(BASH_SCRIPT.format(**options.__dict__))
+    open('runPostProc'+options.datasets+options.year+options.onlyUnc+options.selection+'.sh', 'w').write(BASH_SCRIPT.format(**options.__dict__))
 
 
 def submitJobs( job, inputFiles, unitJobs ):
 
     from CRABAPI.RawCommand import crabCommand
     from WMCore.Configuration import Configuration
+
     config = Configuration()
 
     from httplib import HTTPException
@@ -62,7 +64,8 @@ def submitJobs( job, inputFiles, unitJobs ):
     config.section_("JobType")
     config.JobType.pluginName = 'Analysis'
     config.JobType.psetName = 'PSet.py'
-    config.JobType.maxMemoryMB = 2000
+    config.JobType.maxMemoryMB = 4000
+    #config.JobType.numCores = 2
 
     config.JobType.allowUndistributedCMSSW = True
 
@@ -83,7 +86,7 @@ def submitJobs( job, inputFiles, unitJobs ):
             print hte.headers
 
 
-    config.JobType.scriptExe = 'runPostProc'+options.datasets+options.year+options.onlyUnc+'.sh'
+    config.JobType.scriptExe = 'runPostProc'+options.datasets+options.year+options.onlyUnc+options.selection+'.sh'
     config.JobType.inputFiles = [ options.pythonFile ,'haddnano.py', 'keep_and_drop.txt']
     config.JobType.sendPythonFolder  = True
     
@@ -105,24 +108,24 @@ def submitJobs( job, inputFiles, unitJobs ):
     config.JobType.outputFiles = [ 'jetObservables_histograms.root']#'jetObservables_nanoskim.root', 
     config.Data.outLFNDirBase = '/store/user/'+os.environ['USER']+'/jetObservables/'
 
-    requestname = 'jetObservables_Skimmer_'+ job.replace('_','').replace('-','')+options.onlyUnc+'_'+options.year + '_' +options.version
+    requestname = 'jetObs_Skimmer_'+ job.replace('_','').replace('-','')+options.onlyUnc+'_'+options.year +'_'+options.selection + '_' +options.version
     print requestname
     if len(requestname) > 100: requestname = (requestname[:95-len(requestname)])
     if os.path.isdir('crab_projects/crab_'+requestname):
         print '|-------> JOB '+requestname+' has already a folder. Please remove it.'
-        os.remove('runPostProc'+options.datasets+options.year+options.onlyUnc+'.sh')
+        os.remove('runPostProc'+options.datasets+options.year+options.onlyUnc+options.selection+'.sh')
         return False
 
     print 'requestname = ', requestname
 
     config.General.requestName = requestname
-    if ('QCD' in job or 'MuEn'in job) and options.selection.startswith('Wtop'):
+    if ('QCD' in job or 'MuEn'in job) and (options.selection.startswith('WSel') or options.selection.startswith('topSel')):
         if '2018' in options.year: 
             print ('2018')
-            if 'UL18v1' in config.Data.inputDataset: config.Data.outputDatasetTag = 'Run'+inputFiles.split('Run')[1].split('UL18v1')[0]+'UL18PFNano_jetObs_Skim_'+options.onlyUnc+options.version+('EXT'+job.split('EXT')[1] if 'EXT' in job else '')		   
-            else: config.Data.outputDatasetTag = 'Run'+inputFiles.split('Run')[1].split('UL18')[0]+'UL18PFNano_jetObs_Skim_'+options.onlyUnc+options.version+('EXT'+job.split('EXT')[1] if 'EXT' in job else '')         
-        elif '2017': config.Data.outputDatasetTag = 'Run'+inputFiles.split('Run')[1].split('UL17')[0]+'UL17PFNano_jetObs_Skim_'+options.onlyUnc+options.version+('EXT'+job.split('EXT')[1] if 'EXT' in job else '')		   
-    else: config.Data.outputDatasetTag = 'Run'+inputFiles.split('Run')[1].split('AOD')[0]+'AOD_jetObservables_Skimmer_'+options.onlyUnc+options.version+('EXT'+job.split('EXT')[1] if 'EXT' in job else '')
+            if 'UL18v1' in config.Data.inputDataset: config.Data.outputDatasetTag = 'Run'+inputFiles.split('Run')[1].split('UL18v1')[0]+'UL18PFNano_jetObs_Skim_'+options.onlyUnc+options.selection+options.version+('EXT'+job.split('EXT')[1] if 'EXT' in job else '')		   
+            else: config.Data.outputDatasetTag = 'Run'+inputFiles.split('Run')[1].split('UL18')[0]+'UL18PFNano_jetObs_Skim_'+options.onlyUnc+options.selection+options.version+('EXT'+job.split('EXT')[1] if 'EXT' in job else '')         
+        elif '2017': config.Data.outputDatasetTag = 'Run'+inputFiles.split('Run')[1].split('UL17')[0]+'UL17PFNano_jetObs_Skim_'+options.onlyUnc+options.selection+options.version+('EXT'+job.split('EXT')[1] if 'EXT' in job else '')		   
+    else: config.Data.outputDatasetTag = 'Run'+inputFiles.split('Run')[1].split('AOD')[0]+'AOD_jetObservables_Skimmer_'+options.onlyUnc+options.selection+options.version+('EXT'+job.split('EXT')[1] if 'EXT' in job else '')
 
     print 'Submitting ' + config.General.requestName + ', dataset = ' + job
     print 'Configuration :'
@@ -130,7 +133,7 @@ def submitJobs( job, inputFiles, unitJobs ):
     submit(config)
     #try : submit(config)
     #except : print 'Not submitted.'
-    os.remove('runPostProc'+options.datasets+options.year+options.onlyUnc+'.sh')
+    os.remove('runPostProc'+options.datasets+options.year+options.onlyUnc+options.selection+'.sh')
 
 
 
@@ -167,7 +170,7 @@ if __name__ == '__main__':
     parser.add_option(
             "-s", "--selection",
             dest="selection", default="Wtop",
-            help=("Selection: dijet, Wtop"),
+            help=("Selection: dijet, WSel, topSel"),
             )
     parser.add_option(
             "-p", "--pythonFile",
@@ -192,13 +195,13 @@ if __name__ == '__main__':
             default='',
             help="Run only specific uncertainty variations"
             )
-
     (options, args) = parser.parse_args()
-
+    print (options.selection)
+    if options.selection.startswith(('WSel','topSel')): sel = 'Wtop'
     processingSamples = {}
     for sam in dictSamples:
         if sam.startswith( options.datasets ) | options.datasets.startswith('all'):
-            if checkDict( sam, dictSamples )['selection'] != options.selection: continue
+            if checkDict( sam, dictSamples )['selection'] != sel: continue
             if 'SingleMuon' in sam or sam.startswith(('JetHT', 'SingleMuon')):
                 for iera in checkDict( sam, dictSamples )[options.year]['nanoAOD']:
                     processingSamples[ sam+'Run'+options.year+iera ] = [ checkDict( sam, dictSamples )[options.year]['nanoAOD'][iera], 1 ]
