@@ -1,0 +1,1 @@
+./calculateXSectionAndFilterEfficiency.sh -f datasets_dijetSel_RunIISummer20UL16_preVFP.txt -d MINIAODSIM -c RunIISummer20UL16MiniAODAPVv2-106X| grep -B 14 -A 20 --colour 'After matching: total cross section =' > XS_UL16preVFP.txt &    

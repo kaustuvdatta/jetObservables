@@ -1,0 +1,73 @@
+Data is served from fnal.gov instead of original site T2_IT_Pisa
+%MSG
+10-Oct-2022 10:38:30 CEST  Successfully opened file root://xrootd-cms.infn.it//store/mc/RunIISummer20UL18MiniAODv2/QCD_HT100to200_TuneCP5_PSWeights_13TeV-madgraph-pythia8/MINIAODSIM/106X_upgrade2018_realistic_v16_L1v1-v1/270000/CB0B56A7-1BC7-CB4A-92AD-EB576AAC8FD4.root
+55994250.000000 416155.300000  21894.600000             1
+17420820.000000 137066.300000  21894.600000             0
+72534370.000000 355057.500000  21894.600000             2
+ 
+10-Oct-2022 10:38:41 CEST  Closed file root://xrootd-cms.infn.it//store/mc/RunIISummer20UL18MiniAODv2/QCD_HT100to200_TuneCP5_PSWeights_13TeV-madgraph-pythia8/MINIAODSIM/106X_upgrade2018_realistic_v16_L1v1-v1/270000/CB0B56A7-1BC7-CB4A-92AD-EB576AAC8FD4.root
+
+------------------------------------
+GenXsecAnalyzer:
+------------------------------------
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------- 
+Overall cross-section summary 
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Process		xsec_before [pb]		passed	nposw	nnegw	tried	nposw	nnegw 	xsec_match [pb]			accepted [%]	 event_eff [%]
+0		1.740e+07 +/- 4.489e+03		160299	160299	0	744907	744907	0	3.745e+06 +/- 8.343e+03		21.5 +/- 0.0	21.5 +/- 0.0
+1		5.625e+07 +/- 1.223e+04		360701	360701	0	2388934	2388934	0	8.494e+06 +/- 1.316e+04		15.1 +/- 0.0	15.1 +/- 0.0
+2		7.273e+07 +/- 1.104e+04		480063	480063	0	3072205	3072205	0	1.137e+07 +/- 1.517e+04		15.6 +/- 0.0	15.6 +/- 0.0
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------- 
+Total		1.464e+08 +/- 1.708e+04		1001063	1001063	0	6206046	6206046	0	2.361e+07 +/- 2.179e+04		16.1 +/- 0.0	16.1 +/- 0.0
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Before matching: total cross section = 1.464e+08 +- 1.708e+04 pb
+After matching: total cross section = 2.361e+07 +- 2.179e+04 pb
+Matching efficiency = 0.2 +/- 0.0   [TO BE USED IN MCM]
+Filter efficiency (taking into account weights)= (1.00106e+06) / (1.00106e+06) = 1.000e+00 +- 0.000e+00
+Filter efficiency (event-level)= (1.00106e+06) / (1.00106e+06) = 1.000e+00 +- 0.000e+00    [TO BE USED IN MCM]
+
+After filter: final cross section = 2.361e+07 +- 2.179e+04 pb
+After filter: final fraction of events with negative weights = 0.000e+00 +- 0.000e+00
+After filter: final equivalent lumi for 1M events (1/fb) = 4.235e-05 +- 5.762e-08
+
+=============================================
+
+MessageLogger Summary
+
+--
+Data is served from fnal.gov instead of original site T2_IT_Pisa
+%MSG
+10-Oct-2022 10:43:47 CEST  Successfully opened file root://xrootd-cms.infn.it//store/mc/RunIISummer20UL18MiniAODv2/QCD_HT200to300_TuneCP5_PSWeights_13TeV-madgraph-pythia8/MINIAODSIM/106X_upgrade2018_realistic_v16_L1v1-v1/270000/79157C73-2380-DB46-BEBD-A73DE6A36E6B.root
+4036236.000000  28743.080000   1650.597000             1
+ 926224.000000   9890.399000   1650.597000             0
+7986477.000000  34463.290000   1650.597000             2
+ 
+10-Oct-2022 10:43:52 CEST  Closed file root://xrootd-cms.infn.it//store/mc/RunIISummer20UL18MiniAODv2/QCD_HT200to300_TuneCP5_PSWeights_13TeV-madgraph-pythia8/MINIAODSIM/106X_upgrade2018_realistic_v16_L1v1-v1/270000/79157C73-2380-DB46-BEBD-A73DE6A36E6B.root
+
+------------------------------------
+GenXsecAnalyzer:
+------------------------------------
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------- 
+Overall cross-section summary 
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Process		xsec_before [pb]		passed	nposw	nnegw	tried	nposw	nnegw 	xsec_match [pb]			accepted [%]	 event_eff [%]
+0		9.358e+05 +/- 3.050e+02		63881	63881	0	610994	610994	0	9.784e+04 +/- 3.677e+02		10.5 +/- 0.0	10.5 +/- 0.0
+1		4.005e+06 +/- 9.461e+02		185120	185120	0	2595446	2595446	0	2.856e+05 +/- 6.433e+02		7.1 +/- 0.0	7.1 +/- 0.0
+2		7.956e+06 +/- 1.038e+03		751198	751198	0	5124950	5124950	0	1.166e+06 +/- 1.252e+03		14.7 +/- 0.0	14.7 +/- 0.0
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------- 
+Total		1.290e+07 +/- 1.437e+03		1000199	1000199	0	8331390	8331390	0	1.548e+06 +/- 1.462e+03		12.0 +/- 0.0	12.0 +/- 0.0
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Before matching: total cross section = 1.290e+07 +- 1.437e+03 pb
+After matching: total cross section = 1.548e+06 +- 1.462e+03 pb
+Matching efficiency = 0.1 +/- 0.0   [TO BE USED IN MCM]
+Filter efficiency (taking into account weights)= (1.0002e+06) / (1.0002e+06) = 1.000e+00 +- 0.000e+00
+Filter efficiency (event-level)= (1.0002e+06) / (1.0002e+06) = 1.000e+00 +- 0.000e+00    [TO BE USED IN MCM]
+
+After filter: final cross section = 1.548e+06 +- 1.462e+03 pb
+After filter: final fraction of events with negative weights = 0.000e+00 +- 0.000e+00
+After filter: final equivalent lumi for 1M events (1/fb) = 6.459e-04 +- 8.884e-07
+
+=============================================
+
+MessageLogger Summary
+
