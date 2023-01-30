@@ -1,5 +1,5 @@
 #!/bin/bash
-
+#Taken from https://gitlab.cern.ch/-/snippets/1954, based on discussion in https://cernbox.cern.ch/index.php/s/mptWEseLCFnSytA and https://indico.cern.ch/event/1105087/contributions/4649200/attachments/2362008/4034238/lhe_headers.pdf 
 cmssw_ver=CMSSW_10_6_14
 cmssw_base=$HOME
 cmssw_location=$cmssw_base/$cmssw_ver
@@ -29,11 +29,11 @@ fi
 cd $cmssw_src;
 eval $(scramv1 runtime -sh); # cmsenv
 
-if [ $(which voms-proxy-init 2>/dev/null | wc -l) = "0" ]; then
-  source /cvmfs/grid.cern.ch/umd-c7ui-latest/etc/profile.d/setup-c7-ui-example.sh;
-fi
+#if [ $(which voms-proxy-init 2>/dev/null | wc -l) = "0" ]; then
+#  source /cvmfs/grid.cern.ch/umd-c7ui-latest/etc/profile.d/setup-c7-ui-example.sh;
+#fi
 
-voms-proxy-init -voms cms --hours $proxy_open;
+#voms-proxy-init -voms cms --hours $proxy_open;
 
 rm -f lhe_printer.py;
 wget -q https://raw.githubusercontent.com/HEP-KBFI/tth-nanoAOD/master/scripts/lhe_printer.py;
