@@ -1,11 +1,14 @@
-#Changelog Oct '22: 
+# Changelog Oct '22: 
 # 1a) updated to correct PS/pdfWeight variation implementation, 
 # 1b) added in 2016 trigger turn ons calculated by Alejandro
 # 2) added better functionality for storing the nominal selection trees (to be updated for systematics, needs a bit more refactoring)
 # 3) udpated DeltaR's to use the y-phi metric when calculating separations from the massive AK8
 # 4) Setting ROOT histos to Sumw2 mode by default
 # 5) Next step, refactor the code and then only work with ROOT trees, and histos will only be made live during analysis and not on the crab post-processing side
-
+# Changelog Jan/Feb '23
+# Refactoring to produce custom trees complete, run with crab using the multicrab_nSubProducer_dijetSel.py in ../test/ which calls the jetObservablesnSubProducer_dijetSel.py which calls this skimmer module
+# run skimmer with onlyUnc='', onlyTrees=False and isMC=True/False (isMC=isSigMC=True)  to produce control histograms and nanoskims with nominal (+wt. variations for signal MC)
+# use onlyUnc='jer'/'jesCorr'/'jesUncorr', isSigMC=isMC=True, to run with systematics for jer, correlated/uncorrelated jes variations on signal MC samples
 
 
 import ROOT
@@ -77,7 +80,6 @@ class nSubProd(Module):
         self.pdfWeight = 1. # storing nominal pdfWeight, to see if it deviates from 1 
         #self.psWeight = 1.
         self.pdfWeightAll = np.ones((103,), dtype=np.float32)*1.
-        #Check, do we need to include scale uncertainties? (should be possible via LHEScaleWeight branch)
         self.pdfWeightUp = 1.
         self.puWeightUp = 1.
         self.isrWeightUp = 1.
@@ -190,12 +192,10 @@ class nSubProd(Module):
         # puWeights used only to change reco event weight (up/down) without application to gen weight, 
         # others applied to modify self.genweight [and thereby also the recoWeight(=self.genWeight*self.puWeights)] 
         # weights+up/down variations are saved for accepted events, to be applied in histogramming
-        #self.sysWeightList = ( '_pu', '_pdf', '_ps', '_isr', '_fsr', '_L1PreFiring' ) 
-        #self.sysrecoWeightList = ( '_pu','_L1PreFiring' )
-        
-        self.sysWeightList = ( '_pu', '_pdf', '_ps', '_isr', '_fsr' ) 
+          
+        self.sysWeightList = ( '_pu', '_pdf', '_isr', '_fsr' ) ## '_ps'
         self.sysrecoWeightList = ( '_pu' ) 
-        self.sysgenWeightList = ( '_pdf', '_ps', '_isr', '_fsr' ) 
+        self.sysgenWeightList = ( '_pdf', '_isr', '_fsr' ) #, '_ps'
 
     #############################################################################
     def beginJob(self, histFile, histDirName):
@@ -203,7 +203,6 @@ class nSubProd(Module):
 
         tauBins = 100
 
-        #if not self.onlyTrees:
         ### Booking histograms
         selList = [ '_'+x+'_dijetSel' for x in self.triggerTable  ] if not self.isMC else [ '_dijetSel' ]
         #selList = ([ '_'+x+'_dijetSel' for x in self.triggerTable  ] + [ '_'+x+'_weight_dijetSel' for x in self.triggerTable  ]) if not self.isMC else [ '_dijetSel' ]
@@ -431,10 +430,9 @@ class nSubProd(Module):
                         self.puWeightDown = event.puWeightDown
                     
                 else: 
-                    
+                    #could remove this else block, doesn't do anything (will remove when running final check)
                     self.totalRecoWeight = event.genWeight*event.puWeight#self.totalRecoWeight*self.puWeight
-                    #else:
-                    #    self.totalRecoWeight = 1.
+                    
             
             genJet = OrderedDict()
             recoJet = OrderedDict()
@@ -525,8 +523,8 @@ class nSubProd(Module):
                 self.out.fillBranch( 'eventCategory'+sys, self.eventCategory )
                 self.out.fillBranch( 'totalRecoWeight'+sys, self.totalRecoWeight if passRecoSel[sys] else 0.)
                 self.out.fillBranch( 'good_nPVs'+sys, getattr( event, 'PV_npvsGood') if passRecoSel[sys] else 0.)
-
-            if self.isMC: #and not sys.startswith(('_jes', '_jer')):
+            #if self.isMC: #and not sys.startswith(('_jes', '_jer')):
+            else:
                 self.out.fillBranch( 'eventCategory'+sys, self.eventCategory )
                 self.out.fillBranch( 'totalRecoWeight'+sys, self.totalRecoWeight if passRecoSel[sys] else 0.)
                 self.out.fillBranch( 'puWeightNom'+sys, self.puWeight if passRecoSel[sys] else 0.)
