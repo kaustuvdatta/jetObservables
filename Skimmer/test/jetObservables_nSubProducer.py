@@ -13,12 +13,12 @@ from PhysicsTools.NanoAODTools.postprocessing.framework.eventloop import Module
 #this takes care of converting the input files from CRAB
 from PhysicsTools.NanoAODTools.postprocessing.framework.crabhelper import inputFiles,runsAndLumis
 from PhysicsTools.NanoAODTools.postprocessing.modules.btv.btagSFProducer import btagSF2016, btagSF2017, btagSF2018, btagSF_UL2016, btagSF_UL2017, btagSF_UL2018
-from PhysicsTools.NanoAODTools.postprocessing.modules.common.puWeightProducer import puWeightProducer, puAutoWeight_UL2017, puAutoWeight_UL2018
+from PhysicsTools.NanoAODTools.postprocessing.modules.common.puWeightProducer import puWeightProducer, puAutoWeight_UL2016, puAutoWeight_UL2017, puAutoWeight_UL2018
 from PhysicsTools.NanoAODTools.postprocessing.modules.jme.jetmetHelperRun2 import *
 
 import argparse
 
-parser = argparse.ArgumentParser(description='Runs MEAnalysis')
+parser = argparse.ArgumentParser(description='Runs jet substructure measurement skimmer')
 parser.add_argument(
     '--sample',
     action="store",
@@ -59,7 +59,7 @@ parser.add_argument(
     '--year',
     action="store",
     help="year of data",
-    choices=["2017", "2018"],
+    choices=["2016_preVFP", "2016","2017", "2018"],
     default="2017",
     required=False
 )
@@ -67,7 +67,7 @@ parser.add_argument(
     '--selection',
     action="store",
     help="Event selection",
-    choices=["Wtop","WSel", "topSel","dijet"],
+    choices=["WSel", "topSel","dijet"],
     default="Wtop",
     required=False
 )
@@ -127,21 +127,40 @@ if not isMC: systSources=[]
 ### Lepton scale factors
 LeptonSF = {
 
+    '2016_preVFP' : {
+        'muon' : {
+            'Trigger' : [ "MuonSF_ULRunII.root", "UL16_preVFP_Trigger", False ],
+            'ID' : [ "MuonSF_ULRunII.root", "UL16_preVFP_ID", False ],
+            'ISO' : [ "MuonSF_ULRunII.root", "UL16_preVFP_ISO", False ],
+            'RecoEff' : [ "MuonSF_ULRunII.root", "UL16_preVFP_Reco", False ],
+        },
+
+    },
+
+    '2016' : {
+        'muon' : {
+            'Trigger' : [ "MuonSF_ULRunII.root", "UL16_postVFP_Trigger", False ],
+            'ID' : [ "MuonSF_ULRunII.root", "UL16_postVFP_ID", False ],
+            'ISO' : [ "MuonSF_ULRunII.root", "UL16_postVFP_ISO", False ],
+            'RecoEff' : [ "MuonSF_ULRunII.root", "UL16_postVFP_Reco", False ],
+        },
+    },
+
     '2017' : {
         'muon' : {
-            'Trigger' : [ "MuonSF_ULFinal.root", "UL17_Trigger", False ],
-            'ID' : [ "MuonSF_ULFinal.root", "UL17_ID", False ],
-            'ISO' : [ "MuonSF_ULFinal.root", "UL17_ISO", False ],
-            'RecoEff' : [ "MuonSF_ULFinal.root", "UL17_Reco", False ],
+            'Trigger' : [ "MuonSF_ULRunII.root", "UL17_Trigger", False ],
+            'ID' : [ "MuonSF_ULRunII.root", "UL17_ID", False ],
+            'ISO' : [ "MuonSF_ULRunII.root", "UL17_ISO", False ],
+            'RecoEff' : [ "MuonSF_ULRunII.root", "UL17_Reco", False ],
         },
 
     },
     '2018' : {
         'muon' : {
-            'Trigger' : [ "MuonSF_ULFinal.root", "UL18_Trigger", False ],
-            'ID' : [ "MuonSF_ULFinal.root", "UL18_ID", False ],
-            'ISO' : [ "MuonSF_ULFinal.root", "UL18_ISO", False ],
-            'RecoEff' : [ "MuonSF_ULFinal.root", "UL18_Reco", False ],
+            'Trigger' : [ "MuonSF_ULRunII.root", "UL18_Trigger", False ],
+            'ID' : [ "MuonSF_ULRunII.root", "UL18_ID", False ],
+            'ISO' : [ "MuonSF_ULRunII.root", "UL18_ISO", False ],
+            'RecoEff' : [ "MuonSF_ULRunII.root", "UL18_Reco", False ],
         },
 
     },
@@ -150,6 +169,8 @@ LeptonSF = {
 
 #### Modules to run
 jesUncert = 'Merged' if any('_jes' in iunc for iunc in systSources) else 'Total'
+print(jesUncert, systSources)
+
 if jesUncert.startswith('Merged'):
     if args.year=='2017': 
         systSources =   ['_jesAbsolute', '_jesBBEC1', '_jesEC2', '_jesAbsolute_2017', '_jesBBEC1_2017', '_jesEC2_2017', '_jesHF_2017', '_jesRelativeSample_2017', '_jesFlavorQCD', '_jesHF', '_jesRelativeBal']
@@ -161,6 +182,12 @@ if jesUncert.startswith('Merged'):
         if not args.onlyUnc=='_jesAll': 
             for s in systSources:
                 if s==args.onlyUnc: systSources = [s]
+    elif args.year.startswith('2016'):
+        systSources = ['_jesAbsolute', '_jesBBEC1', '_jesEC2', '_jesAbsolute_2016', '_jesBBEC1_2016', '_jesEC2_2016', '_jesHF_2016', '_jesRelativeSample_2016', '_jesFlavorQCD', '_jesHF', '_jesRelativeBal']
+        if not args.onlyUnc=='_jesAll': 
+            for s in systSources:
+                if s==args.onlyUnc: systSources = [s]        
+
 
 print(jesUncert, systSources)
 
@@ -178,23 +205,27 @@ if isMC:
             print "###Running with btag SF calc.###"
             modulesToRun.append( btagSF2018() )
     if args.year=='2017':
+        modulesToRun.append( puAutoWeight_UL2017() )
         if not args.selection.startswith('dijet'):
             print "###Running with btag SF calc.###"
-            modulesToRun.append( puAutoWeight_UL2017() )
             modulesToRun.append( btagSF2017() )
-        else:
-            modulesToRun.append( puWeightProducer( "auto", os.environ['CMSSW_BASE']+"/src/jetObservables/Skimmer/data/pileup/pileupForDijet_UL2017.root", "pu_mc", "pileup", verbose=False) )
-    if args.year=='2016':
+    if args.year.startswith('2016'):
         modulesToRun.append( puAutoWeight_2016() )
-        print "Running with btag SF calc."
-        if not args.selection.startswith('dijet'): modulesToRun.append( btagSF2016() )
+        if not args.selection.startswith('dijet'): 
+            print "Running with btag SF calc."
+            modulesToRun.append( btagSF2016() )
+    if args.year.startswith('2016_preVFP'):
+        modulesToRun.append( puAutoWeight_2016() )
+        if not args.selection.startswith('dijet'): 
+            print "Running with btag SF calc."
+            modulesToRun.append( btagSF2016() )
 
 # our module
 if args.selection.startswith('dijet'):
     from jetObservables.Skimmer.nSubProducer_dijetSel import nSubProd
     modulesToRun.append( nSubProd( sysSource=systSources, isMC=isMC, year=args.year, onlyUnc=args.onlyUnc, onlyTrees=args.onlyTrees ) )
 else:
-    from jetObservables.Skimmer.nSubProducer_WtopSel_Final import nSubProd 
+    from jetObservables.Skimmer.nSubProducer_WtopSel_Final import nSubProd #_invertedDeltaRWb, #_noDeltaRWb, #try all with >1 and >=1 btags.
     modulesToRun.append( nSubProd( sysSource=systSources, leptonSF=LeptonSF[args.year], isMC=isMC, topreweight=topweight, onlyUnc=args.onlyUnc, onlyTrees=args.onlyTrees, evtSelection=args.selection   )  )
     if topweight: print ("using top reweighting")
     else: print ("Not using top reweighting")
@@ -212,8 +243,8 @@ p1=PostProcessor(
     prefetch     = args.local,
     longTermCache= args.local,
     fwkJobReport = True,
-    haddFileName = "jetObservables_"+args.selection+args.onlyUnc+"_withOUTLeakage_nanoskim.root" if args.local else 'jetObservables_nanoskim.root',
-    histFileName = "jetObservables_"+args.selection+args.onlyUnc+"_withOUTLeakage_histograms.root" if args.local else 'jetObservables_histograms.root',
+    haddFileName = "jetObservables_"+args.selection+args.onlyUnc+"_newSel_GRT1medB_nanoskim.root" if args.local else 'jetObservables_nanoskim.root', #launched on crab with >=1 and >1 btags, and >=1btag on no window testSel  for just tops
+    histFileName = "jetObservables_"+args.selection+args.onlyUnc+"_newSel_GRT1medB_histograms.root" if args.local else 'jetObservables_histograms.root',
     histDirName  = 'jetObservables',
 )
 

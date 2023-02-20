@@ -369,6 +369,7 @@ class nSubProd(Module):
             self.out.branch('nRecoLepBtags_nom',  "I") 
             self.out.branch('recoSelectedEventNumber_nom', "L" )
             self.out.branch('good_nPVs_nom', "F" )
+            self.out.branch('FlagRecoLeptHemBjet_nom', "I")
             self.out.branch('selRecoHadHemDeltaR_nom', "F" ) # dR(lead AK8, lead b-tagged AK4 in had. hem.)
             
             tmplistAK8.append('selRecoJets_nom')
@@ -1448,7 +1449,7 @@ class nSubProd(Module):
         
         if len(genJetsAK8)!=0: 
             for ijets in genJetsAK8: 
-                ijets.rapidity = self.etaToRapidity(ijets)
+                ijets.rapidity = ijets.p4().Rapidity()
                 ijets.msoftdrop = self.getGenJetAK8softdropmass( AK8jet=ijets, event=event, PFCollection='GenCands', isGen=True)
         genAK8jets = [ x for x in genJetsAK8 if x.pt > self.minAK8JetPt and abs(x.rapidity) < self.maxJetAK8Rap]
         genAK8HT = sum( [ x.pt for x in genAK8jets ] )

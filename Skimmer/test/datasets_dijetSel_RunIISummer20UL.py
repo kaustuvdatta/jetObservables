@@ -4,8 +4,8 @@ import ROOT
 
 dictSamples = {
 
-    'JetHT' : 
-        {
+	'JetHT' : 
+		{
         'selection' : 'dijet',
         '2016_preVFP' :  {
             'miniAOD' : {
@@ -115,12 +115,12 @@ dictSamples = {
                 }
             },
         'color': ROOT.kWhite
-                
-        },
+    			
+    	},
 
     'QCD_HT100to200_TuneCP5_PSWeights_13TeV-madgraph-pythia8' : 
 
-        {
+    	{
         '2016_preVFP' :  {
             'miniAOD' : [ '/QCD_HT100to200_TuneCP5_PSWeights_13TeV-madgraph-pythia8/RunIISummer20UL16MiniAODAPVv2-106X_mcRun2_asymptotic_preVFP_v11-v1/MINIAODSIM' ],
             'nanoAOD' : [ '/QCD_HT100to200_TuneCP5_PSWeights_13TeV-madgraph-pythia8/kadatta-RunIISummer20UL16PFNanov2pt3APVv2-106X_mcRun2_asymptotic_preVFP_v11-v1-a11d409e36cbafe26c98db696a6b5c66/USER' ],
@@ -157,10 +157,10 @@ dictSamples = {
         'XS' : 2.364e+07,
         'label' : 'QCD MG5+Pythia8' ,
         'color': ROOT.kMagenta
-        },
+    	},
 
     'QCD_HT200to300_TuneCP5_PSWeights_13TeV-madgraph-pythia8' : 
-        {
+    	{
         '2016_preVFP' :  {
             'miniAOD' : [ '/QCD_HT200to300_TuneCP5_PSWeights_13TeV-madgraph-pythia8/RunIISummer20UL16MiniAODAPVv2-106X_mcRun2_asymptotic_preVFP_v11-v1/MINIAODSIM' ],
             'nanoAOD' : [ '/QCD_HT200to300_TuneCP5_PSWeights_13TeV-madgraph-pythia8/kadatta-RunIISummer20UL16PFNanov2pt3APVv2-106X_mcRun2_asymptotic_preVFP_v11-v1-a11d409e36cbafe26c98db696a6b5c66/USER' ],
@@ -197,10 +197,10 @@ dictSamples = {
         'XS' : 1.551e+06,
         'label' : 'QCD MG5+Pythia8' ,
         'color': ROOT.kMagenta
-        },
+    	},
 
     'QCD_HT300to500_TuneCP5_PSWeights_13TeV-madgraph-pythia8' : 
-        {
+    	{
         '2016_preVFP' :  {
             'miniAOD' : [ '/QCD_HT300to500_TuneCP5_PSWeights_13TeV-madgraph-pythia8/RunIISummer20UL16MiniAODAPVv2-106X_mcRun2_asymptotic_preVFP_v11-v1/MINIAODSIM' ],
             'nanoAOD' : [ '/QCD_HT300to500_TuneCP5_PSWeights_13TeV-madgraph-pythia8/kadatta-RunIISummer20UL16PFNanov2pt3APVv2-106X_mcRun2_asymptotic_preVFP_v11-v1-a11d409e36cbafe26c98db696a6b5c66/USER' ],
@@ -237,10 +237,10 @@ dictSamples = {
         'XS' : 3.239e+05,
         'label' : 'QCD MG5+Pythia8' ,
         'color': ROOT.kMagenta
-        },
+    	},
 
     'QCD_HT500to700_TuneCP5_PSWeights_13TeV-madgraph-pythia8' : 
-        {
+    	{
         '2016_preVFP' :  {
             'miniAOD' : [ '/QCD_HT500to700_TuneCP5_PSWeights_13TeV-madgraph-pythia8/RunIISummer20UL16MiniAODAPVv2-106X_mcRun2_asymptotic_preVFP_v11-v1/MINIAODSIM' ],
             'nanoAOD' : [ '/QCD_HT500to700_TuneCP5_PSWeights_13TeV-madgraph-pythia8/kadatta-RunIISummer20UL16PFNanov2pt3APVv2-106X_mcRun2_asymptotic_preVFP_v11-v1-a11d409e36cbafe26c98db696a6b5c66/USER' ],
@@ -277,10 +277,10 @@ dictSamples = {
         'XS' : 3.035e+04,
         'label' : 'QCD MG5+Pythia8' ,
         'color': ROOT.kMagenta
-        },
+    	},
 
     'QCD_HT700to1000_TuneCP5_PSWeights_13TeV-madgraph-pythia8' : 
-        {
+    	{
         '2016_preVFP' :  {
             'miniAOD' : [ '/QCD_HT700to1000_TuneCP5_PSWeights_13TeV-madgraph-pythia8/RunIISummer20UL16MiniAODAPVv2-106X_mcRun2_asymptotic_preVFP_v11-v1/MINIAODSIM' ],
             'nanoAOD' : [ '/QCD_HT700to1000_TuneCP5_PSWeights_13TeV-madgraph-pythia8/kadatta-RunIISummer20UL16PFNanov2pt3APVv2-106X_mcRun2_asymptotic_preVFP_v11-v1-a11d409e36cbafe26c98db696a6b5c66/USER' ],
@@ -297,7 +297,7 @@ dictSamples = {
             'nevents' : 0.,
             'nGenWeights' : 0.,
             },
-        '2017' :  {
+	    '2017' :  {
             'miniAOD' : [ '/QCD_HT700to1000_TuneCP5_PSWeights_13TeV-madgraph-pythia8/RunIISummer20UL17MiniAODv2-106X_mc2017_realistic_v9-v1/MINIAODSIM' ],
             'nanoAOD' : [ '/QCD_HT700to1000_TuneCP5_PSWeights_13TeV-madgraph-pythia8/kadatta-RunIISummer20UL17PFNanoV3-106X_mc2017_realistic_v9-v1-3a26c9a4394b9b50b8bf5dda6bb9a62c/USER' ],
             'skimmer' : [ '/QCD_HT700to1000_TuneCP5_PSWeights_13TeV-madgraph-pythia8/kadatta-RunIISummer20UL17PFNanoV3-106X_mc2017_realistic_v9-v1-3a26c9a4394b9b50b8bf5dda6bb9a62c/USER' ],
@@ -317,10 +317,10 @@ dictSamples = {
         'XS' : 6.430e+03,
         'label' : 'QCD MG5+Pythia8' ,
         'color': ROOT.kMagenta
-        },
+   		},
 
     'QCD_HT1000to1500_TuneCP5_PSWeights_13TeV-madgraph-pythia8' : 
-        {
+    	{
         '2016_preVFP' :  {
             'miniAOD' : [ '/QCD_HT1000to1500_TuneCP5_PSWeights_13TeV-madgraph-pythia8/RunIISummer20UL16MiniAODAPVv2-106X_mcRun2_asymptotic_preVFP_v11-v1/MINIAODSIM' ],
             'nanoAOD' : [ '/QCD_HT1000to1500_TuneCP5_PSWeights_13TeV-madgraph-pythia8/spigazzi-RunIISummer20UL16PFNanov2pt2APVv2-106X_mcRun2_asymptotic_preVFP_v11-v1-5b62f87422b4b3633317ac4b6822e17c/USER' ],
@@ -358,10 +358,10 @@ dictSamples = {
         'XS' : 1.121e+03,
         'label' : 'QCD MG5+Pythia8' ,
         'color': ROOT.kMagenta
-        },
+    	},
 
     'QCD_HT1500to2000_TuneCP5_PSWeights_13TeV-madgraph-pythia8' : 
-        {
+    	{
         '2016_preVFP' :  {
             'miniAOD' : [ '/QCD_HT1500to2000_TuneCP5_PSWeights_13TeV-madgraph-pythia8/RunIISummer20UL16MiniAODAPVv2-106X_mcRun2_asymptotic_preVFP_v11-v1/MINIAODSIM' ],
             'nanoAOD' : [ '/QCD_HT1500to2000_TuneCP5_PSWeights_13TeV-madgraph-pythia8/spigazzi-RunIISummer20UL16PFNanov2pt2APVv2-106X_mcRun2_asymptotic_preVFP_v11-v1-5b62f87422b4b3633317ac4b6822e17c/USER' ],
@@ -393,15 +393,15 @@ dictSamples = {
             'skimmerHisto' : 'jetObservables_histograms_QCDHT1500to2000_UL2018.root',
             'nevents' : 0.,
             'nGenWeights' : 0.,
-                  },
+    	          },
         'selection' : 'dijet',
         'XS' : 1.081e+02,
         'label' : 'QCD MG5+Pythia8' ,
         'color': ROOT.kMagenta
-        },
+    	},
 
     'QCD_HT2000toInf_TuneCP5_PSWeights_13TeV-madgraph-pythia8' : 
-        {
+    	{
         '2016_preVFP' :  {
             'miniAOD' : [ '/QCD_HT2000toInf_TuneCP5_PSWeights_13TeV-madgraph-pythia8/RunIISummer20UL16MiniAODAPVv2-106X_mcRun2_asymptotic_preVFP_v11-v1/MINIAODSIM' ],
             'nanoAOD' : [ '/QCD_HT2000toInf_TuneCP5_PSWeights_13TeV-madgraph-pythia8/spigazzi-RunIISummer20UL16PFNanov2pt2APVv2-106X_mcRun2_asymptotic_preVFP_v11-v1-5b62f87422b4b3633317ac4b6822e17c/USER' ],
@@ -438,10 +438,10 @@ dictSamples = {
         'XS' : 2.199e+01,
         'label' : 'QCD MG5+Pythia8' ,
         'color': ROOT.kMagenta
-        },
+    	},
 
     'QCD_Pt_170to300_TuneCP5_13TeV_pythia8' : 
-        {
+    	{
         '2016_preVFP' :  {
             'miniAOD' : [ '/QCD_Pt_170to300_TuneCP5_13TeV_pythia8/RunIISummer20UL16MiniAODAPVv2-106X_mcRun2_asymptotic_preVFP_v11-v1/MINIAODSIM' ],
             'nanoAOD' : [ '/QCD_Pt_170to300_TuneCP5_13TeV_pythia8/kadatta-RunIISummer20UL16PFNanov2pt3APVv2-106X_mcRun2_asymptotic_preVFP_v11-v1-a11d409e36cbafe26c98db696a6b5c66/USER' ],
@@ -478,10 +478,10 @@ dictSamples = {
         'XS' : 1.036e+05,
         'label' : 'QCD Pythia8',
         'color': ROOT.kBlue
-        },
+    	},
 
     'QCD_Pt_300to470_TuneCP5_13TeV_pythia8' : 
-        {
+    	{
         '2016_preVFP' :  {
             'miniAOD' : [ '/QCD_Pt_300to470_TuneCP5_13TeV_pythia8/RunIISummer20UL16MiniAODAPVv2-106X_mcRun2_asymptotic_preVFP_v11-v1/MINIAODSIM' ],
             'nanoAOD' : [ '/QCD_Pt_300to470_TuneCP5_13TeV_pythia8/spigazzi-RunIISummer20UL16PFNanov2pt2APVv2-106X_mcRun2_asymptotic_preVFP_v11-v1-5b62f87422b4b3633317ac4b6822e17c/USER' ],
@@ -519,10 +519,10 @@ dictSamples = {
         'XS' : 6.835e+03,
         'label' : 'QCD Pythia8',
         'color': ROOT.kBlue
-        },
+    	},
 
     'QCD_Pt_470to600_TuneCP5_13TeV_pythia8' : 
-        {
+    	{
         '2016_preVFP' :  {
             'miniAOD' : [ '/QCD_Pt_470to600_TuneCP5_13TeV_pythia8/RunIISummer20UL16MiniAODAPVv2-106X_mcRun2_asymptotic_preVFP_v11-v1/MINIAODSIM' ],
             'nanoAOD' : [ '/QCD_Pt_470to600_TuneCP5_13TeV_pythia8/spigazzi-RunIISummer20UL16PFNanov2pt2APVv2-106X_mcRun2_asymptotic_preVFP_v11-v1-5b62f87422b4b3633317ac4b6822e17c/USER' ],
@@ -559,10 +559,10 @@ dictSamples = {
         'XS' : 5.519e+02,
         'label' : 'QCD Pythia8',
         'color': ROOT.kBlue
-        },
+    	},
 
     'QCD_Pt_600to800_TuneCP5_13TeV_pythia8' : 
-        {
+    	{
         '2016_preVFP' :  {
             'miniAOD' : [ '/QCD_Pt_600to800_TuneCP5_13TeV_pythia8/RunIISummer20UL16MiniAODAPVv2-106X_mcRun2_asymptotic_preVFP_v11-v1/MINIAODSIM' ],
             'nanoAOD' : [ '/QCD_Pt_600to800_TuneCP5_13TeV_pythia8/spigazzi-RunIISummer20UL16PFNanov2pt2APVv2-106X_mcRun2_asymptotic_preVFP_v11-v1-5b62f87422b4b3633317ac4b6822e17c/USER' ],
@@ -599,10 +599,10 @@ dictSamples = {
         'XS' : 1.565e+02,
         'label' : 'QCD Pythia8',
         'color': ROOT.kBlue
-        },
+    	},
 
     'QCD_Pt_800to1000_TuneCP5_13TeV_pythia8' : 
-        {
+    	{
         '2016_preVFP' :  {
             'miniAOD' : [ '/QCD_Pt_800to1000_TuneCP5_13TeV_pythia8/RunIISummer20UL16MiniAODAPVv2-106X_mcRun2_asymptotic_preVFP_v11-v1/MINIAODSIM' ],
             'nanoAOD' : [ '/QCD_Pt_800to1000_TuneCP5_13TeV_pythia8/spigazzi-RunIISummer20UL16PFNanov2pt2APVv2-106X_mcRun2_asymptotic_preVFP_v11-v1-5b62f87422b4b3633317ac4b6822e17c/USER' ],
@@ -639,10 +639,10 @@ dictSamples = {
         'XS' : 2.624e+01,
         'label' : 'QCD Pythia8',
         'color': ROOT.kBlue
-        },
+    	},
 
     'QCD_Pt_1000to1400_TuneCP5_13TeV_pythia8' : 
-        {
+    	{
         '2016_preVFP' :  {
             'miniAOD' : [ '/QCD_Pt_1000to1400_TuneCP5_13TeV_pythia8/RunIISummer20UL16MiniAODAPVv2-106X_mcRun2_asymptotic_preVFP_v11-v1/MINIAODSIM' ],
             'nanoAOD' : [ '/QCD_Pt_1000to1400_TuneCP5_13TeV_pythia8/kadatta-RunIISummer20UL16PFNanov2pt3APVv2-106X_mcRun2_asymptotic_preVFP_v11-v1-a11d409e36cbafe26c98db696a6b5c66/USER' ],
@@ -679,10 +679,10 @@ dictSamples = {
         'XS' : 7.474e+00,
         'label' : 'QCD Pythia8',
         'color': ROOT.kBlue
-        },
+    	},
 
     'QCD_Pt_1400to1800_TuneCP5_13TeV_pythia8' : 
-        {
+    	{
         '2016_preVFP' :  {
             'miniAOD' : [ '/QCD_Pt_1400to1800_TuneCP5_13TeV_pythia8/RunIISummer20UL16MiniAODAPVv2-106X_mcRun2_asymptotic_preVFP_v11-v1/MINIAODSIM' ],
             'nanoAOD' : [ '/QCD_Pt_1400to1800_TuneCP5_13TeV_pythia8/spigazzi-RunIISummer20UL16PFNanov2pt2APVv2-106X_mcRun2_asymptotic_preVFP_v11-v1-5b62f87422b4b3633317ac4b6822e17c/USER' ],
@@ -719,10 +719,10 @@ dictSamples = {
         'XS' : 6.482e-01,
         'label' : 'QCD Pythia8',
         'color': ROOT.kBlue
-        },
+    	},
 
     'QCD_Pt_1800to2400_TuneCP5_13TeV_pythia8' : 
-        {
+    	{
         '2016_preVFP' :  {
             'miniAOD' : [ '/QCD_Pt_1800to2400_TuneCP5_13TeV_pythia8/RunIISummer20UL16MiniAODAPVv2-106X_mcRun2_asymptotic_preVFP_v11-v1/MINIAODSIM' ],
             'nanoAOD' : [ '/QCD_Pt_1800to2400_TuneCP5_13TeV_pythia8/kadatta-RunIISummer20UL16PFNanov2pt3APVv2-106X_mcRun2_asymptotic_preVFP_v11-v1-a11d409e36cbafe26c98db696a6b5c66/USER' ],
@@ -759,10 +759,10 @@ dictSamples = {
         'XS' : 8.745e-02,
         'label' : 'QCD Pythia8',
         'color': ROOT.kBlue
-        },
+    	},
 
     'QCD_Pt_2400to3200_TuneCP5_13TeV_pythia8' : 
-        {
+    	{
         '2016_preVFP' :  {
             'miniAOD' : [ '/QCD_Pt_2400to3200_TuneCP5_13TeV_pythia8/RunIISummer20UL16MiniAODAPVv2-106X_mcRun2_asymptotic_preVFP_v11-v1/MINIAODSIM' ],
             'nanoAOD' : [ '/QCD_Pt_2400to3200_TuneCP5_13TeV_pythia8/kadatta-RunIISummer20UL16PFNanov2pt3APVv2-106X_mcRun2_asymptotic_preVFP_v11-v1-a11d409e36cbafe26c98db696a6b5c66/USER' ],
@@ -799,10 +799,10 @@ dictSamples = {
         'XS' : 5.236e-03,
         'label' : 'QCD Pythia8',
         'color': ROOT.kBlue
-        },
+    	},
 
     'QCD_Pt_3200toInf_TuneCP5_13TeV_pythia8' : 
-        {
+    	{
         '2016_preVFP' :  {
             'miniAOD' : [ '/QCD_Pt_3200toInf_TuneCP5_13TeV_pythia8/RunIISummer20UL16MiniAODAPVv2-106X_mcRun2_asymptotic_preVFP_v11-v1/MINIAODSIM' ],
             'nanoAOD' : [ '/QCD_Pt_3200toInf_TuneCP5_13TeV_pythia8/spigazzi-RunIISummer20UL16PFNanov2pt2APVv2-106X_mcRun2_asymptotic_preVFP_v11-v1-5b62f87422b4b3633317ac4b6822e17c/USER' ],
@@ -839,12 +839,14 @@ dictSamples = {
         'XS' : 1.352e-04,
         'label' : 'QCD Pythia8',
         'color': ROOT.kBlue
-        },    
+    	},    
     
 
 }
 
 
-def checkDict( string, dictio ):
-    return next(v for k,v in dictio.items() if string.startswith(k))
+#def checkDict( string, dictio ):
+#    return next(v for k,v in dictio.items() if string.startswith(k))
 
+def checkDict( string, dictio ):
+    return next(dictio[k] for k in list(dictio.keys()) if k.startswith(string))

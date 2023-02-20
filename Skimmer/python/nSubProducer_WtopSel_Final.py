@@ -1,3 +1,6 @@
+#next check if b-tagging the hadronic hem b changes things compared to the below, particluarly for the top selection
+
+
 import ROOT
 import math, os, sys
 import numpy as np
@@ -43,8 +46,8 @@ class nSubProd(Module):
 
         ### Kinematics Cuts AK8Jets ###
         self.minAK8JetPt = 170  ### this is the basic minimum, not the final
-        self.maxJetAK8Eta = 2.4
-
+        self.maxJetAK8Eta = 1.5
+        self.maxJetAK8Rap = 1.7
         ### Cuts for selections
         self.minLeadAK8JetPtW = 200.
         self.minSDMassW = 65.#60.#   ### looser to pick low bins
@@ -59,10 +62,9 @@ class nSubProd(Module):
         ### Kinematics Cuts Jets ###
         self.minJetPt = 30.
         self.maxJetEta = 2.4
-        self.minBDisc = 0.3040  ### L: 0.0532, M: 0.3040, T: 0.7476, for DeepJet (ie, DeepFlavB)
+        self.minBDisc = 0.3040   ### L: 0.0532, M: 0.3040, T: 0.7476, for DeepJet (ie, DeepFlavB)
 
         ### Kinenatic Cuts Muons ###
-        self.minLooseMuonPt = 40.
         self.minTightMuonPt = 55.
         self.maxMuonEta = 2.4
         self.minMuonMETPt = 50.
@@ -79,8 +81,9 @@ class nSubProd(Module):
         self.btaggingWeight = 1.
         self.topreweight = topreweight 
         self.topweight = 1.
-        self.leptonWeight=1.
-        
+        self.leptonWeight = 1.
+        self.puWeight = 1.
+
         self.pdfWeightUp = 1.
         self.puWeightUp = 1.
         self.isrWeightUp = 1.
@@ -115,7 +118,7 @@ class nSubProd(Module):
         self.nSub0p5 = ROOT.NsubjettinessWrapper( 0.5, 0.8, 0, 0 ) #beta, cone size, measureDef 0=Normalize, axesDef 0=KT_axes
         self.nSub1 = ROOT.NsubjettinessWrapper( 1, 0.8, 0, 0 )
         self.nSub2 = ROOT.NsubjettinessWrapper( 2, 0.8, 0, 0 )
-        self.nSub1_OP_kT = ROOT.NsubjettinessWrapper( 1, 0.8, 0, 6) ##### needed for genjet tau21 or tau32 # NOW USING opm for the CMS comparisons
+        self.nSub1_WTA_kT = ROOT.NsubjettinessWrapper( 1, 0.8, 0, 6) ##### needed for genjet tau21 or tau32 # NOW USING opm for the CMS comparisons
 
         ### Softdrop quantities
         self.beta = 0.0
@@ -207,33 +210,54 @@ class nSubProd(Module):
         #### general selection
         for isel in [ '_noSelnoWeight', '_noSel' ] + selList:
             self.addObject( ROOT.TH1F('nPVs'+isel,   ';number of PVs',   100, 0, 100) )
-            self.addObject( ROOT.TH1F('nleps'+isel,   ';number of leptons',   20, 0, 20) )
+            self.addObject( ROOT.TH1F('nleps'+isel,   ';number of leptons',   40, 0, 20) )
             self.addP4Hists( 'muons', isel )
             self.addP4Hists( 'eles', isel )
-            self.addObject( ROOT.TH1F('nAK8jets'+isel,   ';number of AK8 jets',   20, 0, 20) )
+            self.addObject( ROOT.TH1F('nAK8jets'+isel,   ';number of AK8 jets',   40, 0, 20) )
             self.addP4Hists( 'AK8jets', isel )
-            self.addObject( ROOT.TH1F('nAK4jets'+isel,   ';number of AK4 jets',   20, 0, 20) )
+            #self.addObject( ROOT.TH1F('AK8jets_rap'+isel,   ';rapidity of AK8 jets',   100, -2., 2.) )
+            self.addObject( ROOT.TH1F('nAK4jets'+isel,   ';number of AK4 jets',   40, 0, 20) )
+            self.addObject( ROOT.TH1F('nAK4bjets'+isel,   ';number of AK4 jets',   40, 0, 20) )
+            self.addObject( ROOT.TH1F('nAK4bhadjets'+isel,   ';number of AK4 jets',   40, 0, 20) )
+            self.addObject( ROOT.TH1F('nAK4blepjets'+isel,   ';number of AK4 jets',   40, 0, 20) )
             self.addP4Hists( 'AK4jets', isel )
+            self.addP4Hists( 'AK4btaggedjets', isel )
             self.addObject( ROOT.TH1F('METPt'+isel,   ';MET (GeV)',   200, 0, 2000) )
+            self.addObject( ROOT.TH1F('leptonicWMT'+isel,   ';leptonic W m_T(GeV)',   400, 0, 4000) )
+            self.addObject( ROOT.TH1F('Mtt'+isel,   '; m_{t#bar{t}}(GeV)',   400, 0, 4000) )
+            self.addP4Hists( 'leptonicW', isel)#,   ';Leptonic W p_T (GeV)',   200, 0, 2000) )
+            self.addP4Hists( 'leptonicTop', isel)#,   ';Leptonic  p_T (GeV)',   200, 0, 2000) )
+            self.addP4Hists( 'lepHemB', isel)#,   ';Leptonic  p_T (GeV)',   200, 0, 2000) )
+            self.addP4Hists( 'hadHemB', isel)#,   ';Leptonic  p_T (GeV)',   200, 0, 2000) )
             self.addObject( ROOT.TH1F('HT'+isel,   ';HT (GeV)',   200, 0, 2000) )
-            #self.addObject( ROOT.TH1F('recoPtAsym'+isel,   '; pt Asymmetry', 100, 0, 1.) )
-            #self.addObject( ROOT.TH1F('recoDeltaPhi'+isel,   '; #Delta #Phi(j,j)', 100, 0, 5) )
+            #self.addObject( ROOT.TH1F('pTrel'+isel,   '; p_{T,rel}', 50, 0, 200.) )
+            #self.addObject( ROOT.TH1F('mindR'+isel,   '; #Delta R(j,#mu)', 50, 0, 5) )
             
             self.addObject( ROOT.TH1F('leadAK8JetMatched'+isel, ';AK8 reco jet SD mass matched'+isel+' [GeV]', 500, 0, 500) )
 
         if self.isMC:
             for isel in [ '_noSel' ] + selList :
-                self.addObject( ROOT.TH1F('ngenleps'+isel,   ';number of gen leptons',   20, 0, 20) )
+                self.addObject( ROOT.TH1F('ngenleps'+isel,   ';number of gen leptons',   40, 0, 20) )
                 self.addP4Hists( 'genmuons', isel )
                 self.addP4Hists( 'geneles', isel )
                 self.addObject( ROOT.TH1F('ngenAK8jets'+isel,   ';number of AK8 genjets',   20, 0, 20) )
                 self.addP4Hists( 'AK8genjets', isel )
                 self.addObject( ROOT.TH1F('ngenAK4jets'+isel,   ';number of AK4 genjets',   20, 0, 20) )
+                self.addObject( ROOT.TH1F('ngenAK4bjets'+isel,   ';number of AK4 genjets',   20, 0, 20) )
+                self.addObject( ROOT.TH1F('ngenAK4bhadjets'+isel,   ';number of AK4 genjets',   20, 0, 20) )
+                self.addObject( ROOT.TH1F('ngenAK4blepjets'+isel,   ';number of AK4 genjets',   20, 0, 20) )
                 self.addP4Hists( 'AK4genjets', isel )
+                self.addP4Hists( 'AK4btaggedgenjets', isel )
                 self.addObject( ROOT.TH1F('genMETPt'+isel,   ';gen MET (GeV)',   200, 0, 2000) )
                 self.addObject( ROOT.TH1F('genHT'+isel,   ';genHT (GeV)',   200, 0, 2000) )
-                #self.addObject( ROOT.TH1F('genPtAsym'+isel,   '; pt Asymmetry', 100, 0, 1.) )
-                #self.addObject( ROOT.TH1F('genDeltaPhi'+isel,   '; #Delta #Phi(j,j)', 100, 0, 5) )
+                self.addObject( ROOT.TH1F('genleptonicWMT'+isel,   ';gen leptonic W m_T(GeV)',   400, 0, 4000) )
+                self.addObject( ROOT.TH1F('genMtt'+isel,   '; gen m_{t#bar{t}}(GeV)',   400, 0, 4000) )
+                self.addP4Hists( 'genleptonicW', isel)#,   '; gen leptonic W p_T (GeV)',   200, 0, 2000) )
+                self.addP4Hists( 'genleptonicTop', isel)#,   '; gen leptonic W p_T (GeV)',   200, 0, 2000) )
+                self.addP4Hists( 'genlepHemB', isel)#,   '; gen leptonic W p_T (GeV)',   200, 0, 2000) )
+                self.addP4Hists( 'genhadHemB', isel)#,   '; gen leptonic W p_T (GeV)',   200, 0, 2000) )
+                #self.addObject( ROOT.TH1F('genpTrel'+isel,   '; p_{T,rel}', 50, 0, 200.) )
+                #self.addObject( ROOT.TH1F('genmindR'+isel,   '; #Delta R(j,#mu)', 50, 0, 5) )
                 
 
         for isel in selList:
@@ -247,25 +271,28 @@ class nSubProd(Module):
 
                         for sysUnc in self.sysSource:
                             self.addP4Hists( itype+iJ, sysUnc+isel )
+
                             binning = np.array([(i/2000) for i in np.arange(0*2000, 2.*2000)])
                             self.addObject( ROOT.TH1F(itype+iJ+'_tau21'+sysUnc+isel, ';AK8 '+itype+' jet #tau_{21}', len(binning)-1, binning) )
                             self.addObject( ROOT.TH1F(itype+iJ+'_tau32'+sysUnc+isel, ';AK8 '+itype+' jet #tau_{32}', len(binning)-1, binning) )
 
+
                             if itype.startswith('truereco') and self.isMC:
                                 self.addObject( ROOT.TH2F('resp'+iJ+'_tau21'+sysUnc+isel, ';AK8 accepgen jet #tau_{21};AK8 truereco jet #tau_{21}', len(binning)-1, binning, len(binning)-1, binning) )
                                 self.addObject( ROOT.TH2F('resp'+iJ+'_tau32'+sysUnc+isel, ';AK8 accepgen jet #tau_{32};AK8 truereco jet #tau_{32}', len(binning)-1, binning, len(binning)-1, binning) )
+                                
                                 if sysUnc.endswith('nom'):
-                                    self.addObject( ROOT.TH1F('resol'+iJ+'_pt'+isel, ';AK8 reco/gen jet pt', 100, 0, 2) )
-                                    self.addObject( ROOT.TH1F('resol'+iJ+'_sdmass'+isel, ';AK8 reco/gen jet SD mass', 100, 0, 2) )
-                                    self.addObject( ROOT.TH1F('resol'+iJ+'_tau21'+isel, ';AK8 reco/gen jet #tau_{21}', 100, 0, 2) )
-                                    self.addObject( ROOT.TH1F('resol'+iJ+'_tau32'+isel, ';AK8 reco/gen jet #tau_{32}', 100, 0, 2) )
+                                    self.addObject( ROOT.TH1F('resol'+iJ+'_pt'+isel, ';AK8 reco/gen jet pt', 500, 0, 5) )
+                                    self.addObject( ROOT.TH1F('resol'+iJ+'_sdmass'+isel, ';AK8 reco/gen jet SD mass', 500, 0, 5) )
+                                    self.addObject( ROOT.TH1F('resol'+iJ+'_tau21'+isel, ';AK8 reco/gen jet #tau_{21}', 500, 0, 5) )
+                                    self.addObject( ROOT.TH1F('resol'+iJ+'_tau32'+isel, ';AK8 reco/gen jet #tau_{32}', 500, 0, 5) )
 
                             for x, y in self.nSub_labels.items():
                                 binning = np.array([(i/1000) for i in np.arange(y[0]*1000, y[1]*1000)])
                                 self.addObject( ROOT.TH1F(itype+iJ+x+sysUnc+isel, ';AK8 '+itype+' jet #tau', len(binning)-1, binning ) )
                                 if itype.startswith('reco') and self.isMC:
                                     self.addObject( ROOT.TH2F('resp'+iJ+x+sysUnc+isel, ';AK8 gen jet '+x+';AK8 reco jet '+x, len(binning)-1, binning, len(binning)-1, binning ) )
-                                    if sysUnc.endswith('nom'): self.addObject( ROOT.TH1F('resol'+iJ+x+isel, ';AK8 reco/gen jet '+x, 200, 0, 2) )
+                                    if sysUnc.endswith('nom'): self.addObject( ROOT.TH1F('resol'+iJ+x+isel, ';AK8 reco/gen jet '+x, 500, 0, 5) )
 
                     else:
                         #print ('Creating gen objects:', itype, iJ, isel)
@@ -282,9 +309,10 @@ class nSubProd(Module):
     #############################################################################
     def addP4Hists(self, s, t ):
         self.addObject( ROOT.TH1F(s+'_pt'+t,  s+';p_{T} (GeV)',   200, 0, 2000) )
-        self.addObject( ROOT.TH1F(s+'_eta'+t, s+';#eta', 100, -4.0, 4.0 ) )
-        self.addObject( ROOT.TH1F(s+'_phi'+t, s+';#phi', 100, -3.14259, 3.14159) )
-        self.addObject( ROOT.TH1F(s+'_mass'+t,s+';mass (GeV)', 100, 0, 1000) )
+        self.addObject( ROOT.TH1F(s+'_eta'+t, s+';#eta', 100, -2.5, 2.5 ) )
+        self.addObject( ROOT.TH1F(s+'_rap'+t, s+';y', 100, -2.5, 2.5 ) )
+        self.addObject( ROOT.TH1F(s+'_phi'+t, s+';#phi', 100, -3.14259, 3.14259) )
+        self.addObject( ROOT.TH1F(s+'_mass'+t,s+';mass (GeV)', 100, 0, 500) )
 
 
     #############################################################################
@@ -349,7 +377,9 @@ class nSubProd(Module):
             self.out.branch(iJ+'_pt',  'F', lenVar='n'+iJ)
             self.out.branch(iJ+'_eta',  'F', lenVar='n'+iJ)
             self.out.branch(iJ+'_phi',  'F', lenVar='n'+iJ)
+            self.out.branch(iJ+'_rap',  'F', lenVar='n'+iJ)
             self.out.branch(iJ+'_mass',  'F', lenVar='n'+iJ)
+            self.out.branch(iJ+'_msoftdrop',  'F', lenVar='n'+iJ)
             self.out.branch(iJ+'_Tau21',  'F', lenVar='n'+iJ)
             self.out.branch(iJ+'_Tau32',  'F', lenVar='n'+iJ)
             #self.out.branch(iJ+'_SD_Tau21',  'F', lenVar='n'+iJ)
@@ -450,9 +480,31 @@ class nSubProd(Module):
         #print (SFTrigger * SFID * SFISO), SFTrigger , SFID , SFISO, leptonP4.pt, leptonP4.eta
         return [SFTrigger , SFID , SFISO, SFRecoEff]
 
+     #############################################################################
+
+
+
+    def mindRandIndex(self, recoAK4Coll, muon):
+        mindR=999
+        c=0
+        for x in recoAK4Coll:
+            if x.p4().DeltaR(muon)<mindR:
+                mindR=x.p4().DeltaR(muon)
+                c+=1
+        return mindR, c-1
+
+    def getpTRel(self, recoAK4, muon): 
+
+        p_mu = muon.Vect()#ROOT.TVector3(muon.Px(),muon.Py(),muon.Pz())
+        p_j = recoAK4.Vect()#ROOT.TVector3(recoAK4.Px(),recoAK4.Py(),recoAK4.Pz())
+        
+        pTrel2 = p_mu.Dot(p_mu) - (p_mu.Dot(p_j)/p_j.Mag())**2.
+        
+        if pTrel2<0.: return 0.
+        else: return ROOT.TMath.Sqrt(pTrel2)
 
     #############################################################################
-    
+    '''
     def getBTagWeight(self, nBTagged=0, jet_SFs=[0]): # Now redundant to allow for more than just two btagged jets per event
         bTagWeight=0
         if len(jet_SFs)>2 or nBTagged>2:
@@ -478,7 +530,7 @@ class nSubProd(Module):
 
         return bTagWeight
 
-
+    '''
     #############################################################################
     def analyze(self, event):
         '''process event, return True (go to next module) or False (fail, go to next event)'''
@@ -489,7 +541,7 @@ class nSubProd(Module):
             iGenSel=None
         else:
             passGenSel, iGenSel, selGenMuons, selGenElectrons, selGenAK4bjets, selGenJets, selGenMET = self.genSelection(event)
-        passRecoSel, iRecoSel, selRecoMuons, selRecoElectrons, selRecoAK4bjets, selRecoJets, selRecoMET = self.recoSelection( event )
+        passRecoSel, iRecoSel, selRecoMuons, selRecoElectrons, selRecoAK4bjets, selRecoJets, selRecoMET, selbtagweights = self.recoSelection( event )
         #print (event.genWeight)
         if not self.isMC and not passRecoSel['_nom']: return False
         
@@ -552,7 +604,10 @@ class nSubProd(Module):
                     self.totalGenWeight = event.genWeight
                     WEIGHT = self.totalRecoWeight # the up down modulation of btagweights is controlled in the WtopSel function
             else: 
-                WEIGHT =  self.totalRecoWeight
+
+                WEIGHT =  self.totalRecoWeight*(selbtagweights[sys]/selbtagweights['_nom']) 
+                # the funky btag weight ratio is to handle small variations if same # of ak4b's aren't tagged in case of AK8 jet sys variations
+                # this is because of how we decide to id the hadronic hemispheric AK4s via a deltaR selection vs the leading AK8 leading to this dependency
                 if self.isMC: self.totalGenWeight = event.genWeight
 
             
@@ -616,6 +671,7 @@ class nSubProd(Module):
 
                     getattr( self, 'reco'+iRJ+'_eta'+sys+iRecoSel[sys] ).Fill( getattr(ireco['jet'], 'eta'), WEIGHT )
                     getattr( self, 'reco'+iRJ+'_phi'+sys+iRecoSel[sys] ).Fill( getattr(ireco['jet'], 'phi'), WEIGHT )
+                    getattr( self, 'reco'+iRJ+'_rap'+sys+iRecoSel[sys] ).Fill( getattr(ireco['jet'], 'rapidity'), WEIGHT )
                     getattr( self, 'reco'+iRJ+'_tau21'+sys+iRecoSel[sys] ).Fill( ireco['tau21'], WEIGHT )
                     getattr( self, 'reco'+iRJ+'_tau32'+sys+iRecoSel[sys] ).Fill( ireco['tau32'], WEIGHT )
                     
@@ -654,6 +710,7 @@ class nSubProd(Module):
                                 getattr( self, 'fakereco'+iRJ+'_mass'+sys+iRecoSel[sys] ).Fill( getattr(ireco['jet'], 'msoftdrop'+sys ), WEIGHT )
                             getattr( self, 'fakereco'+iRJ+'_eta'+sys+iRecoSel[sys] ).Fill( getattr(ireco['jet'], 'eta'), WEIGHT )
                             getattr( self, 'fakereco'+iRJ+'_phi'+sys+iRecoSel[sys] ).Fill( getattr(ireco['jet'], 'phi'), WEIGHT )
+                            getattr( self, 'fakereco'+iRJ+'_rap'+sys+iRecoSel[sys] ).Fill( getattr(ireco['jet'], 'rapidity'), WEIGHT )
                             getattr( self, 'fakereco'+iRJ+'_tau21'+sys+iRecoSel[sys] ).Fill( ireco['tau21'], WEIGHT )
                             getattr( self, 'fakereco'+iRJ+'_tau32'+sys+iRecoSel[sys] ).Fill( ireco['tau32'], WEIGHT )
                                 
@@ -678,6 +735,7 @@ class nSubProd(Module):
                             getattr( self, 'gen'+iGJ+'_eta'+sys+iGenSel ).Fill( igen['jet'].eta, self.totalGenWeight )
                             getattr( self, 'gen'+iGJ+'_mass'+sys+iGenSel ).Fill( igen['jet'].mass, self.totalGenWeight )
                             getattr( self, 'gen'+iGJ+'_phi'+sys+iGenSel ).Fill( igen['jet'].phi, self.totalGenWeight )
+                            getattr( self, 'gen'+iGJ+'_rap'+sys+iGenSel ).Fill( igen['jet'].rapidity, self.totalGenWeight )
                             getattr( self, 'gen'+iGJ+'_tau21'+sys+iGenSel ).Fill( igen['tau21'], self.totalGenWeight )
                             getattr( self, 'gen'+iGJ+'_tau32'+sys+iGenSel ).Fill( igen['tau32'], self.totalGenWeight )
                           
@@ -718,6 +776,7 @@ class nSubProd(Module):
                                 getattr( self, 'accepgen'+iGJ+'_eta'+sys+iGenSel ).Fill( igen['jet'].eta, self.totalGenWeight )
                                 getattr( self, 'accepgen'+iGJ+'_mass'+sys+iGenSel ).Fill( igen['jet'].mass, self.totalGenWeight )
                                 getattr( self, 'accepgen'+iGJ+'_phi'+sys+iGenSel ).Fill( igen['jet'].phi, self.totalGenWeight )
+                                getattr( self, 'accepgen'+iGJ+'_rap'+sys+iGenSel ).Fill( igen['jet'].rapidity, self.totalGenWeight )
                                 getattr( self, 'accepgen'+iGJ+'_tau21'+sys+iGenSel ).Fill( igen['tau21'], self.totalGenWeight )
                                 getattr( self, 'accepgen'+iGJ+'_tau32'+sys+iGenSel ).Fill( igen['tau32'], self.totalGenWeight )
                                 
@@ -740,6 +799,8 @@ class nSubProd(Module):
                                 
                                 getattr( self, 'truereco'+iRJ+'_eta'+sys+iGenSel ).Fill( getattr(ireco['jet'], 'eta'), WEIGHT )
                                 getattr( self, 'truereco'+iRJ+'_phi'+sys+iGenSel ).Fill( getattr(ireco['jet'], 'phi'), WEIGHT )
+                                getattr( self, 'truereco'+iRJ+'_rap'+sys+iGenSel ).Fill( getattr(ireco['jet'], 'rapidity'), WEIGHT )
+
                                 getattr( self, 'truereco'+iRJ+'_tau21'+sys+iGenSel ).Fill( ireco['tau21'], WEIGHT )
                                 getattr( self, 'truereco'+iRJ+'_tau32'+sys+iGenSel ).Fill( ireco['tau32'], WEIGHT )
                                 
@@ -751,10 +812,10 @@ class nSubProd(Module):
 
                                 #### Filling response matrices and resolution plots
                                 if sys.endswith('nom'):
-                                    getattr( self, 'resol'+iGJ+'_pt'+iGenSel ).Fill( getattr(ireco['jet'], 'pt')/getattr(igen['jet'], 'pt'), WEIGHT )
-                                    getattr( self, 'resol'+iGJ+'_sdmass'+iGenSel ).Fill( getattr(ireco['jet'], 'msoftdrop')/getattr(igen['jet'], 'mass'), WEIGHT )
-                                    getattr( self, 'resol'+iGJ+'_tau21'+iGenSel ).Fill( ireco['tau21']/igen['tau21'], WEIGHT )
-                                    getattr( self, 'resol'+iGJ+'_tau32'+iGenSel ).Fill( ireco['tau32']/igen['tau32'], WEIGHT )
+                                    getattr( self, 'resol'+iGJ+'_pt'+iGenSel ).Fill( getattr(ireco['jet'], 'pt')/getattr(igen['jet'], 'pt'))#, WEIGHT )
+                                    getattr( self, 'resol'+iGJ+'_sdmass'+iGenSel ).Fill( getattr(ireco['jet'], 'msoftdrop')/getattr(igen['jet'], 'mass'))#, WEIGHT )
+                                    getattr( self, 'resol'+iGJ+'_tau21'+iGenSel ).Fill( ireco['tau21']/igen['tau21'])#, WEIGHT )
+                                    getattr( self, 'resol'+iGJ+'_tau32'+iGenSel ).Fill( ireco['tau32']/igen['tau32'])#, WEIGHT )
                                     
                                 getattr( self, 'resp'+iGJ+'_tau21'+sys+iGenSel ).Fill( igen['tau21'], ireco['tau21'], WEIGHT )
                                 getattr( self, 'resp'+iGJ+'_tau32'+sys+iGenSel ).Fill( igen['tau32'], ireco['tau32'], WEIGHT )
@@ -771,9 +832,9 @@ class nSubProd(Module):
                                     getattr( self, 'resp'+iGJ+'_tau_2_'+str(tauN)+sys+iGenSel ).Fill( igen['2'+str(tauN)], -1., self.totalGenWeight - WEIGHT  )
                                     
                                     if sys.endswith('nom'):
-                                        getattr( self, 'resol'+iGJ+'_tau_0p5_'+str(tauN)+iGenSel ).Fill( ( ireco['0p5'+str(tauN)]/igen['0p5'+str(tauN)] if igen['0p5'+str(tauN)]!=0 else -999 ), WEIGHT )
-                                        getattr( self, 'resol'+iGJ+'_tau_1_'+str(tauN)+iGenSel ).Fill( ( ireco['1'+str(tauN)]/igen['1'+str(tauN)] if igen['1'+str(tauN)]!=0 else -999 ), WEIGHT )
-                                        getattr( self, 'resol'+iGJ+'_tau_2_'+str(tauN)+iGenSel ).Fill( ( ireco['2'+str(tauN)]/igen['2'+str(tauN)] if igen['2'+str(tauN)]!=0 else -999 ), WEIGHT )
+                                        getattr( self, 'resol'+iGJ+'_tau_0p5_'+str(tauN)+iGenSel ).Fill( ( ireco['0p5'+str(tauN)]/igen['0p5'+str(tauN)] if igen['0p5'+str(tauN)]!=0 else -999 ))#, WEIGHT )
+                                        getattr( self, 'resol'+iGJ+'_tau_1_'+str(tauN)+iGenSel ).Fill( ( ireco['1'+str(tauN)]/igen['1'+str(tauN)] if igen['1'+str(tauN)]!=0 else -999 ))#, WEIGHT )
+                                        getattr( self, 'resol'+iGJ+'_tau_2_'+str(tauN)+iGenSel ).Fill( ( ireco['2'+str(tauN)]/igen['2'+str(tauN)] if igen['2'+str(tauN)]!=0 else -999 ))#, WEIGHT )
                             self.fillBranches( 'accepGenJets'+sys, genJet )    
                             self.fillBranches( 'trueRecoJets'+sys, recoJet )    
 
@@ -798,6 +859,7 @@ class nSubProd(Module):
                                 getattr( self, 'missgen'+iGJ+'_eta'+sys+iGenSel ).Fill( igen['jet'].eta, self.totalGenWeight )
                                 getattr( self, 'missgen'+iGJ+'_mass'+sys+iGenSel ).Fill( igen['jet'].mass, self.totalGenWeight )
                                 getattr( self, 'missgen'+iGJ+'_phi'+sys+iGenSel ).Fill( igen['jet'].phi, self.totalGenWeight )
+                                getattr( self, 'missgen'+iGJ+'_rap'+sys+iGenSel ).Fill( igen['jet'].rapidity, self.totalGenWeight )
 
                                 getattr( self, 'missgen'+iGJ+'_tau21'+sys+iGenSel ).Fill( igen['tau21'], self.totalGenWeight )
                                 getattr( self, 'missgen'+iGJ+'_tau32'+sys+iGenSel ).Fill( igen['tau32'], self.totalGenWeight )
@@ -841,6 +903,7 @@ class nSubProd(Module):
                                     getattr( self, 'fakereco'+iRJ+'_mass'+sys+iRecoSel[sys] ).Fill( getattr(ireco['jet'], 'msoftdrop'+sys ), WEIGHT )
                                 getattr( self, 'fakereco'+iRJ+'_eta'+sys+iRecoSel[sys] ).Fill( getattr(ireco['jet'], 'eta'), WEIGHT )
                                 getattr( self, 'fakereco'+iRJ+'_phi'+sys+iRecoSel[sys] ).Fill( getattr(ireco['jet'], 'phi'), WEIGHT )
+                                getattr( self, 'fakereco'+iRJ+'_rap'+sys+iRecoSel[sys] ).Fill( getattr(ireco['jet'], 'rapidity'), WEIGHT )
                                 getattr( self, 'fakereco'+iRJ+'_tau21'+sys+iRecoSel[sys] ).Fill( ireco['tau21'], WEIGHT )
                                 getattr( self, 'fakereco'+iRJ+'_tau32'+sys+iRecoSel[sys] ).Fill( ireco['tau32'], WEIGHT )
                                     
@@ -865,6 +928,7 @@ class nSubProd(Module):
                         getattr( self, 'gen'+iGJ+'_eta'+sys+iGenSel ).Fill( igen['jet'].eta, self.totalGenWeight )
                         getattr( self, 'gen'+iGJ+'_mass'+sys+iGenSel ).Fill( igen['jet'].mass, self.totalGenWeight )
                         getattr( self, 'gen'+iGJ+'_phi'+sys+iGenSel ).Fill( igen['jet'].phi, self.totalGenWeight )
+                        getattr( self, 'gen'+iGJ+'_rap'+sys+iGenSel ).Fill( igen['jet'].rapidity, self.totalGenWeight )
                         getattr( self, 'gen'+iGJ+'_tau21'+sys+iGenSel ).Fill( igen['tau21'], self.totalGenWeight )
                         getattr( self, 'gen'+iGJ+'_tau32'+sys+iGenSel ).Fill( igen['tau32'], self.totalGenWeight )
                             
@@ -872,6 +936,7 @@ class nSubProd(Module):
                         getattr( self, 'missgen'+iGJ+'_eta'+sys+iGenSel ).Fill( igen['jet'].eta, self.totalGenWeight )
                         getattr( self, 'missgen'+iGJ+'_mass'+sys+iGenSel ).Fill( igen['jet'].mass, self.totalGenWeight )
                         getattr( self, 'missgen'+iGJ+'_phi'+sys+iGenSel ).Fill( igen['jet'].phi, self.totalGenWeight )
+                        getattr( self, 'missgen'+iGJ+'_rap'+sys+iGenSel ).Fill( igen['jet'].rapidity, self.totalGenWeight )
                         getattr( self, 'missgen'+iGJ+'_tau21'+sys+iGenSel ).Fill( igen['tau21'], self.totalGenWeight )
                         getattr( self, 'missgen'+iGJ+'_tau32'+sys+iGenSel ).Fill( igen['tau32'], self.totalGenWeight )
                         
@@ -929,6 +994,11 @@ class nSubProd(Module):
         '''Analyzing reco information'''
 
         AK8jets = list(Collection(event, 'FatJet' ))
+
+        for ijets in AK8jets: ijets.rapidity = self.etaToRapidity(ijets)
+
+
+
         electrons = list(Collection(event, 'Electron'))
         muons = list(Collection(event, 'Muon'))
         jets = list(Collection(event, 'Jet'))
@@ -936,215 +1006,393 @@ class nSubProd(Module):
         if self.isMC: genParticles = Collection(event, 'GenPart')
         
         
-        #### Lepton selection
+        ########### Lepton selection ###############
         recoElectrons  = [x for x in electrons if x.pt > self.minLooseElectronPt and x.cutBased >= 2 and ((self.range1ElectronEta[0]<abs(x.eta)<self.range1ElectronEta[1]) or (self.range2ElectronEta[0]<abs(x.eta)<self.range2ElectronEta[1]))] #only loose selection for e
-        recoMuons = [x for x in muons if x.pt > self.minTightMuonPt and abs(x.p4().Eta()) < self.maxMuonEta and x.tightId and abs(x.dxy)<0.2 and abs(x.dz)<0.5 and x.isGlobal and x.highPtId and x.tkRelIso<0.3] #and x.highPurity  applying tight selection on muons already here since we only veto for loose muons and loose electrons in event
-
+        recoMuons = [x for x in muons if x.pt > self.minTightMuonPt and abs(x.p4().Eta()) < self.maxMuonEta and x.tightId and abs(x.dxy)<0.2 and abs(x.dz)<0.5 and x.isGlobal and x.highPtId and x.tkRelIso<0.3] #  applying tight selection on muons already here since we only veto for loose muons and loose electrons in event
 
         recoElectrons.sort(key=lambda x:x.pt, reverse=True)
         recoMuons.sort(key=lambda x:x.pt,reverse=True)
 
         nleptons = len(recoMuons)+len(recoElectrons)
 
-        ##################################################
+        ############################################
 
-        #### MET (not sure if needed)
+        ################### MET  #######################
         MET = ROOT.TLorentzVector()
-        MET.SetPtEtaPhiE(met.pt, 0., met.phi, met.sumEt)
-        ##################################################
+        MET.SetPtEtaPhiM(met.pt, 0., met.phi, 0.)#met.sumEt)
+        ################################################
 
-        #### Basic AK4 b-jet cand. selection
-        recoAK4bjets = [ x for x in jets if x.pt > self.minJetPt and abs(x.p4().Eta()) < self.maxJetEta and x.btagDeepFlavB > self.minBDisc and (x.jetId >= 2)]
-        recoAK4bjets.sort(key=lambda x:x.pt,reverse=True)
-        
-                
-        ##################################################
+
+        ############ Basic AK4 selection ###############
+        recoAK4jets = [ x for x in jets if x.pt > self.minJetPt and abs(x.p4().Eta()) < self.maxJetEta and (x.jetId >= 2)]# and x.btagDeepFlavB > self.minBDisc]
+        recoAK4jets.sort(key=lambda x:x.pt,reverse=True)
+        ################################################
 
         recoAK8jets = {}
+        btagweights = {}
         passSel = {}
         iSel = {}
         flagTopWt=False
+        recoAK4bjets = []
+        recoAK4_lepTop_jets = []
+        recoAK4_hadrTop_jets = [] 
+        recottbarp4 = []
+        recoleptW = []
+        recoleptonicTop = []
         for sys in self.sysSource:
+             
             if sys.startswith(self.sysWeightList): sys = '_nom'
-            #### Basic AK8 jet selection
-            recoAK8jets[sys] = [ x for x in AK8jets if getattr( x, 'pt'+sys ) > self.minAK8JetPt and abs(x.eta) < self.maxJetAK8Eta and (x.jetId >= 2) ]
+
+            ################### Basic AK8 jet selection ############################
+            recoAK8jets[sys] = [ x for x in AK8jets if getattr( x, 'pt'+sys ) > self.minAK8JetPt and abs(x.rapidity) < self.maxJetAK8Rap and (x.jetId >= 2) ]
             recoAK8jets[sys].sort(key=lambda x:getattr( x, 'pt'+sys ), reverse=True)
             AK8HT = sum( [ getattr( x, 'pt'+sys ) for x in recoAK8jets[sys] ] )
-            ##################################################
+            ###################################################################
 
-            ##### Applying selection
+           
+            ########################## Selections on jets ############################## 
+            if len(recoMuons)!=0: 
+
+                # isolate leptonic hemisphere AK4's via deltaR(mu,AK4jet), require a medium b-tag on AK4's in this hemisphere
+                recoAK4_lepTop_jets = [x for x in recoAK4jets if (x.p4().DeltaR(recoMuons[0].p4())<1.6 and x.p4().DeltaR( recoMuons[0].p4() )>0.4)]# and x.btagDeepFlavB > self.minBDisc] 
+                recoAK4_lepTop_jets.sort(key=lambda x:x.pt,reverse=True) 
+                #######################################################
+
+                
+                # leptonic W definition
+                recoleptW = [MET+recoMuons[0].p4()]
+
+                #######################################################
+
+                # leptonic top definition
+                if len(recoAK4_lepTop_jets)!=0: 
+                    #leptonic top reco'd using leading leptonic hemisphere AK4, and leptonically decaying W 
+                    recoleptonicTop = [x+recoAK4_lepTop_jets[0].p4() for x in recoleptW] 
+
+
+                    # Ensure separation of the AK8s from the leptonic hemisphere by deltaPhi(mu,AK8) and deltaR(AK8,lept hem AK4)
+                    recoAK8jets[sys] = [ x for x in recoAK8jets[sys] if abs(recoMuons[0].p4().DeltaPhi(x.p4()))>2. and recoAK4_lepTop_jets[0].p4().DeltaR(x.p4())>1.6]
+                    recoAK8jets[sys].sort(key=lambda x:getattr( x, 'pt'+sys ), reverse=True)
+                    ####################################################### (consider putting the below in this above if to check)
+
+
+                    # Isolate hadronic hemisphere AK4s via deltaR(leading AK8, AK4jet) 
+                    # change angular selection  based on whether we're looking for W's or tops to make the next steps more efficient
+                    # require at least a medium b-tagged jet to ensure we're catching the t->W(->qq~)b rather than a light quark from the W->qq~
+
+                    #removing deltaR(W,b) for check with and without this cut
+                    if len(recoAK8jets[sys])>0 and self.evtSelection.startswith('WSel'): 
+                        recoAK4_hadrTop_jets = [x for x in recoAK4jets if x.p4().DeltaR(recoAK8jets[sys][0].p4())>0.8 and x.p4().DeltaR(recoAK8jets[sys][0].p4())<1.6]# and x.btagDeepFlavB > self.minBDisc] #
+                        recoAK4_hadrTop_jets.sort(key=lambda x:x.pt,reverse=True)
+                    elif len(recoAK8jets[sys])>0 and self.evtSelection.startswith('topSel'):  
+                        recoAK4_hadrTop_jets = [x for x in recoAK4jets if x.p4().DeltaR(recoAK8jets[sys][0].p4())<0.8]# and x.btagDeepFlavB > self.minBDisc] 
+                        recoAK4_hadrTop_jets.sort(key=lambda x:x.pt,reverse=True)
+                    #######################################################
+
+                    #Not a cut, just so we can plot m_tt when we can reconstruct a ttbar pair
+                    if len(recoAK4_hadrTop_jets)!=0: #len(recoAK4_lepTop_jets)!=0 and 
+
+                        
+                        if self.evtSelection.startswith('WSel'): 
+                            # Considering the leading b-tagged AK4 in the hadronic hemisphere, and outside the W->qq jet
+                            # to reconstruct the hadronically decaying top
+                            recottbarp4 = [(x+(recoAK4_hadrTop_jets[0].p4()+recoAK8jets[sys][0].p4())) for x in recoleptonicTop]
+                        
+                        elif self.evtSelection.startswith('topSel'): 
+                            # Here, the hadronically decaying top is reconstructed in it's entirety as an AK8 jet
+                            # the leading b-tagged hadronic hemisphere AK4 is required to be within DeltaR(AK8,AK4)<0.8 already above
+                            recottbarp4 = [(x+recoAK8jets[sys][0].p4()) for x in recoleptonicTop]
+                        
+                    recoAK4bjets = recoAK4_lepTop_jets+recoAK4_hadrTop_jets#[x for x in [recoAK4_lepTop_jets[0],recoAK4_hadrTop_jets[0]] if x.btagDeepFlavB > self.minBDisc]
+                    recoAK4bjets = [x for x in recoAK4bjets if x.btagDeepFlavB > self.minBDisc]
+                    recoAK4bjets.sort(key=lambda x:x.pt,reverse=True)
+                    #######################################################
+
+
+            ############################################################################
+
+
+
+            ################################################### Applying selection #########################################################
             
             passSel[sys], iSel[sys] = self.WtopSelection( False, event, recoMuons, recoElectrons, recoAK4bjets, recoAK8jets[sys], MET, sys)
-            if iSel[sys]:
-                if iSel[sys].startswith('_top') and passSel[sys]: flagTopWt=True
-            #############################
-        
-        #### Weight #########
+            
+            ################################################################################################################################
+            
+            # Since number of b-tagged jets may vary based on the systematics that modify the FatJet pt, calculate them dynamically here in the loop
+            #### Calculate btagging weights on the fly for MC reco
+            if self.isMC:  
+                
+                if self.onlyUnc.startswith('_btagWeightUp'): bTagSFs = [x.btagSF_deepjet_M_up for x in recoAK4bjets]
+                elif self.onlyUnc.startswith('_btagWeightDown'): bTagSFs = [x.btagSF_deepjet_M_down for x in recoAK4bjets]
+                else: bTagSFs = [x.btagSF_deepjet_M for x in recoAK4bjets]
+                w=1.
+                for i in bTagSFs:
+                    w *= i  
+                self.btaggingWeight = w 
+                btagweights[sys] = w
+            ########################################################
+           
+
+
+        ######################### Weights ############################
         weight=1.
         
         #### b-tagging Weights #####
-        if self.isMC: weight = weight*self.btaggingWeight
-
-        #### ################# #####
+        #if self.isMC: weight = weight#self.btaggingWeight 
+        ##################################################
         
 
-        #### Lepton Weights #####
+        #### Lepton Weights ####
         if self.isMC:
             if len(recoMuons)>0: leptonWeights = self.leptonSF( "muon", recoMuons[0] )
             else: leptonWeights = [0, 0, 0, 0]
         else: leptonWeights = [1, 1, 1, 1.]
         self.leptonWeight = np.prod(leptonWeights)
-        #self.out.fillBranch("leptonWeight", np.prod(self.leptonWeight) )  ### dummy for nanoAOD Tools
-        #### ############## #####
-
-
-        #if self.isMC and  passSel[sys] and iSel[sys].startswith('_top'):  
-        #    print ("We have a top", sys, self.topreweight)
+        ##################################################
 
         if self.isMC:
-
-            if self.topreweight and flagTopWt:
-
             
-                #### Top pT reweighting #####
-                #itempSel = {}
-                tops=[]
-                antiTops=[]
-                
-                tops =  [x for x in genParticles if x.pdgId==6 and self.hasFlags(x, "isLastCopy")]
-                tops.sort(key=lambda x:getattr( x, 'pt' ), reverse=True)
-                antiTops =  [x for x in genParticles if x.pdgId==-6 and self.hasFlags(x, "isLastCopy")]
-                antiTops.sort(key=lambda x:getattr( x, 'pt' ), reverse=True)
-
-                if (len(tops)>0 and len(antiTops)>0):
-        
-                    if tops[0].pt<500.: topSF = math.exp(0.0615 - 0.0005 * tops[0].pt) 
-                    else: topSF = math.exp(0.0615 - 0.0005 * 500.) 
-                    
-                    if antiTops[0].pt<500.: antitopSF = math.exp(0.0615 - 0.0005 * antiTops[0].pt)
-                    else: antitopSF = math.exp(0.0615 - 0.0005 * 500.)
-
-                    self.topweight = math.sqrt(topSF*antitopSF)
-                    #print ("top reweighting going on", iSel, self.topweight, tops[0].pt, topSF, antiTops[0].pt, antitopSF)
-
-                else: 
-                    self.topweight = 1.#????math.sqrt(topSF*antitopSF) #switching off top reweighting since it doesn't make sense in our pT range
-
-            else:
-                self.topweight = 1.
-                #self.out.fillBranch("top_pTreweight_SF", self.topreweight)
-
-
-            #### Applying ALL remaining object-related weights ####
-            weight = event.puWeight * event.genWeight * self.leptonWeight * self.topweight * weight # last term includes btag weight updated in WtopSel function
-            
-
             self.puWeight = event.puWeight
-            #if  not self.onlyUnc:
-            #    getattr( self, 'PUweight' ).Fill( event.puWeight )
-            #getattr( self, 'Lepweight' ).Fill( self.leptonWeight )
-            #getattr( self, 'Topweight' ).Fill( self.topweight )
-            #getattr( self, 'Btagweight' ).Fill( self.btaggingWeight )
+            #### Applying ALL remaining object-related weights ####
+            weight = event.puWeight * event.genWeight * self.leptonWeight * self.topweight * btagweights['_nom'] # last term includes btag weight updated in WtopSel function            
         
         else:
             weight = 1
 
         self.totalRecoWeight = weight
-        #if  passSel['_nom']: print ( self.totalRecoWeight,  event.puWeight, event.genWeight, self.leptonWeight, self.topweight, self.btaggingWeight )
+        
+        ##############################################################
 
-        #### ############################################# ####
-
+        # filling test histos
         if not self.onlyUnc:
 
             #### Checking no selection without weights
             getattr( self, 'nPVs_noSelnoWeight' ).Fill( getattr( event, 'PV_npvsGood') )
+            
             getattr( self, 'nleps_noSelnoWeight' ).Fill( nleptons )
+            
             for imuon in recoMuons:
                 getattr( self, 'muons_pt_noSelnoWeight' ).Fill( imuon.pt )
                 getattr( self, 'muons_eta_noSelnoWeight' ).Fill( imuon.eta )
                 getattr( self, 'muons_phi_noSelnoWeight' ).Fill( imuon.phi )
+
             for iele in recoElectrons:
                 getattr( self, 'eles_pt_noSelnoWeight' ).Fill( iele.pt )
                 getattr( self, 'eles_eta_noSelnoWeight' ).Fill( iele.eta )
                 getattr( self, 'eles_phi_noSelnoWeight' ).Fill( iele.phi )
+
             getattr( self, 'nAK8jets_noSelnoWeight' ).Fill( len(recoAK8jets['_nom']) )
             getattr( self, 'HT_noSelnoWeight' ).Fill( AK8HT )
+
             for ijet in recoAK8jets['_nom']:
                 getattr( self, 'AK8jets_pt_noSelnoWeight' ).Fill( ijet.pt )
                 getattr( self, 'AK8jets_eta_noSelnoWeight' ).Fill( ijet.eta )
+                getattr( self, 'AK8jets_rap_noSelnoWeight' ).Fill( ijet.rapidity )
                 getattr( self, 'AK8jets_phi_noSelnoWeight' ).Fill( ijet.phi )
-                getattr( self, 'AK8jets_mass_noSelnoWeight' ).Fill( ijet.msoftdrop_nom )
-            getattr( self, 'nAK4jets_noSelnoWeight' ).Fill( len(recoAK4bjets) )
-            for ijet in recoAK4bjets:
+                getattr( self, 'AK8jets_mass_noSelnoWeight' ).Fill( ijet.msoftdrop_nom if self.evtSelection.startswith('W') else ijet.msoftdrop_nom/ijet.msoftdrop_corr_PUPPI )
+            
+            getattr( self, 'nAK4jets_noSelnoWeight' ).Fill( len(recoAK4jets) )
+            getattr( self, 'nAK4bjets_noSelnoWeight' ).Fill( len(recoAK4bjets) )
+            getattr( self, 'nAK4bhadjets_noSelnoWeight' ).Fill( len(recoAK4_hadrTop_jets) )
+            getattr( self, 'nAK4blepjets_noSelnoWeight' ).Fill( len(recoAK4_lepTop_jets) )
+
+            for ijet in recoAK4jets:
                 getattr( self, 'AK4jets_pt_noSelnoWeight' ).Fill( ijet.pt )
                 getattr( self, 'AK4jets_eta_noSelnoWeight' ).Fill( ijet.eta )
                 getattr( self, 'AK4jets_phi_noSelnoWeight' ).Fill( ijet.phi )
+
+            for ijet in recoAK4bjets:
+                getattr( self, 'AK4btaggedjets_pt_noSelnoWeight' ).Fill( ijet.pt )
+                getattr( self, 'AK4btaggedjets_eta_noSelnoWeight' ).Fill( ijet.eta )
+                getattr( self, 'AK4btaggedjets_phi_noSelnoWeight' ).Fill( ijet.phi )
+
             getattr( self, 'METPt_noSelnoWeight' ).Fill( MET.Pt() )
+            for lW in recoleptW:
+                getattr( self, 'leptonicW_pt_noSelnoWeight' ).Fill( lW.Pt() )
+                getattr( self, 'leptonicW_eta_noSelnoWeight' ).Fill( lW.Eta() )
+                getattr( self, 'leptonicW_phi_noSelnoWeight' ).Fill( lW.Phi() )
+                getattr( self, 'leptonicW_mass_noSelnoWeight' ).Fill( lW.M() )
+                getattr( self, 'leptonicWMT_noSelnoWeight').Fill( lW.Mt() )
+
+            for ttbar in recottbarp4:
+                getattr( self, 'Mtt_noSelnoWeight').Fill( ttbar.M())
+
+            for lT in recoleptonicTop:
+                getattr( self, 'leptonicTop_pt_noSelnoWeight' ).Fill( lT.Pt() )
+                getattr( self, 'leptonicTop_eta_noSelnoWeight' ).Fill( lT.Eta() )
+                getattr( self, 'leptonicTop_phi_noSelnoWeight' ).Fill( lT.Phi() )
+                getattr( self, 'leptonicTop_mass_noSelnoWeight' ).Fill( lT.M() )
+
+            for ijet in recoAK4_lepTop_jets:
+                getattr( self, 'lepHemB_pt_noSelnoWeight' ).Fill( ijet.pt )
+                getattr( self, 'lepHemB_eta_noSelnoWeight' ).Fill( ijet.eta )
+                getattr( self, 'lepHemB_phi_noSelnoWeight' ).Fill( ijet.phi )
+                getattr( self, 'lepHemB_mass_noSelnoWeight' ).Fill( ijet.mass )
+            for ijet in recoAK4_hadrTop_jets:
+                getattr( self, 'hadHemB_pt_noSelnoWeight' ).Fill( ijet.pt )
+                getattr( self, 'hadHemB_eta_noSelnoWeight' ).Fill( ijet.eta )
+                getattr( self, 'hadHemB_phi_noSelnoWeight' ).Fill( ijet.phi )
+                getattr( self, 'hadHemB_mass_noSelnoWeight' ).Fill( ijet.mass )
 
             #### Checking no selection with weights
-            #reweight = self.totalRecoWeight 
             getattr( self, 'nPVs_noSel' ).Fill( getattr( event, 'PV_npvsGood'), weight )
-            getattr( self, 'nleps_noSel' ).Fill( nleptons, weight )
+            
+            getattr( self, 'nleps_noSel' ).Fill( nleptons , weight)
+            
             for imuon in recoMuons:
-                getattr( self, 'muons_pt_noSel' ).Fill( imuon.pt, weight )
-                getattr( self, 'muons_eta_noSel' ).Fill( imuon.eta, weight )
-                getattr( self, 'muons_phi_noSel' ).Fill( imuon.phi, weight )
+                getattr( self, 'muons_pt_noSel' ).Fill( imuon.pt , weight)
+                getattr( self, 'muons_eta_noSel' ).Fill( imuon.eta , weight)
+                getattr( self, 'muons_phi_noSel' ).Fill( imuon.phi , weight)
+
             for iele in recoElectrons:
-                getattr( self, 'eles_pt_noSel' ).Fill( iele.pt, weight )
-                getattr( self, 'eles_eta_noSel' ).Fill( iele.eta, weight )
-                getattr( self, 'eles_phi_noSel' ).Fill( iele.phi, weight )
-            getattr( self, 'nAK8jets_noSel' ).Fill( len(recoAK8jets), weight )
-            getattr( self, 'HT_noSel' ).Fill( AK8HT, weight )
+                getattr( self, 'eles_pt_noSel' ).Fill( iele.pt , weight)
+                getattr( self, 'eles_eta_noSel' ).Fill( iele.eta , weight)
+                getattr( self, 'eles_phi_noSel' ).Fill( iele.phi , weight)
+
+            getattr( self, 'nAK8jets_noSel' ).Fill( len(recoAK8jets['_nom']) , weight)
+            getattr( self, 'HT_noSel' ).Fill( AK8HT , weight)
+
             for ijet in recoAK8jets['_nom']:
-                getattr( self, 'AK8jets_pt_noSel' ).Fill( ijet.pt, weight )
-                getattr( self, 'AK8jets_eta_noSel' ).Fill( ijet.eta, weight )
-                getattr( self, 'AK8jets_phi_noSel' ).Fill( ijet.phi, weight )
-                getattr( self, 'AK8jets_mass_noSel' ).Fill( ijet.msoftdrop_nom, weight )
-            getattr( self, 'nAK4jets_noSel' ).Fill( len(recoAK4bjets), weight )
+                getattr( self, 'AK8jets_pt_noSel' ).Fill( ijet.pt , weight)
+                getattr( self, 'AK8jets_eta_noSel' ).Fill( ijet.eta , weight)
+                getattr( self, 'AK8jets_rap_noSel' ).Fill( ijet.rapidity , weight)
+                getattr( self, 'AK8jets_phi_noSel' ).Fill( ijet.phi , weight)
+                getattr( self, 'AK8jets_mass_noSel' ).Fill( ijet.msoftdrop_nom if self.evtSelection.startswith('W') else ijet.msoftdrop_nom/ijet.msoftdrop_corr_PUPPI , weight)
+            
+            getattr( self, 'nAK4jets_noSelnoWeight' ).Fill( len(recoAK4jets) , weight )
+            getattr( self, 'nAK4bjets_noSelnoWeight' ).Fill( len(recoAK4bjets)  , weight)
+            getattr( self, 'nAK4bhadjets_noSelnoWeight' ).Fill( len(recoAK4_hadrTop_jets) , weight )
+            getattr( self, 'nAK4blepjets_noSelnoWeight' ).Fill( len(recoAK4_lepTop_jets) , weight )
+
+            for ijet in recoAK4jets:
+                getattr( self, 'AK4jets_pt_noSel' ).Fill( ijet.pt , weight)
+                getattr( self, 'AK4jets_eta_noSel' ).Fill( ijet.eta , weight)
+                getattr( self, 'AK4jets_phi_noSel' ).Fill( ijet.phi , weight)
+                
             for ijet in recoAK4bjets:
-                getattr( self, 'AK4jets_pt_noSel' ).Fill( ijet.pt, weight )
-                getattr( self, 'AK4jets_eta_noSel' ).Fill( ijet.eta, weight )
-                getattr( self, 'AK4jets_phi_noSel' ).Fill( ijet.phi, weight )
-            getattr( self, 'METPt_noSel' ).Fill( MET.Pt(), weight )
+                getattr( self, 'AK4btaggedjets_pt_noSel' ).Fill( ijet.pt , weight)
+                getattr( self, 'AK4btaggedjets_eta_noSel' ).Fill( ijet.eta , weight)
+                getattr( self, 'AK4btaggedjets_phi_noSel' ).Fill( ijet.phi , weight)
+
+            getattr( self, 'METPt_noSel' ).Fill( MET.Pt() , weight)
             
-            reweight = self.totalRecoWeight 
+            for lW in recoleptW:
+                getattr( self, 'leptonicW_pt_noSel' ).Fill( lW.Pt(), weight )
+                getattr( self, 'leptonicW_eta_noSel' ).Fill( lW.Eta() , weight)
+                getattr( self, 'leptonicW_phi_noSel' ).Fill( lW.Phi() , weight)
+                getattr( self, 'leptonicW_mass_noSel' ).Fill( lW.M() , weight)
+                getattr( self, 'leptonicWMT_noSel').Fill( lW.Mt() , weight)
             
-            #### Creating Nsub basis, filling histos and creating branches IF passSel
-            if ('_nom' in iSel.keys()) and passSel['_nom'] and iSel['_nom']:
+            for ttbar in recottbarp4:
+                getattr( self, 'Mtt_noSel').Fill( ttbar.M() , weight)
+
+            for lT in recoleptonicTop:
+                getattr( self, 'leptonicTop_pt_noSel' ).Fill( lT.Pt() , weight)
+                getattr( self, 'leptonicTop_eta_noSel' ).Fill( lT.Eta() , weight)
+                getattr( self, 'leptonicTop_phi_noSel' ).Fill( lT.Phi() , weight)
+                getattr( self, 'leptonicTop_mass_noSel' ).Fill( lT.M() , weight)
+
             
-                #### Basic reco histos
-                getattr( self, 'nPVs'+iSel['_nom'] ).Fill( getattr( event, 'PV_npvsGood'), reweight )
-                getattr( self, 'nleps'+iSel['_nom'] ).Fill( len(recoMuons)+len(recoElectrons), reweight )
-                for imuon in recoMuons:
-                    getattr( self, 'muons_pt'+iSel['_nom'] ).Fill( imuon.pt, reweight )
-                    getattr( self, 'muons_eta'+iSel['_nom'] ).Fill( imuon.eta, reweight )
-                    getattr( self, 'muons_phi'+iSel['_nom'] ).Fill( imuon.phi, reweight )
-                for iele in recoElectrons:
-                    getattr( self, 'eles_pt'+iSel['_nom'] ).Fill( iele.pt, reweight )
-                    getattr( self, 'eles_eta'+iSel['_nom'] ).Fill( iele.eta, reweight )
-                    getattr( self, 'eles_phi'+iSel['_nom'] ).Fill( iele.phi, reweight )
-                getattr( self, 'nAK8jets'+iSel['_nom'] ).Fill( len(recoAK8jets['_nom']), reweight )
-                getattr( self, 'HT'+iSel['_nom'] ).Fill( AK8HT, reweight )
-                for ijet in recoAK8jets['_nom']:
-                    getattr( self, 'AK8jets_pt'+iSel['_nom'] ).Fill( ijet.pt, reweight )
-                    getattr( self, 'AK8jets_eta'+iSel['_nom'] ).Fill( ijet.eta, reweight )
-                    getattr( self, 'AK8jets_phi'+iSel['_nom'] ).Fill( ijet.phi, reweight )
-                    getattr( self, 'AK8jets_mass'+iSel['_nom'] ).Fill( ijet.msoftdrop_nom, reweight )
-                getattr( self, 'nAK4jets'+iSel['_nom'] ).Fill( len(recoAK4bjets), reweight )
-                for ijet in recoAK4bjets:
-                    getattr( self, 'AK4jets_pt'+iSel['_nom'] ).Fill( ijet.pt, reweight )
-                    getattr( self, 'AK4jets_eta'+iSel['_nom'] ).Fill( ijet.eta, reweight )
-                    getattr( self, 'AK4jets_phi'+iSel['_nom'] ).Fill( ijet.phi, reweight )
-                getattr( self, 'METPt'+iSel['_nom'] ).Fill( getattr(event,'MET_pt'), reweight )
             
 
-        return passSel, iSel, recoMuons, recoElectrons, recoAK4bjets, recoAK8jets, MET
+            for ijet in recoAK4_lepTop_jets:
+                getattr( self, 'lepHemB_pt_noSel' ).Fill( ijet.pt, weight)
+                getattr( self, 'lepHemB_eta_noSel' ).Fill( ijet.eta, weight)
+                getattr( self, 'lepHemB_phi_noSel' ).Fill( ijet.phi, weight)
+                getattr( self, 'lepHemB_mass_noSel' ).Fill( ijet.mass, weight)
+            for ijet in recoAK4_hadrTop_jets:
+                getattr( self, 'hadHemB_pt_noSel' ).Fill( ijet.pt, weight)
+                getattr( self, 'hadHemB_eta_noSel' ).Fill( ijet.eta, weight)
+                getattr( self, 'hadHemB_phi_noSel' ).Fill( ijet.phi, weight)
+                getattr( self, 'hadHemB_mass_noSel' ).Fill( ijet.mass, weight)
+                
+
+
+            reweight = self.totalRecoWeight 
+            #### Checking nominal selection with weights
+            if ('_nom' in iSel.keys()) and passSel['_nom'] and iSel['_nom']:
+
+                # basic reco histos
+                getattr( self, 'nPVs'+iSel['_nom'] ).Fill( getattr( event, 'PV_npvsGood'), reweight )
+            
+                getattr( self, 'nleps'+iSel['_nom'] ).Fill( nleptons , reweight)
+                
+                for imuon in recoMuons:
+                    getattr( self, 'muons_pt'+iSel['_nom'] ).Fill( imuon.pt , reweight)
+                    getattr( self, 'muons_eta'+iSel['_nom'] ).Fill( imuon.eta , reweight)
+                    getattr( self, 'muons_phi'+iSel['_nom'] ).Fill( imuon.phi , reweight)
+
+                for iele in recoElectrons:
+                    getattr( self, 'eles_pt'+iSel['_nom'] ).Fill( iele.pt , reweight)
+                    getattr( self, 'eles_eta'+iSel['_nom'] ).Fill( iele.eta , reweight)
+                    getattr( self, 'eles_phi'+iSel['_nom'] ).Fill( iele.phi , reweight)
+
+                getattr( self, 'nAK8jets'+iSel['_nom'] ).Fill( len(recoAK8jets['_nom']) , reweight)
+                getattr( self, 'HT'+iSel['_nom'] ).Fill( AK8HT , reweight)
+
+                for ijet in recoAK8jets['_nom']:
+                    getattr( self, 'AK8jets_pt'+iSel['_nom'] ).Fill( ijet.pt , reweight)
+                    getattr( self, 'AK8jets_eta'+iSel['_nom'] ).Fill( ijet.eta , reweight)
+                    getattr( self, 'AK8jets_rap'+iSel['_nom'] ).Fill( ijet.rapidity , reweight)
+                    getattr( self, 'AK8jets_phi'+iSel['_nom'] ).Fill( ijet.phi , reweight)
+                    getattr( self, 'AK8jets_mass'+iSel['_nom'] ).Fill( ijet.msoftdrop_nom if self.evtSelection.startswith('W') else ijet.msoftdrop_nom/ijet.msoftdrop_corr_PUPPI , reweight)
+                
+                getattr( self, 'nAK4jets_noSelnoWeight' ).Fill( len(recoAK4jets) , reweight )
+                getattr( self, 'nAK4bjets_noSelnoWeight' ).Fill( len(recoAK4bjets)  , reweight)
+                getattr( self, 'nAK4bhadjets_noSelnoWeight' ).Fill( len(recoAK4_hadrTop_jets) , reweight )
+                getattr( self, 'nAK4blepjets_noSelnoWeight' ).Fill( len(recoAK4_lepTop_jets) , reweight )
+
+                for ijet in recoAK4jets:
+                    getattr( self, 'AK4jets_pt'+iSel['_nom'] ).Fill( ijet.pt , reweight)
+                    getattr( self, 'AK4jets_eta'+iSel['_nom'] ).Fill( ijet.eta , reweight)
+                    getattr( self, 'AK4jets_phi'+iSel['_nom'] ).Fill( ijet.phi , reweight)
+                    
+                for ijet in recoAK4bjets:
+                    getattr( self, 'AK4btaggedjets_pt'+iSel['_nom'] ).Fill( ijet.pt , reweight)
+                    getattr( self, 'AK4btaggedjets_eta'+iSel['_nom'] ).Fill( ijet.eta , reweight)
+                    getattr( self, 'AK4btaggedjets_phi'+iSel['_nom'] ).Fill( ijet.phi , reweight)
+
+                getattr( self, 'METPt'+iSel['_nom'] ).Fill( MET.Pt() , reweight)
+                
+                for lW in recoleptW:
+                    getattr( self, 'leptonicW_pt'+iSel['_nom'] ).Fill( lW.Pt(), reweight )
+                    getattr( self, 'leptonicW_eta'+iSel['_nom'] ).Fill( lW.Eta() , reweight)
+                    getattr( self, 'leptonicW_phi'+iSel['_nom'] ).Fill( lW.Phi() , reweight)
+                    getattr( self, 'leptonicW_mass'+iSel['_nom'] ).Fill( lW.M() , reweight)
+                    getattr( self, 'leptonicWMT'+iSel['_nom']).Fill( lW.Mt() , reweight)
+
+                for ttbar in recottbarp4:
+                    getattr( self, 'Mtt'+iSel['_nom']).Fill( ttbar.M() , reweight)                
+
+                for lT in recoleptonicTop:
+                    getattr( self, 'leptonicTop_pt'+iSel['_nom'] ).Fill( lT.Pt() , reweight)
+                    getattr( self, 'leptonicTop_eta'+iSel['_nom'] ).Fill( lT.Eta() , reweight)
+                    getattr( self, 'leptonicTop_phi'+iSel['_nom'] ).Fill( lT.Phi() , reweight)
+                    getattr( self, 'leptonicTop_mass'+iSel['_nom'] ).Fill( lT.M() , reweight)
+
+                for ijet in recoAK4_lepTop_jets:
+                    getattr( self, 'lepHemB_pt'+iSel['_nom'] ).Fill( ijet.pt, reweight)
+                    getattr( self, 'lepHemB_eta'+iSel['_nom'] ).Fill( ijet.eta, reweight)
+                    getattr( self, 'lepHemB_phi'+iSel['_nom'] ).Fill( ijet.phi, reweight)
+                    getattr( self, 'lepHemB_mass'+iSel['_nom'] ).Fill( ijet.mass, reweight)
+                for ijet in recoAK4_hadrTop_jets:
+                    getattr( self, 'hadHemB_pt'+iSel['_nom'] ).Fill( ijet.pt, reweight)
+                    getattr( self, 'hadHemB_eta'+iSel['_nom'] ).Fill( ijet.eta, reweight)
+                    getattr( self, 'hadHemB_phi'+iSel['_nom'] ).Fill( ijet.phi, reweight)
+                    getattr( self, 'hadHemB_mass'+iSel['_nom'] ).Fill( ijet.mass, reweight)
+            
+                #print (met.pt, MET.Pt())
+
+        return passSel, iSel, recoMuons, recoElectrons, recoAK4bjets, recoAK8jets, MET, btagweights
 
     #############################################################################
     def genSelection( self, event ):
         '''Analyzing gen information'''
 
         genJetsAK8 = list(Collection( event, 'GenJetAK8' ))
+        for ijets in genJetsAK8: ijets.rapidity = self.etaToRapidity(ijets)
+
         genLeptons = list(Collection( event, 'GenDressedLepton' ))
         genJets = list(Collection( event, 'GenJet'))
         genParticles = Collection(event, 'GenPart')
@@ -1155,30 +1403,96 @@ class nSubProd(Module):
         antiTops =  [x for x in genParticles if x.pdgId==-6 and x.statusFlags==14]
         antiTops.sort(key=lambda x:getattr( x, 'pt' ), reverse=True)
 
-        ### Lepton selection
-        genElectrons  = [x for x in genLeptons if abs(x.pdgId)==11 and x.pt>self.minLooseElectronPt and abs(x.eta)<self.maxMuonEta ]
+        #### Lepton selection
+        genElectrons  = [x for x in genLeptons if abs(x.pdgId)==11 and x.pt>self.minLooseElectronPt and ((self.range1ElectronEta[0]<abs(x.eta)<self.range1ElectronEta[1]) or (self.range2ElectronEta[0]<abs(x.eta)<self.range2ElectronEta[1]))] #and abs(x.eta)<self.maxMuonEta ]
         genElectrons.sort(key=lambda x:x.pt, reverse=True)
 
         genMuons = [ x for x in genLeptons if abs(x.pdgId)==13 and  x.pt > self.minTightMuonPt and abs(x.eta) < self.maxMuonEta ]
         genMuons.sort(key=lambda x:x.pt, reverse=True)
+        
+        ngenLeptons = len(genMuons)+len(genElectrons)
         ##################################################
 
         #### MET (not sure if needed)
         genMET = ROOT.TLorentzVector()
-        genMET.SetPtEtaPhiE(genmet.pt, 0., genmet.phi, 0)
+        genMET.SetPtEtaPhiM(genmet.pt, 0., genmet.phi, 0)
         ##################################################
 
-        #### Basic AK8 jet selection
-        genAK8jets = [ x for x in genJetsAK8 if x.pt > self.minAK8JetPt and abs(x.eta) < self.maxJetAK8Eta]
+        #### Basic AK4 jet selection
+        genAK4jets = [ x for x in genJets if x.pt > self.minJetPt and abs(x.eta) < self.maxJetEta]# and abs(x.hadronFlavour)==5 ] 
+        ##################################################
+
+        #### Basic AK8 jet selection 
+        genAK8jets = [ x for x in genJetsAK8 if x.pt > self.minAK8JetPt and abs(x.rapidity) < self.maxJetAK8Rap]
         genAK8HT = sum( [ x.pt for x in genAK8jets ] )
-        genAK8jets.sort(key=lambda x:x.pt,reverse=True)
-        ##################################################
+        ##################################################    
+        
+        genAK4bjets = []
+        genAK4_lepTop_jets = []
+        genAK4_hadrTop_jets = []
+        genleptonicTop = []#ROOT.TLorentzVector(0.,0.,0.,0.)
+        genleptW = []#ROOT.TLorentzVector(0.,0.,0.,0.) 
+        genttbarp4 = []
 
-        #### Basic AK4 bjet selection
-        genAK4bjets = [ x for x in genJets if x.pt > self.minJetPt and abs(x.eta) < self.maxJetEta and abs(x.hadronFlavour)==5 ]
-        genAK4bjets.sort(key=lambda x:x.pt,reverse=True)
-        ##################################################
+        ################## selections on jets ####################
+        if len(genMuons)!=0:
 
+            # isolate leptonic hemisphere AK4's via 0.4<deltaR(mu,AK4jet)<1.6, require |hadronFlavour|==5 matched AK4's in this hemisphere
+            genAK4_lepTop_jets = [x for x in genAK4jets if (x.p4().DeltaR(genMuons[0].p4())<1.6 and x.p4().DeltaR( genMuons[0].p4() )>0.4)]# and abs(x.hadronFlavour)==5 ] 
+            genAK4_lepTop_jets.sort(key=lambda x:x.pt,reverse=True) 
+            #######################################################
+
+            # leptonic W definition
+            genleptW = [genMET+genMuons[0].p4()]
+
+            # leptonic top definition
+            if len(genAK4_lepTop_jets)!=0: 
+                genleptonicTop = [x+genAK4_lepTop_jets[0].p4() for x in genleptW]
+
+                # Ensure separation of the AK8s from the leptonic hemisphere by deltaPhi(mu,AK8) and deltaR(AK8,lept hem AK4)
+                genAK8jets = [ x for x in genAK8jets if abs(genMuons[0].p4().DeltaPhi(x.p4()))>2. and genAK4_lepTop_jets[0].p4().DeltaR(x.p4())>1.6]
+                genAK8jets.sort(key=lambda x:x.pt,reverse=True)
+
+                # Isolate hadronic hemisphere AK4 bjets via deltaR(leading AK8, AK4bjet) 
+                # change angular selection  based on whether we're looking for W's or tops to make the next steps more efficient
+                # require hadronFlavour matched b jets to ensure we're catching the t->W(->qq~)b rather than a light quark from the W->qq~
+                
+                # v2 select tops only if no further AK4's in x.p4().DeltaR(genAK8jets[0].p4())>0.8 and x.p4().DeltaR(genAK8jets[0].p4())<1.6
+                # do in Wtop sel function
+
+                #genAK8jets = [ x for x in genAK8jets if abs(genMuons[0].p4().DeltaPhi(x.p4()))>2. and genAK4_lepTop_jets[0].p4().DeltaR(x.p4())>1.6]
+                #genAK8jets.sort(key=lambda x:x.pt,reverse=True)
+
+                if len(genAK8jets)>0 and self.evtSelection.startswith('WSel'): 
+                    genAK4_hadrTop_jets = [x for x in genAK4jets if x.p4().DeltaR(genAK8jets[0].p4())>0.8 and x.p4().DeltaR(genAK8jets[0].p4())<1.6]# and abs(x.hadronFlavour)==5] #
+                    genAK4_hadrTop_jets.sort(key=lambda x:x.pt,reverse=True)
+                elif len(genAK8jets)>0 and self.evtSelection.startswith('topSel'):  
+                    genAK4_hadrTop_jets = [x for x in genAK4jets if x.p4().DeltaR(genAK8jets[0].p4())<0.8]# and abs(x.hadronFlavour)==5] 
+                    genAK4_hadrTop_jets.sort(key=lambda x:x.pt,reverse=True)
+
+
+                # this is not a cut, used just to reconstruct ttbar pair, if possible, for m_tt measurement 
+                if len(genAK4_hadrTop_jets)!=0: #len(genAK4_lepTop_jets)!=0 and 
+
+                    
+                    if self.evtSelection.startswith('WSel'):
+                        # Considering the leading AK4 b in the hadronic hemisphere, and outside the W->qq jet
+                        # to reconstruct the hadronically decaying top 
+                        genttbarp4 = [(x+(genAK4_hadrTop_jets[0].p4()+genAK8jets[0].p4())) for x in genleptonicTop] 
+                    
+                    elif self.evtSelection.startswith('topSel'): 
+                        # Here, the hadronically decaying top is reconstructed in its entirety as an AK8 jet
+                        # the leading hadronic hemisphere AK4 b jet is required to be within DeltaR(AK8,AK4)<0.8 already above
+                        genttbarp4 = [(x+genAK8jets[0].p4()) for x in genleptonicTop]
+                    
+        
+                genAK4bjets = genAK4_lepTop_jets+genAK4_hadrTop_jets#[x for x in [genAK4_lepTop_jets[0],genAK4_hadrTop_jets[0]] if abs(x.hadronFlavour)==5]
+                genAK4bjets = [x for x in genAK4bjets if abs(x.hadronFlavour)==5]
+                genAK4bjets.sort(key=lambda x:x.pt,reverse=True)
+               
+        #####################################################################
+
+        
         
         ##### Applying selection
         #### Creating Nsub basis, filling histos and creating branches IF passSel
@@ -1190,29 +1504,70 @@ class nSubProd(Module):
         if not self.onlyUnc: 
             #### Checking no selection
             getattr( self, 'ngenleps_noSel' ).Fill( len(genMuons)+len(genElectrons), weight )
+            
             for imuon in genMuons:
                 getattr( self, 'genmuons_pt_noSel' ).Fill( imuon.pt, weight )
                 getattr( self, 'genmuons_eta_noSel' ).Fill( imuon.eta, weight )
                 getattr( self, 'genmuons_phi_noSel' ).Fill( imuon.phi, weight )
+            
             for iele in genElectrons:
                 getattr( self, 'geneles_pt_noSel' ).Fill( iele.pt, weight )
                 getattr( self, 'geneles_eta_noSel' ).Fill( iele.eta, weight )
                 getattr( self, 'geneles_phi_noSel' ).Fill( iele.phi, weight )
+            
             getattr( self, 'ngenAK8jets_noSel' ).Fill( len(genAK8jets), weight )
             getattr( self, 'genHT_noSel' ).Fill( genAK8HT, weight )
+            
             for ijet in genAK8jets:
                 getattr( self, 'AK8genjets_pt_noSel' ).Fill( ijet.pt, weight )
                 getattr( self, 'AK8genjets_eta_noSel' ).Fill( ijet.eta, weight )
+                getattr( self, 'AK8genjets_rap_noSel' ).Fill( ijet.rapidity, weight )
                 getattr( self, 'AK8genjets_phi_noSel' ).Fill( ijet.phi, weight )
                 getattr( self, 'AK8genjets_mass_noSel' ).Fill( ijet.mass, weight )
-            getattr( self, 'ngenAK4jets_noSel' ).Fill( len(genAK4bjets), weight )
-            for ijet in genAK4bjets:
+            
+            getattr( self, 'ngenAK4jets_noSel' ).Fill( len(genAK4jets), weight )
+            getattr( self, 'ngenAK4bjets_noSel' ).Fill( len(genAK4bjets), weight )
+            getattr( self, 'ngenAK4bhadjets_noSel' ).Fill( len(genAK4_hadrTop_jets), weight )
+            getattr( self, 'ngenAK4blepjets_noSel' ).Fill( len(genAK4_lepTop_jets), weight )
+            
+            for ijet in genAK4jets:
                 getattr( self, 'AK4genjets_pt_noSel' ).Fill( ijet.pt, weight )
                 getattr( self, 'AK4genjets_eta_noSel' ).Fill( ijet.eta, weight )
                 getattr( self, 'AK4genjets_phi_noSel' ).Fill( ijet.phi, weight )
+            for ijet in genAK4bjets:
+                getattr( self, 'AK4btaggedgenjets_pt_noSel' ).Fill( ijet.pt, weight )
+                getattr( self, 'AK4btaggedgenjets_eta_noSel' ).Fill( ijet.eta, weight )
+                getattr( self, 'AK4btaggedgenjets_phi_noSel' ).Fill( ijet.phi, weight )
+            
             getattr( self, 'genMETPt_noSel' ).Fill( genMET.Pt(), weight )
-            
-            
+
+            for lW in genleptW:
+                getattr( self, 'genleptonicW_pt_noSel' ).Fill( lW.Pt(), weight )
+                getattr( self, 'genleptonicW_eta_noSel' ).Fill( lW.Eta(), weight )
+                getattr( self, 'genleptonicW_phi_noSel' ).Fill( lW.Phi(), weight )
+                getattr( self, 'genleptonicW_mass_noSel' ).Fill( lW.M(), weight )
+                getattr( self, 'genleptonicWMT_noSel' ).Fill( lW.Mt(), weight )
+
+            for ttbar in genttbarp4:
+                getattr( self, 'genMtt_noSel' ).Fill( ttbar.M(), weight )
+
+            for lT in genleptonicTop:
+                getattr( self, 'genleptonicTop_pt_noSel' ).Fill( lT.Pt(), weight )
+                getattr( self, 'genleptonicTop_eta_noSel' ).Fill( lT.Eta(), weight )
+                getattr( self, 'genleptonicTop_phi_noSel' ).Fill( lT.Phi(), weight )
+                getattr( self, 'genleptonicTop_mass_noSel' ).Fill( lT.M(), weight )
+
+            for ijet in genAK4_lepTop_jets:
+                getattr( self, 'genlepHemB_pt_noSel' ).Fill( ijet.pt, weight )
+                getattr( self, 'genlepHemB_eta_noSel' ).Fill( ijet.eta, weight )
+                getattr( self, 'genlepHemB_phi_noSel' ).Fill( ijet.phi, weight )
+                getattr( self, 'genlepHemB_mass_noSel' ).Fill( ijet.mass, weight )
+            for ijet in genAK4_hadrTop_jets:
+                getattr( self, 'genhadHemB_pt_noSel' ).Fill( ijet.pt, weight )
+                getattr( self, 'genhadHemB_eta_noSel' ).Fill( ijet.eta, weight )
+                getattr( self, 'genhadHemB_phi_noSel' ).Fill( ijet.phi, weight )
+                getattr( self, 'genhadHemB_mass_noSel' ).Fill( ijet.mass, weight )
+
             ##### Filling histograms
             if passSel and iSel:
                 #print ("Filling gen histos")
@@ -1231,64 +1586,83 @@ class nSubProd(Module):
                 for ijet in genAK8jets:
                     getattr( self, 'AK8genjets_pt'+iSel ).Fill( ijet.pt, weight )
                     getattr( self, 'AK8genjets_eta'+iSel ).Fill( ijet.eta, weight )
+                    getattr( self, 'AK8genjets_rap'+iSel ).Fill( ijet.rapidity, weight )
                     getattr( self, 'AK8genjets_phi'+iSel ).Fill( ijet.phi, weight )
                     getattr( self, 'AK8genjets_mass'+iSel ).Fill( ijet.mass, weight )
-                getattr( self, 'ngenAK4jets'+iSel ).Fill( len(genAK4bjets), weight )
+
+                getattr( self, 'ngenAK4jets_noSel' ).Fill( len(genAK4jets), weight )
+                getattr( self, 'ngenAK4bjets_noSel' ).Fill( len(genAK4bjets), weight )
+                getattr( self, 'ngenAK4bhadjets_noSel' ).Fill( len(genAK4_hadrTop_jets), weight )
+                getattr( self, 'ngenAK4blepjets_noSel' ).Fill( len(genAK4_lepTop_jets), weight )
+
+                for ijet in genAK4jets:
+                    getattr( self, 'AK4genjets_pt'+iSel  ).Fill( ijet.pt, weight )
+                    getattr( self, 'AK4genjets_eta'+iSel  ).Fill( ijet.eta, weight )
+                    getattr( self, 'AK4genjets_phi'+iSel  ).Fill( ijet.phi, weight )
                 for ijet in genAK4bjets:
-                    getattr( self, 'AK4genjets_pt'+iSel ).Fill( ijet.pt, weight )
-                    getattr( self, 'AK4genjets_eta'+iSel ).Fill( ijet.eta, weight )
-                    getattr( self, 'AK4genjets_phi'+iSel ).Fill( ijet.phi, weight )
+                    getattr( self, 'AK4btaggedgenjets_pt'+iSel  ).Fill( ijet.pt, weight )
+                    getattr( self, 'AK4btaggedgenjets_eta'+iSel  ).Fill( ijet.eta, weight )
+                    getattr( self, 'AK4btaggedgenjets_phi'+iSel ).Fill( ijet.phi, weight )
                 getattr( self, 'genMETPt'+iSel ).Fill( genMET.Pt(), weight )
-                #getattr( self, 'genPtAsym'+iSel ).Fill( ptAsym, weight )
-                #getattr( self, 'genDeltaPhi'+iSel ).Fill( deltaPhi, weight )
+                
+                for lW in genleptW:
+                    getattr( self, 'genleptonicW_pt'+iSel  ).Fill( lW.Pt(), weight )
+                    getattr( self, 'genleptonicW_eta'+iSel  ).Fill( lW.Eta(), weight )
+                    getattr( self, 'genleptonicW_phi'+iSel  ).Fill( lW.Phi(), weight )
+                    getattr( self, 'genleptonicW_mass'+iSel  ).Fill( lW.M(), weight )
+                    getattr( self, 'genleptonicWMT'+iSel ).Fill( lW.Mt(), weight )
+
+                for ttbar in genttbarp4:
+                    getattr( self, 'genMtt'+iSel).Fill( ttbar.M(), weight )
+
+                for lT in genleptonicTop:
+                    getattr( self, 'genleptonicTop_pt'+iSel  ).Fill( lT.Pt(), weight )
+                    getattr( self, 'genleptonicTop_eta'+iSel  ).Fill( lT.Eta(), weight )
+                    getattr( self, 'genleptonicTop_phi'+iSel  ).Fill( lT.Phi(), weight )
+                    getattr( self, 'genleptonicTop_mass'+iSel  ).Fill( lT.M(), weight )
+
+                for ijet in genAK4_lepTop_jets:
+                    getattr( self, 'genlepHemB_pt'+iSel  ).Fill( ijet.pt, weight )
+                    getattr( self, 'genlepHemB_eta'+iSel  ).Fill( ijet.eta, weight )
+                    getattr( self, 'genlepHemB_phi'+iSel  ).Fill( ijet.phi, weight )
+                    getattr( self, 'genlepHemB_mass'+iSel  ).Fill( ijet.mass, weight )
+                for ijet in genAK4_hadrTop_jets:
+                    getattr( self, 'genhadHemB_pt'+iSel  ).Fill( ijet.pt, weight )
+                    getattr( self, 'genhadHemB_eta'+iSel  ).Fill( ijet.eta, weight )
+                    getattr( self, 'genhadHemB_phi'+iSel  ).Fill( ijet.phi, weight )
+                    getattr( self, 'genhadHemB_mass'+iSel  ).Fill( ijet.mass, weight )
+                #print (genmet.pt, genMET.Pt())
+
 
         return passSel, iSel, genMuons, genElectrons, genAK4bjets, genAK8jets, genMET
 
     #############################################################################
     def WtopSelection( self, isGen, event, muons, electrons, AK4bjets, AK8jets, MET, ptLabel):
     
-        if (len(muons)==1) and (len(electrons)== 0) and (len(AK8jets)>0) and (len(AK4bjets)>=1) and (MET.Pt()>self.METCutWtop):                
-            leadJetpT = getattr( AK8jets[0], 'pt'+ptLabel )
-            leptWpT=muons[0].p4()+MET
-            if leptWpT.Pt()>self.minLeptonicWPt and leadJetpT >=self.minLeadAK8JetPtW:
+        if (len(muons)==1) and (len(electrons)==0) and (len(AK8jets)>0) and (len(AK4bjets)>= 1):                
             
+            leadJetpT = getattr( AK8jets[0], 'pt'+ptLabel )
+            
+            leptWpT=muons[0].p4()+MET
+            
+            if leptWpT.Pt()>self.minLeptonicWPt and (MET.Pt()>self.METCutWtop) and leadJetpT>self.minLeadAK8JetPtW:
                 
-                AK4bjets = [x for x in AK4bjets if abs(x.p4().DeltaPhi(muons[0].p4()))<2. and AK8jets[0].p4().DeltaR( x.p4() )>0.8 and x.p4().DeltaR( muons[0].p4() )>0.4 and (muons[0].p4().DeltaR( x.p4() )<np.pi/2.)] 
-                
-                if (len(AK8jets)>0) and (len(AK4bjets)>=1) and abs(AK8jets[0].p4().DeltaPhi(muons[0].p4()))>2.: # and (len(AK4bjets)<3)
-                    if not isGen:
-                        if self.isMC:  
-                            
-                            if self.onlyUnc.startswith('_btagWeightUp'): bTagSFs =  [x.btagSF_deepjet_M_up for x in AK4bjets]
-                            elif self.onlyUnc.startswith('_btagWeightDown'): bTagSFs =  [x.btagSF_deepjet_M_down for x in AK4bjets]
-                            else: bTagSFs =  [x.btagSF_deepjet_M for x in AK4bjets]
+                ################ Cuts on AK8 to finally consider whether the fatjet is a W/top candidate #################                  
+                jetMass = AK8jets[0].mass if isGen else AK8jets[0].msoftdrop_nom
+                if 'WSel' in self.evtSelection: 
+                    if (((jetMass<self.maxSDMassW) and (jetMass>=self.minSDMassW)) and (leadJetpT>self.minLeadAK8JetPtW)): 
+                        #print (leptWpT.Mt(),isGen)                           
+                        return True, '_WSel' 
+                    else: return False, None
 
-                            w=1
-                            for i in bTagSFs:
-                                w *= i  # modified as per Alessandro's recommendation, allows for greater than 2 bjets unlike before #self.getBTagWeight(nBTagged=len(AK4bjets), jet_SFs=bTagSFs);
-                            self.btaggingWeight = w # update as a class-level variable so can be used in reweighting in recoSelection() and then the analyzer.
+                elif 'topSel' in self.evtSelection:
+                    if ((jetMass/ (1 if isGen else AK8jets[0].msoftdrop_corr_PUPPI) >= self.minSDMassTop) and (jetMass/(1 if isGen else AK8jets[0].msoftdrop_corr_PUPPI) < self.maxSDMassTop) and (leadJetpT> self.minLeadAK8JetPtTop)): # 
+                    #if ((jetMass/ (1 if isGen else AK8jets[0].msoftdrop_corr_PUPPI) > 150. ) and (leadJetpT> 400.)):#self.minLeadAK8JetPtTop)): # >= self.minSDMassTop) and (jetMass/(1 if isGen else AK8jets[0].msoftdrop_corr_PUPPI) < self.maxSDMassTop
+                        #print (leptWpT.Mt(),isGen)                           
+                        return True, '_topSel'
+                    else: return False, None    
+                ###########################################################################################################
 
-                        else: self.btaggingWeight = 1
-                        
-                    jetMass = AK8jets[0].mass if isGen else AK8jets[0].msoftdrop_nom
-                    
-                    if 'WSel' in self.evtSelection: 
-                        if (((jetMass<=self.maxSDMassW) and (jetMass>self.minSDMassW)) and (leadJetpT>=self.minLeadAK8JetPtW)):
-                            #print ("Kinematics", jetMass,leadJetpT,'WSel', isGen)
-                            #if not isGen:
-                            #    if len(bTagSFs)>1: print (bTagSFs, len(bTagSFs))
-                            return True, '_WSel' 
-                        else: return False, None
-
-                    elif 'topSel' in self.evtSelection:
-                        if ((jetMass/ (1 if isGen else AK8jets[0].msoftdrop_corr_PUPPI) > self.minSDMassTop) and (jetMass/ (1 if isGen else AK8jets[0].msoftdrop_corr_PUPPI) < self.maxSDMassTop) and (leadJetpT>self.minLeadAK8JetPtTop)): 
-                            #print ("Kinematics", jetMass,leadJetpT,'topSel', isGen)
-                            #if not isGen:
-                            #    if len(bTagSFs)>1: print (bTagSFs, len(bTagSFs))
-                            return True, '_topSel'
-                        else: return False, None    
-                    
-                else: return False, None 
             else: return False, None 
         else: return False, None
         
@@ -1316,19 +1690,19 @@ class nSubProd(Module):
 
         #### Storing only the PF candidates that are close to the leadAK8jet (constituents)
         for x in CandsPUPPIweightedVec:
-            if abs(AK8jet.p4().DeltaR( x )) < 0.8: constituents.push_back(x)
+            if abs(AK8jet.p4().DeltaR( x )) < 0.8: constituents.push_back(x) #Shouldn't this be DrRapidityPhi?
 
         #### Computing n-subjetiness basis from PF PUPPI constituents
         nsub0p5 = self.nSub0p5.getTau( self.maxTau, constituents )
         nsub1 = self.nSub1.getTau( self.maxTau, constituents )
         nsub2 = self.nSub2.getTau( self.maxTau, constituents )
-        nsub1_OP_kT = self.nSub1_OP_kT.getTau( 3, constituents )    ### needed for genjet tau21 tau32
+        nsub1_WTA_kT = self.nSub1_WTA_kT.getTau( 3, constituents )    ### needed for genjet tau21 tau32
 
 
-        ### default in CMS OP_KT https://github.com/cms-sw/cmssw/blob/9834f5dc9ff342ddef08b73d6c294cad36575772/RecoJets/JetProducers/python/nJettinessAdder_cfi.py
-        try: ak8jet['tau21'] = nsub1_OP_kT[1]/nsub1_OP_kT[0]
+        ### default in CMS WTA_kT https://github.com/cms-sw/cmssw/blob/9834f5dc9ff342ddef08b73d6c294cad36575772/RecoJets/JetProducers/python/nJettinessAdder_cfi.py
+        try: ak8jet['tau21'] = nsub1_WTA_kT[1]/nsub1_WTA_kT[0]
         except ZeroDivisionError: ak8jet['tau21'] = -1.
-        try: ak8jet['tau32'] = nsub1_OP_kT[2]/nsub1_OP_kT[1]
+        try: ak8jet['tau32'] = nsub1_WTA_kT[2]/nsub1_WTA_kT[1]
         except ZeroDivisionError: ak8jet['tau32'] = -1.
 
 
@@ -1356,11 +1730,11 @@ class nSubProd(Module):
                 sd_nsub0p5 = self.nSub0p5.getTau( self.maxTau, sd_constituents )
                 sd_nsub1 = self.nSub1.getTau( self.maxTau, sd_constituents )
                 sd_nsub2 = self.nSub2.getTau( self.maxTau, sd_constituents )
-                sd_nsub1_OP_kT = self.nSub1_OP_kT.getTau( 3, sd_constituents )
+                sd_nsub1_WTA_kT = self.nSub1_WTA_kT.getTau( 3, sd_constituents )
 
-                try: ak8jet['sdtau21'] = sd_nsub1_OP_kT[1]/sd_nsub1_OP_kT[0]
+                try: ak8jet['sdtau21'] = sd_nsub1_WTA_kT[1]/sd_nsub1_WTA_kT[0]
                 except ZeroDivisionError: ak8jet['sdtau21'] = -1
-                try: ak8jet['sdtau32'] = sd_nsub1_OP_kT[2]/sd_nsub1_OP_kT[1]
+                try: ak8jet['sdtau32'] = sd_nsub1_WTA_kT[2]/sd_nsub1_WTA_kT[1]
                 except ZeroDivisionError: ak8jet['sdtau32'] = -1
 
                 for tauN in range(self.maxTau):
@@ -1394,6 +1768,9 @@ class nSubProd(Module):
         #### Filling branch with passAK8jet info after selection
         self.out.fillBranch( 'n'+jetLabel, len(jetInfo) )
         self.out.fillBranch(jetLabel+"_mass", [ iJ['jet'].mass for i,iJ in jetInfo.items() ] )
+        if not 'gen' in jetLabel.lower(): 
+            if not 'top'in self.evtSelection: self.out.fillBranch(jetLabel+"_msoftdrop", [ iJ['jet'].msoftdrop_nom for i,iJ in jetInfo.items() ] )
+            else: self.out.fillBranch(jetLabel+"_msoftdrop", [ iJ['jet'].msoftdrop_nom/iJ['jet'].msoftdrop_corr_PUPPI for i,iJ in jetInfo.items() ] )
         self.out.fillBranch(jetLabel+"_pt", [ iJ['jet'].pt for i,iJ in jetInfo.items()  ] )
         self.out.fillBranch(jetLabel+"_eta", [ iJ['jet'].eta for i,iJ in jetInfo.items()  ] )
         self.out.fillBranch(jetLabel+"_phi", [ iJ['jet'].phi for i,iJ in jetInfo.items()  ] )
@@ -1454,7 +1831,15 @@ class nSubProd(Module):
             if p4.DeltaR(subjet.p4()) < dRmax and len(ret) < 2 :
                 ret.append(subjet.p4())
         return ret
+    
+    #############################################################################
+    def etaToRapidity( self, ijet ):
+        nom = np.sqrt( np.power(ijet.mass,2) + np.power(ijet.pt * np.cosh(ijet.eta),2) ) + ijet.pt * np.sinh(ijet.eta)
+        den = np.sqrt( np.power(ijet.mass,2) + np.power(ijet.pt,2) )
+        return np.log(nom/den)
 
+
+    ###############
     
 
 ###################### Different gen functions
@@ -1491,4 +1876,4 @@ def GenQuarkFromW(GenParticle):
                 if 24 not in dauids:
                     ret.append(gP)
 
-###############
+

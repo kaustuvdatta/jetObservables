@@ -3,7 +3,7 @@ process = cms.Process('NANO')
 process.source = cms.Source("PoolSource", fileNames = cms.untracked.vstring(),
 )
 process.source.fileNames = [
-    'root://cms-xrd-global.cern.ch///store/user/kadatta/PFNano/106X_v1/TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8/RunIISummer19UL17PFNanoAOD-106X_mc2017_realistic_v6-v2/210120_093555/0000/nano106X_on_mini106X_2017_mc_NANO_1.root',
+    'root://cms-xrd-global.cern.ch///store/user/kadatta/PFNano/106x_v02/QCD_HT700to1000_TuneCP5_PSWeights_13TeV-madgraph-pythia8/RunIISummer20UL17PFNanov2pt3-106X_mc2017_realistic_v9-v1/220922_001208/0000/nano_mc2017_1.root',
     #'root://cms-xrd-global.cern.ch//store/user/algomez/PFNano/106X_v1/JetHT/Run2017B-09Aug2019_UL2017-v1_PFNanoAOD_v01/210301_094536/0000/nano106X_on_mini106X_2017_data_NANO_195.root',
 #'root://cms-xrd-global.cern.ch//store/user/algomez/PFNano/106X_v1/JetHT/Run2017B-09Aug2019_UL2017-v1_PFNanoAOD_v01/210301_094536/0000/nano106X_on_mini106X_2017_data_NANO_399.root',
 #'root://cms-xrd-global.cern.ch//store/user/algomez/PFNano/106X_v1/JetHT/Run2017B-09Aug2019_UL2017-v1_PFNanoAOD_v01/210301_094536/0000/nano106X_on_mini106X_2017_data_NANO_22.root',
@@ -24,7 +24,12 @@ process.source.fileNames = [
 ]
 process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(-1))
 
-#process.options = cms.untracked.PSet()
+process.options = cms.untracked.PSet()
+#Setup FWK for multithreaded
+
+process.options.numberOfThreads=cms.untracked.uint32(4)
+process.options.numberOfStreams=cms.untracked.uint32(0)
+process.options.numberOfConcurrentLuminosityBlocks=cms.untracked.uint32(1)
 
 process.output = cms.OutputModule("PoolOutputModule",
         #fileName = cms.untracked.string('jetObservables_histograms.root'),

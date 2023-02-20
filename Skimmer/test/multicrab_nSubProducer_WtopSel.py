@@ -4,7 +4,7 @@ This is a small script that submits a config over many datasets
 """
 import os
 from optparse import OptionParser
-from datasets import dictSamples, checkDict
+from datasets_WtopSel_RunIISummer20UL import dictSamples, checkDict
 
 def make_list(option, opt, value, parser):
     setattr(parser.values, option.dest, value.split(','))
@@ -35,15 +35,18 @@ mv lib $CMSSW_BASE/lib
 mv src $CMSSW_BASE/src
 mv python $CMSSW_BASE/python
 echo Found Proxy in: $X509_USER_PROXY
-ls
-echo "python {pythonFile} --sample {datasets} --selection {selection} --year {year}"
+#ls
+#echo "python {pythonFile} --sample {datasets} --selection {selection} --year {year}"
 #python {pythonFile} --sample {datasets} --selection {selection} --year {year} --runEra {runEra} --onlyTrees
 #python {pythonFile} --sample {datasets} --selection {selection} --year {year} --runEra {runEra} 
-python {pythonFile} --sample {datasets} --selection {selection} --year {year} --onlyUnc {onlyUnc} --runEra {runEra}  
-fi
+#python {pythonFile} --sample {datasets} --selection {selection} --year {year} --onlyUnc {onlyUnc} --runEra {runEra}  
+#fi
     '''
-    open('runPostProc'+options.datasets+options.year+options.onlyUnc+options.selection+'.sh', 'w').write(BASH_SCRIPT.format(**options.__dict__))
-
+    #open('runPostProc'+options.datasets+options.year+options.onlyUnc+options.selection+'.sh', 'w').write(BASH_SCRIPT.format(**options.__dict__))
+    open('runPostProc'+options.datasets+options.onlyUnc+'_'+options.year+options.selection+'.sh', 'w').write(BASH_SCRIPT)
+    with open('runPostProc'+options.datasets+options.onlyUnc+'_'+options.year+options.selection+'.sh', 'a') as txtfile:
+        cmd = "python "+options.pythonFile+" --sample "+options.datasets+" --selection "+options.selection+" --year "+options.year+" --runEra "+options.runEra+(" --onlyUnc "+options.onlyUnc if options.onlyUnc else "" )+(" --onlyTrees" if options.onlyTrees else "" )+(" --isSigMC" if options.isSigMC else "" )+(" --isBkgMC" if options.isBkgMC else "" )+'\nls\nfi'
+        txtfile.write(cmd)
 
 def submitJobs( job, inputFiles, unitJobs ):
 
@@ -64,18 +67,19 @@ def submitJobs( job, inputFiles, unitJobs ):
     config.section_("JobType")
     config.JobType.pluginName = 'Analysis'
     config.JobType.psetName = 'PSet.py'
-    config.JobType.maxMemoryMB = 4000
-    #config.JobType.numCores = 2
-
+    config.JobType.maxMemoryMB = 6000 #if (options.onlyUnc and options.onlyUnc.startswith('_je')) else 2500
+    if (options.onlyUnc and options.onlyUnc.startswith('_je')): config.JobType.maxJobRuntimeMin = 600
+    config.JobType.numCores = 4
     config.JobType.allowUndistributedCMSSW = True
+
 
     config.section_("Data")
     config.Data.inputDBS = 'phys03'
-    #config.Data.ignoreLocality = True
+    config.Data.ignoreLocality = True
 
     config.section_("Site")
     config.Site.storageSite = options.storageSite
-    #config.Site.whitelist = ['T1_US_FNAL','T2_CH_CSCS','T3_US_FNALLPC' ]
+    config.Site.whitelist = ['T2_CH_*']
 
 
     def submit(config):
@@ -86,15 +90,22 @@ def submitJobs( job, inputFiles, unitJobs ):
             print hte.headers
 
 
-    config.JobType.scriptExe = 'runPostProc'+options.datasets+options.year+options.onlyUnc+options.selection+'.sh'
-    config.JobType.inputFiles = [ options.pythonFile ,'haddnano.py', 'keep_and_drop.txt']
+    config.JobType.scriptExe = 'runPostProc'+options.datasets+options.onlyUnc+'_'+options.year+options.selection+'.sh'
+    config.JobType.inputFiles = [ options.pythonFile ,'haddnano.py', 'keep_and_drop_Wtop.txt']
     config.JobType.sendPythonFolder  = True
     
     isMC = True
-    if job.startswith(('UL18_Single', 'UL18_JetHT','UL17_Single', 'UL17_JetHT', 'JetHT', 'SingleMuon')):
-        isMC = False
-        if options.year.startswith('2017'): config.Data.lumiMask = '/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions17/13TeV/Legacy_2017/Cert_294927-306462_13TeV_UL2017_Collisions17_GoldenJSON.txt'
-        elif options.year.startswith('2018'): config.Data.lumiMask = '/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions18/13TeV/Legacy_2018/Cert_314472-325175_13TeV_Legacy2018_Collisions18_JSON.txt'
+    config.JobType.sendPythonFolder  = True
+    isDataFlag=False
+    isvNFlag=True if 'v2pt' in job else False
+    if job.startswith(('UL17_Single', 'UL17_JetHT', 'UL18_Single', 'UL18_JetHT', 'UL16_Single', 'UL16_JetHT', 'UL16_preVFP_Single', 'UL16_preVFP_JetHT', 'JetHT', 'SingleMuon')):
+        isDataFlag=True
+        if options.year.startswith('2016'):
+            config.Data.lumiMask = '/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions16/13TeV/Legacy_2016/Cert_271036-284044_13TeV_Legacy2016_Collisions16_JSON.txt'
+        if options.year.startswith('2017'): 
+            config.Data.lumiMask = '/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions17/13TeV/Legacy_2017/Cert_294927-306462_13TeV_UL2017_Collisions17_GoldenJSON.txt'
+        elif options.year.startswith('2018'): 
+            config.Data.lumiMask = '/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions18/13TeV/Legacy_2018/Cert_314472-325175_13TeV_Legacy2018_Collisions18_JSON.txt'
     config.Data.inputDataset = inputFiles
 
     #config.Data.splitting = 'EventAwareLumiBased' if job.startswith('QCD_Pt') else 'FileBased'
@@ -105,7 +116,7 @@ def submitJobs( job, inputFiles, unitJobs ):
     config.Data.unitsPerJob = unitJobs
 
     # since the input will have no metadata information, output can not be put in DBS
-    config.JobType.outputFiles = [ 'jetObservables_histograms.root']#'jetObservables_nanoskim.root', 
+    config.JobType.outputFiles = [ 'jetObservables_nanoskim.root', 'jetObservables_histograms.root']
     config.Data.outLFNDirBase = '/store/user/'+os.environ['USER']+'/jetObservables/'
 
     requestname = 'jetObs_Skimmer_'+ job.replace('_','').replace('-','')+options.onlyUnc+'_'+options.year +'_'+options.selection + '_' +options.version
@@ -113,19 +124,18 @@ def submitJobs( job, inputFiles, unitJobs ):
     if len(requestname) > 100: requestname = (requestname[:95-len(requestname)])
     if os.path.isdir('crab_projects/crab_'+requestname):
         print '|-------> JOB '+requestname+' has already a folder. Please remove it.'
-        os.remove('runPostProc'+options.datasets+options.year+options.onlyUnc+options.selection+'.sh')
+        os.remove('runPostProc'+options.datasets+options.onlyUnc+'_'+options.year+options.selection+'.sh')
         return False
 
     print 'requestname = ', requestname
 
     config.General.requestName = requestname
-    if ('QCD' in job or 'MuEn'in job) and (options.selection.startswith('WSel') or options.selection.startswith('topSel')):
-        if '2018' in options.year: 
-            print ('2018')
-            if 'UL18v1' in config.Data.inputDataset: config.Data.outputDatasetTag = 'Run'+inputFiles.split('Run')[1].split('UL18v1')[0]+'UL18PFNano_jetObs_Skim_'+options.onlyUnc+options.selection+options.version+('EXT'+job.split('EXT')[1] if 'EXT' in job else '')		   
-            else: config.Data.outputDatasetTag = 'Run'+inputFiles.split('Run')[1].split('UL18')[0]+'UL18PFNano_jetObs_Skim_'+options.onlyUnc+options.selection+options.version+('EXT'+job.split('EXT')[1] if 'EXT' in job else '')         
-        elif '2017': config.Data.outputDatasetTag = 'Run'+inputFiles.split('Run')[1].split('UL17')[0]+'UL17PFNano_jetObs_Skim_'+options.onlyUnc+options.selection+options.version+('EXT'+job.split('EXT')[1] if 'EXT' in job else '')		   
-    else: config.Data.outputDatasetTag = 'Run'+inputFiles.split('Run')[1].split('AOD')[0]+'AOD_jetObservables_Skimmer_'+options.onlyUnc+options.selection+options.version+('EXT'+job.split('EXT')[1] if 'EXT' in job else '')
+    if isDataFlag or isvNFlag:#('QCD' in job or 'MuEn'in job) and (options.selection.startswith('_W') or options.selection.startswith('_top')):
+        s=['v2pt2','v2pt3','v2pt4']
+        flag = next((x for x in s if x in inputFiles), "")#x for x in s if x in inputFiles else ""
+        if not(flag==""): config.Data.outputDatasetTag = 'Run'+inputFiles.split('Run')[1].split(flag)[0]+'_jetObsSkim_'+options.onlyUnc+options.version+('EXT'+job.split('EXT')[1] if 'EXT' in job else '')
+        else: config.Data.outputDatasetTag = 'Run'+inputFiles.split('Run')[1].split(flag)[0]+'_jetObsSkim_'+options.onlyUnc+options.version+('EXT'+job.split('EXT')[1] if 'EXT' in job else '')
+    else: config.Data.outputDatasetTag = 'Run'+inputFiles.split('Run')[1].split('-106X')[0]+'_jetObsSkim_'+options.onlyUnc+options.selection+options.version+('EXT'+job.split('EXT')[1] if 'EXT' in job else '')
 
     print 'Submitting ' + config.General.requestName + ', dataset = ' + job
     print 'Configuration :'
@@ -133,13 +143,13 @@ def submitJobs( job, inputFiles, unitJobs ):
     submit(config)
     #try : submit(config)
     #except : print 'Not submitted.'
-    os.remove('runPostProc'+options.datasets+options.year+options.onlyUnc+options.selection+'.sh')
+    os.remove('runPostProc'+options.datasets+options.onlyUnc+'_'+options.year+options.selection+'.sh')
 
 
 
 if __name__ == '__main__':
 
-    usage = ('usage: python multicrab_nSubProducer.py --datasets NAMEOFDATASET -d DIR -v VERSION -y YEAR --onlyUnc _UNC -s SELECTION')
+    usage = ('usage: python multicrab_nSubProducer.py --datasets NAMEOFDATASET -d DIR -v VERSION -y YEAR --onlyUnc _UNC ')
 
     parser = OptionParser(usage=usage)
     parser.add_option(
@@ -169,12 +179,12 @@ if __name__ == '__main__':
             )
     parser.add_option(
             "-s", "--selection",
-            dest="selection", default="Wtop",
-            help=("Selection: dijet, WSel, topSel"),
+            dest="selection", default="_WtopSel",
+            help=("Selection: _WtopSel, _WSel, _topSel"),
             )
     parser.add_option(
             "-p", "--pythonFile",
-            dest="pythonFile", default="jetObservables_nSubProducer.py",
+            dest="pythonFile", default="jetObservables_nSubProducer_WtopSel.py",
             help=("python file to run"),
             )
     parser.add_option(
@@ -184,24 +194,38 @@ if __name__ == '__main__':
             default="B"
             )
     parser.add_option(
-            '--onlyTrees',
-            action="store",
-            help="To store or not to store trees",
-            default="False"
+        '--onlyUnc',
+        action="store",
+        default='',
+        help="Run only specific uncertainty variations"
             )
     parser.add_option(
-            '--onlyUnc',
-            action="store",
-            default='',
-            help="Run only specific uncertainty variations"
+        '--onlyTrees',
+        action="store_true",
+        help="Do not save histograms, only trees"
             )
+    parser.add_option(
+        '--isSigMC',
+        action="store_true",
+        help="Save branches with sys+puWeights for signal/main MC else store basic reco/gen branches"
+            )  
+    parser.add_option(
+        '--isBkgMC',
+        action="store_true",
+        help="Save branches with basic reco/gen branches for bkg MC and signal variation models"
+            )  
+
     (options, args) = parser.parse_args()
     print (options.selection)
-    if options.selection.startswith(('WSel','topSel')): sel = 'Wtop'
+    if options.selection.startswith(('_Wtop','Wtop')): sel = 'Wtop'
+    elif options.selection.startswith(('_WSel','WSel')): sel = 'W'
+    elif options.selection.startswith(('_top','top','_topSel')): sel = 'top'
     processingSamples = {}
     for sam in dictSamples:
         if sam.startswith( options.datasets ) | options.datasets.startswith('all'):
-            if checkDict( sam, dictSamples )['selection'] != sel: continue
+            if checkDict( sam, dictSamples )['selection'] != sel:   
+                print("wrong sel",sel)  
+                continue
             if 'SingleMuon' in sam or sam.startswith(('JetHT', 'SingleMuon')):
                 for iera in checkDict( sam, dictSamples )[options.year]['nanoAOD']:
                     processingSamples[ sam+'Run'+options.year+iera ] = [ checkDict( sam, dictSamples )[options.year]['nanoAOD'][iera], 1 ]

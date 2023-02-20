@@ -38,6 +38,8 @@ class nSubProd(Module):
         self.onlyTrees = onlyTrees
         self.runSDVariables = False
 
+        self.FlagBadPFCands = False
+
         self.recoLevel=0
         self.fakes=0
         self.miss=0
@@ -209,6 +211,7 @@ class nSubProd(Module):
         if not self.onlyUnc:
             self.addObject( ROOT.TH1F('cutflow_test',   ';Categories',   12, 0, 12) ) 
             self.addObject( ROOT.TH1F('PUweight',   ';PUWeight',   20, 0, 2) )
+            #self.addObject( ROOT.TH1F('nEvtBadPFCands',   ';Events with bad PFCands',   20, 0, 2) )
             if not self.isMC:
                 for isel in [ '_only'+x+'_dijetSel' for x in self.triggerTable  ]:
                     self.addObject( ROOT.TH1F('nPVs'+isel,   ';number of PVs',   100, 0, 100) )
@@ -264,9 +267,12 @@ class nSubProd(Module):
         self.addObject( ROOT.TH1F(s+'_eta'+t, ';#eta', 100, -2.5, 2.5 ) )
         self.addObject( ROOT.TH1F(s+'_y'+t, ';y', 100, -2.5, 2.5 ) )
         self.addObject( ROOT.TH1F(s+'_phi'+t, ';#phi', 100, -3.5, 3.5) )
-        self.addObject( ROOT.TH1F(s+'_mass'+t,';mass (GeV)', 150, 0, 750) )
-        self.addObject( ROOT.TH1F(s+'_msoftdrop'+t,';Softdrop mass (GeV)', 100, 0, 500) )
-
+        if not 'mu' in s.lower() or 'met' in s.lower(): 
+            self.addObject( ROOT.TH1F(s+'_mass'+t,s+';mass (GeV)', 100, 0, 500) )
+        
+            if 'ak8' in s.lower():
+                self.addObject( ROOT.TH1F(s+'_msoftdrop'+t,s+';mass (GeV)', 100, 0, 500) )
+            
     #############################################################################
     def DrRapPhi(self,va,vb ):
         dy = va.Rapidity()-vb.Rapidity()
@@ -289,11 +295,14 @@ class nSubProd(Module):
             self.out.branch( 'totalRecoWeight_nom', "F" )
             self.out.branch( 'recoSelectedEventNumber_nom', "L" )
             self.out.branch( 'good_nPVs_nom', "F" )
+            #self.out.branch( 'eventWithBadPFCands', "L" )
             tmplist.append( 'selRecoJets_nom')
 
         if self.isMC:
             for sys in self.sysSource: 
                 self.out.branch( 'eventCategory'+sys,  "I")
+
+                self.out.branch( 'eventWithBadPFCands', "L" )
 
                 self.out.branch( 'totalRecoWeight'+sys, "F" )
                 self.out.branch( 'puWeightNom'+sys, "F" )
@@ -376,6 +385,7 @@ class nSubProd(Module):
 
         self.isMC = event.run == 1
         #print(event.event)
+        self.FlagBadPFCands=False
         if not self.isMC:
             passGenSel=False
             iGenSel=None
@@ -384,7 +394,11 @@ class nSubProd(Module):
         passRecoSel, iRecoSel, selRecoMuons, selRecoElectrons, selRecoJets = self.recoSelection( event )
         #print(event.event)
 
+
         if not self.isMC and not passRecoSel['_nom']: return False
+
+
+
         if (self.isMC) and (not passGenSel) and (not passRecoSel['_nom']): 
             #print (passRecoSel[sys])
             return False
@@ -450,6 +464,10 @@ class nSubProd(Module):
                     tmpGenJets[0] = self.createNsubBasis( selGenJets[0], event, 'GenCands', True )
                     tmpGenJets[1] = self.createNsubBasis( selGenJets[1], event, 'GenCands', True )
 
+                    if self.FlagBadPFCands==True:
+                        print ("Found an event with bad PF Cands in gen will not retain this event")
+                        return False
+
                     if abs(tmpGenJets[0]['jet'].rapidity) > abs(tmpGenJets[1]['jet'].rapidity):
                         genJet['Jet'] = tmpGenJets[1]#self.createNsubBasis( selGenJets[1], event, 'GenCands', True )
                     else: genJet['Jet'] = tmpGenJets[0]#self.createNsubBasis( selGenJets[0], event, 'GenCands', True  )
@@ -466,6 +484,29 @@ class nSubProd(Module):
                 tmpRecoJets[sys]={}
                 tmpRecoJets[sys][0] = self.createNsubBasis( selRecoJets[sys][0], event, 'PFCands' )
                 tmpRecoJets[sys][1] = self.createNsubBasis( selRecoJets[sys][1], event, 'PFCands' )
+                if self.FlagBadPFCands==True:
+                    print ("Found an event with bad PF Cands in gen, will not retain this event")
+                    return False
+
+
+
+
+                #######################Testing block for pad pfnanos will remove#####################
+                # prevent events with negative mass pfcands in the branches from 
+                # being considered in the jets passing our selection to see if the differences are massive
+
+                if passGenSel:
+                    tmpGenJets={}
+                    tmpGenJets[0] = self.createNsubBasis( selGenJets[0], event, 'GenCands', True )
+                    tmpGenJets[1] = self.createNsubBasis( selGenJets[1], event, 'GenCands', True )
+                    if self.FlagBadPFCands==True:
+                        print ("Found an event with bad PF Cands in gen will not retain this event")
+                        return False
+                #######################Testing block for pad pfnanos will remove#####################
+
+
+
+
 
                 if abs(tmpRecoJets[sys][0]['jet'].rapidity) > abs(tmpRecoJets[sys][1]['jet'].rapidity):
                     recoJet['Jet'] = tmpRecoJets[sys][1]#self.createNsubBasis( selRecoJets[sys][1], event, 'PFCands' )
@@ -894,7 +935,7 @@ class nSubProd(Module):
         if not len(genJetsAK8)==0:
             for ijets in genJetsAK8: 
                 ijets.rapidity = ijets.p4().Rapidity()
-                
+                ijets.msoftdrop = self.getGenJetAK8softdropmass( AK8jet=ijets, event=event, PFCollection='GenCands', isGen=True)
         genAK8jets = [ x for x in genJetsAK8 if x.pt > self.minLeadAK8JetPtDijet and abs(x.rapidity) < self.maxLeadAK8JetRap]#maxJetAK8Eta 
         genAK8jets.sort(key=lambda x:x.pt,reverse=True)
         ##################################################
@@ -927,6 +968,7 @@ class nSubProd(Module):
                 getattr( self, 'AK8genjets_y_noSel' ).Fill( ijet.rapidity, weight )
                 getattr( self, 'AK8genjets_phi_noSel' ).Fill( ijet.phi, weight )
                 getattr( self, 'AK8genjets_mass_noSel' ).Fill( ijet.mass, weight )
+                if not self.FlagBadPFCands: getattr( self, 'AK8genjets_msoftdrop_noSel' ).Fill( ijet.msoftdrop, weight )
 
             if not len(genAK8jets)==0:
                 getattr( self, 'LeadingPtAK8genjet_pt_noSel' ).Fill( genAK8jets[0].pt, weight )
@@ -934,12 +976,14 @@ class nSubProd(Module):
                 getattr( self, 'LeadingPtAK8genjet_y_noSel' ).Fill( genAK8jets[0].rapidity, weight )
                 getattr( self, 'LeadingPtAK8genjet_phi_noSel' ).Fill( genAK8jets[0].phi, weight )
                 getattr( self, 'LeadingPtAK8genjet_mass_noSel' ).Fill( genAK8jets[0].mass, weight )
+                if not self.FlagBadPFCands: getattr( self, 'LeadingPtAK8genjet_msoftdrop_noSel' ).Fill( genAK8jets[0].msoftdrop, weight )
                 if len(genAK8jets)>1:
                     getattr( self, 'SubleadingPtAK8genjet_pt_noSel' ).Fill( genAK8jets[1].pt, weight )
                     getattr( self, 'SubleadingPtAK8genjet_eta_noSel' ).Fill( genAK8jets[1].eta, weight )
                     getattr( self, 'SubleadingPtAK8genjet_y_noSel' ).Fill( genAK8jets[1].rapidity , weight )
                     getattr( self, 'SubleadingPtAK8genjet_phi_noSel' ).Fill( genAK8jets[1].phi , weight )
                     getattr( self, 'SubleadingPtAK8genjet_mass_noSel' ).Fill( genAK8jets[1].mass, weight )
+                    if not self.FlagBadPFCands: getattr( self, 'SubleadingPtAK8genjet_msoftdrop_noSel' ).Fill( genAK8jets[1].msoftdrop, weight )
 
                     if abs(genAK8jets[0].rapidity)<abs(genAK8jets[1].rapidity):
                         getattr( self, 'CentralAK8genjet_pt_noSel' ).Fill( genAK8jets[0].pt, weight )
@@ -947,24 +991,28 @@ class nSubProd(Module):
                         getattr( self, 'CentralAK8genjet_y_noSel' ).Fill( genAK8jets[0].rapidity, weight )
                         getattr( self, 'CentralAK8genjet_phi_noSel' ).Fill( genAK8jets[0].phi, weight )
                         getattr( self, 'CentralAK8genjet_mass_noSel' ).Fill( genAK8jets[0].mass, weight )
+                        if not self.FlagBadPFCands: getattr( self, 'CentralAK8genjet_msoftdrop_noSel' ).Fill( genAK8jets[0].msoftdrop, weight )
 
                         getattr( self, 'ForwardAK8genjet_pt_noSel' ).Fill( genAK8jets[1].pt, weight )
                         getattr( self, 'ForwardAK8genjet_eta_noSel' ).Fill( genAK8jets[1].eta, weight )
                         getattr( self, 'ForwardAK8genjet_y_noSel' ).Fill( genAK8jets[1].rapidity, weight )
                         getattr( self, 'ForwardAK8genjet_phi_noSel' ).Fill( genAK8jets[1].phi, weight )
                         getattr( self, 'ForwardAK8genjet_mass_noSel' ).Fill( genAK8jets[1].mass, weight )
+                        getattr( self, 'ForwardAK8genjet_msoftdrop_noSel' ).Fill( genAK8jets[1].msoftdrop, weight )
                     else: 
                         getattr( self, 'CentralAK8genjet_pt_noSel' ).Fill( genAK8jets[1].pt, weight )
                         getattr( self, 'CentralAK8genjet_eta_noSel' ).Fill( genAK8jets[1].eta, weight )
                         getattr( self, 'CentralAK8genjet_y_noSel' ).Fill( genAK8jets[1].rapidity, weight )
                         getattr( self, 'CentralAK8genjet_phi_noSel' ).Fill( genAK8jets[1].phi, weight )
                         getattr( self, 'CentralAK8genjet_mass_noSel' ).Fill( genAK8jets[1].mass, weight )
+                        if not self.FlagBadPFCands: getattr( self, 'CentralAK8genjet_msoftdrop_noSel' ).Fill( genAK8jets[1].msoftdrop, weight )
 
                         getattr( self, 'ForwardAK8genjet_pt_noSel' ).Fill( genAK8jets[0].pt, weight )
                         getattr( self, 'ForwardAK8genjet_eta_noSel' ).Fill( genAK8jets[0].eta, weight )
                         getattr( self, 'ForwardAK8genjet_y_noSel' ).Fill( genAK8jets[0].rapidity, weight )
                         getattr( self, 'ForwardAK8genjet_phi_noSel' ).Fill( genAK8jets[0].phi, weight )
                         getattr( self, 'ForwardAK8genjet_mass_noSel' ).Fill( genAK8jets[0].mass, weight )
+                        if not self.FlagBadPFCands: getattr( self, 'ForwardAK8genjet_msoftdrop_noSel' ).Fill( genAK8jets[0].msoftdrop, weight )
 
             getattr( self, 'genPtAsym_noSel' ).Fill( ptAsym, weight )
             getattr( self, 'genDeltaPhi_noSel' ).Fill( deltaPhi, weight )
@@ -993,6 +1041,7 @@ class nSubProd(Module):
                     getattr( self, 'AK8genjets_y'+iSel ).Fill( ijet.rapidity, weight )
                     getattr( self, 'AK8genjets_phi'+iSel ).Fill( ijet.phi, weight )
                     getattr( self, 'AK8genjets_mass'+iSel ).Fill( ijet.mass, weight )
+                    if not self.FlagBadPFCands: getattr( self, 'AK8genjets_msoftdrop'+iSel ).Fill( ijet.msoftdrop, weight )
                 
                 #if not len(genAK8jets)==0:
                 getattr( self, 'LeadingPtAK8genjet_pt'+iSel ).Fill( genAK8jets[0].pt, weight )
@@ -1000,12 +1049,14 @@ class nSubProd(Module):
                 getattr( self, 'LeadingPtAK8genjet_y'+iSel ).Fill( genAK8jets[0].rapidity, weight )
                 getattr( self, 'LeadingPtAK8genjet_phi'+iSel ).Fill( genAK8jets[0].phi, weight )
                 getattr( self, 'LeadingPtAK8genjet_mass'+iSel ).Fill( genAK8jets[0].mass, weight )
+                if not self.FlagBadPFCands: getattr( self, 'LeadingPtAK8genjet_msoftdrop'+iSel ).Fill( genAK8jets[0].msoftdrop, weight )
 
                 getattr( self, 'SubleadingPtAK8genjet_pt'+iSel ).Fill( genAK8jets[1].pt, weight )
                 getattr( self, 'SubleadingPtAK8genjet_eta'+iSel ).Fill( genAK8jets[1].eta, weight )
                 getattr( self, 'SubleadingPtAK8genjet_y'+iSel ).Fill( genAK8jets[1].rapidity , weight )
                 getattr( self, 'SubleadingPtAK8genjet_phi'+iSel ).Fill( genAK8jets[1].phi , weight )
                 getattr( self, 'SubleadingPtAK8genjet_mass'+iSel ).Fill( genAK8jets[1].mass, weight )
+                if not self.FlagBadPFCands: getattr( self, 'SubleadingPtAK8genjet_msoftdrop'+iSel ).Fill( genAK8jets[1].msoftdrop, weight )
 
                 if abs(genAK8jets[0].rapidity)<abs(genAK8jets[1].rapidity):
                     getattr( self, 'CentralAK8genjet_pt'+iSel ).Fill( genAK8jets[0].pt, weight )
@@ -1013,24 +1064,28 @@ class nSubProd(Module):
                     getattr( self, 'CentralAK8genjet_y'+iSel ).Fill( genAK8jets[0].rapidity, weight )
                     getattr( self, 'CentralAK8genjet_phi'+iSel ).Fill( genAK8jets[0].phi, weight )
                     getattr( self, 'CentralAK8genjet_mass'+iSel ).Fill( genAK8jets[0].mass, weight )
+                    if not self.FlagBadPFCands: getattr( self, 'CentralAK8genjet_msoftdrop'+iSel ).Fill( genAK8jets[0].msoftdrop, weight )
 
                     getattr( self, 'ForwardAK8genjet_pt'+iSel ).Fill( genAK8jets[1].pt, weight )
                     getattr( self, 'ForwardAK8genjet_eta'+iSel ).Fill( genAK8jets[1].eta, weight )
                     getattr( self, 'ForwardAK8genjet_y'+iSel ).Fill( genAK8jets[1].rapidity, weight )
                     getattr( self, 'ForwardAK8genjet_phi'+iSel ).Fill( genAK8jets[1].phi, weight )
                     getattr( self, 'ForwardAK8genjet_mass'+iSel ).Fill( genAK8jets[1].mass, weight )
+                    if not self.FlagBadPFCands: getattr( self, 'ForwardAK8genjet_msoftdrop'+iSel ).Fill( genAK8jets[1].msoftdrop, weight )
                 else: 
                     getattr( self, 'CentralAK8genjet_pt'+iSel ).Fill( genAK8jets[1].pt, weight )
                     getattr( self, 'CentralAK8genjet_eta'+iSel ).Fill( genAK8jets[1].eta, weight )
                     getattr( self, 'CentralAK8genjet_y'+iSel ).Fill( genAK8jets[1].rapidity, weight )
                     getattr( self, 'CentralAK8genjet_phi'+iSel ).Fill( genAK8jets[1].phi, weight )
                     getattr( self, 'CentralAK8genjet_mass'+iSel ).Fill( genAK8jets[1].mass, weight )
+                    if not self.FlagBadPFCands: getattr( self, 'CentralAK8genjet_msoftdrop'+iSel ).Fill( genAK8jets[1].msoftdrop, weight )
 
                     getattr( self, 'ForwardAK8genjet_pt'+iSel ).Fill( genAK8jets[0].pt, weight )
                     getattr( self, 'ForwardAK8genjet_eta'+iSel ).Fill( genAK8jets[0].eta, weight )
                     getattr( self, 'ForwardAK8genjet_y'+iSel ).Fill( genAK8jets[0].rapidity, weight )
                     getattr( self, 'ForwardAK8genjet_phi'+iSel ).Fill( genAK8jets[0].phi, weight )
                     getattr( self, 'ForwardAK8genjet_mass'+iSel ).Fill( genAK8jets[0].mass, weight )
+                    if not self.FlagBadPFCands: getattr( self, 'ForwardAK8genjet_msoftdrop'+iSel ).Fill( genAK8jets[0].msoftdrop, weight )
 
                 getattr( self, 'genPtAsym'+iSel ).Fill( ptAsym, weight )
                 getattr( self, 'genDeltaPhi'+iSel ).Fill( deltaPhi, weight )
@@ -1093,6 +1148,7 @@ class nSubProd(Module):
         CandsPUPPIweightedVec = ROOT.vector("TLorentzVector")()
 
         for p in pfCands :
+            if p.p4().M()<0.: self.FlagBadPFCands=True
             tp = ROOT.TLorentzVector(p.p4().Px(), p.p4().Py(), p.p4().Pz(), p.p4().E())
             tp = tp * p.puppiWeight if not isGen else tp
             #except RuntimeError: tp = tp    ### for genjets
@@ -1128,11 +1184,11 @@ class nSubProd(Module):
             ak8jet['1'+str(tauN+1)] = nsub1[tauN]
             ak8jet['2'+str(tauN+1)] = nsub2[tauN]
 
-        if isGen: #to add in softdrop mass as a variable to the selected (accep)gen jet branches
-            sd_AK8jets = self.sd.result( constituents)
-            if len(sd_AK8jets)>0: #stupidly, in some rare cases, this will not be true (with ptmin>=170) leading to errors, hence the else (and also switching to ptmin=0.)
-                ak8jet['msoftdrop'] = sd_AK8jets[0].m()
-            else: ak8jet['msoftdrop'] = -1. 
+        #if isGen: #to add in softdrop mass as a variable to the selected (accep)gen jet branches
+        #    sd_AK8jets = self.sd.result( constituents)
+        #    if len(sd_AK8jets)>0: #stupidly, in some rare cases, this will not be true (with ptmin>=170) leading to errors, hence the else (and also switching to ptmin=0.)
+        #        ak8jet['msoftdrop'] = sd_AK8jets[0].m()
+        #    else: ak8jet['msoftdrop'] = -1. 
         '''
         #### Computing Softdrop jets
         if self.runSDVariables:
@@ -1174,6 +1230,40 @@ class nSubProd(Module):
                 ak8jet['sd2'+str(tauN+1)] = -1
         '''
         return ak8jet
+
+    #############################################################################
+    def getGenJetAK8softdropmass(self, AK8jet, event, PFCollection, isGen=True ): 
+        '''for gen, in this use case, but generically useful for reco if needed; uses same inputs as createNsubBasis function below'''
+        pfCands = list(Collection(event, PFCollection ))
+        ak8jet = {}          ### Storing good jet as list for later use
+
+        ##### Computing quantities
+        ak8jet['jet'] = AK8jet
+
+        #### Applying PUPPI weights to the PF candidates for reco and not for gen and pushing back constituents
+        constituents = ROOT.vector("TLorentzVector")()
+        CandsPUPPIweightedVec = ROOT.vector("TLorentzVector")()
+
+        for p in pfCands :
+            if p.p4().M()<0.: self.FlagBadPFCands=True
+            tp = ROOT.TLorentzVector(p.p4().Px(), p.p4().Py(), p.p4().Pz(), p.p4().E())
+            tp = tp * p.puppiWeight if not isGen else tp
+            #except RuntimeError: tp = tp    ### for genjets
+            CandsPUPPIweightedVec.push_back(tp)
+
+        #### Storing only the PF candidates that are close to the leadAK8jet (constituents)
+        #print ("pushing back candidates")
+        for x in CandsPUPPIweightedVec:
+            if self.DrRapPhi( AK8jet.p4(), x ) < 0.8: constituents.push_back(x)
+        #print ("pushed back candidates")
+
+        if isGen: #to add in softdrop mass as a variable to the selected (accep)gen jet branches
+            sd_AK8jets = self.sd.result( constituents)
+            if len(sd_AK8jets)>0: #stupidly, in some rare cases, this will not be true (with ptmin>=170) leading to errors, hence, switching to ptmin=0 in function calls (but, since not sure this is error, free I use this if-else block)
+                ak8jet['msoftdrop'] = sd_AK8jets[0].m()
+            else: ak8jet['msoftdrop'] = -1. 
+        return ak8jet['msoftdrop']
+
 
     #############################################################################
     def fillBranches( self, event, jetLabel, jetInfo, dummy=False, sys='_nom' ): 

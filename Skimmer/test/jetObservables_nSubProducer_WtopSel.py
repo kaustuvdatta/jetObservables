@@ -12,7 +12,7 @@ from PhysicsTools.NanoAODTools.postprocessing.framework.eventloop import Module
 
 #this takes care of converting the input files from CRAB
 from PhysicsTools.NanoAODTools.postprocessing.framework.crabhelper import inputFiles,runsAndLumis
-from PhysicsTools.NanoAODTools.postprocessing.modules.btv.btagSFProducer import btagSF2016, btagSF2017, btagSF2018, btagSF_UL2016, btagSF_UL2017, btagSF_UL2018
+from PhysicsTools.NanoAODTools.postprocessing.modules.btv.btagSFProducer import btagSF_UL2016, btagSF_UL2016_preVFP, btagSF_UL2017, btagSF_UL2018
 from PhysicsTools.NanoAODTools.postprocessing.modules.common.puWeightProducer import puWeightProducer, puAutoWeight_UL2016, puAutoWeight_UL2017, puAutoWeight_UL2018
 from PhysicsTools.NanoAODTools.postprocessing.modules.jme.jetmetHelperRun2 import *
 
@@ -88,6 +88,12 @@ parser.add_argument(
     #default='',
     help="Save branches with sys+puWeights for signal/main MC else store basic reco/gen branches"
 )
+parser.add_argument(
+    '--isBkgMC',
+    action="store_true",
+    #default='',
+    help="Save branches with for only nominal values and weights if this flag is turned on"
+)
 
 args = parser.parse_args(sys.argv[1:])
 if args.sample.startswith(('/EGamma', '/Single', 'EGamma', 'Single', 'UL16_Single', '/UL16_Single', 'UL17_Single', '/UL17_Single', 'UL18_Single', '/UL18_Single', '/JetHT', 'JetHT', '/UL17_Jet', 'UL17_Jet' )) or ('EGamma' in args.iFile or 'SingleMuon' in args.iFile or ('JetHT' in args.iFile)):
@@ -103,7 +109,7 @@ if not '2016' in args.year: METFilters = "( (Flag_goodVertices==1) && (Flag_glob
 else: METFilters = "( (Flag_goodVertices==1) && (Flag_globalSuperTightHalo2016Filter==1) && (Flag_HBHENoiseFilter==1) && (Flag_HBHENoiseIsoFilter==1) && (Flag_EcalDeadCellTriggerPrimitiveFilter==1) && (Flag_BadPFMuonFilter==1)  )"
 if not isMC: METFilters = METFilters + "&& (Flag_eeBadScFilter==1)"
 
-Triggers = "((HLT_Mu50==1) || (HLT_TkMu50==1))" if '2016' in args.year else "((HLT_Mu50==1) || (HLT_TkMu100==1) || (HLT_TkMu50==1))"
+Triggers = "((HLT_Mu50==1) || (HLT_TkMu50==1))" if '2016' in args.year else "((HLT_Mu50==1) || (HLT_TkMu100==1))" # (HLT_TkMu50 and HLT_Mu100 not present in 2017/18)"
 
 cuts = PV + " && " + METFilters + " && " + Triggers
 
@@ -200,13 +206,14 @@ if isMC:
         #print "###Running with btag SF calc.###"
         modulesToRun.append( btagSF_UL2017() )
     elif '2016' in args.year:
-        modulesToRun.append( puAutoWeight_2016() )
+        modulesToRun.append( puAutoWeight_UL2016() )
         print "Running with btag SF calc."
-        modulesToRun.append( btagSF_UL2016() )
-    
+        if not('preVFP' in args.year): modulesToRun.append( btagSF_UL2016() )
+        else: modulesToRun.append( btagSF_UL2016_preVFP() )
+
 # our module
 from jetObservables.Skimmer.nSubProducer_WtopSel_RunIISummer20UL_CustomTrees import nSubProd #_invertedDeltaRWb, #_noDeltaRWb, #try all with >1 and >=1 btags.
-modulesToRun.append( nSubProd( sysSource=systSources, leptonSF=LeptonSF[args.year], isMC=isMC, onlyUnc=args.onlyUnc, onlyTrees=False, evtSelection=args.selection, isSigMC=True if args.isSigMC else False    )  )#args.onlyTrees
+modulesToRun.append( nSubProd( sysSource=systSources, leptonSF=LeptonSF[args.year], isMC=isMC, onlyUnc=args.onlyUnc, onlyTrees=False, evtSelection=args.selection, isSigMC=True if args.isSigMC and (not args.isBkgMC) else False    )  )#args.onlyTrees
 
 
 #### Make it run
@@ -221,12 +228,11 @@ p1=PostProcessor(
     prefetch     = args.local,
     longTermCache= args.local,
     fwkJobReport = True,
-    haddFileName = "jetObservables_"+args.selection+args.year+args.onlyUnc+("sigMC" if args.isSigMC else "")+"_newSel_nanoskim.root" if args.local else 'jetObservables_nanoskim.root',
-    histFileName = "jetObservables_"+args.selection+args.year+args.onlyUnc+("sigMC" if args.isSigMC else "")+"_newSel_histograms.root" if args.local else 'jetObservables_histograms.root',
+    haddFileName = "jetObservables_"+args.selection+args.year+args.onlyUnc+("sigMC" if args.isSigMC else "")+("bkgMC" if args.isBkgMC else "")+"_nanoskim.root" if args.local else 'jetObservables_nanoskim.root',
+    histFileName = "jetObservables_"+args.selection+args.year+args.onlyUnc+("sigMC" if args.isSigMC else "")+("bkgMC" if args.isBkgMC else "")+"_histograms.root" if args.local else 'jetObservables_histograms.root',
     histDirName  = 'jetObservables',
 )
 
 
 p1.run()
 print "DONE"
-#if not args.local: os.system("ls -lR")
