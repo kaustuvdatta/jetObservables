@@ -7,12 +7,22 @@ drop *
 #keep GenJetAK8*
 #keep GenPartAK8*
 #keep GenMET*
-#keep GenPart*
 #keep HLT_Mu*
 #keep HLT_PFHT*
-#keep HLT_*AK8PF*
-#keep Jet*
-#keep PFCandsAK8*
+
+keep GenCand*
+#keep GenPart*
+keep HLT_AK8PFJet80
+keep HLT_AK8PFJet140
+keep HLT_AK8PFJet200
+keep HLT_AK8PFJet260
+keep HLT_AK8PFJet320
+keep HLT_AK8PFJet400
+keep HLT_AK8PFJet450
+keep HLT_AK8PFJet500
+keep HLT_AK8PFJet550
+keep PFCands*
+
 #keep LHE*eight*
 #keep Muon*
 #keep MET*
@@ -22,6 +32,7 @@ drop *
 #keep btagWeight*
 #keep genWeight*
 #keep triggerWeight*
+
 keep luminosity*
 keep run*
 keep event*
@@ -39,3 +50,5 @@ keep accepgenSel*
 keep recoSel*
 keep truerecoSel*
 keep good_*
+keep passHLT*
+keep l1prefiring*

@@ -521,7 +521,6 @@ def get_syst_shifted_hist(syst_shift, unfolded=None):
     """Get histogram with systematic shift applied to bin contents
     Can specify starting hist, otherwise assumes unfolded w/no error
     """
-    # TODO: syst_label -> ExpSystematic obj
     hist_shift = syst_shift.Clone(syst_shift.GetTitle()+'_shiftedbyNom')
     hist_shift.Add(unfolded)  # TODO what about errors?
     return hist_shift
@@ -530,22 +529,20 @@ def get_syst_error_hist(syst_shift, unfolded=None):
     """Get histogram with systematic shift as error bars
     Can specify starting hist, otherwise assumes unfolded w/no error
     """
-    this_syst = self.get_exp_syst(syst_label)
-    if this_syst.syst_error_bar is None:
-        ref = unfolded or self.get_unfolded_with_no_errors()
-        new_hist = self.convert_error_shift_to_error_bars(ref, self.get_syst_shift(syst_label))
-        this_syst.syst_error_bar = new_hist
-    return this_syst.syst_error_bar
+    syst_label = syst_shift.GetTitle()+#self.get_exp_syst(syst_label)
+    histOut = convert_error_shift_to_error_bars(unfolded.Clone(), syst_shift)
+    
+    return histOut
 
 
 def convert_error_bars_to_error_shift(h):
-        """Create histogram with bin contents equal to error bar on h,
-        and 0 error bars"""
-        h_new = h.Clone(get_unique_str())
-        for i in range(1, h.GetNbinsX()+1):
-            h_new.SetBinContent(i, h.GetBinError(i))
-            h_new.SetBinError(i, 0)
-        return h_new
+    """Create histogram with bin contents equal to error bar on h,
+    and 0 error bars"""
+    h_new = h.Clone(get_unique_str())
+    for i in range(1, h.GetNbinsX()+1):
+        h_new.SetBinContent(i, h.GetBinError(i))
+        h_new.SetBinError(i, 0)
+    return h_new
 
 
 def convert_error_shift_to_error_bars(h_nominal, h_shift):

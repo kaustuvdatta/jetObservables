@@ -59,35 +59,27 @@ def runTUnfold(
     
     colors = [ 2, 4,  9, 8, 28, 30, 42, 13, 12, 40, 46, 3, 24, 26, 41, 45, 48, 49, 37, 38, 33, 17]
 
-    if mainMC.startswith('MLM_HTbin'):
-        signalLabelBegin = 'MLMQCD_HT'
-        signalLabel = 'MLMQCD_HT2000toInf'
-
+    if mainMC.startswith('Ptbin'):
+        signalLabelBegin = 'QCD_Pt_'
+        signalLabel = 'QCD_Pt_3200toInf'
     elif mainMC.startswith('HTbin'):
         signalLabelBegin = 'QCD_HT'
         signalLabel = 'QCD_HT2000toInf'
-
-    elif mainMC.startswith('H7MLM_HTbin'):
-        signalLabelBegin = 'H7MLMQCD_HT'
-        signalLabel = 'H7MLMQCD_HT2000toInf'
-
-    if altMC.startswith('MLM_HTbin'):
-        altSignalLabelBegin = 'MLMQCD_HT'
-        altSignalLabel = 'MLMQCD_HT2000toInf'
-    
+    elif mainMC.startswith('herwig'):
+        signalLabelBegin = 'QCD_Pt-'
+        signalLabel = 'QCD_Pt-150to3000'
+        
+    if altMC.startswith('Ptbin'):
+        altSignalLabelBegin = 'QCD_Pt_'
+        altSignalLabel = 'QCD_Pt_3200toInf'
     elif altMC.startswith('HTbin'):
         altSignalLabelBegin = 'QCD_HT'
         altSignalLabel = 'QCD_HT2000toInf'
-    
-    elif altMC.startswith('H7MLM_HTbin'):
-        altSignalLabelBegin = 'H7MLMQCD_HT'
-        altSignalLabel = 'H7MLMQCD_HT2000toInf'
+    elif altMC.startswith('herwig'):
+        altSignalLabelBegin = 'QCD_Pt-'
+        altSignalLabel = 'QCD_Pt150to3000'
         #altSignalLabel = 'QCD_Pt-15to7000'
-    
-    
-    print ("Labels:", signalLabelBegin,altSignalLabelBegin)
-    
-    
+
     sysSignalLabelBegin = 'sysQCD_' 
     selection=sel
     
@@ -129,7 +121,7 @@ def runTUnfold(
             signalHistos[ signalLabel+'_fakereco'+ivar+'_nom'+sel ].Add( dataFile[ivar+'_2018'].Get(signalLabel+'_fakereco'+ivar+'_nom'+sel) )
             signalHistos[ signalLabel+'_accepgen'+ivar+'_nom'+sel ].Add( dataFile[ivar+'_2018'].Get(signalLabel+'_accepgen'+ivar+'_nom'+sel) )
             signalHistos[ signalLabel+'_reco'+ivar+'_nom'+sel+'_genBin' ].Add( dataFile[ivar+'_2018'].Get(signalLabel+'_reco'+ivar+'_nom'+sel+'_genBin') )            
-            if not process.startswith('MCSelfClosure'):
+            if not process.startswith('MC'):
                 sysSignalHistos={}
 
                 print ("Loading up all syst. variations from the following:", sysUncert)
@@ -149,11 +141,8 @@ def runTUnfold(
                             else:
                                 s=[s[0]]
                             #print (s[0]+'_reco'+ivar+sys+upDown+sel)
-                        elif len(s)==1:
-                            s=[s[0]]
-                            #print (s[0]+'_reco'+ivar+sys+upDown+sel)
+                        else:
                             
-                        else:                            
                             continue
                             
                             

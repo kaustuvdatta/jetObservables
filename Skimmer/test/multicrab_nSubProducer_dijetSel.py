@@ -4,7 +4,7 @@ This is a small script that submits a config over many datasets
 """
 import os
 from optparse import OptionParser
-from datasets_dijetSel_RunIISummer20UL import dictSamples, checkDict
+from datasets_dijetSel_RunIISummer20UL_allMC_nomWts import dictSamples, checkDict #datasets_dijetSel_RunIISummer20UL_allMC_nomWts
 
 def make_list(option, opt, value, parser):
     setattr(parser.values, option.dest, value.split(','))
@@ -37,8 +37,8 @@ mv python $CMSSW_BASE/python
 
 echo Found Proxy in: $X509_USER_PROXY
 '''
-    open('runPostProc'+options.datasets+options.onlyUnc+'_'+options.year+'.sh', 'w').write(BASH_SCRIPT)
-    with open('runPostProc'+options.datasets+options.onlyUnc+'_'+options.year+'.sh', 'a') as txtfile:
+    open('runPostProc'+options.datasets+options.onlyUnc+'_'+options.year+("_isSigMC" if options.isSigMC else "" )+'.sh', 'w').write(BASH_SCRIPT)
+    with open('runPostProc'+options.datasets+options.onlyUnc+'_'+options.year+("_isSigMC" if options.isSigMC else "" )+'.sh', 'a') as txtfile:
         cmd = "python "+options.pythonFile+" --sample "+options.datasets+" --selection "+options.selection+" --year "+options.year+" --runEra "+options.runEra+(" --onlyUnc "+options.onlyUnc if options.onlyUnc else "" )+(" --onlyTrees" if options.onlyTrees else "" )+(" --isSigMC" if options.isSigMC else "" )+'\nls\nfi'
         txtfile.write(cmd)
 
@@ -61,9 +61,10 @@ def submitJobs( job, inputFiles, unitJobs ):
     config.section_("JobType")
     config.JobType.pluginName = 'Analysis'
     config.JobType.psetName = 'PSet.py'
-    config.JobType.maxMemoryMB = 4000 if (options.onlyUnc and options.onlyUnc.startswith('_je')) else 2500
-    if (options.onlyUnc and options.onlyUnc.startswith('_je')): config.JobType.maxJobRuntimeMin = 600
-    config.JobType.numCores = 2
+    config.JobType.maxMemoryMB = 6000 #if (options.onlyUnc and options.onlyUnc.startswith('_je')) else 2500
+    #if (options.onlyUnc and options.onlyUnc.startswith('_je')): 
+    config.JobType.maxJobRuntimeMin = 1200 if (options.onlyUnc and options.onlyUnc.startswith('_jes')) else 600
+    config.JobType.numCores = 4
     config.JobType.allowUndistributedCMSSW = True
 
     config.section_("Data")
@@ -72,7 +73,7 @@ def submitJobs( job, inputFiles, unitJobs ):
 
     config.section_("Site")
     config.Site.storageSite = options.storageSite
-    config.Site.whitelist = ['T2_CH_CSCS','T2_CH_CERN']#,'T2_DE_*','T1_IT_*','T1_FR_*','T2_IT_*','T2_FR_*']#,'T2_HU_*','T1_ES_*','T2_ES_*','T2_PT_*','T1_US_*']
+    config.Site.whitelist = ['T2_CH_CSCS','T2_CH_CERN','T1_IT_*','T1_FR_*','T2_IT_*','T2_FR_*'] #,'T2_DE_*','T1_IT_*','T1_FR_*','T2_IT_*','T2_FR_*']#,'T2_HU_*','T1_ES_*','T2_ES_*','T2_PT_*','T1_US_*']
 
 
     def submit(config):
@@ -83,7 +84,7 @@ def submitJobs( job, inputFiles, unitJobs ):
             print hte.headers
 
 
-    config.JobType.scriptExe = 'runPostProc'+options.datasets+options.onlyUnc+'_'+options.year+'.sh'
+    config.JobType.scriptExe = 'runPostProc'+options.datasets+options.onlyUnc+'_'+options.year+("_isSigMC" if options.isSigMC else "" )+'.sh'
     config.JobType.inputFiles = [ options.pythonFile ,'haddnano.py', 'keep_and_drop_dijet.txt']#, 'keep_and_drop.txt']
     #if (options.onlyUnc and options.onlyUnc.startswith('_jes')): config.JobType.maxJobRuntimeMin = 2000 
     config.JobType.sendPythonFolder  = True
@@ -98,8 +99,9 @@ def submitJobs( job, inputFiles, unitJobs ):
             config.Data.lumiMask = '/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions18/13TeV/Legacy_2018/Cert_314472-325175_13TeV_Legacy2018_Collisions18_JSON.txt'
     config.Data.inputDataset = inputFiles
     
-    config.Data.splitting ='FileBased'#'LumiBased' if ( (('700to1000' in job) or ('1000to1500' in job) or ('2000' in job) or ('500to700' in job)) and options.onlyUnc.startswith('_je') and not ('JetHT' in job)) else 'FileBased'#'Automatic'
-    config.Data.unitsPerJob = 10 if config.Data.splitting=='LumiBased' else unitJobs#'Automatic'
+    config.Data.splitting ='LumiBased' if isDataFlag else 'FileBased'#( (('JetHT' in job) or ('1000to1500' in job) or ('2000' in job) or ('500to700' in job)) and options.onlyUnc.startswith('_je') and not ('JetHT' in job)) else 'FileBased'#'Automatic'
+    config.Data.unitsPerJob = 25 if config.Data.splitting=='LumiBased' else unitJobs#unitJobs#'Automatic'
+    if not(config.Data.splitting)=='LumiBased': config.Data.unitsPerJob = 1 if ('MLM' in job) else unitJobs
     #config.Data.totalUnits = -1
     #config.Data.splitting = 'FileBased'
     #config.Data.unitsPerJob = 2 if (options.onlyUnc and options.onlyUnc.startswith('_jes')) else unitJobs
@@ -108,7 +110,7 @@ def submitJobs( job, inputFiles, unitJobs ):
     config.JobType.outputFiles = [ 'jetObservables_nanoskim.root', 'jetObservables_histograms.root']
     config.Data.outLFNDirBase = '/store/user/'+os.environ['USER']+'/jetObservables/'
 
-    requestname = 'jetObs_Skim_'+ job.replace('_','').replace('-','').replace('PSWeights', '')+options.onlyUnc+'_'+options.year + '_' +options.version
+    requestname = 'jetObs_Skim_'+ job.replace('_','').replace('-','').replace('PSWeights', '')+options.onlyUnc+'_'+options.year+("_isSigMC" if options.isSigMC else "" )+ '_' +options.version
     print requestname
     
     
@@ -117,7 +119,7 @@ def submitJobs( job, inputFiles, unitJobs ):
 
     if os.path.isdir('crab_projects/crab_'+requestname):
         print '|-------> JOB '+requestname+' has already a folder. Please remove it.'
-        os.remove('runPostProc'+options.datasets+options.onlyUnc+'_'+options.year+'.sh')
+        os.remove('runPostProc'+options.datasets+options.onlyUnc+'_'+options.year+("_isSigMC" if options.isSigMC else "" )+'.sh')
         return False
 
     print 'requestname = ', requestname
@@ -130,7 +132,7 @@ def submitJobs( job, inputFiles, unitJobs ):
     submit(config)
     #try : submit(config)
     #except : print 'Not submitted.'
-    os.remove('runPostProc'+options.datasets+options.onlyUnc+'_'+options.year+'.sh')
+    os.remove('runPostProc'+options.datasets+options.onlyUnc+'_'+options.year+("_isSigMC" if options.isSigMC else "" )+'.sh')
 
 
 
@@ -216,7 +218,7 @@ if __name__ == '__main__':
                 if len(tmpList)>1:
                     for iext in range(1,len(tmpList)):
                         processingSamples[ sam+'EXT'+str(iext) ] = [ tmpList[iext], 1 ]
-
+                #options.runEra = '' 
     if len(processingSamples)==0: print 'No sample found. \n Have a nice day :)'
 
     for isam in processingSamples:

@@ -68,7 +68,7 @@ parser.add_argument(
     '--selection',
     action="store",
     help="Event selection",
-    choices=["dijet"],#, "Wtop"],
+    choices=["dijet"], #, "Wtop"],
     default="dijet",
     required=False
 )
@@ -100,15 +100,15 @@ else: isMC = True
 
 ### General selections:
 PV = "(PV_npvsGood>0)"
-if not '2016' in args.year: METFilters = "( (Flag_goodVertices==1) && (Flag_globalSuperTightHalo2016Filter==1) && (Flag_HBHENoiseFilter==1) && (Flag_HBHENoiseIsoFilter==1) && (Flag_EcalDeadCellTriggerPrimitiveFilter==1) && (Flag_BadPFMuonFilter==1) && (Flag_BadPFMuonDzFilter==1) )"
+if not('2016' in args.year): METFilters = "( (Flag_goodVertices==1) && (Flag_globalSuperTightHalo2016Filter==1) && (Flag_HBHENoiseFilter==1) && (Flag_HBHENoiseIsoFilter==1) && (Flag_EcalDeadCellTriggerPrimitiveFilter==1) && (Flag_BadPFMuonFilter==1) && (Flag_BadPFMuonDzFilter==1) )"
 else: METFilters = "( (Flag_goodVertices==1) && (Flag_globalSuperTightHalo2016Filter==1) && (Flag_HBHENoiseFilter==1) && (Flag_HBHENoiseIsoFilter==1) && (Flag_EcalDeadCellTriggerPrimitiveFilter==1) && (Flag_BadPFMuonFilter==1)  )"
 
 if not isMC: METFilters = METFilters + ' && (Flag_eeBadScFilter==1)'
 
-#if not '2016' in args.year: 
-#else: Triggers = '( (HLT_AK8PFJet80==1) || (HLT_AK8PFJet140==1) || (HLT_AK8PFJet200==1) || (HLT_AK8PFJet260==1) || (HLT_AK8PFJet320==1) || (HLT_AK8PFJet400==1) || (HLT_AK8PFJet450==1) || (HLT_AK8PFJet500==1) )'
-
-Triggers =  '( (HLT_AK8PFJet80==1) || (HLT_AK8PFJet140==1) || (HLT_AK8PFJet200==1) || (HLT_AK8PFJet260==1) || (HLT_AK8PFJet320==1) || (HLT_AK8PFJet400==1) || (HLT_AK8PFJet450==1) || (HLT_AK8PFJet500==1) )' # ' || (HLT_AK8PFJet550==1) )' 
+if not('2016' in args.year): 
+    Triggers =  '( (HLT_AK8PFJet80==1) || (HLT_AK8PFJet140==1) || (HLT_AK8PFJet200==1) || (HLT_AK8PFJet260==1) || (HLT_AK8PFJet320==1) || (HLT_AK8PFJet400==1) || (HLT_AK8PFJet450==1) || (HLT_AK8PFJet500==1 ) || (HLT_AK8PFJet550==1) )' 
+else:
+    Triggers =  '( (HLT_AK8PFJet80==1) || (HLT_AK8PFJet140==1) || (HLT_AK8PFJet200==1) || (HLT_AK8PFJet260==1) || (HLT_AK8PFJet320==1) || (HLT_AK8PFJet400==1) || (HLT_AK8PFJet450==1) || (HLT_AK8PFJet500==1) )'
 
 cuts = PV + " && " + METFilters + " && " + Triggers
 
@@ -188,7 +188,7 @@ if isMC:
         
 # our module
 if args.selection.startswith('dijet'):
-    from jetObservables.Skimmer.nSubProducer_dijetSel_RunIISummer20UL_CustomTrees import nSubProd
+    from jetObservables.Skimmer.nSubProducer_dijetSel_fullRunII_Summer20UL import nSubProd
     modulesToRun.append( nSubProd( sysSource=systSources, isMC=isMC, year=args.year, onlyUnc=args.onlyUnc, onlyTrees=args.onlyTrees, isSigMC=True if args.isSigMC else False ) )
 
 #### Make it run
@@ -203,8 +203,8 @@ p1=PostProcessor(
         prefetch     = args.local,
         longTermCache= args.local,
         fwkJobReport = True,
-        haddFileName = "jetObservables_"+args.selection+args.year+args.onlyUnc+("sigMC" if args.isSigMC else "")+"_newSel_nanoskim.root" if args.local else 'jetObservables_nanoskim.root',
-        histFileName = "jetObservables_"+args.selection+args.year+args.onlyUnc+("sigMC" if args.isSigMC else "")+"_newSel_histograms.root" if args.local else 'jetObservables_histograms.root',
+        haddFileName = "jetObservables_"+args.selection+args.year+args.onlyUnc+("sigMC" if args.isSigMC else "")+("isMC" if isMC else "isData")+"_nanoskim.root" if args.local else 'jetObservables_nanoskim.root',
+        histFileName = "jetObservables_"+args.selection+args.year+args.onlyUnc+("sigMC" if args.isSigMC else "")+("isMC" if isMC else "isData")+"_histograms.root" if args.local else 'jetObservables_histograms.root',
         histDirName  = 'jetObservables',
         )
 p1.run()

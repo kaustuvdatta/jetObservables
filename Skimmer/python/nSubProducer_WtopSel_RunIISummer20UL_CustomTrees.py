@@ -176,7 +176,7 @@ class nSubProd(Module):
                         "_tau_2_4": [ 0., 0.5, 500  ],
                         "_tau_2_5": [ 0., 0.5, 500  ]
                 }
-        self.nSub0p5 = ROOT.NsubjettinessWrapper( 0.5, 0.8, 0, 0 ) #beta, cone size, measureDef 0=Normalize, axesDef 0=KT_axes
+        self.nSub0p5 = ROOT.NsubjettinessWrapper( 0.5, 0.8, 0, 0 ) #beta, cone size, measureDef 0=Normalize, axesDef 0=KT_axes, WTA_kT=3, OP_kT=6
         self.nSub1 = ROOT.NsubjettinessWrapper( 1, 0.8, 0, 0 )
         self.nSub2 = ROOT.NsubjettinessWrapper( 2, 0.8, 0, 0 )
         self.nSub1_OP_kT = ROOT.NsubjettinessWrapper( 1, 0.8, 0, 6 ) ##### needed for genjet tau21 or tau32, WTA_kT=3, OP_kT=6
@@ -463,16 +463,7 @@ class nSubProd(Module):
 
                     self.out.branch( 'leptonWeightRecoEffUp'+sys, "F" )
                     self.out.branch( 'leptonWeightRecoEffDown'+sys, "F" )
-                    '''
-                    self.out.branch( 'leptonSFISOUp'+sys, "F" )
-                    self.out.branch( 'leptonSFISODown'+sys, "F" )
-                    self.out.branch( 'leptonSFIDUp'+sys, "F" )
-                    self.out.branch( 'leptonSFIDDown'+sys, "F" )
-                    self.out.branch( 'leptonSFTrigUp'+sys, "F" )
-                    self.out.branch( 'leptonSFTrigDown'+sys, "F" )
-                    self.out.branch( 'leptonSFRecoEffUp'+sys, "F" )
-                    self.out.branch( 'leptonSFRecoEffDown'+sys, "F" )
-                    '''
+                   
             # since gen selection will always be unchanged we only store selGen objects for the nominal selection case
             # recojet kinematics may vary, due to systematics like jes/jer, so accepgen/true reco quantities may also vary, thus we store them separately for each sys
             # masks from weight branches required help to keep this consistent after skimming
@@ -1027,8 +1018,7 @@ class nSubProd(Module):
         
         if not len(AK8jets)==0:
             for ijets in AK8jets: 
-                ijets.rapidity = self.etaToRapidity(ijets)
-
+                ijets.rapidity = ijets.p4().Rapidity()#self.etaToRapidity(ijets)
         recoAK8jets = {}
         passSel = {}
         iSel = {}

@@ -1,3 +1,4 @@
+from collections import OrderedDict
 import copy
 import pprint 
 import ROOT
@@ -15,7 +16,7 @@ ROOT.gErrorIgnoreLevel = ROOT.kWarning
 ROOT.TH1.SetDefaultSumw2()
 ROOT.TH2.SetDefaultSumw2()
 from root_numpy import array2hist, hist2array
-import histoHelpers
+#import histoHelpers
 from histoHelpers import *
 import os
 import glob
@@ -116,7 +117,7 @@ def plotSysComparison( nomHisto, dictUncHistos, outputName, labelX='', log=False
         canUnc.SaveAs( outputDir + outputFileName.replace('pdf', 'png') )
     del canUnc
     
-def drawClosures(ivar, selection, process, year, genJetHisto, genJetHistoCross, unfoldHisto, unfoldHistoCross,
+def drawClosures(ivar, selection, process, year, lumi, genJetHisto, genJetHistoCross, unfoldHisto, unfoldHistoCross,
                  ratioUncHisto, ratiototUncHisto, ratiosystUncHisto, labelX, maxX, tlegendAlignment, outputName ):
     
     """docstring for drawUnfold"""
@@ -726,7 +727,7 @@ def makeJacobian(aTH1, aJac):
                 
                 
 
-def drawUnfold( ivar, selection, process, year, dataJetHisto, genJetHisto, unfoldHisto, unfoldHistowoUnc, altMCHisto,
+def drawUnfold( ivar, selection, process, year, lumi, dataJetHisto, genJetHisto, unfoldHisto, unfoldHistowoUnc, altMCHisto,
                foldHisto, recoJetHisto, cov_tot, cov_datastat_tot, labelX, maxX, tlegendAlignment, outputName ):
     """docstring for drawUnfold"""
     print ("Drawing unfolding")
@@ -747,7 +748,7 @@ def drawUnfold( ivar, selection, process, year, dataJetHisto, genJetHisto, unfol
     legend.SetTextSize(0.035)
     legend.SetBorderSize(0)
     
-    bins = variables[ivar]['bins']
+    #bins = variables[ivar]['bins']
 
     unfoldHistoTot = unfoldHisto.Clone()
     #print (unfoldHisto)
@@ -843,7 +844,7 @@ def drawUnfold( ivar, selection, process, year, dataJetHisto, genJetHisto, unfol
     altMCHisto.SetLineColor(ROOT.kBlue)
     altMCHisto.SetMarkerColor(ROOT.kBlue)
     altMCHisto.SetMarkerStyle(25)
-    legend.AddEntry( altMCHisto, 'Herwig7', 'lp' )
+    legend.AddEntry( altMCHisto, 'Pythia8', 'lp' )
     altMCHisto.Draw("histe same")
     #unfoldHistowoUnc.Draw( "e1 same")
     #foldHisto.Draw( "histe same")
@@ -858,7 +859,7 @@ def drawUnfold( ivar, selection, process, year, dataJetHisto, genJetHisto, unfol
 
     selText.SetNDC()
 
-    if selection.startswith("_dijet"): seltext = 'Dijet'#( 'Central' if 'Central' in labelX  else 'Outer' )+' dijet region'
+    if selection.startswith("_dijet"): seltext = 'Central Dijet'#( 'Central' if 'Central' in labelX  else 'Outer' )+' dijet region'
     elif selection.startswith("_W"): seltext = 'Boosted W region'
     elif selection.startswith("_top"): seltext = 'Boosted top region'
     selText.DrawLatex( ( 0.21 if tlegendAlignment.startswith('right') else 0.55 ), 0.87, seltext )
@@ -1680,7 +1681,7 @@ def plotSysComparison2( nomHisto, dictUncHistos, outputName, labelX='', log=Fals
     
 
     outputFileName = outputName+'_'+version+'.'+ext
-    #print ('Processing.......', outputFileName)
+    print ('Processing plots for sys comparisons......', outputFileName)
 
     binWidth = nomHisto.GetBinWidth(1)
 
@@ -1698,6 +1699,7 @@ def plotSysComparison2( nomHisto, dictUncHistos, outputName, labelX='', log=Fals
     gnom.SetLineWidth(2)
     legend.AddEntry( gnom, 'Nominal' , 'l' )
     #multiGraph.Add( gnom )
+    
     dictShifts = {}
     dummy=0
     
@@ -1708,7 +1710,7 @@ def plotSysComparison2( nomHisto, dictUncHistos, outputName, labelX='', log=Fals
     gnom.Draw('L')
 
     #print (dictUncHistos)
-    for ih in dictUncHistos:
+    for ih in dictUncHistos.keys():
         #print(ih, dummy, len(colors))
         dictShifts[ih] = dictUncHistos[ih].Clone()
         dictShifts[ih].Divide( nomHisto)
@@ -1720,15 +1722,21 @@ def plotSysComparison2( nomHisto, dictUncHistos, outputName, labelX='', log=Fals
             dummy = dummy-len(colors)+2
             dictShifts[ih].SetLineColor( colors[dummy] )
             dictShifts[ih].SetLineStyle( 3 )
+
         
-        if 'jes' in ih: dictShifts[ih].SetLineStyle( 1 )
+        if 'jes' in ih: 
+            dictShifts[ih].SetLineStyle( 1 )
+
         dictShifts[ih].SetMarkerStyle(0)
         dictShifts[ih].SetLineWidth( 1 )
         
-        if 'jes' in ih and ('2017' in ih or '2018' in ih): 
-            print (ih)
-            legend.AddEntry( dictShifts[ih], ih.split('_')[1] , 'l' )
-        else: legend.AddEntry( dictShifts[ih], ih.split('_')[1] , 'l' )
+        y=year if not('all' in year or '+' in year) else 'all'
+        stringtocheck=ih.split(y+'_')[1]#+'_'+(year if not('+' in year) else '_fullRunII')
+        #print(stringtowrite)
+        #if 'jes' in stringtocheck and ('2016' in stringtocheck or'2017' in stringtocheck or '2018' in stringtocheck): 
+            #print (ih, ih.split('_')[1])
+        legend.AddEntry( dictShifts[ih], stringtocheck+'_'+y, 'l' )
+        #else: legend.AddEntry( dictShifts[ih], ih.split('_')[1] , 'l' )
         dummy=dummy+1
         dictShifts[ih].Draw("L SAME")
         

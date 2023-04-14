@@ -26,6 +26,7 @@ ROOT.TH2.SetDefaultSumw2()
 from PhysicsTools.NanoAODTools.postprocessing.framework.datamodel import Collection, Object
 from PhysicsTools.NanoAODTools.postprocessing.framework.eventloop import Module
 from PhysicsTools.NanoAODTools.postprocessing.tools import *
+#import numpy.testing as npt
 
 class nSubProd(Module):
 
@@ -38,7 +39,10 @@ class nSubProd(Module):
         self.onlyTrees = onlyTrees
         self.runSDVariables = False
 
-        #self.FlagBadPFCands=False
+        self.FlagBadPFCands = False
+        self.FlagBadPFCandsCounter=0
+        self.evtCounter=0
+
         self.recoLevel=0
         self.fakes=0
         self.miss=0
@@ -89,6 +93,11 @@ class nSubProd(Module):
         self.puWeightDown = 1.
         self.isrWeightDown = 1.
         self.fsrWeightDown = 1.
+
+        self.l1PreFireWeight = 1.
+        self.l1PreFireWeightUp = 1.
+        self.l1PreFireWeightDown = 1.
+
 
         self.eventCategory = -1
         self.dummy = 0
@@ -144,6 +153,12 @@ class nSubProd(Module):
                     '2017' : [ 653.,  1000000., 1.00, 1.00, 1.00, 1.00, 1.00 ],
                     '2018' : [ 661,   1000000., 1, 1, 1, 1 ],
                     }
+        #self.triggerTable[ 'AK8PFJet550' ] = {
+        #            '2016_preVFP' : [ 635,   10000000. ],
+        #            '2016' : [ 635,   1000000. ],
+        #            '2017' : [ 653.,  1000000., 1.00, 1.00, 1.00, 1.00, 1.00 ],
+        #            '2018' : [ 661,   1000000., 1, 1, 1, 1 ],
+        #            }
 
         
         ### Defining nsubjetiness basis
@@ -194,8 +209,8 @@ class nSubProd(Module):
         # others applied to modify self.genweight [and thereby also the recoWeight(=self.genWeight*self.puWeights)] 
         # weights+up/down variations are saved for accepted events, to be applied in histogramming
           
-        self.sysWeightList = ( '_pu', '_pdf', '_isr', '_fsr' ) ## '_ps'
-        self.sysrecoWeightList = ( '_pu' ) 
+        self.sysWeightList = ( '_pu', '_pdf', '_isr', '_fsr', '_l1' ) ## '_ps'
+        self.sysrecoWeightList = ( '_pu', '_l1' ) 
         self.sysgenWeightList = ( '_pdf', '_isr', '_fsr' ) #, '_ps'
 
     #############################################################################
@@ -296,15 +311,21 @@ class nSubProd(Module):
             self.out.branch( 'good_nPVs_nom', "F" )
             #self.out.branch( 'eventWithBadPFCands', "L" )
             tmplist.append( 'selRecoJets_nom')
+            tmplist.append( 'selRecoJetsF_nom')
+            for x in self.triggerTable.keys():
+                self.out.branch( 'passHLT_'+x, "I" )
+            if not('2016' in self.year): self.out.branch( 'passHLT_AK8PFJet550',"I" )# 1 if getattr(event, 'HLT_AK8PFJet550')==1 and passRecoSel[sys] else 0)  
 
         if self.isMC:
             for sys in self.sysSource: 
                 self.out.branch( 'eventCategory'+sys,  "I")
 
-                self.out.branch( 'eventWithBadPFCands', "L" )
+                #if sys.startswith('_nom'): self.out.branch( 'eventWithBadPFCands', "L" )
 
                 self.out.branch( 'totalRecoWeight'+sys, "F" )
                 self.out.branch( 'puWeightNom'+sys, "F" )
+                self.out.branch( 'l1prefiringWeightNom'+sys, "F")
+
                 self.out.branch( 'good_nPVs'+sys, "F" )
                 if sys.startswith('_nom'): self.out.branch( 'evtGenWeight'+sys, "F" )
 
@@ -324,11 +345,24 @@ class nSubProd(Module):
                     self.out.branch( 'fsrWeightDown'+sys, "F" )
                     self.out.branch( 'puWeightUp'+sys, "F" )
                     self.out.branch( 'puWeightDown'+sys, "F" )
+                    self.out.branch( 'l1prefiringWeightUp'+sys,  "F")
+                    self.out.branch( 'l1prefiringWeightDown'+sys,  "F")
+
 
             tmplist_reco = [ 'selRecoJets'+sys for sys in self.sysSource ]
             tmplist_truereco = ['trueRecoJets'+sys for sys in self.sysSource]
             tmplist_gen = ['selGenJets'+sys for sys in self.sysSource if sys.startswith('_nom')] #check if you really need this for the jes or otherwise just the nom branch=>checked, not needed
             tmplist_accepgen = ['accepGenJets'+sys for sys in self.sysSource]
+            for x in tmplist_reco+tmplist_truereco+tmplist_gen+tmplist_accepgen: tmplist.append(x)
+
+            tmplist_reco = [ 'selRecoJetsF'+sys for sys in self.sysSource ]
+            tmplist_truereco = ['trueRecoJetsF'+sys for sys in self.sysSource]
+            tmplist_gen = ['selGenJetsF'+sys for sys in self.sysSource if sys.startswith('_nom')] #check if you really need this for the jes or otherwise just the nom branch=>checked, not needed
+            tmplist_accepgen = ['accepGenJetsF'+sys for sys in self.sysSource]
+            for x in self.triggerTable.keys():
+                self.out.branch( 'passHLT_'+x, "I" )
+            if not('2016' in self.year): self.out.branch( 'passHLT_AK8PFJet550',"I" )
+
             for x in tmplist_reco+tmplist_truereco+tmplist_gen+tmplist_accepgen: tmplist.append(x)
 
         print ("Stored jet branches:", tmplist)
@@ -344,6 +378,8 @@ class nSubProd(Module):
             self.out.branch(iJ+'_tau32',  'F')#, lenVar='n'+iJ)
             self.out.branch(iJ+'_tau21_WTA',  'F')#, lenVar='n'+iJ)
             self.out.branch(iJ+'_tau32_WTA',  'F')#, lenVar='n'+iJ)
+            self.out.branch(iJ+'_tau21_exkT',  'F')#, lenVar='n'+iJ)
+            self.out.branch(iJ+'_tau32_exkT',  'F')#, lenVar='n'+iJ)
             
             for x in self.nSub_labels:
                 self.out.branch(iJ+x, 'F')#, lenVar='n'+iJ )
@@ -381,10 +417,8 @@ class nSubProd(Module):
     #############################################################################
     def analyze(self, event):
         '''process event, return True (go to next module) or False (fail, go to next event)'''
-
         self.isMC = event.run == 1
         #print(event.event)
-        #self.FlagBadPFCands=False
         if not self.isMC:
             passGenSel=False
             iGenSel=None
@@ -394,22 +428,28 @@ class nSubProd(Module):
         #print(event.event)
 
 
-        if not self.isMC and not passRecoSel['_nom']: return False
+        if not( self.isMC) and not(passRecoSel['_nom']): return False
 
 
 
-        if (self.isMC) and (not passGenSel) and (not passRecoSel['_nom']): 
+        if (self.isMC) and not(passGenSel) and not(passRecoSel['_nom']): 
             #print (passRecoSel[sys])
             return False
+        
+        #self.FlagBadPFCands=False
+
+        self.evtCounter+=1.
 
         for sys in self.sysSource:
 
-            if not self.isMC: self.totalRecoWeight=1.
+            #if not self.isMC: 
+            self.totalRecoWeight=1.
             if self.isMC:
                 
                 self.puWeight = event.puWeight
                 self.evtGenWeight=event.genWeight
-                self.totalRecoWeight = event.genWeight*event.puWeight
+                self.l1PreFireWeight = event.L1PreFiringWeight_Nom                
+                self.totalRecoWeight = event.genWeight*event.puWeight*event.L1PreFiringWeight_Nom  
                 if not sys.startswith(('_jes', '_jer')):
                    
                     selRecoJets[sys] = selRecoJets['_nom']
@@ -441,14 +481,19 @@ class nSubProd(Module):
                         
                         self.puWeightUp = event.puWeightUp
                         self.puWeightDown = event.puWeightDown
+                        self.l1PreFireWeightUp = event.L1PreFiringWeight_Up
+                        self.l1PreFireWeightDown = event.L1PreFiringWeight_Dn
                     
                 else: 
                     #could remove this else block, doesn't do anything (will remove when running final check)
                     self.totalRecoWeight = event.genWeight*event.puWeight#self.totalRecoWeight*self.puWeight
-                    
+            else: 
+                self.totalRecoWeight=1.        
             
             genJet = OrderedDict()
             recoJet = OrderedDict()
+            genJetF = OrderedDict()
+            recoJetF = OrderedDict()
             tmpRecoJets = OrderedDict()
             tmpGenJets = OrderedDict()
 
@@ -464,16 +509,27 @@ class nSubProd(Module):
                     tmpGenJets[1] = self.createNsubBasis( selGenJets[1], event, 'GenCands', True )
 
                     #if self.FlagBadPFCands==True:
-                    #    print ("Found an event with bad PF Cands in gen will not retain this event")
+                    #    self.FlagBadPFCandsCounter+=1
+                    #    #print ("Found an event with bad PF Cands in gen will not retain this event",event.event,self.FlagBadPFCandsCounter,self.evtCounter,self.FlagBadPFCandsCounter/self.evtCounter*100.)
+                    #    self.out.fillBranch('eventWithBadPFCands', event.event)
                     #    return False
+                    #else: self.out.fillBranch('eventWithBadPFCands',-3)                         
 
                     if abs(tmpGenJets[0]['jet'].rapidity) > abs(tmpGenJets[1]['jet'].rapidity):
                         genJet['Jet'] = tmpGenJets[1]#self.createNsubBasis( selGenJets[1], event, 'GenCands', True )
-                    else: genJet['Jet'] = tmpGenJets[0]#self.createNsubBasis( selGenJets[0], event, 'GenCands', True  )
+                        genJetF['Jet'] = tmpGenJets[0]
+                    else: 
+                        genJet['Jet'] = tmpGenJets[0]#self.createNsubBasis( selGenJets[0], event, 'GenCands', True  )
+                        genJetF['Jet'] = tmpGenJets[1]
+
 
                     if sys.startswith('_nom'): 
                         self.fillBranches( event, 'selGenJets'+sys, genJet, False, sys ) 
+                        self.fillBranches( event, 'selGenJetsF'+sys, genJetF, False, sys ) 
                     self.fillBranches( event, 'accepGenJets'+sys, genJet, True, sys )
+                    self.fillBranches( event, 'accepGenJetsF'+sys, genJetF, True, sys )
+                else: self.evtGenWeight=0.
+                self.totalRecoWeight=0.
 
             if passRecoSel[sys]:  #### Detector level dist.
                 
@@ -483,24 +539,29 @@ class nSubProd(Module):
                 tmpRecoJets[sys]={}
                 tmpRecoJets[sys][0] = self.createNsubBasis( selRecoJets[sys][0], event, 'PFCands' )
                 tmpRecoJets[sys][1] = self.createNsubBasis( selRecoJets[sys][1], event, 'PFCands' )
-
                 #if self.FlagBadPFCands==True:
-                #    print ("Found an event with bad PF Cands in gen, will not retain this event")
-                #    return False
+                    #self.FlagBadPFCandsCounter+=1
+                    #print ("Found an event with bad PF Cands in reco, will not retain this event",event.event,self.FlagBadPFCandsCounter,self.evtCounter,self.FlagBadPFCandsCounter/self.evtCounter*100.)
+                    #self.out.fillBranch('eventWithBadPFCands', event.event)
+                    #return False
 
+                
 
 
                 #######################Testing block for pad pfnanos will remove#####################
                 # prevent events with negative mass pfcands in the branches from 
                 # being considered in the jets passing our selection to see if the differences are massive
 
-                #if passGenSel:
-                #    tmpGenJets={}
-                #    tmpGenJets[0] = self.createNsubBasis( selGenJets[0], event, 'GenCands', True )
-                #    tmpGenJets[1] = self.createNsubBasis( selGenJets[1], event, 'GenCands', True )
-                #    if self.FlagBadPFCands==True:
-                #        print ("Found an event with bad PF Cands in gen will not retain this event")
-                #        return False
+                if passGenSel:
+                    tmpGenJets={}
+                    tmpGenJets[0] = self.createNsubBasis( selGenJets[0], event, 'GenCands', True )
+                    tmpGenJets[1] = self.createNsubBasis( selGenJets[1], event, 'GenCands', True )
+                    #if self.FlagBadPFCands==True:
+                        #self.FlagBadPFCandsCounter+=1
+                        #print ("Found an event with bad PF Cands in gen will not retain this event",event.event,self.FlagBadPFCandsCounter,self.evtCounter,self.FlagBadPFCandsCounter/self.evtCounter*100.)
+                        #self.out.fillBranch('eventWithBadPFCands', event.event)                        
+                        #return False
+                    #else: self.out.fillBranch('eventWithBadPFCands',-3)                         
                 #######################Testing block for pad pfnanos will remove#####################
 
 
@@ -508,10 +569,14 @@ class nSubProd(Module):
 
 
                 if abs(tmpRecoJets[sys][0]['jet'].rapidity) > abs(tmpRecoJets[sys][1]['jet'].rapidity):
-                    recoJet['Jet'] = tmpRecoJets[sys][1]#self.createNsubBasis( selRecoJets[sys][1], event, 'PFCands' )
-                else: recoJet['Jet'] = tmpRecoJets[sys][0]#self.createNsubBasis( selRecoJets[sys][0], event, 'PFCands' )                    
+                    recoJet['Jet'] = tmpRecoJets[sys][1]
+                    recoJetF['Jet'] = tmpRecoJets[sys][0]#self.createNsubBasis( selRecoJets[sys][1], event, 'PFCands' )
+                else: 
+                    recoJet['Jet'] = tmpRecoJets[sys][0]#self.createNsubBasis( selRecoJets[sys][0], event, 'PFCands' )                    
+                    recoJetF['Jet'] = tmpRecoJets[sys][1]
 
                 self.fillBranches( event, 'selRecoJets'+sys, recoJet, False, sys ) #not a dummy fill so dummy=False
+                self.fillBranches( event, 'selRecoJetsF'+sys, recoJetF, False, sys ) #not a dummy fill so dummy=False
 
             
                 if self.isMC:
@@ -520,6 +585,8 @@ class nSubProd(Module):
                         self.fakes = self.fakes+1
                         self.eventCategory = 2
                         self.fillBranches( event, 'trueRecoJets'+sys, recoJet, True, sys ) #True=dummyFill
+                        self.fillBranches( event, 'trueRecoJetsF'+sys, recoJetF, True, sys ) #True=dummyFill
+                        self.evtGenWeight=0.
 
                     else:        ##### go to matrix
                         
@@ -529,28 +596,37 @@ class nSubProd(Module):
 
                         if abs(tmpGenJets[0]['jet'].rapidity) > abs(tmpGenJets[1]['jet'].rapidity):
                             genJet['Jet'] = tmpGenJets[1]#self.createNsubBasis( selGenJets[1], event, 'GenCands', True )
-                        else: genJet['Jet'] = tmpGenJets[0]#self.createNsubBasis( selGenJets[0], event, 'GenCands', True  )
+                            genJetF['Jet'] = tmpGenJets[0]
+                        else: 
+                            genJet['Jet'] = tmpGenJets[0]#self.createNsubBasis( selGenJets[0], event, 'GenCands', True  )
+                            genJetF['Jet'] = tmpGenJets[1]
 
-                        if sys.startswith('_nom'): self.fillBranches( event, 'selGenJets'+sys, genJet, False, sys ) 
+                        if sys.startswith('_nom'): 
+                            self.fillBranches( event, 'selGenJets'+sys, genJet, False, sys ) 
+                            self.fillBranches( event, 'selGenJetsF'+sys, genJetF, False, sys ) 
 
                         # small redundancy here since reco/genJet['Jet'] is already one of the two tmpReco/GenJets:
                         # basically, checking that the measurement jets as stored in the recoJet and genJet objects are in whack with one another, 
                         # while also checking that both of the pT ordered tmp jets in gen/reco are deltaR matched, since if not it's not safe to continue
                         # this block is to ensure that the measurement jet is pristinely selected in an event where the entire dijet system is consistent b/w gen- and reco-level 
                         # doing all this so that it doesn't need to be rechecked later via storing the subleading jet too (too much computational overhead for QCD samples)
-                        if ( self.DrRapPhi( recoJet['Jet']['jet'].p4(), genJet['Jet']['jet'].p4() ) < 0.4 ) and (self.DrRapPhi( tmpRecoJets[sys][0]['jet'].p4(), tmpGenJets[0]['jet'].p4() ) < 0.4 and self.DrRapPhi( tmpRecoJets[sys][1]['jet'].p4(), tmpGenJets[1]['jet'].p4() ) < 0.4):
+                        if ( self.DrRapPhi( recoJet['Jet']['jet'].p4(), genJet['Jet']['jet'].p4() ) < 0.4 ) and ( self.DrRapPhi( recoJetF['Jet']['jet'].p4(), genJetF['Jet']['jet'].p4()) < 0.4 ):#self.DrRapPhi( tmpRecoJets[sys][0]['jet'].p4(), tmpGenJets[0]['jet'].p4() ) < 0.4 and self.DrRapPhi( tmpRecoJets[sys][1]['jet'].p4(), tmpGenJets[1]['jet'].p4() ) < 0.4):
                             deltaRmatch = True
                             self.response= self.response+1
                             self.eventCategory = 4
                         
                         if deltaRmatch:
                             self.fillBranches( event, 'accepGenJets'+sys, genJet, False, sys )    
+                            self.fillBranches( event, 'accepGenJetsF'+sys, genJetF, False, sys )    
                             self.fillBranches( event, 'trueRecoJets'+sys, recoJet, False, sys )
+                            self.fillBranches( event, 'trueRecoJetsF'+sys, recoJetF, False, sys )
                         
                         #if not deltaR matched, fill branches with dummies to posteriorly obtain misreconstructed gen and fake reco jets
                         else:
                             self.fillBranches( event, 'accepGenJets'+sys, genJet, True, sys )    #fill dummy=True to indicate fakes and misses 
+                            self.fillBranches( event, 'accepGenJetsF'+sys, genJetF, True, sys )    #fill dummy=True to indicate fakes and misses 
                             self.fillBranches( event, 'trueRecoJets'+sys, recoJet, True, sys )
+                            self.fillBranches( event, 'trueRecoJetsF'+sys, recoJetF, True, sys )
                             
                             self.fakes = self.fakes+1
                             self.eventCategory = 2
@@ -563,13 +639,20 @@ class nSubProd(Module):
                 self.out.fillBranch( 'eventCategory'+sys, self.eventCategory )
                 self.out.fillBranch( 'totalRecoWeight'+sys, self.totalRecoWeight if passRecoSel[sys] else 0.)
                 self.out.fillBranch( 'good_nPVs'+sys, getattr( event, 'PV_npvsGood') if passRecoSel[sys] else 0.)
+                for x in self.triggerTable.keys():
+                    self.out.fillBranch( 'passHLT_'+x, 1 if getattr(event, 'HLT_'+x)==1 and passRecoSel[sys] else 0)
+
+                if not('2016' in self.year): self.out.fillBranch( 'passHLT_AK8PFJet550', 1 if getattr(event, 'HLT_AK8PFJet550')==1 and passRecoSel[sys] else 0)
+            
             #if self.isMC: #and not sys.startswith(('_jes', '_jer')):
             else:
                 self.out.fillBranch( 'eventCategory'+sys, self.eventCategory )
                 self.out.fillBranch( 'totalRecoWeight'+sys, self.totalRecoWeight if passRecoSel[sys] else 0.)
                 self.out.fillBranch( 'puWeightNom'+sys, self.puWeight if passRecoSel[sys] else 0.)
+                self.out.fillBranch( 'l1prefiringWeightNom'+sys, self.l1PreFireWeight if passRecoSel[sys] else 0.)
                 self.out.fillBranch( 'good_nPVs'+sys, getattr( event, 'PV_npvsGood') if passRecoSel[sys] else 0.)
-                if sys.startswith('_nom'): self.out.fillBranch( 'evtGenWeight'+sys, self.evtGenWeight if passGenSel else 0.) 
+                if sys.startswith('_nom'): 
+                    self.out.fillBranch( 'evtGenWeight'+sys, self.evtGenWeight if passGenSel else 0.) 
                 
                 if self.isSigMC and not self.onlyUnc:
                     self.out.fillBranch( 'pdfWeightNom'+sys, self.pdfWeight if passGenSel else 0.)
@@ -582,6 +665,8 @@ class nSubProd(Module):
                     self.out.fillBranch( 'fsrWeightDown'+sys, self.fsrWeightDown if passGenSel else 0.)
                     self.out.fillBranch( 'puWeightUp'+sys, self.puWeightUp if passRecoSel[sys] else 0.)
                     self.out.fillBranch( 'puWeightDown'+sys, self.puWeightDown if passRecoSel[sys] else 0.)
+                    self.out.fillBranch( 'l1prefiringWeightUp'+sys, self.l1PreFireWeightUp if passRecoSel[sys] else 0.)
+                    self.out.fillBranch( 'l1prefiringWeightDown'+sys, self.l1PreFireWeightDown if passRecoSel[sys] else 0.)
 
         return True
 
@@ -635,20 +720,21 @@ class nSubProd(Module):
                     if ( getattr(event, 'HLT_'+itrigger)==1 ):
 
                         getattr( self, 'nPVs_only'+itrigger+'_dijetSel' ).Fill( getattr( event, 'PV_npvsGood') )
-                        if len(recoAK8jets['_nom'])>1:#and not self.onlyTrees:
+                        if len(recoAK8jets['_nom'])>0:#and not self.onlyTrees:
                             getattr( self, 'LeadPtJetAK8_pt_only'+itrigger+'_dijetSel' ).Fill( recoAK8jets['_nom'][0].pt_nom )   ### pt_nom here to ensure data process
                             getattr( self, 'LeadPtJetAK8_eta_only'+itrigger+'_dijetSel' ).Fill( recoAK8jets['_nom'][0].eta )
                             getattr( self, 'LeadPtJetAK8_y_only'+itrigger+'_dijetSel' ).Fill( recoAK8jets['_nom'][0].rapidity )
                             getattr( self, 'LeadPtJetAK8_phi_only'+itrigger+'_dijetSel' ).Fill( recoAK8jets['_nom'][0].phi )
                             getattr( self, 'LeadPtJetAK8_mass_only'+itrigger+'_dijetSel' ).Fill( recoAK8jets['_nom'][0].mass_nom )
                             getattr( self, 'LeadPtJetAK8_msoftdrop_only'+itrigger+'_dijetSel' ).Fill( recoAK8jets['_nom'][0].msoftdrop_nom )
-
+                            
                             getattr( self, 'SubleadPtJetAK8_pt_only'+itrigger+'_dijetSel' ).Fill( recoAK8jets['_nom'][1].pt_nom )   ### pt_nom here to ensure data process
                             getattr( self, 'SubleadPtJetAK8_eta_only'+itrigger+'_dijetSel' ).Fill( recoAK8jets['_nom'][1].eta )
                             getattr( self, 'SubleadPtJetAK8_y_only'+itrigger+'_dijetSel' ).Fill( recoAK8jets['_nom'][1].rapidity )
                             getattr( self, 'SubleadPtJetAK8_phi_only'+itrigger+'_dijetSel' ).Fill( recoAK8jets['_nom'][1].phi )
                             getattr( self, 'SubleadPtJetAK8_mass_only'+itrigger+'_dijetSel' ).Fill( recoAK8jets['_nom'][1].mass_nom )
                             getattr( self, 'SubleadPtJetAK8_msoftdrop_only'+itrigger+'_dijetSel' ).Fill( recoAK8jets['_nom'][1].msoftdrop_nom )
+                            
                             
                             if abs(recoAK8jets['_nom'][0].rapidity)<abs(recoAK8jets['_nom'][1].rapidity):
                                 getattr( self, 'CentralJetAK8_pt_only'+itrigger+'_dijetSel' ).Fill( recoAK8jets['_nom'][0].pt_nom )   ### pt_nom here to ensure data process
@@ -967,6 +1053,7 @@ class nSubProd(Module):
                 getattr( self, 'AK8genjets_y_noSel' ).Fill( ijet.rapidity, weight )
                 getattr( self, 'AK8genjets_phi_noSel' ).Fill( ijet.phi, weight )
                 getattr( self, 'AK8genjets_mass_noSel' ).Fill( ijet.mass, weight )
+                #if not self.FlagBadPFCands: 
                 getattr( self, 'AK8genjets_msoftdrop_noSel' ).Fill( ijet.msoftdrop, weight )
 
             if not len(genAK8jets)==0:
@@ -975,13 +1062,16 @@ class nSubProd(Module):
                 getattr( self, 'LeadingPtAK8genjet_y_noSel' ).Fill( genAK8jets[0].rapidity, weight )
                 getattr( self, 'LeadingPtAK8genjet_phi_noSel' ).Fill( genAK8jets[0].phi, weight )
                 getattr( self, 'LeadingPtAK8genjet_mass_noSel' ).Fill( genAK8jets[0].mass, weight )
+                #if not self.FlagBadPFCands: 
                 getattr( self, 'LeadingPtAK8genjet_msoftdrop_noSel' ).Fill( genAK8jets[0].msoftdrop, weight )
+                
                 if len(genAK8jets)>1:
                     getattr( self, 'SubleadingPtAK8genjet_pt_noSel' ).Fill( genAK8jets[1].pt, weight )
                     getattr( self, 'SubleadingPtAK8genjet_eta_noSel' ).Fill( genAK8jets[1].eta, weight )
                     getattr( self, 'SubleadingPtAK8genjet_y_noSel' ).Fill( genAK8jets[1].rapidity , weight )
                     getattr( self, 'SubleadingPtAK8genjet_phi_noSel' ).Fill( genAK8jets[1].phi , weight )
                     getattr( self, 'SubleadingPtAK8genjet_mass_noSel' ).Fill( genAK8jets[1].mass, weight )
+                    #if not self.FlagBadPFCands: 
                     getattr( self, 'SubleadingPtAK8genjet_msoftdrop_noSel' ).Fill( genAK8jets[1].msoftdrop, weight )
 
                     if abs(genAK8jets[0].rapidity)<abs(genAK8jets[1].rapidity):
@@ -990,6 +1080,7 @@ class nSubProd(Module):
                         getattr( self, 'CentralAK8genjet_y_noSel' ).Fill( genAK8jets[0].rapidity, weight )
                         getattr( self, 'CentralAK8genjet_phi_noSel' ).Fill( genAK8jets[0].phi, weight )
                         getattr( self, 'CentralAK8genjet_mass_noSel' ).Fill( genAK8jets[0].mass, weight )
+                        #if not self.FlagBadPFCands: 
                         getattr( self, 'CentralAK8genjet_msoftdrop_noSel' ).Fill( genAK8jets[0].msoftdrop, weight )
 
                         getattr( self, 'ForwardAK8genjet_pt_noSel' ).Fill( genAK8jets[1].pt, weight )
@@ -1004,6 +1095,7 @@ class nSubProd(Module):
                         getattr( self, 'CentralAK8genjet_y_noSel' ).Fill( genAK8jets[1].rapidity, weight )
                         getattr( self, 'CentralAK8genjet_phi_noSel' ).Fill( genAK8jets[1].phi, weight )
                         getattr( self, 'CentralAK8genjet_mass_noSel' ).Fill( genAK8jets[1].mass, weight )
+                        #if not self.FlagBadPFCands: 
                         getattr( self, 'CentralAK8genjet_msoftdrop_noSel' ).Fill( genAK8jets[1].msoftdrop, weight )
 
                         getattr( self, 'ForwardAK8genjet_pt_noSel' ).Fill( genAK8jets[0].pt, weight )
@@ -1011,6 +1103,7 @@ class nSubProd(Module):
                         getattr( self, 'ForwardAK8genjet_y_noSel' ).Fill( genAK8jets[0].rapidity, weight )
                         getattr( self, 'ForwardAK8genjet_phi_noSel' ).Fill( genAK8jets[0].phi, weight )
                         getattr( self, 'ForwardAK8genjet_mass_noSel' ).Fill( genAK8jets[0].mass, weight )
+                        #if not self.FlagBadPFCands: 
                         getattr( self, 'ForwardAK8genjet_msoftdrop_noSel' ).Fill( genAK8jets[0].msoftdrop, weight )
 
             getattr( self, 'genPtAsym_noSel' ).Fill( ptAsym, weight )
@@ -1040,6 +1133,7 @@ class nSubProd(Module):
                     getattr( self, 'AK8genjets_y'+iSel ).Fill( ijet.rapidity, weight )
                     getattr( self, 'AK8genjets_phi'+iSel ).Fill( ijet.phi, weight )
                     getattr( self, 'AK8genjets_mass'+iSel ).Fill( ijet.mass, weight )
+                    #if not self.FlagBadPFCands: 
                     getattr( self, 'AK8genjets_msoftdrop'+iSel ).Fill( ijet.msoftdrop, weight )
                 
                 #if not len(genAK8jets)==0:
@@ -1048,6 +1142,7 @@ class nSubProd(Module):
                 getattr( self, 'LeadingPtAK8genjet_y'+iSel ).Fill( genAK8jets[0].rapidity, weight )
                 getattr( self, 'LeadingPtAK8genjet_phi'+iSel ).Fill( genAK8jets[0].phi, weight )
                 getattr( self, 'LeadingPtAK8genjet_mass'+iSel ).Fill( genAK8jets[0].mass, weight )
+                #if not self.FlagBadPFCands: 
                 getattr( self, 'LeadingPtAK8genjet_msoftdrop'+iSel ).Fill( genAK8jets[0].msoftdrop, weight )
 
                 getattr( self, 'SubleadingPtAK8genjet_pt'+iSel ).Fill( genAK8jets[1].pt, weight )
@@ -1055,6 +1150,7 @@ class nSubProd(Module):
                 getattr( self, 'SubleadingPtAK8genjet_y'+iSel ).Fill( genAK8jets[1].rapidity , weight )
                 getattr( self, 'SubleadingPtAK8genjet_phi'+iSel ).Fill( genAK8jets[1].phi , weight )
                 getattr( self, 'SubleadingPtAK8genjet_mass'+iSel ).Fill( genAK8jets[1].mass, weight )
+                #if not self.FlagBadPFCands: 
                 getattr( self, 'SubleadingPtAK8genjet_msoftdrop'+iSel ).Fill( genAK8jets[1].msoftdrop, weight )
 
                 if abs(genAK8jets[0].rapidity)<abs(genAK8jets[1].rapidity):
@@ -1063,6 +1159,7 @@ class nSubProd(Module):
                     getattr( self, 'CentralAK8genjet_y'+iSel ).Fill( genAK8jets[0].rapidity, weight )
                     getattr( self, 'CentralAK8genjet_phi'+iSel ).Fill( genAK8jets[0].phi, weight )
                     getattr( self, 'CentralAK8genjet_mass'+iSel ).Fill( genAK8jets[0].mass, weight )
+                    #if not self.FlagBadPFCands: 
                     getattr( self, 'CentralAK8genjet_msoftdrop'+iSel ).Fill( genAK8jets[0].msoftdrop, weight )
 
                     getattr( self, 'ForwardAK8genjet_pt'+iSel ).Fill( genAK8jets[1].pt, weight )
@@ -1070,6 +1167,7 @@ class nSubProd(Module):
                     getattr( self, 'ForwardAK8genjet_y'+iSel ).Fill( genAK8jets[1].rapidity, weight )
                     getattr( self, 'ForwardAK8genjet_phi'+iSel ).Fill( genAK8jets[1].phi, weight )
                     getattr( self, 'ForwardAK8genjet_mass'+iSel ).Fill( genAK8jets[1].mass, weight )
+                    #if not self.FlagBadPFCands: 
                     getattr( self, 'ForwardAK8genjet_msoftdrop'+iSel ).Fill( genAK8jets[1].msoftdrop, weight )
                 else: 
                     getattr( self, 'CentralAK8genjet_pt'+iSel ).Fill( genAK8jets[1].pt, weight )
@@ -1077,6 +1175,7 @@ class nSubProd(Module):
                     getattr( self, 'CentralAK8genjet_y'+iSel ).Fill( genAK8jets[1].rapidity, weight )
                     getattr( self, 'CentralAK8genjet_phi'+iSel ).Fill( genAK8jets[1].phi, weight )
                     getattr( self, 'CentralAK8genjet_mass'+iSel ).Fill( genAK8jets[1].mass, weight )
+                    #if not self.FlagBadPFCands: 
                     getattr( self, 'CentralAK8genjet_msoftdrop'+iSel ).Fill( genAK8jets[1].msoftdrop, weight )
 
                     getattr( self, 'ForwardAK8genjet_pt'+iSel ).Fill( genAK8jets[0].pt, weight )
@@ -1084,6 +1183,7 @@ class nSubProd(Module):
                     getattr( self, 'ForwardAK8genjet_y'+iSel ).Fill( genAK8jets[0].rapidity, weight )
                     getattr( self, 'ForwardAK8genjet_phi'+iSel ).Fill( genAK8jets[0].phi, weight )
                     getattr( self, 'ForwardAK8genjet_mass'+iSel ).Fill( genAK8jets[0].mass, weight )
+                    #if not self.FlagBadPFCands: 
                     getattr( self, 'ForwardAK8genjet_msoftdrop'+iSel ).Fill( genAK8jets[0].msoftdrop, weight )
 
                 getattr( self, 'genPtAsym'+iSel ).Fill( ptAsym, weight )
@@ -1147,7 +1247,8 @@ class nSubProd(Module):
         CandsPUPPIweightedVec = ROOT.vector("TLorentzVector")()
 
         for p in pfCands :
-            #if p.p4().M()<0.: self.FlagBadPFCands=True
+            #if p.p4().M()<0.:# and not(np.isclose(p.p4().M(),0.,rtol=10**(-9),atol=10**(-9))): 
+            #    self.FlagBadPFCands=True
             tp = ROOT.TLorentzVector(p.p4().Px(), p.p4().Py(), p.p4().Pz(), p.p4().E())
             tp = tp * p.puppiWeight if not isGen else tp
             #except RuntimeError: tp = tp    ### for genjets
@@ -1183,6 +1284,10 @@ class nSubProd(Module):
             ak8jet['1'+str(tauN+1)] = nsub1[tauN]
             ak8jet['2'+str(tauN+1)] = nsub2[tauN]
 
+        try: ak8jet['tau21_exkT'] = nsub1[1]/nsub1[0]
+        except ZeroDivisionError: ak8jet['tau21_exkT'] = -1
+        try: ak8jet['tau32_exkT'] = nsub1[2]/nsub1[1]
+        except ZeroDivisionError: ak8jet['tau32_exkT'] = -1
         #if isGen: #to add in softdrop mass as a variable to the selected (accep)gen jet branches
         #    sd_AK8jets = self.sd.result( constituents)
         #    if len(sd_AK8jets)>0: #stupidly, in some rare cases, this will not be true (with ptmin>=170) leading to errors, hence the else (and also switching to ptmin=0.)
@@ -1244,7 +1349,8 @@ class nSubProd(Module):
         CandsPUPPIweightedVec = ROOT.vector("TLorentzVector")()
 
         for p in pfCands :
-            #if p.p4().M()<0.: self.FlagBadPFCands=True
+            #if p.p4().M()<0.:# and not(np.isclose(p.p4().M(),0.,rtol=10**(-9),atol=10**(-9))): 
+            #    self.FlagBadPFCands=True
             tp = ROOT.TLorentzVector(p.p4().Px(), p.p4().Py(), p.p4().Pz(), p.p4().E())
             tp = tp * p.puppiWeight if not isGen else tp
             #except RuntimeError: tp = tp    ### for genjets
@@ -1292,7 +1398,7 @@ class nSubProd(Module):
                     elif 'gen' in jetLabel.lower():
                         self.out.fillBranch(jetLabel+"_pt",  iJ['jet'].pt  )#, 'pt'+jetLabel.split('Jets')[1] )  )
                         self.out.fillBranch(jetLabel+"_mass",  iJ['jet'].mass  )
-                        self.out.fillBranch(jetLabel+"_msoftdrop",  iJ.msoftdrop )
+                        self.out.fillBranch(jetLabel+"_msoftdrop",  iJ['jet'].msoftdrop  )
                         
 
                     self.out.fillBranch(jetLabel+"_eta",  iJ['jet'].eta  )
@@ -1302,6 +1408,8 @@ class nSubProd(Module):
                     self.out.fillBranch(jetLabel+"_tau32",  iJ['tau32']  )
                     self.out.fillBranch(jetLabel+"_tau21_WTA",  iJ['tau21_WTA']  )
                     self.out.fillBranch(jetLabel+"_tau32_WTA",  iJ['tau32_WTA']  )
+                    self.out.fillBranch(jetLabel+"_tau21_exkT", iJ['tau21_exkT']  )
+                    self.out.fillBranch(jetLabel+"_tau32_exkT", iJ['tau32_exkT']  )
             
                     for tauN in range(1, self.maxTau+1):
                         self.out.fillBranch(jetLabel+"_tau_0p5_"+str(tauN), iJ['0p5'+str(tauN)]  )
@@ -1337,6 +1445,8 @@ class nSubProd(Module):
                     self.out.fillBranch(jetLabel+"_tau32", dummyFill  )
                     self.out.fillBranch(jetLabel+"_tau21_WTA", dummyFill  )
                     self.out.fillBranch(jetLabel+"_tau32_WTA", dummyFill  )
+                    self.out.fillBranch(jetLabel+"_tau21_exkT", dummyFill  )
+                    self.out.fillBranch(jetLabel+"_tau32_exkT", dummyFill  )
 
                     for tauN in range(1, self.maxTau+1):
                         self.out.fillBranch(jetLabel+"_tau_0p5_"+str(tauN),  dummyFill  )

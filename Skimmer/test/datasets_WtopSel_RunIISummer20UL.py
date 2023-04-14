@@ -63,17 +63,17 @@ dictSamples = {
                 'B' : '/SingleMuon/Run2018B-UL2018_MiniAODv2_GT36-v1/MINIAOD',
                 'C' : '/SingleMuon/Run2018C-UL2018_MiniAODv2_GT36-v2/MINIAOD',
                 'D' : '/SingleMuon/Run2018D-UL2018_MiniAODv2_GT36-v1/MINIAOD',
-                'D-ext1': '/SingleMuon/Run2018D-UL2018_MiniAODv2_GT36-v1/MINIAOD', #lumi blocks from the above that didn't get captured in first production from the above
+                #'D-ext1': '/SingleMuon/Run2018D-UL2018_MiniAODv2_GT36-v1/MINIAOD', #lumi blocks from the above that didn't get captured in first production from the above
                 },
             'nanoAOD' : {
                 'A' : '/SingleMuon/kadatta-Run2018A-UL2018_MiniAODv2_GT36-v1_PFNano-05315415ba22ce0eb9676f5f753b2b2a/USER',
                 'B' : '/SingleMuon/kadatta-Run2018B-UL2018_MiniAODv2_GT36-v1_PFNano-05315415ba22ce0eb9676f5f753b2b2a/USER',
                 'C' : '/SingleMuon/kadatta-Run2018C-UL2018_MiniAODv2_GT36-v2_PFNano-05315415ba22ce0eb9676f5f753b2b2a/USER',
-                'D' : '/SingleMuon/kadatta-Run2018D-UL2018_MiniAODv2_GT36-v1_PFNano-05315415ba22ce0eb9676f5f753b2b2a/USER',
-                'D-ext1' : '/SingleMuon/kadatta-Run2018D-UL2018_MiniAODv2_GT36-v1_PFNanov2pt2-ext1-05315415ba22ce0eb9676f5f753b2b2a/USER',
+                'D' : '/SingleMuon/kadatta-Run2018D-UL2018_MiniAODv2_GT36-v1_PFNanov2pt2-05315415ba22ce0eb9676f5f753b2b2a/USER',
+                #'D-ext1' : '/SingleMuon/kadatta-Run2018D-UL2018_MiniAODv2_GT36-v1_PFNanov2pt2-ext1-05315415ba22ce0eb9676f5f753b2b2a/USER',
                 },
             'skimmerHisto' : 'SingleMuonAll_2018UL.root',
-            'lumi' : 60.785796597,
+            'lumi' : 59673.938,
             },
         'color': ROOT.kWhite,
         'selection' : 'Wtop'
@@ -112,7 +112,7 @@ dictSamples = {
             'nevents' : 1.,
             'nGenWeights' : 0.,
             },
-        'XS' : 831.76, #xsdb says 831.76 with unc of +4.8%/-6.1%
+        'XS' : 7.568e+02,#831.76, #xsdb says 831.76 with unc of +4.8%/-6.1%
         'selection' : 'Wtop',
         'label' : 't#bar{t} amcatnloFXFX' ,
         'color': ROOT.kBlue
@@ -152,7 +152,7 @@ dictSamples = {
             'nevents' : 1.,
             'nGenWeights' : 0.,
             },
-        'XS' : 831.76, #xsdb says 831.76 with unc of +4.8%/-6.1%
+        'XS' : 4.761e+02,#831.76, #xsdb says 831.76 with unc of +4.8%/-6.1%
         'selection' : 'Wtop',
         'label' : 't#bar{t} amcatnloFXFX' ,
         'color': ROOT.kBlue
@@ -192,7 +192,7 @@ dictSamples = {
             'nevents' : 1.,
             'nGenWeights' : 0.,
             },
-        'XS' : 300.9,#xsdb and xSec tool agree (after 3 years!)
+        'XS' : 300.9498,#xsdb and xSec tool agree (after 3 years!)
         'selection' : 'Wtop',
         'label' : 't#bar{t} powheg' ,
         'color': ROOT.kMagenta
@@ -231,7 +231,7 @@ dictSamples = {
             'nevents' : 1.,
             'nGenWeights' : 0.,
             },
-        'XS' : 365.34,
+        'XS' : 314.0047,
         'selection' : 'Wtop',
         'label' : 't#bar{t} powheg' ,
         'color': ROOT.kMagenta
@@ -271,7 +271,7 @@ dictSamples = {
             'nGenWeights' : 0.,
             },
         'selection' : 'Wtop',
-        'XS' : 87.4, 
+        'XS' : 72.1455,#87.4, 
         'label' : 't#bar{t} DL' ,
         'color': ROOT.kCyan+1
     },
@@ -310,7 +310,7 @@ dictSamples = {
             'nGenWeights' : 10484986870276.357422,
             },
         'selection' : 'Wtop',
-        'XS' : 53870,# previously 5.368e+04 from xsecanalyzer, current # from xsecdb
+        'XS' : 5.360e+04,# previously 5.368e+04 from xsecanalyzer, current # from xsecdb
         'label' : 'WJets' ,
         'color': ROOT.kOrange-2
     },
@@ -324,7 +324,7 @@ dictSamples = {
             'nevents' : 1.,
             'nGenWeights' : 70439807.475972,
             },
-        '2018' :  {
+        '2016' :  {
             'miniAOD' : [ '/ST_s-channel_4f_leptonDecays_TuneCP5_13TeV-amcatnlo-pythia8/RunIISummer20UL16MiniAODv2-106X_mcRun2_asymptotic_v17-v1/MINIAODSIM' ],
             'nanoAOD' : [ '/ST_s-channel_4f_leptonDecays_TuneCP5_13TeV-amcatnlo-pythia8/spigazzi-RunIISummer20UL16PFNanov2pt2-106X_mcRun2_asymptotic_v17-v1-36773dbd6a9d41d00afbee31f82bc069/USER' ],
             'skimmer' : [ '/ST_s-channel_4f_leptonDecays_TuneCP5_13TeV-amcatnlo-pythia8/spigazzi-RunIISummer20UL16PFNanov2pt2-106X_mcRun2_asymptotic_v17-v1-36773dbd6a9d41d00afbee31f82bc069/USER' ],
@@ -349,7 +349,7 @@ dictSamples = {
             'nGenWeights' : 64014403.924644,
             },
         'selection' : 'Wtop',
-        'XS' : 3.74,#previously 3.549e+00, new number from xsdb
+        'XS' : 3.549e+00,#3.74 from xsdb
         'label' : 'Single top' ,
         'color': ROOT.kGreen+2,
     },
@@ -388,7 +388,7 @@ dictSamples = {
             'nGenWeights' : 64014403.924644,
             },
         'selection' : 'Wtop',
-        'XS' : 3.74,#previously 3.549e+00, new number from xsdb
+        'XS' :  7.104e+00,
         'label' : 'Single top' ,
         'color': ROOT.kGreen+2,
     },
@@ -430,7 +430,7 @@ dictSamples = {
         'label' : 'Single top' ,
         'color': ROOT.kGreen+2,
     },
-    'ST_t-channel_antitop_5f_IclusiveDecays_TuneCP5_13TeV-powheg-pythia8' : {
+    'ST_t-channel_antitop_5f_InclusiveDecays_TuneCP5_13TeV-powheg-pythia8' : {
         '2016_preVFP' :  {
             'miniAOD' : [ '/ST_t-channel_antitop_5f_InclusiveDecays_TuneCP5_13TeV-powheg-pythia8/RunIISummer20UL16MiniAODAPVv2-106X_mcRun2_asymptotic_preVFP_v11-v1/MINIAODSIM' ],
             'nanoAOD' : [ '/ST_t-channel_antitop_5f_InclusiveDecays_TuneCP5_13TeV-powheg-pythia8/spigazzi-RunIISummer20UL16PFNanov2pt2APVv2-106X_mcRun2_asymptotic_preVFP_v11-v1-5b62f87422b4b3633317ac4b6822e17c/USER' ],
@@ -464,7 +464,7 @@ dictSamples = {
             'nGenWeights' : 0.,
             },
         'selection' : 'Wtop',
-        'XS' : 7.174e+01,
+        'XS' : 7.175e+01,
         'label' : 'Single top' ,
         'color': ROOT.kGreen+2,
     },
@@ -577,7 +577,7 @@ dictSamples = {
             'nevents' : 1.,
             'nGenWeights' : 7959266.140092,
             },
-        'XS' : 75.95, #previously 75.76, new number from xsdb, alt from xsdb is 75.8
+        'XS' : 7.592e+01, 
         'selection' : 'Wtop',
         'label' : 'Diboson' ,
         'color': ROOT.kPink-1
@@ -615,9 +615,8 @@ dictSamples = {
             'nevents' : 1.,
             'nGenWeights' : 2000000.000000,
             },
-        #'XS' : 1.210e+01,#from xsec py script, and 12.14/12.17 from xsdb and 27.48/27.3 from papers...
         'selection' : 'Wtop',
-        'XS' : 12.17,
+        'XS' : 1.213e+01,
         'label' : 'Diboson' ,
         'color': ROOT.kPink-1
     },
@@ -654,7 +653,7 @@ dictSamples = {
             'nevents' : 1.,
             'nGenWeights' : 3976000.000000,
             },
-        'XS' : 2.751e+01, 
+        'XS' : 2.758e+01, 
         'selection' : 'Wtop',
         #'XS' : 1.21e+00,
         'label' : 'Dibosons' ,
@@ -693,7 +692,7 @@ dictSamples = {
             'nevents' : 1.,
             'nGenWeights' : 35868369.000000,
             },
-    'XS' : 7.014e+03,
+    'XS' : 7.015e+03,
         'selection' : 'Wtop',
         'label' : 'QCD' ,
         'color': ROOT.kRed-7
@@ -725,13 +724,13 @@ dictSamples = {
             },
         '2018' :  {
             'miniAOD' : [ '/QCD_Pt-300To470_MuEnrichedPt5_TuneCP5_13TeV-pythia8/RunIISummer20UL18MiniAODv2-106X_upgrade2018_realistic_v16_L1v1-v2/MINIAODSIM' ],
-            'nanoAOD' : [ '/QCD_Pt-300To470_MuEnrichedPt5_TuneCP5_13TeV-pythia8/kadatta-RunIISummer20UL18PFNanov2pt2-106X_upgrade2018_realistic_v16_L1v1-v2-654ac7a30df3f7a4474385d733' ],
-            'skimmer' : [ '/QCD_Pt-300To470_MuEnrichedPt5_TuneCP5_13TeV-pythia8/kadatta-RunIISummer20UL18PFNanov2pt2-106X_upgrade2018_realistic_v16_L1v1-v2-654ac7a30df3f7a4474385d733' ],
+            'nanoAOD' : [ '/QCD_Pt-300To470_MuEnrichedPt5_TuneCP5_13TeV-pythia8/kadatta-RunIISummer20UL18PFNanov2pt2-106X_upgrade2018_realistic_v16_L1v1-v2-654ac7a30df3f7a4474385d73390277c/USER' ],
+            'skimmer' : [ '/QCD_Pt-300To470_MuEnrichedPt5_TuneCP5_13TeV-pythia8/kadatta-RunIISummer20UL18PFNanov2pt2-106X_upgrade2018_realistic_v16_L1v1-v2-654ac7a30df3f7a4474385d73390277c/USER' ],
             'skimmerHisto' : 'QCD_Muen_Pt_300to470_pythia8_2018UL.root',
             'nevents' : 1.,
             'nGenWeights' : 49232711.259666,
             },
-        'XS' : 6.205e+02,
+        'XS' : 6.201e+02,
         'selection' : 'Wtop',
         'label' : 'QCD' ,
         'color': ROOT.kRed-7
@@ -769,7 +768,7 @@ dictSamples = {
             'nevents' : 1.,
             'nGenWeights' : 20585907.002748,
             },
-        'XS' : 5.910e+01,
+        'XS' : 5.908e+01,
         'selection' : 'Wtop',
         'label' : 'QCD' ,
         'color': ROOT.kRed-7
@@ -845,7 +844,7 @@ dictSamples = {
             'nevents' : 1.,
            'nGenWeights' : 17178227.000000,
             },
-       'XS' : 3.287e+00,
+       'XS' : 3.276e+00,
        'selection' : 'Wtop',
        'label' : 'QCD' ,
        'color': ROOT.kRed-7
@@ -883,14 +882,14 @@ dictSamples = {
             'nevents' : 1.,
             'nGenWeights' : 14556168.000000,
             },
-        'XS' : 1.087e+00,
+        'XS' : 1.078e+00,
         'selection' : 'Wtop',
         'label' : 'QCD' ,
         'color': ROOT.kRed-7
     },
     
     # MC variations
-    'varTTToSemieptonic_TuneCP5_erdON_13TeV-powheg-pythia8' : {
+    'varTTToSemileptonic_TuneCP5_erdON_13TeV-powheg-pythia8' : {
         '2016_preVFP' :  {
             'miniAOD' : [ '/TTToSemiLeptonic_TuneCP5_erdON_13TeV-powheg-pythia8/RunIISummer20UL16MiniAODAPVv2-106X_mcRun2_asymptotic_preVFP_v11-v1/MINIAODSIM' ],
             'nanoAOD' : [ '/TTToSemiLeptonic_TuneCP5_erdON_13TeV-powheg-pythia8/kadatta-RunIISummer20UL16PFNanov2pt3APVv2-106X_mcRun2_asymptotic_preVFP_v11-v1-a11d409e36cbafe26c98db696a6b5c66/USER' ],
@@ -923,9 +922,9 @@ dictSamples = {
             'nevents' : 1.,
             'nGenWeights' : 8066810085.685998,
             },
-        'XS' : 365.34,
+        'XS' : 300.9498,
         'selection' : 'Wtop',
-        'label' : 'CR Model (erdON)' ,
+        'label' : 'CR (erdON)' ,
         'color': ROOT.kBlue+3
     },
 
@@ -962,9 +961,9 @@ dictSamples = {
             'nevents' : 1.,
             'nGenWeights' : 7783384223.075996,
             },
-        'XS' : 365.34,
+        'XS' : 300.9498,
         'selection' : 'Wtop',
-        'label' : 'Tune' ,
+        'label' : 'Tune CP5 down' ,
         'color': ROOT.kBlue+7
     },
 
@@ -1002,9 +1001,9 @@ dictSamples = {
             'nevents' : 1.,
             'nGenWeights' : 8024917255.960003,
             },
-        'XS' : 365.34,
+        'XS' : 300.9498,
          'selection' : 'Wtop',
-         'label' : 'Tune' ,
+         'label' : 'TuneCP5 up' ,
         'color': ROOT.kBlue+7
     },
 
@@ -1041,9 +1040,9 @@ dictSamples = {
             'nevents' : 1.,
             'nGenWeights' : 7407695568.779999,
             },
-        'XS' : 365.34,
+        'XS' : 300.9498,
         'selection' : 'Wtop',
-        'label' : '#h_{damp}' ,
+        'label' : '#h_{damp} down' ,
         'color': ROOT.kBlue+5
     },
 
@@ -1081,9 +1080,9 @@ dictSamples = {
             'nevents' : 1.,
             'nGenWeights' : 7743168497.928005,
             },
-        'XS' : 365.34,
+        'XS' : 300.9498,
         'selection' : 'Wtop',
-        'label' : '#h_{damp}' ,
+        'label' : '#h_{damp} up' ,
         'color': ROOT.kBlue+5
     },
     
@@ -1121,7 +1120,7 @@ dictSamples = {
             'nevents' : 1.,
             'nGenWeights' : 7343389413.151999,
             },
-        'XS' : 365.34,
+        'XS' : 309.2718,
         'selection' : 'Wtop',
         'label' : '#m_{top}=171.5' ,
         'color': ROOT.kBlue-3
@@ -1160,7 +1159,7 @@ dictSamples = {
             'nevents' : 1.,
             'nGenWeights' : 7159151017.746006,
             },
-        'XS' : 365.34,
+        'XS' : 292.8468,
         'selection' : 'Wtop',
         'label' : '#m_{top}=173.5' ,
         'color': ROOT.kBlue-3
@@ -1201,9 +1200,9 @@ dictSamples = {
             'nevents' : 1.,
             'nGenWeights' : 8196473485.551998,
             },
-        'XS' : 365.34,
+        'XS' : 300.9498,
         'selection' : 'Wtop',
-        'label' : 'CR' ,
+        'label' : 'CR1' ,
         'color': ROOT.kBlue+3
     },
     
@@ -1240,9 +1239,9 @@ dictSamples = {
             'nevents' : 1.,
             'nGenWeights' : 7834556470.664001,
             },
-        'XS' : 365.34,
+        'XS' : 300.9498,
         'selection' : 'Wtop',
-        'label' : '#m_{top}=175.5' ,
+        'label' : 'CR2' ,
         'color': ROOT.kBlue+3
     },
 
