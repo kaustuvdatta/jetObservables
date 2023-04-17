@@ -26,7 +26,8 @@ import numba
 class nSubBasis_unfoldingHistoProd_DijetsCentral(processor.ProcessorABC):
     
     def __init__(self, sampleName, sysSource=[],year='2017', era='', isMC=True, isSigMC=True, 
-                 onlyUnc='', wtUnc=False, sampleDict=dictSamples,test=False, sysUnc=False, verbose=True):#isaltSigMC=False,
+                 onlyUnc='', wtUnc=False, sampleDict=dictSamples,test=False, sysUnc=False, 
+                 saveParquet=False, verbose=True):#isaltSigMC=False,
         self.test=test
         self.year = year
         self.isMC = isMC
@@ -38,7 +39,7 @@ class nSubBasis_unfoldingHistoProd_DijetsCentral(processor.ProcessorABC):
         self.wtUnc = wtUnc
         self.sysUnc = sysUnc
         
-        
+        self.saveParquet=saveParquet
         self.dictSamples = sampleDict
         self.sampleName = sampleName
         
@@ -132,9 +133,9 @@ class nSubBasis_unfoldingHistoProd_DijetsCentral(processor.ProcessorABC):
                     "_tau32_WTA": np.array([(i/1000) for i in np.arange(0.*1000, 1.4*1001)]),#for WTA-kT for comparison
                     "_tau21_exkT": np.array([(i/1000) for i in np.arange(0.*1000, 2.*1001)]),#for excl.-kT and E-scheme as per basis
                     "_tau32_exkT": np.array([(i/1000) for i in np.arange(0.*1000, 2.*1001)]),#for excl.-kT and E-scheme as per basis
-                    #"_mass": np.array([(i/2.0) for i in np.arange(0.*2, 300*2.1)]),
-                    #"_msoftdrop": np.array([(i/2.0) for i in np.arange(0.*2, 200*2.1)]),
-                    #"_pt": np.array([(i/2.0) for i in np.arange(170.*2, 2500.*2.1)]),
+                    "__mass": np.array([(i/2.0) for i in np.arange(0.*2, 300*2.1)]),
+                    "__msoftdrop": np.array([(i/2.0) for i in np.arange(0.*2, 200*2.1)]),
+                    "__pt": np.array([(i/2.0) for i in np.arange(170.*2, 2500.*2.1)]),
                         }
         self.kinematic_labels=['_pt','_eta', '_y', '_phi', '_mass', '_msoftdrop']
         self.reco_only_labels=['_good_nPVs']
@@ -189,12 +190,34 @@ class nSubBasis_unfoldingHistoProd_DijetsCentral(processor.ProcessorABC):
                 if self.verbose: print(sys,s, len(events[events[f'totalRecoWeight{s}']!=0]))
 
                 selRecoMask = events[f'totalRecoWeight{s}']!=0.
-                
-                trueRecoMask = (events[f'trueRecoJets{s}_pt']>0.) & (selRecoMask)# & (events[f'trueRecoJetsF{s}_pt']>0.)
-                fakeRecoMask = (events[f'trueRecoJets{s}_pt']<0.) & (selRecoMask)# & (events[f'trueRecoJetsF{s}_pt']<0.)
                 selGenMask = events[f'evtGenWeight_nom'] !=0.
-                accepGenMask = (events[f'accepGenJets{s}_pt']>0.) & (selGenMask)# & (events[f'accepGenJetsF{s}_pt']>0.)
-                missGenMask = (events[f'accepGenJets{s}_pt']<0.) & (selGenMask)# & (events[f'accepGenJetsF{s}_pt']<0.)
+
+                trueRecoMask = (events[f'trueRecoJets{s}_pt']>0.) & (selRecoMask) & (selGenMask) & (events[f'trueRecoJetsF{s}_pt']>0.)
+                
+                fakeRecoMask = (selRecoMask) & ((events[f'trueRecoJets{s}_pt']<0.) | (events[f'trueRecoJetsF{s}_pt']<0.) ) #& (~selGenMask)
+                
+                accepGenMask = (selGenMask) & (selRecoMask) & ((events[f'accepGenJets{s}_pt']>0.) & (events[f'accepGenJetsF{s}_pt']>0.))
+                
+                missGenMask =  (selGenMask)  & ((events[f'accepGenJetsF{s}_pt']<0.) | (events[f'accepGenJets{s}_pt']<0.) ) #& (~selRecoMask)
+                if self.saveParquet: 
+                    events['trueRecoMask']=trueRecoMask
+                    events['selRecoMask']=selRecoMask
+                    events['fakeRecoMask']=fakeRecoMask
+                    events['selGenMask']=selGenMask
+                    events['accepGenMask']=accepGenMask
+                    events['missGenMask']=missGenMask
+                    
+
+                    if (sys.endswith('nom')): 
+                        print(f"Saving the following .parquet file: {self.inputDir[0].split('jetObservables/')[0]+'jetObservables/Dijets_rootToParquet/'+self.inputDir[0].split('kadatta/jetObservables/')[1].split('/')[0]+'_UL'+self.year+'_nomWts_CentralJet_V2.parquet'}")
+                        ak.to_parquet(events,self.inputDir[0].split('jetObservables/')[0]+'jetObservables/Dijets_rootToParquet/'+self.inputDir[0].split('kadatta/jetObservables/')[1].split('/')[0]+'_UL'+self.year+'_nomWts_CentralJet_V2.parquet')
+                        #return 1 # dummy 
+                    elif self.sysUnc and self.onlyUnc: 
+                        print(f"Saving the following .parquet file: {self.inputDir[0].split('jetObservables/')[0]+'jetObservables/Dijets_rootToParquet/'+self.inputDir[0].split('kadatta/jetObservables/')[1].split('/')[0]+'_UL'+self.year+'_{s}Unc_CentralJet_V2.parquet'}")
+                        ak.to_parquet(events, self.inputDir[0].split('jetObservables/')[0]+'jetObservables/Dijets_rootToParquet/'+self.inputDir[0].split('kadatta/jetObservables/')[1].split('/')[0]+'_UL'+self.year+'_{s}Unc_CentralJet_V2.parquet')
+                        #return 1 # dummy 
+                    
+                    
                 
             elif self.isMC and (not self.isSigMC): #not so relevant for dijets but for background MC's in W/top
                 
@@ -218,6 +241,18 @@ class nSubBasis_unfoldingHistoProd_DijetsCentral(processor.ProcessorABC):
                     #for t in othertrigsInds:
                     #    #if not(('500' in triggerList[t]) and (self.year!='2017' or self.year!='2018')) and not(('450' in triggerList[t] or '500' in itrigger) and (self.year.startswith('2016'))):
                     #    selRecoMasks[itrigger]=(selRecoMasks[itrigger]) & (events[f'passHLT_{triggerList[t]}']==0 )
+
+                    if self.saveParquet: 
+                        
+                        
+                        for itrigger, itrValues in self.triggerTable.items():
+                            events['selRecoMask_'+itrigger]=selRecoMasks[itrigger]
+
+                        if sys.endswith('nom'): 
+                            print(f"Saving the following .parquet file: {self.inputDir[0].split('jetObservables/')[0]+'jetObservables/Dijets_rootToParquet/'+self.inputDir[0].split('kadatta/jetObservables/')[1].split('/')[0]+'_UL'+self.year+'_nomWts_CentralJet_V2.parquet'}")
+                            ak.to_parquet(events, (self.inputDir[0].split('jetObservables/')[0]+'jetObservables/Dijets_rootToParquet/'+self.inputDir[0].split('kadatta/jetObservables/')[1].split('/')[0]+'_UL'+self.year+'_nomWts_CentralJet_V2.parquet'))                                    
+                    
+                   
 
             else: 
                 print (f'something fishy in what type of sample you want me to load, recheck input config') 
@@ -254,12 +289,13 @@ class nSubBasis_unfoldingHistoProd_DijetsCentral(processor.ProcessorABC):
                         whichKinVar = [var for var in self.dict_variables_kinematics.keys() if var[1:] in key]#[0]
                         varToFill = whichKinVar[0]
 
-                    elif ('_tau' in key):# and 'nom' in key):
+                    elif ('_tau' in key or '__' in key):# and 'nom' in key):
                         temp='WTA' if 'WTA' in key else 'tau' #hack, :(, to fix tau21_nonOPkT being histogrammed incorrectly
                         temp='exkT' if 'exkT' in key else 'tau'
+                        if not 'tau' in key: temp="__"
                         whichnSub = [var for var in self.dict_variables_toUnfold.keys() if (var in key and temp in var)]
-                        varToFill = whichnSub[0]
-                        
+                        varToFill = whichnSub[0] if 'tau' in whichnSub[0] else whichnSub[0].replace('__','_')
+                        if self.verbose:print(varToFill)
 
                     ################## Filling histos from accumulated event arrays ##################
 
@@ -268,8 +304,7 @@ class nSubBasis_unfoldingHistoProd_DijetsCentral(processor.ProcessorABC):
                         s=sys
                         #if self.verbose and sys.endswith('nom'): 
                         #    #print (s, events[f'totalRecoWeight_nom'],events[f'puWeightNom{s}'],events[f'l1prefiringWeightNom{s}'])
-                        totalRecoWeight = events[f'evtGenWeight_nom']*events[f'puWeightNom{s}'] if self.isMC else events[f'totalRecoWeight_nom']
-                        totalRecoWeight = totalRecoWeight*events[f'l1prefiringWeightNom{s}'] if (self.isMC and not('h7'in self.sampleName.lower())) else totalRecoWeight
+                        totalRecoWeight = events[f'evtGenWeight_nom']*events[f'puWeightNom{s}'] if self.isMC else events[f'totalRecoWeight_nom']*events[f'l1prefiringWeightNom{s}'] if (self.isMC ) else totalRecoWeight
                         totalGenWeight = events[f'evtGenWeight_nom'] if self.isMC else None
                     else:
                         s='_nom'
@@ -460,10 +495,17 @@ class nSubBasis_unfoldingHistoProd_DijetsCentral(processor.ProcessorABC):
         #print (sysSources)
         for sys in self.sysSource:
             #if not wtUnc and not sysUnc:
-            reco_list.append('selRecoJetsF_nom_pt')
-            #if self.isMC: reco_list.append('trueRecoJetsF'+sys+'_pt')
+            
+            #include nominal branches for forward jet so that  masking can be done in tandem
+            reco_list.append(f'selRecoJetsF{sys}_pt')
+            
+            if self.isMC: 
+                gen_list.append('selGenJetsF_nom_pt')
+                gen_list.append(f'accepGenJetsF{sys}_pt')
+                reco_list.append(f'trueRecoJetsF{sys}_pt')
             #reco_list.append('accepGenJetsF'+sys+'_pt')
             for i in kinematic_labels+list(nSub_labels.keys()): 
+                if '__' in i: i=i.replace('__','_')
                 
                 if sys.endswith('nom') or (self.isSigMC and self.sysUnc): 
                     reco_list.append('selRecoJets'+sys+i)
@@ -510,7 +552,7 @@ class nSubBasis_unfoldingHistoProd_DijetsCentral(processor.ProcessorABC):
 
 class nSubBasis_unfoldingHistoProd_DijetsForward(processor.ProcessorABC):
     
-    def __init__(self, sampleName, sysSource=[],year='2017', era='', isMC=True, isSigMC=True, 
+    def __init__(self, sampleName, sysSource=[],year='2017', era='', isMC=True, isSigMC=True, saveParquet=False,
                  onlyUnc='', wtUnc=False, sampleDict=dictSamples,test=False, sysUnc=False,verbose=False):#isaltSigMC=False,
         self.test=test
         self.year = year
@@ -522,7 +564,7 @@ class nSubBasis_unfoldingHistoProd_DijetsForward(processor.ProcessorABC):
         self.onlyUnc = onlyUnc
         self.wtUnc = wtUnc
         self.sysUnc = sysUnc
-        
+        self.saveParquet=saveParquet
         
         self.dictSamples = sampleDict
         self.sampleName = sampleName
@@ -536,7 +578,7 @@ class nSubBasis_unfoldingHistoProd_DijetsForward(processor.ProcessorABC):
         self.inputDir = checkDict(sampleName,self.dictSamples)[self.year]['t3_dirs'] if self.isMC else checkDict(sampleName,self.dictSamples)[self.year]['t3_dirs'][self.era]
         #self.outputDir = 'UL17and18_nano_tests/'
         
-        self.nJet = [ 'Jet'] #1', 'Jet2' ]
+        self.nJet = [ 'JetF'] #1', 'Jet2' ]
         self.triggerTable = OrderedDict()
         self.triggerTable[ 'AK8PFJet80' ] = {# from the list below, only the first two numbers (trigger turn on) are used. The others were a test - Alejandro
                     '2016_preVFP' : [ 200,   242 ],
@@ -611,9 +653,9 @@ class nSubBasis_unfoldingHistoProd_DijetsForward(processor.ProcessorABC):
                     "_tau32_WTA": np.array([(i/1000) for i in np.arange(0.*1000, 1.4*1001)]),#for WTA-kT for comparison
                     "_tau21_exkT": np.array([(i/1000) for i in np.arange(0.*1000, 2.*1001)]),#for excl.-kT and E-scheme as per basis
                     "_tau32_exkT": np.array([(i/1000) for i in np.arange(0.*1000, 2.*1001)]),#for excl.-kT and E-scheme as per basis
-                    #"_mass": np.array([(i/2.0) for i in np.arange(0.*2, 300*2.1)]),
-                    #"_msoftdrop": np.array([(i/2.0) for i in np.arange(0.*2, 200*2.1)]),
-                    #"_pt": np.array([(i/2.0) for i in np.arange(170.*2, 2500.*2.1)]),
+                    "__mass": np.array([(i/2.0) for i in np.arange(0.*2, 300*2.1)]),
+                    "__msoftdrop": np.array([(i/2.0) for i in np.arange(0.*2, 200*2.1)]),
+                    "__pt": np.array([(i/2.0) for i in np.arange(170.*2, 2500.*2.1)]),
                         }
         self.kinematic_labels=['_pt','_eta', '_y', '_phi', '_mass', '_msoftdrop']
         self.reco_only_labels=['_good_nPVs']
@@ -632,8 +674,8 @@ class nSubBasis_unfoldingHistoProd_DijetsForward(processor.ProcessorABC):
         
         ### Uncertainties
         self.sysSource = ['_nom'] + [ isys+i for i in [ 'Up', 'Down' ] for isys in sysSource if not( isys.endswith('nom') or self.sysUnc) ]
-        self.sysWeightList = ( '_pu', '_pdf', '_isr', '_fsr', '_l1prefiring' ) #'_ps',
-        self.wtSources=['_puWeight','_isrWeight','_fsrWeight','_pdfWeight', '_l1prefiringWeight'] if self.wtUnc else [] 
+        self.sysWeightList = ( '_pu', '_pdf', '_isr', '_fsr')#, '_l1prefiring' ) #'_ps',
+        self.wtSources=['_puWeight','_isrWeight','_fsrWeight','_pdfWeight']#, '_l1prefiringWeight'] if self.wtUnc else [] 
         if self.onlyUnc: self.sysSource = ['_nom'] + [ onlyUnc+i for i in [ 'Up', 'Down' ] ] #################### Not using for right now
         
         #puWeights used only to change reco event weight (up/down) without application to gen weight, others applied to modify the genweight [and thereby also the recoWeight(=self.genWeight*self.puWeights)]
@@ -667,12 +709,35 @@ class nSubBasis_unfoldingHistoProd_DijetsForward(processor.ProcessorABC):
                 
                 s='_nom' if (sys.startswith(self.sysWeightList)) else sys
                 selRecoMask = events[f'totalRecoWeight{s}']!=0.
-                trueRecoMask = (events[f'trueRecoJetsF{s}_pt']>0.) & (selRecoMask) #& (events[f'trueRecoJets{s}_pt']>0.) 
-                fakeRecoMask = (events[f'trueRecoJetsF{s}_pt']<0.) & (selRecoMask) #& (events[f'trueRecoJets{s}_pt']<0.) 
                 selGenMask = events[f'evtGenWeight_nom'] !=0.
-                accepGenMask = (events[f'accepGenJetsF{s}_pt']>0.) & (selGenMask) #& (events[f'accepGenJets{s}_pt']>0.)
-                missGenMask = (events[f'accepGenJetsF{s}_pt']<0.) & (selGenMask) #& (events[f'accepGenJets{s}_pt']<0.)
+                trueRecoMask = (events[f'trueRecoJetsF{s}_pt']>0.) & (selRecoMask) & (selGenMask) & (events[f'trueRecoJets{s}_pt']>0.)
                 
+                fakeRecoMask = (selRecoMask) & ((events[f'trueRecoJets{s}_pt']<0.) | (events[f'trueRecoJetsF{s}_pt']<0.) ) #& (~selGenMask)
+                
+                accepGenMask = (selGenMask) & (selRecoMask) & ((events[f'accepGenJets{s}_pt']>0.) & (events[f'accepGenJetsF{s}_pt']>0.))
+                
+                missGenMask =  (selGenMask)  & ((events[f'accepGenJets{s}_pt']<0.) | (events[f'accepGenJetsF{s}_pt']<0.) ) #& (~selRecoMask)
+                
+                if self.saveParquet: 
+                    events['trueRecoMask']=trueRecoMask
+                    events['selRecoMask']=selRecoMask
+                    events['fakeRecoMask']=fakeRecoMask
+                    events['selGenMask']=selGenMask
+                    events['accepGenMask']=accepGenMask
+                    events['missGenMask']=missGenMask
+                    
+
+                    if (sys.endswith('nom')): 
+                        print(f"Saving the following .parquet file: {self.inputDir[0].split('jetObservables/')[0]+'jetObservables/Dijets_rootToParquet/'+self.inputDir[0].split('kadatta/jetObservables/')[1].split('/')[0]+'_UL'+self.year+'_nomWts_ForwardJet_V2.parquet'}")
+                        ak.to_parquet(events,self.inputDir[0].split('jetObservables/')[0]+'jetObservables/Dijets_rootToParquet/'+self.inputDir[0].split('kadatta/jetObservables/')[1].split('/')[0]+'_UL'+self.year+'_nomWts_ForwardJet_V2.parquet')
+                        #return 1 # dummy 
+                    elif self.sysUnc and self.onlyUnc: 
+                        print(f"Saving the following .parquet file: {self.inputDir[0].split('jetObservables/')[0]+'jetObservables/Dijets_rootToParquet/'+self.inputDir[0].split('kadatta/jetObservables/')[1].split('/')[0]+'_UL'+self.year+'_{s}Unc_ForwardJet_V2.parquet'}")
+                        ak.to_parquet(events, self.inputDir[0].split('jetObservables/')[0]+'jetObservables/Dijets_rootToParquet/'+self.inputDir[0].split('kadatta/jetObservables/')[1].split('/')[0]+'_UL'+self.year+'_{s}Unc_ForwardJet_V2.parquet')
+                        #return 1 # dummy 
+                    
+
+
             elif self.isMC and (not self.isSigMC): #not so relevant for dijets but for background MC's in W/top
                 
                 if sys.endswith('nom'):
@@ -690,6 +755,17 @@ class nSubBasis_unfoldingHistoProd_DijetsForward(processor.ProcessorABC):
                     
                     selRecoMasks[itrigger]=(events[f'totalRecoWeight{sys}']!=0.) & (events[f'passHLT_{itrigger}']==1 ) & ((events[f'selRecoJetsF{sys}_pt']>itrValues[self.year][0]) | (events[f'selRecoJetsF{sys}_pt']>itrValues[self.year][0])) & ((events[f'selRecoJets{sys}_pt']  < itrValues[self.year][1]) & (events[f'selRecoJetsF{sys}_pt']  < itrValues[self.year][1]))
                     
+                    if self.saveParquet: 
+                        
+                        
+                        for itrigger, itrValues in self.triggerTable.items():
+                            events['selRecoMask_'+itrigger]=selRecoMasks[itrigger]
+
+                        if sys.endswith('nom'): 
+                            print(f"Saving the following .parquet file: {self.inputDir[0].split('jetObservables/')[0]+'jetObservables/Dijets_rootToParquet/'+self.inputDir[0].split('kadatta/jetObservables/')[1].split('/')[0]+'_UL'+self.year+'_nomWts_ForwardJet_V2.parquet'}")
+                            ak.to_parquet(events, (self.inputDir[0].split('jetObservables/')[0]+'jetObservables/Dijets_rootToParquet/'+self.inputDir[0].split('kadatta/jetObservables/')[1].split('/')[0]+'_UL'+self.year+'_nomWts_ForwardJet_V2.parquet'))                                    
+                    
+                   
                     #if not(('500' in itrigger) and (self.year!='2017' or self.year!='2018')) and not(('450' in itrigger or '500' in itrigger) and (self.year.startswith('2016'))):
                     #    #avoiding doing the below for unprescaled triggers in each year (should I use the custom pass_HLT flags instead?check diff) to prevent duplicate events passing the prescaled triggers
                     #for t in othertrigsInds:
@@ -728,11 +804,12 @@ class nSubBasis_unfoldingHistoProd_DijetsForward(processor.ProcessorABC):
                         whichKinVar = [var for var in self.dict_variables_kinematics.keys() if var[1:] in key]#[0]
                         varToFill = whichKinVar[0]
 
-                    elif ('_tau' in key):# and 'nom' in key):
+                    elif ('_tau' in key or '__' in key):# and 'nom' in key):
                         temp='WTA' if 'WTA' in key else 'tau' #hack, :(, to fix tau21_nonOPkT being histogrammed incorrectly
                         temp='exkT' if 'exkT' in key else 'tau'
+                        if not 'tau' in key: temp="__"
                         whichnSub = [var for var in self.dict_variables_toUnfold.keys() if (var in key and temp in var)]
-                        varToFill = whichnSub[0]
+                        varToFill = whichnSub[0] if 'tau' in whichnSub[0] else whichnSub[0].replace('__','_')
                         
 
                     ################## Filling histos from accumulated event arrays ##################
@@ -740,8 +817,8 @@ class nSubBasis_unfoldingHistoProd_DijetsForward(processor.ProcessorABC):
                     # Decide what weights to use
                     if not (sys.startswith(self.sysWeightList)):
                         s=sys
-                        totalRecoWeight = events[f'evtGenWeight_nom']*events[f'puWeightNom{s}'] if self.isMC else events[f'totalRecoWeight_nom']
-                        totalRecoWeight = totalRecoWeight*events[f'l1prefiringWeightNom{s}'] if (self.isMC and not('h7'in self.sampleName.lower())) else totalRecoWeight
+                        totalRecoWeight = events[f'evtGenWeight_nom']*events[f'puWeightNom{s}'] if self.isMC else events[f'totalRecoWeight_nom']*events[f'l1prefiringWeightNom{s}'] if (self.isMC) else totalRecoWeight
+                        
                         totalGenWeight = events[f'evtGenWeight_nom'] if self.isMC else None
                     else:
                         s='_nom'
@@ -931,11 +1008,15 @@ class nSubBasis_unfoldingHistoProd_DijetsForward(processor.ProcessorABC):
         #print (sysSources)
         for sys in self.sysSource:
             #if not wtUnc and not sysUnc:
-            reco_list.append('selRecoJets_nom_pt')
-            #eco_list.append('trueRecoJets'+sys+'_pt')
-            #reco_list.append('accepGenJets'+sys+'_pt')
+            reco_list.append(f'selRecoJets{sys}_pt')
+            if self.isMC:
+                reco_list.append(f'trueRecoJets{sys}_pt')
+                gen_list.append(f'accepGenJets{sys}_pt')
+                gen_list.append('selGenJets_nom_pt')
+
+            
             for i in kinematic_labels+list(nSub_labels.keys()): 
-                
+                if '__' in i: i=i.replace('__','_')
                 if sys.endswith('nom') or (self.isSigMC and self.sysUnc): 
                     reco_list.append('selRecoJetsF'+sys+i)
                     
