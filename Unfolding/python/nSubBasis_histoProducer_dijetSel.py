@@ -3,7 +3,7 @@ import uproot
 from uproot import *
 import coffea
 '''
-
+from os.path import exists
 
 from coffea import processor
 import coffea.processor
@@ -27,7 +27,7 @@ class nSubBasis_unfoldingHistoProd_DijetsCentral(processor.ProcessorABC):
     
     def __init__(self, sampleName, sysSource=[],year='2017', era='', isMC=True, isSigMC=True, 
                  onlyUnc='', wtUnc=False, sampleDict=dictSamples,test=False, sysUnc=False, 
-                 saveParquet=False, verbose=True):#isaltSigMC=False,
+                 saveParquet=False, verbose=True, splitCount='0'):#isaltSigMC=False,
         self.test=test
         self.year = year
         self.isMC = isMC
@@ -38,7 +38,7 @@ class nSubBasis_unfoldingHistoProd_DijetsCentral(processor.ProcessorABC):
         self.onlyUnc = onlyUnc
         self.wtUnc = wtUnc
         self.sysUnc = sysUnc
-        
+        self.splitCount=splitCount
         self.saveParquet=saveParquet
         self.dictSamples = sampleDict
         self.sampleName = sampleName
@@ -133,9 +133,9 @@ class nSubBasis_unfoldingHistoProd_DijetsCentral(processor.ProcessorABC):
                     "_tau32_WTA": np.array([(i/1000) for i in np.arange(0.*1000, 1.4*1001)]),#for WTA-kT for comparison
                     "_tau21_exkT": np.array([(i/1000) for i in np.arange(0.*1000, 2.*1001)]),#for excl.-kT and E-scheme as per basis
                     "_tau32_exkT": np.array([(i/1000) for i in np.arange(0.*1000, 2.*1001)]),#for excl.-kT and E-scheme as per basis
-                    "__mass": np.array([(i/2.0) for i in np.arange(0.*2, 300*2.1)]),
-                    "__msoftdrop": np.array([(i/2.0) for i in np.arange(0.*2, 200*2.1)]),
-                    "__pt": np.array([(i/2.0) for i in np.arange(170.*2, 2500.*2.1)]),
+                    #"__mass": np.array([(i/2.0) for i in np.arange(0.*2, 300*2.1)]),
+                    #"__msoftdrop": np.array([(i/2.0) for i in np.arange(0.*2, 200*2.1)]),
+                    #"__pt": np.array([(i/2.0) for i in np.arange(170.*2, 2500.*2.1)]),
                         }
         self.kinematic_labels=['_pt','_eta', '_y', '_phi', '_mass', '_msoftdrop']
         self.reco_only_labels=['_good_nPVs']
@@ -209,12 +209,14 @@ class nSubBasis_unfoldingHistoProd_DijetsCentral(processor.ProcessorABC):
                     
 
                     if (sys.endswith('nom')): 
-                        print(f"Saving the following .parquet file: {self.inputDir[0].split('jetObservables/')[0]+'jetObservables/Dijets_rootToParquet/'+self.inputDir[0].split('kadatta/jetObservables/')[1].split('/')[0]+'_UL'+self.year+'_nomWts_CentralJet_V2.parquet'}")
-                        ak.to_parquet(events,self.inputDir[0].split('jetObservables/')[0]+'jetObservables/Dijets_rootToParquet/'+self.inputDir[0].split('kadatta/jetObservables/')[1].split('/')[0]+'_UL'+self.year+'_nomWts_CentralJet_V2.parquet')
+                        print(f"Saving the following .parquet file: {self.inputDir[0].split('jetObservables/')[0]+'jetObservables/Dijets_rootToParquet/'+self.inputDir[0].split('kadatta/jetObservables/')[1].split('/')[0]+'_UL'+self.year+f'_nomWts_CentralJet_V2_{self.splitCount}.parquet'}")
+                        
+                        ak.to_parquet(events,self.inputDir[0].split('jetObservables/')[0]+'jetObservables/Dijets_rootToParquet/'+self.inputDir[0].split('kadatta/jetObservables/')[1].split('/')[0]+'_UL'+self.year+f'_nomWts_CentralJet_V2_{self.splitCount}.parquet')
                         #return 1 # dummy 
                     elif self.sysUnc and self.onlyUnc: 
-                        print(f"Saving the following .parquet file: {self.inputDir[0].split('jetObservables/')[0]+'jetObservables/Dijets_rootToParquet/'+self.inputDir[0].split('kadatta/jetObservables/')[1].split('/')[0]+'_UL'+self.year+'_{s}Unc_CentralJet_V2.parquet'}")
-                        ak.to_parquet(events, self.inputDir[0].split('jetObservables/')[0]+'jetObservables/Dijets_rootToParquet/'+self.inputDir[0].split('kadatta/jetObservables/')[1].split('/')[0]+'_UL'+self.year+'_{s}Unc_CentralJet_V2.parquet')
+                        print(f"Saving the following .parquet file: {self.inputDir[0].split('jetObservables/')[0]+'jetObservables/Dijets_rootToParquet/'+self.inputDir[0].split('kadatta/jetObservables/')[1].split('/')[0]+'_UL'+self.year+f'_{s}Unc_CentralJet_V2_{self.splitCount}.parquet'}")
+                        
+                        ak.to_parquet(events, self.inputDir[0].split('jetObservables/')[0]+'jetObservables/Dijets_rootToParquet/'+self.inputDir[0].split('kadatta/jetObservables/')[1].split('/')[0]+'_UL'+self.year+f'_{s}Unc_CentralJet_V2_{self.splitCount}.parquet')
                         #return 1 # dummy 
                     
                     
@@ -249,8 +251,8 @@ class nSubBasis_unfoldingHistoProd_DijetsCentral(processor.ProcessorABC):
                             events['selRecoMask_'+itrigger]=selRecoMasks[itrigger]
 
                         if sys.endswith('nom'): 
-                            print(f"Saving the following .parquet file: {self.inputDir[0].split('jetObservables/')[0]+'jetObservables/Dijets_rootToParquet/'+self.inputDir[0].split('kadatta/jetObservables/')[1].split('/')[0]+'_UL'+self.year+'_nomWts_CentralJet_V2.parquet'}")
-                            ak.to_parquet(events, (self.inputDir[0].split('jetObservables/')[0]+'jetObservables/Dijets_rootToParquet/'+self.inputDir[0].split('kadatta/jetObservables/')[1].split('/')[0]+'_UL'+self.year+'_nomWts_CentralJet_V2.parquet'))                                    
+                            print(f"Saving the following .parquet file: {self.inputDir[0].split('jetObservables/')[0]+'jetObservables/Dijets_rootToParquet/'+self.inputDir[0].split('kadatta/jetObservables/')[1].split('/')[0]+'_UL'+self.year+self.era+f'_nomWts_CentralJet_V2_{self.splitCount}.parquet'}")
+                            ak.to_parquet(events, (self.inputDir[0].split('jetObservables/')[0]+'jetObservables/Dijets_rootToParquet/'+self.inputDir[0].split('kadatta/jetObservables/')[1].split('/')[0]+'_UL'+self.year+self.era+f'_nomWts_CentralJet_V2_{self.splitCount}.parquet'))                                    
                     
                    
 
@@ -304,7 +306,7 @@ class nSubBasis_unfoldingHistoProd_DijetsCentral(processor.ProcessorABC):
                         s=sys
                         #if self.verbose and sys.endswith('nom'): 
                         #    #print (s, events[f'totalRecoWeight_nom'],events[f'puWeightNom{s}'],events[f'l1prefiringWeightNom{s}'])
-                        totalRecoWeight = events[f'evtGenWeight_nom']*events[f'puWeightNom{s}'] if self.isMC else events[f'totalRecoWeight_nom']*events[f'l1prefiringWeightNom{s}'] if (self.isMC ) else totalRecoWeight
+                        totalRecoWeight = events[f'evtGenWeight_nom']*events[f'puWeightNom{s}']*events[f'l1prefiringWeightNom{s}']  if self.isMC else events[f'totalRecoWeight_nom']
                         totalGenWeight = events[f'evtGenWeight_nom'] if self.isMC else None
                     else:
                         s='_nom'
@@ -497,13 +499,15 @@ class nSubBasis_unfoldingHistoProd_DijetsCentral(processor.ProcessorABC):
             #if not wtUnc and not sysUnc:
             
             #include nominal branches for forward jet so that  masking can be done in tandem
-            reco_list.append(f'selRecoJetsF{sys}_pt')
-            
-            if self.isMC: 
+            if sys.endswith('nom') or (self.isSigMC and self.sysUnc):
+                reco_list.append(f'selRecoJetsF{sys}_pt')
+
+            if (self.isMC and sys.endswith('nom')) or (self.isSigMC and (sys.endswith('nom') or self.onlyUnc)): 
                 gen_list.append('selGenJetsF_nom_pt')
                 gen_list.append(f'accepGenJetsF{sys}_pt')
                 reco_list.append(f'trueRecoJetsF{sys}_pt')
-            #reco_list.append('accepGenJetsF'+sys+'_pt')
+                #reco_list.append('accepGenJetsF'+sys+'_pt')
+            
             for i in kinematic_labels+list(nSub_labels.keys()): 
                 if '__' in i: i=i.replace('__','_')
                 
@@ -553,13 +557,14 @@ class nSubBasis_unfoldingHistoProd_DijetsCentral(processor.ProcessorABC):
 class nSubBasis_unfoldingHistoProd_DijetsForward(processor.ProcessorABC):
     
     def __init__(self, sampleName, sysSource=[],year='2017', era='', isMC=True, isSigMC=True, saveParquet=False,
-                 onlyUnc='', wtUnc=False, sampleDict=dictSamples,test=False, sysUnc=False,verbose=False):#isaltSigMC=False,
+                 onlyUnc='', wtUnc=False, sampleDict=dictSamples,test=False, sysUnc=False,verbose=False,splitCount='0'):#isaltSigMC=False,
         self.test=test
         self.year = year
         self.isMC = isMC
         self.isSigMC = isSigMC
         self.era = era
         #self.isaltSigMC = isaltSigMC
+        self.splitCount=splitCount
         self.verbose=verbose
         self.onlyUnc = onlyUnc
         self.wtUnc = wtUnc
@@ -653,9 +658,9 @@ class nSubBasis_unfoldingHistoProd_DijetsForward(processor.ProcessorABC):
                     "_tau32_WTA": np.array([(i/1000) for i in np.arange(0.*1000, 1.4*1001)]),#for WTA-kT for comparison
                     "_tau21_exkT": np.array([(i/1000) for i in np.arange(0.*1000, 2.*1001)]),#for excl.-kT and E-scheme as per basis
                     "_tau32_exkT": np.array([(i/1000) for i in np.arange(0.*1000, 2.*1001)]),#for excl.-kT and E-scheme as per basis
-                    "__mass": np.array([(i/2.0) for i in np.arange(0.*2, 300*2.1)]),
-                    "__msoftdrop": np.array([(i/2.0) for i in np.arange(0.*2, 200*2.1)]),
-                    "__pt": np.array([(i/2.0) for i in np.arange(170.*2, 2500.*2.1)]),
+                    #"__mass": np.array([(i/2.0) for i in np.arange(0.*2, 300*2.1)]),
+                    #"__msoftdrop": np.array([(i/2.0) for i in np.arange(0.*2, 200*2.1)]),
+                    #"__pt": np.array([(i/2.0) for i in np.arange(170.*2, 2500.*2.1)]),
                         }
         self.kinematic_labels=['_pt','_eta', '_y', '_phi', '_mass', '_msoftdrop']
         self.reco_only_labels=['_good_nPVs']
@@ -674,8 +679,8 @@ class nSubBasis_unfoldingHistoProd_DijetsForward(processor.ProcessorABC):
         
         ### Uncertainties
         self.sysSource = ['_nom'] + [ isys+i for i in [ 'Up', 'Down' ] for isys in sysSource if not( isys.endswith('nom') or self.sysUnc) ]
-        self.sysWeightList = ( '_pu', '_pdf', '_isr', '_fsr')#, '_l1prefiring' ) #'_ps',
-        self.wtSources=['_puWeight','_isrWeight','_fsrWeight','_pdfWeight']#, '_l1prefiringWeight'] if self.wtUnc else [] 
+        self.sysWeightList = ( '_pu', '_isr')#, '_fsr','_pdf', '_l1prefiring' ) #'_ps',
+        self.wtSources=['_puWeight','_isrWeight']#,'_fsrWeight','_pdfWeight', '_l1prefiringWeight'] if self.wtUnc else [] 
         if self.onlyUnc: self.sysSource = ['_nom'] + [ onlyUnc+i for i in [ 'Up', 'Down' ] ] #################### Not using for right now
         
         #puWeights used only to change reco event weight (up/down) without application to gen weight, others applied to modify the genweight [and thereby also the recoWeight(=self.genWeight*self.puWeights)]
@@ -728,14 +733,13 @@ class nSubBasis_unfoldingHistoProd_DijetsForward(processor.ProcessorABC):
                     
 
                     if (sys.endswith('nom')): 
-                        print(f"Saving the following .parquet file: {self.inputDir[0].split('jetObservables/')[0]+'jetObservables/Dijets_rootToParquet/'+self.inputDir[0].split('kadatta/jetObservables/')[1].split('/')[0]+'_UL'+self.year+'_nomWts_ForwardJet_V2.parquet'}")
-                        ak.to_parquet(events,self.inputDir[0].split('jetObservables/')[0]+'jetObservables/Dijets_rootToParquet/'+self.inputDir[0].split('kadatta/jetObservables/')[1].split('/')[0]+'_UL'+self.year+'_nomWts_ForwardJet_V2.parquet')
-                        #return 1 # dummy 
+                        print(f"Saving the following .parquet file: {self.inputDir[0].split('jetObservables/')[0]+'jetObservables/Dijets_rootToParquet/'+self.inputDir[0].split('kadatta/jetObservables/')[1].split('/')[0]+'_UL'+self.year+f'_nomWts_ForwardJet_V2_{self.splitCount}.parquet'}")
+                        
+                        ak.to_parquet(events,self.inputDir[0].split('jetObservables/')[0]+'jetObservables/Dijets_rootToParquet/'+self.inputDir[0].split('kadatta/jetObservables/')[1].split('/')[0]+'_UL'+self.year+f'_nomWts_ForwardJet_V2_{self.splitCount}.parquet')
+
                     elif self.sysUnc and self.onlyUnc: 
-                        print(f"Saving the following .parquet file: {self.inputDir[0].split('jetObservables/')[0]+'jetObservables/Dijets_rootToParquet/'+self.inputDir[0].split('kadatta/jetObservables/')[1].split('/')[0]+'_UL'+self.year+'_{s}Unc_ForwardJet_V2.parquet'}")
-                        ak.to_parquet(events, self.inputDir[0].split('jetObservables/')[0]+'jetObservables/Dijets_rootToParquet/'+self.inputDir[0].split('kadatta/jetObservables/')[1].split('/')[0]+'_UL'+self.year+'_{s}Unc_ForwardJet_V2.parquet')
-                        #return 1 # dummy 
-                    
+                        print(f"Saving the following .parquet file: {self.inputDir[0].split('jetObservables/')[0]+'jetObservables/Dijets_rootToParquet/'+self.inputDir[0].split('kadatta/jetObservables/')[1].split('/')[0]+'_UL'+self.year+f'_{s}Unc_ForwardJet_V2_{self.splitCount}.parquet'}")
+                        ak.to_parquet(events, self.inputDir[0].split('jetObservables/')[0]+'jetObservables/Dijets_rootToParquet/'+self.inputDir[0].split('kadatta/jetObservables/')[1].split('/')[0]+'_UL'+self.year+f'_{s}Unc_ForwardJet_V2_{self.splitCount}.parquet')
 
 
             elif self.isMC and (not self.isSigMC): #not so relevant for dijets but for background MC's in W/top
@@ -762,8 +766,8 @@ class nSubBasis_unfoldingHistoProd_DijetsForward(processor.ProcessorABC):
                             events['selRecoMask_'+itrigger]=selRecoMasks[itrigger]
 
                         if sys.endswith('nom'): 
-                            print(f"Saving the following .parquet file: {self.inputDir[0].split('jetObservables/')[0]+'jetObservables/Dijets_rootToParquet/'+self.inputDir[0].split('kadatta/jetObservables/')[1].split('/')[0]+'_UL'+self.year+'_nomWts_ForwardJet_V2.parquet'}")
-                            ak.to_parquet(events, (self.inputDir[0].split('jetObservables/')[0]+'jetObservables/Dijets_rootToParquet/'+self.inputDir[0].split('kadatta/jetObservables/')[1].split('/')[0]+'_UL'+self.year+'_nomWts_ForwardJet_V2.parquet'))                                    
+                            print(f"Saving the following .parquet file: {self.inputDir[0].split('jetObservables/')[0]+'jetObservables/Dijets_rootToParquet/'+self.inputDir[0].split('kadatta/jetObservables/')[1].split('/')[0]+'_UL'+self.year+self.era+f'_nomWts_ForwardJet_V2_{self.splitCount}.parquet'}")
+                            ak.to_parquet(events, (self.inputDir[0].split('jetObservables/')[0]+'jetObservables/Dijets_rootToParquet/'+self.inputDir[0].split('kadatta/jetObservables/')[1].split('/')[0]+'_UL'+self.year+self.era+f'_nomWts_ForwardJet_V2_{self.splitCount}.parquet'))                                    
                     
                    
                     #if not(('500' in itrigger) and (self.year!='2017' or self.year!='2018')) and not(('450' in itrigger or '500' in itrigger) and (self.year.startswith('2016'))):
@@ -817,7 +821,7 @@ class nSubBasis_unfoldingHistoProd_DijetsForward(processor.ProcessorABC):
                     # Decide what weights to use
                     if not (sys.startswith(self.sysWeightList)):
                         s=sys
-                        totalRecoWeight = events[f'evtGenWeight_nom']*events[f'puWeightNom{s}'] if self.isMC else events[f'totalRecoWeight_nom']*events[f'l1prefiringWeightNom{s}'] if (self.isMC) else totalRecoWeight
+                        totalRecoWeight = events[f'evtGenWeight_nom']*events[f'puWeightNom{s}']*events[f'l1prefiringWeightNom{s}'] if self.isMC else events[f'totalRecoWeight_nom']
                         
                         totalGenWeight = events[f'evtGenWeight_nom'] if self.isMC else None
                     else:
@@ -1007,9 +1011,10 @@ class nSubBasis_unfoldingHistoProd_DijetsForward(processor.ProcessorABC):
             
         #print (sysSources)
         for sys in self.sysSource:
-            #if not wtUnc and not sysUnc:
-            reco_list.append(f'selRecoJets{sys}_pt')
-            if self.isMC:
+            if sys.endswith('nom') or (self.isSigMC and self.sysUnc):
+                reco_list.append(f'selRecoJets{sys}_pt')
+
+            if (self.isMC and sys.endswith('nom')) or (self.isSigMC and (sys.endswith('nom') or self.onlyUnc)): 
                 reco_list.append(f'trueRecoJets{sys}_pt')
                 gen_list.append(f'accepGenJets{sys}_pt')
                 gen_list.append('selGenJets_nom_pt')

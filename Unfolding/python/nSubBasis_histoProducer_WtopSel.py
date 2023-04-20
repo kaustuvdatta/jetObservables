@@ -20,12 +20,12 @@ from hist import Hist
 
 from collections import defaultdict
 import numba
-
+import gc
 
 class nSubBasis_unfoldingHistoProd_WtopSel(processor.ProcessorABC):
     
-    def __init__(self, sampleName, selection='_topSel', withLeptHemBtag=False, sysSource=[],year='2017', era='', 
-                 isMC=True, isSigMC=True, onlyUnc='', wtUnc=False, verbose=True,
+    def __init__(self, sampleName, selection='_topSel', withLeptHemBtag=False, sysSources=[],year='2017', era='', 
+                 isMC=True, isSigMC=True, onlyUnc='', wtUnc=False, verbose=True, saveParquet=False, splitCount='0',
                  sampleDict=dictSamples, test=False, sysUnc=False):
 
         self.test=test
@@ -34,14 +34,15 @@ class nSubBasis_unfoldingHistoProd_WtopSel(processor.ProcessorABC):
         self.isSigMC = isSigMC
         self.era = era
         self.withLeptHemBtag = withLeptHemBtag
-        
+        self.splitCount=splitCount
         self.onlyUnc = onlyUnc
         self.wtUnc = wtUnc
         self.sysUnc = sysUnc       
         self.dictSamples = sampleDict
         self.sampleName = sampleName
         self.verbose=verbose
-
+        self.saveParquet=saveParquet
+        
         if (not self.isMC) and self.era=='': print (f'Data-loading error: You need to specify what era if you want to work with while handling data' )
         
         
@@ -146,16 +147,16 @@ class nSubBasis_unfoldingHistoProd_WtopSel(processor.ProcessorABC):
                     "_tau32_WTA": np.array([(i/1000) for i in np.arange(0.*1000, 1.4*1001)]),#for WTA-kT for comparison
                     "_tau21_exkT": np.array([(i/1000) for i in np.arange(0.*1000, 2.*1001)]),#for excl.-kT and E-scheme as per basis
                     "_tau32_exkT": np.array([(i/1000) for i in np.arange(0.*1000, 2.*1001)]),#for excl.-kT and E-scheme as per basis
-                    "_mass": np.array([(i/2.0) for i in np.arange(0.*2, 300*2.1)]),
-                    "_msoftdrop": np.array([(i/2.0) for i in np.arange(0.*2, 200*2.1)]),
-                    "_pt": np.array([(i/2.0) for i in np.arange(170.*2, 2500.*2.1)]),
+                    #"_mass": np.array([(i/2.0) for i in np.arange(0.*2, 300*2.1)]),
+                    #"_msoftdrop": np.array([(i/2.0) for i in np.arange(0.*2, 300*2.1)]),
+                    #"_pt": np.array([(i/2.0) for i in np.arange(170.*2, 2500.*2.1)]),
                         }
         
         ### Uncertainties
-        self.sysSource = ['_nom'] + [ isys+i for i in [ 'Up', 'Down' ] for isys in sysSource if not( isys.endswith('nom') or self.sysUnc) ]
-        self.sysWeightList = ( '_pu', '_isr', '_pdf', '_fsr', '_l1prefiring', '_lepton', '_btag' ) #'_ps',
-        self.wtSources=['_puWeight','_isrWeight','_fsrWeight','_pdfWeight', '_btagWeight', '_l1prefiringWeight', '_leptonWeightAll']#, '_leptonWeightISO', '_leptonWeightID', '_leptonWeightTrig', '_leptonWeightRecoEff'] if self.wtUnc else [] 
-        if self.onlyUnc: self.sysSource = ['_nom'] + [ onlyUnc+i for i in [ 'Up', 'Down' ] ] #################### Not using for right now
+        self.sysSources = ['_nom'] + [ isys+i for i in [ 'Up', 'Down' ] for isys in sysSources if not( isys.endswith('nom') or self.sysUnc) ]
+        self.sysWeightList = ( '_pu', '_isr', '_fsr', '_pdf', '_l1prefiring', '_lepton', '_btag' ) #'_ps',
+        self.wtSources=['_puWeight','_isrWeight','_fsrWeight','_pdfWeight', '_l1prefiringWeight','_leptonWeightAll','_btagWeight']#, '_leptonWeightISO', '_leptonWeightID', '_leptonWeightTrig', '_leptonWeightRecoEff'] if self.wtUnc else [] 
+        if self.onlyUnc: self.sysSources = ['_nom'] + [ onlyUnc+i for i in [ 'Up', 'Down' ] ] #################### Not using for right now
         
         #puWeights used only to change reco event weight (up/down) without application to gen weight, others applied to modify the genweight [and thereby also the recoWeight(=self.genWeight*self.puWeights)]
         
@@ -195,134 +196,243 @@ class nSubBasis_unfoldingHistoProd_WtopSel(processor.ProcessorABC):
         output = self.buildDictOfHistograms()
         branches = self._branchesToRead
         events = events[branches]
+        if self.verbose: print (output.keys())
         
-        if self.verbose: print (f'systematic sources being considered:{self.sysSource} for nevents={len(events)}')
-        for sys in self.sysSource:
+        print (f'systematic sources being considered:{self.sysSources} for nevents={len(events)} before masking')
+        
+        for sys in self.sysSources:
+            
             
             s='_nom' if (sys.startswith(self.sysWeightList)) else sys
             
-            if self.verbose: 
-                print('making individual W and topSel mask',sys,s)
                 
-            #if self.withLeptHemBtag==False:
-
-            topRecoMask = (events[f'selRecoJets{s}_pt']>self.top_ptmin) & (events[f'selRecoJets{s}_msoftdrop']/events[f'selRecoJets{s}_msoftdrop']/events[f'selRecoJets{s}_msoftdrop_corr_PUPPI']>self.top_mSDmin) & (events[f'selRecoJets{s}_msoftdrop']/events[f'selRecoJets{s}_msoftdrop']/events[f'selRecoJets{s}_msoftdrop_corr_PUPPI']<self.top_mSDmax) & (events[f'selRecoHadHemDeltaR{s}']<0.8) & (events[f'totalRecoWeight{s}']!=0.)
+            topRecoMask = (events[f'selRecoJets{s}_pt']>self.top_ptmin) & (events[f'selRecoJets{s}_mass']>self.top_mSDmin) & (events[f'selRecoJets{s}_mass']<self.top_mSDmax) & (events[f'selRecoHadHemDeltaR{s}']<0.8) & (events[f'totalRecoWeight{s}']!=0.)
 
             WRecoMask = (events[f'selRecoJets{s}_pt']>self.W_ptmin) & (events[f'selRecoJets{s}_mass']>self.W_mSDmin) & (events[f'selRecoJets{s}_mass']<self.W_mSDmax) & (events[f'selRecoHadHemDeltaR{s}']>0.8) & (events[f'selRecoHadHemDeltaR{s}']<1.6) & (events[f'totalRecoWeight{s}']!=0.)
 
-            if self.isMC or self.isSigMC:                       
-                topGenMask = (events[f'selGenJets{s}_pt']>self.top_ptmin) & (events[f'selGenJets{s}_msoftdrop']>self.top_mSDmin) & (events[f'selGenJets{s}_msoftdrop']<self.top_mSDmax) & (events[f'selGenHadHemDeltaR{s}']<0.8) & (events[f'evtGenWeight_nom'] !=0.)
+            if self.isMC:# or self.isSigMC:                       
+                topGenMask = (events[f'selGenJets_nom_pt']>self.top_ptmin) & (events[f'selGenJets_nom_mass']>self.top_mSDmin) & (events[f'selGenJets_nom_mass']<self.top_mSDmax) & (events[f'selGenHadHemDeltaR_nom']<0.8) & (events[f'evtGenWeight_nom'] !=0.)
 
-            WGenMask = (events[f'selGenJets{s}_pt']>self.W_ptmin) & (events[f'selGenJets{s}_mass']>self.W_mSDmin) & (events[f'selGenJets{s}_mass']<self.W_mSDmax) & (events[f'selGenHadHemDeltaR{s}']>0.8) & (events[f'selGenHadHemDeltaR{s}']<1.6) & (events[f'evtGenWeight_nom'] !=0.)
+                WGenMask = (events[f'selGenJets_nom_pt']>self.W_ptmin) & (events[f'selGenJets_nom_mass']>self.W_mSDmin) & (events[f'selGenJets_nom_mass']<self.W_mSDmax) & (events[f'selGenHadHemDeltaR_nom']>0.8) & (events[f'selGenHadHemDeltaR_nom']<1.6) & (events[f'evtGenWeight_nom'] !=0.)
 
-            #else:
+            if self.verbose:
+                print(s,sys,len(events[topRecoMask]),len(events[topGenMask]),len(events[WRecoMask]),len(events[WGenMask]))
 
-            #    topRecoMask = (events[f'selRecoJets{s}_pt']>self.top_ptmin) & (events[f'selRecoJets{s}_msoftdrop']/events[f'selRecoJets{s}_msoftdrop']/events[f'selRecoJets{s}_msoftdrop_corr_PUPPI']>self.top_mSDmin) & (events[f'selRecoJets{s}_msoftdrop']/events[f'selRecoJets{s}_msoftdrop']/events[f'selRecoJets{s}_msoftdrop_corr_PUPPI']<self.top_mSDmax) & (events[f'selRecoHadHemDeltaR{s}']<0.8) & (events[f'FlagRecoLeptHemBjet{s}']==1) & (events[f'totalRecoWeight{s}']!=0.)
+            if self.isSigMC:# and not(sys.startswith(self.sysWeightList)):
+                
+                s='_nom' if (sys.startswith(self.sysWeightList)) else sys
 
-            #    WRecoMask = (events[f'selRecoJets{s}_pt']>self.W_ptmin) & (events[f'selRecoJets{s}_mass']>self.W_mSDmin) & (events[f'selRecoJets{s}_mass']<self.W_mSDmax) & (events[f'selRecoHadHemDeltaR{s}']>0.8) & (events[f'selRecoHadHemDeltaR{s}']<1.6) & (events[f'FlagRecoLeptHemBjet{s}']==1) & (events[f'totalRecoWeight{s}']!=0.)
+                if self.verbose: 
+                    print('making individual W and topSel mask',sys,s)
 
-            #    if self.isMC or self.isSigMC: 
+                #if self.withLeptHemBtag==False:
 
-            #        topGenMask = (events[f'selGenJets{s}_pt']>self.top_ptmin) & (events[f'selGenJets{s}_msoftdrop']>self.top_mSDmin) & (events[f'selGenJets{s}_msoftdrop']<self.top_mSDmax) & (events[f'selGenHadHemDeltaR{s}']<0.8) & (events[f'FlagGenLeptHemBjet{s}']==1) & (events[f'evtGenWeight_nom'] !=0.)
-
-            #        WGenMask = (events[f'selGenJets{s}_pt']>self.W_ptmin) & (events[f'selGenJets{s}_mass']>self.W_mSDmin) & (events[f'selGenJets{s}_mass']<self.W_mSDmax) & (events[f'selGenHadHemDeltaR{s}']>0.8) & (events[f'selGenHadHemDeltaR{s}']<1.6) & (events[f'FlagGenLeptHemBjet{s}']==1) & (events[f'evtGenWeight_nom'] !=0.)
-
-            if '_WSel' in self.selList:
+                
+                if '_WSel' in self.selList:
                     WtopRecoMask = (WRecoMask) & (~(topRecoMask|topGenMask))
-                    if self.isMC or self.isSigMC:                        
-                        WtopGenMask = (WGenMask) & (~(topRecoMask|topGenMask))
+                    WtopGenMask = (WGenMask) & (~(topRecoMask|topGenMask))
 
-            elif '_topSel' in self.selList: 
-                WtopRecoMask = (topRecoMask) &(~(WRecoMask|WGenMask))
-                if self.isMC or self.isSigMC:                        
-                    WtopGenMask = (topGenMask) &(~(WGenMask|WRecoMask))    
+                elif '_topSel' in self.selList: 
+                    WtopRecoMask = (topRecoMask) & (~(WRecoMask|WGenMask))
+                    WtopGenMask = (topGenMask) & (~(WGenMask|WRecoMask))    
 
             
-            
-            if self.isMC and self.isSigMC:# or self.isaltSigMC:
-                #event_mask = ((WtopRecoMask) | (WtopGenMask))
-                #events = events[event_mask]
-                
-                #s='_nom' if (sys.startswith(self.sysWeightList)) else sys
                         
-                selRecoMask = (events[f'totalRecoWeight{s}']!=0.) & (WtopRecoMask) #& (event_mask)
-                selGenMask = (events[f'evtGenWeight_nom'] !=0.) & (WtopGenMask) #& (event_mask)
+                selRecoMask = (WtopRecoMask) 
+                selGenMask = (WtopGenMask) 
 
-                trueRecoMask = (events[f'trueRecoJets{s}_pt']>0.) & (selRecoMask) & (selGenMask) 
-                fakeRecoMask = (events[f'trueRecoJets{s}_pt']<0.) & (selRecoMask) & (~selGenMask) #((selRecoMask) ^ (trueRecoMask))#
-                accepGenMask = (events[f'accepGenJets{s}_pt']>0.) & (selGenMask) & (selRecoMask)
-                missGenMask =  (events[f'accepGenJets{s}_pt']<0.) & (selGenMask) & (~selRecoMask)#((selGenMask) ^ (accepGenMask))  #
+                trueRecoMask = (events[f'trueRecoJets{s}_pt']>0.) & ((selRecoMask) & (selGenMask)) 
+                accepGenMask = (events[f'accepGenJets{s}_pt']>0.) & ((selGenMask) & (selRecoMask))
+
+                fakeRecoMask = ((selRecoMask) & (~trueRecoMask)) #((selRecoMask) ^ (trueRecoMask))#
+
+                missGenMask =  ((selGenMask) & (~accepGenMask))#((selGenMask) ^ (accepGenMask))  #
                 
-                selRecoMask = (trueRecoMask) | (fakeRecoMask) #& (event_mask)
-                selGenMask = (accepGenMask) | (missGenMask) #& (event_mask)
-
-            elif self.isMC and (not self.isSigMC): #not so relevant for dijets but for background MC's in W/top
+                #selRecoMask = (trueRecoMask) | (fakeRecoMask) #& (event_mask)
+                #selGenMask = (accepGenMask) | (missGenMask) #& (event_mask)
                 
-                #event_mask = (WtopRecoMask) | (WtopGenMask)
-                #events = events[event_mask]
                 
-                if sys.endswith('nom'):
-                    selRecoMask = (events[f'totalRecoWeight{sys}']!=0.) & (WtopRecoMask) #& (event_mask)
-                    selGenMask = (events[f'evtGenWeight_nom'] !=0.) & (WtopGenMask) #& (event_mask)
+                
+                if self.saveParquet:
+                    events['selRecoMask']=selRecoMask
+                    events['selGenMask']=selGenMask
+                    events['trueRecoMask']=trueRecoMask
+                    events['fakeRecoMask']=fakeRecoMask
+                    events['accepGenMask']=accepGenMask
+                    events['missGenMask']=missGenMask
 
-                    trueRecoMask = (events[f'trueRecoJets{sys}_pt']>0.) & (selRecoMask)# & (selGenMask) 
-                    fakeRecoMask = (events[f'trueRecoJets{sys}_pt']<0.) & (selRecoMask) #((selRecoMask) ^ (trueRecoMask))#
-                    accepGenMask = (events[f'accepGenJets{sys}_pt']>0.) & (selGenMask)# & (selRecoMask)
-                    missGenMask =  (events[f'accepGenJets{sys}_pt']<0.) & (selGenMask) #((selGenMask) ^ (accepGenMask))  #
+                    if (sys.endswith('nom')): 
+                        
+                        
+                        sel = '_WSel' if '_WSel' in self.selList else '_topSel'
+                        
+                        print(f"Saving the following .parquet file: {self.inputDir[0].split('jetObservables/')[0]+'jetObservables/Wtop_rootToParquet/'+self.inputDir[0].split('kadatta/jetObservables/')[1].split('/')[0]+'_UL'+self.year+f'_nomWts{sel}_{self.splitCount}.parquet'}")
 
-                    selRecoMask = (trueRecoMask) | (fakeRecoMask) #& (event_mask)
-                    selGenMask = (accepGenMask) | (missGenMask) #& (event_mask)
-                    #selRecoMask = (events[f'totalRecoWeight{sys}']!=0.) & (WtopRecoMask)
-                    #selGenMask = (events[f'evtGenWeight{sys}']!=0.) & (WtopGenMask)
+                        ak.to_parquet(events[(selRecoMask|selGenMask)],self.inputDir[0].split('jetObservables/')[0]+'jetObservables/Wtop_rootToParquet/'+self.inputDir[0].split('kadatta/jetObservables/')[1].split('/')[0]+'_UL'+self.year+f'_nomWts{sel}_{self.splitCount}.parquet')
+
+                    elif self.sysUnc and self.onlyUnc: 
+                        print(f"Saving the following .parquet file: {self.inputDir[0].split('jetObservables/')[0]+'jetObservables/Wtop_rootToParquet/'+self.inputDir[0].split('kadatta/jetObservables/')[1].split('/')[0]+'_UL'+self.year+f'_{s}Unc{sel}_{self.splitCount}.parquet'}")
+
+                        ak.to_parquet(events[(selRecoMask|selGenMask)], self.inputDir[0].split('jetObservables/')[0]+'jetObservables/Wtop_rootToParquet/'+self.inputDir[0].split('kadatta/jetObservables/')[1].split('/')[0]+'_UL'+self.year+f'_{s}Unc{sel}_{self.splitCount}.parquet')
                     
-            elif not(self.isMC) and sys.endswith('nom'): 
-                #event_mask = (WtopRecoMask) 
-                #events = events[event_mask]
-                selRecoMask = (events[f'totalRecoWeight{s}']!=0.) & (WtopRecoMask)
+
+            elif self.isMC and not(self.isSigMC) and sys.endswith('nom'): #not so relevant for dijets but for background MC's in W/top
                 
-            else: 
-                print (f'something fishy in what type of sample you want me to load, recheck input config') 
+
+                if '_WSel' in self.selList:
+                    WtopRecoMask = (WRecoMask) & (~(topRecoMask|topGenMask))
+                    WtopGenMask = (WGenMask) & (~(topRecoMask|topGenMask))
+
+                elif '_topSel' in self.selList: 
+                    WtopRecoMask = (topRecoMask) & (~(WRecoMask|WGenMask))
+                    WtopGenMask = (topGenMask) & (~(WGenMask|WRecoMask))    
+
             
-            if self.verbose: 
-                #print (selRecoMask[0:20],selRecoMask[-20:-1])
-                #print (trueRecoMask[0:20],trueRecoMask[-20:-1])
-                #print (selGenMask[0:20],selGenMask[-20:-1])
-                #print (accepGenMask[0:20],accepGenMask[-20:-1])
+                        
+                selRecoMask = (WtopRecoMask) 
+                selGenMask = (WtopGenMask) 
+
+                trueRecoMask = (events[f'trueRecoJets{s}_pt']>0.) & ((selRecoMask) & (selGenMask)) 
+                accepGenMask = (events[f'accepGenJets{s}_pt']>0.) & ((selGenMask) & (selRecoMask))
+
+                fakeRecoMask = ((selRecoMask) & (~trueRecoMask)) #((selRecoMask) ^ (trueRecoMask))#
+
+                missGenMask =  ((selGenMask) & (~accepGenMask))#((selGenMask) ^ (accepGenMask))  #
+                
+                #selRecoMask = (trueRecoMask) | (fakeRecoMask) #& (event_mask)
+                #selGenMask = (accepGenMask) | (missGenMask) #& (event_mask)
+                
+                
+                sel = '_WSel' if '_WSel' in self.selList else '_topSel'
+                
+               
+
+                if self.saveParquet:
+                    events['selRecoMask']=selRecoMask
+                    events['selGenMask']=selGenMask
+                    events['trueRecoMask']=trueRecoMask
+                    events['fakeRecoMask']=fakeRecoMask
+                    events['accepGenMask']=accepGenMask
+                    events['missGenMask']=missGenMask
+                        
+                    print(f"Saving the following .parquet file: {self.inputDir[0].split('jetObservables/')[0]+'jetObservables/Wtop_rootToParquet/'+self.inputDir[0].split('kadatta/jetObservables/')[1].split('/')[0]+'_UL'+self.year+f'_nom{sel}_{self.splitCount}.parquet'}")
+
+                    ak.to_parquet(events[(selRecoMask|selGenMask)],self.inputDir[0].split('jetObservables/')[0]+'jetObservables/Wtop_rootToParquet/'+self.inputDir[0].split('kadatta/jetObservables/')[1].split('/')[0]+'_UL'+self.year+f'_nom{sel}_{self.splitCount}.parquet')
+                
+            
+            elif not(self.isMC) and sys.endswith('nom'): 
+                
+                if '_WSel' in self.selList:
+                    WtopRecoMask = (WRecoMask) & (~(topRecoMask))
+
+                elif '_topSel' in self.selList: 
+                    WtopRecoMask = (topRecoMask) & (~(WRecoMask))
+
+                       
+                selRecoMask = (WtopRecoMask) 
+                
+                sel = '_WSel' if '_WSel' in self.selList else '_topSel'
+                
+                if self.saveParquet:
+                    events['selRecoMask']=selRecoMask
+                    print(f"Saving the following .parquet file: {self.inputDir[0].split('jetObservables/')[0]+'jetObservables/Wtop_rootToParquet/'+self.inputDir[0].split('kadatta/jetObservables/')[1].split('/')[0]+'_UL'+self.year+self.era+f'{sel}_{self.splitCount}.parquet'}")
+
+                    ak.to_parquet(events[selRecoMask],self.inputDir[0].split('jetObservables/')[0]+'jetObservables/Wtop_rootToParquet/'+self.inputDir[0].split('kadatta/jetObservables/')[1].split('/')[0]+'_UL'+self.year+self.era+f'{sel}_{self.splitCount}.parquet')
+                    
+            else: 
+                print (f'something fishy in what type of sample you want me to load, recheck input config', s,sys,self.isMC,self.isSigMC) 
+            
+            if self.verbose and self.isMC: 
+                print (selRecoMask[0:20],selRecoMask[-20:-1])
+                print (trueRecoMask[0:20],trueRecoMask[-20:-1])
+                print (selGenMask[0:20],selGenMask[-20:-1])
+                print (accepGenMask[0:20],accepGenMask[-20:-1])
+                
+                print(output.keys())
                 print("Going to fill histos")
                 
             for isel in self.selList:
                 
+                if self.verbose: print(sys,s)
+                    
                 
-                listOfJetOutputHistosNames = [k for k,h in output.items() if ((('Jet' in k) and (sys in k)) or ('resol' in k and not(sys in k)))] #prevent needless iterations
-                if self.verbose: print (listOfJetOutputHistosNames)
+                if sys.endswith('nom'):
+                    listOfMiscOutputHistosNames = [k for k,h in output.items() if ((not ('Jet' in k) and ('nom' in k)) and ('Mu' in k or 'LeptW' in k or 'MET' in k or 'AK4bjetHadHem' in k or 'nPV' in k))]
+                    
+                    if self.verbose: 
+                        print (listOfMiscOutputHistosNames[0:10], sys)
+                    
+                    totalRecoWeight = events[f'evtGenWeight_nom']*events[f'puWeightNom{s}']*events[f'l1prefiringWeightNom{s}']*events[f'btagWeightNom{s}']*events[f'leptonWeightNom{s}'] if self.isMC else events[f'totalRecoWeight_nom']
+                    totalGenWeight = events[f'evtGenWeight_nom'] if self.isMC else None
+
+                    for histos in listOfMiscOutputHistosNames:
+                        key=histos
                         
-                #listOfMiscOutputHistosNames = [k for k,h in output.items() if ((not ('Jet' in k) and (sys in k)) or ('resol' in k and not(sys in k)))]
-                #if self.verbose: print (listOfMiscOutputHistosNames)
+                        
+                        if 'Mu' in key: 
+                            dicto=self.dict_variables_kinematics_Muon
+                            for i in dicto:
+                                if 'reco' in key.lower(): 
+                                    output[key].fill(events[f'selRecoMu{s}{i}'][selRecoMask],weight=totalRecoWeight[selRecoMask], threads=4)
+                                elif 'gen' in key.lower():
+                                    output[key].fill(events[f'selGenMu{s}{i}'][selGenMask],weight=totalGenWeight[selGenMask], threads=4)
+
+                        elif 'MET' in key: 
+                            dicto=self.dict_variables_kinematics_MET
+                            for i in dicto:
+                                if 'reco' in key.lower(): 
+                                    output[key].fill(events[f'selRecoMET{s}{i}'][selRecoMask],weight=totalRecoWeight[selRecoMask], threads=4)
+                                elif 'gen' in key.lower():
+                                    output[key].fill(events[f'selGenMET{s}{i}'][selGenMask],weight=totalGenWeight[selGenMask], threads=4)
+
+                        elif 'LeptW' in key: 
+                            dicto=self.dict_variables_kinematics_LeptW
+                            for i in dicto:
+                                if 'reco' in key.lower(): 
+                                    output[key].fill(events[f'selRecoLeptW{s}{i}'][selRecoMask],weight=totalRecoWeight[selRecoMask], threads=4)
+                                elif 'gen' in key.lower():
+                                    output[key].fill(events[f'selGenLeptW{s}{i}'][selGenMask],weight=totalGenWeight[selGenMask], threads=4)
+
+                        elif 'AK4bjetHadHem' in key: 
+                            dicto=self.dict_variables_kinematics_AK4Had
+                            for i in dicto:
+                                if 'reco' in key.lower(): 
+                                    output[key].fill(events[f'selRecoAK4bjetHadHem{s}{i}'][selRecoMask],weight=totalRecoWeight[selRecoMask], threads=4)
+                                elif 'gen' in key.lower():
+                                    output[key].fill(events[f'selGenAK4bjetHadHem{s}{i}'][selGenMask],weight=totalGenWeight[selGenMask], threads=4)
                 
+                        elif 'HadHemDeltaR' in key:
+                            if 'reco' in key.lower():
+                                output[key].fill(events[f'selRecoHadHemDeltaR{s}'][selRecoMask], weight=totalRecoWeight[selRecoMask] )
+                            elif 'gen' in key.lower():
+                                output[key].fill(events[f'selGenHadHemDeltaR{s}'][selGenMask], weight=totalGenWeight[selGenMask])
+                                  
+                        elif 'good_nPVs' in key:
+                            output[key].fill(events[f'good_nPVs{s}'][selRecoMask], weight=totalRecoWeight[selRecoMask] )
+                            
+                        elif 'nRecoBtags' in key:
+                            output[key].fill(events[f'nRecoBtags{s}'][selRecoMask], weight=totalRecoWeight[selRecoMask] )
+                            
+                        elif 'nGenBtags' in key:
+                            output[key].fill(events[f'nGenBtags{s}'][selGenMask], weight=totalRecoWeight[selGenMask] )
+                                  
+                listOfJetOutputHistosNames = [k for k,h in output.items() if ((('Jet' in k) and (sys in k)) or ('resol' in k and not(sys in k)))] #prevent needless iterations
+                if self.verbose: print (listOfJetOutputHistosNames[0:10],sys,s)
+                        
                 for k in listOfJetOutputHistosNames:
                     key=k
                     
-                    #if self.verbose: print(key,sys)
                     ############### Safety checks ##################
-                    if not(s in key) and not('resol' in key): 
+                    if not(sys in key) and not('resol' in key): 
+                        if self.verbose: 
+                            print(key,sys,s)
                         continue
 
-                    #if not( self.isMC) and not('AK8PF' in key):
-                    #    continue
-
-                    #if not( self.isMC) and 'AK8PF' in key:
-                    #    if not( isel.split('_')[1] in key): 
-                    #        continue #to ensure that for data, we only fill the histos relevant to a given trigger (stored in isel as '_AKPFJetXYZ_dijetSel') correctly
-
-                    ############### ############ ##################
-                    if self.verbose: print(key,sys,s)
-                    # Decide on trigger variable labels
-    
                     if not('_tau' in key):
                         whichKinVar = [var for var in self.dict_variables_kinematics_AK8.keys() if var[1:] in key]#[0]
                         varToFill = whichKinVar[0]
 
-                    elif ('_tau' in key):# and 'nom' in key):
+                    elif ('_tau' in key or '__' in key):# and 'nom' in key):
                         temp='WTA' if 'WTA' in key else 'tau' #hack, :(, to fix tau21_nonOPkT being histogrammed incorrectly
                         temp='exkT' if 'exkT' in key else 'tau'
                         whichnSub = [var for var in self.dict_variables_toUnfold.keys() if (var in key and temp in var)]
@@ -330,46 +440,43 @@ class nSubBasis_unfoldingHistoProd_WtopSel(processor.ProcessorABC):
                         
 
                     ################## Filling histos from accumulated event arrays ##################
-
+                    if self.verbose: print(key,sys,s,varToFill)
                     # Decide what weights to use
                     if not (sys.startswith(self.sysWeightList)):
                         s=sys
                         totalRecoWeight = events[f'evtGenWeight_nom']*events[f'puWeightNom{s}']*events[f'l1prefiringWeightNom{s}']*events[f'btagWeightNom{s}']*events[f'leptonWeightNom{s}'] if self.isMC else events[f'totalRecoWeight_nom']
                         totalGenWeight = events[f'evtGenWeight_nom'] if self.isMC else None
                     else:
-                        s='_nom'
-                        if 'pu' in sys:
-                            totalGenWeight = events[f'evtGenWeight{s}'] 
-                            totalRecoWeight = totalGenWeight*events[f'{sys.split("_")[1]}{s}']*events[f'l1prefiringWeightNom{s}']*events[f'btagWeightNom{s}']*events[f'leptonWeightNom{s}']
-                            
-                        elif 'l1' in sys:
-                            totalGenWeight = events[f'evtGenWeight{s}'] 
-                            totalRecoWeight = totalGenWeight*events[f'{sys.split("_")[1]}{s}']*events[f'puWeightNom{s}']*events[f'btagWeightNom{s}']*events[f'leptonWeightNom{s}']
+                        if self.isSigMC:
+                            s='_nom'
+                            #print(f'{sys.split("_")[1]}{s}')
+                            if 'pu' in sys:
+                                totalGenWeight = events[f'evtGenWeight{s}'] 
+                                totalRecoWeight = totalGenWeight*events[f'{sys.split("_")[1]}{s}']*events[f'l1prefiringWeightNom{s}']*events[f'btagWeightNom{s}']*events[f'leptonWeightNom{s}']
 
-                        elif 'btag' in sys:
-                            totalGenWeight = events[f'evtGenWeight{s}'] 
-                            totalRecoWeight = totalGenWeight*events[f'{sys.split("_")[1]}{s}']*events[f'puWeightNom{s}']*events[f'l1prefiringWeightNom{s}']*events[f'leptonWeightNom{s}']
+                            elif 'l1' in sys:
+                                totalGenWeight = events[f'evtGenWeight{s}'] 
+                                totalRecoWeight = totalGenWeight*events[f'{sys.split("_")[1]}{s}']*events[f'puWeightNom{s}']*events[f'btagWeightNom{s}']*events[f'leptonWeightNom{s}']
 
-                        elif 'lepton' in sys:
-                            totalGenWeight = events[f'evtGenWeight{s}'] 
-                            totalRecoWeight = totalGenWeight*events[f'{sys.split("_")[1]}{s}']*events[f'puWeightNom{s}']*events[f'l1prefiringWeightNom{s}']*events[f'btagWeightNom{s}']
-                            
-                        elif sys.startswith(('_isr','_fsr','_pdf')):#,'_pdf''):
-                            totalGenWeight = events[f'evtGenWeight{s}']*events[f'{sys.split("_")[1]}{s}']
-                            totalRecoWeight = totalGenWeight*events[f'puWeightNom{s}']*events[f'l1prefiringWeightNom{s}']*events[f'btagWeightNom{s}']*events[f'leptonWeightNom{s}']
+                            elif 'btag' in sys:
+                                totalGenWeight = events[f'evtGenWeight{s}'] 
+                                totalRecoWeight = totalGenWeight*events[f'{sys.split("_")[1]}{s}']*events[f'puWeightNom{s}']*events[f'l1prefiringWeightNom{s}']*events[f'leptonWeightNom{s}']
 
-                    if (key.lower().startswith(('reco','good'))):
-                        if 'nPV' in key:
-                            #output[key].fill(events[f'good_nPVs{s}'][selRecoMask],weight=totalRecoWeight[selRecoMask],
-                            #                 threads=8)
-                            dummy=1
-                        else: 
-                            if self.verbose: print('all reco', key,s,sys, len(events[f'selRecoJets{s}{varToFill}'][selRecoMask]))
-                            output[key].fill(events[f'selRecoJets{s}{varToFill}'][selRecoMask],weight=totalRecoWeight[selRecoMask],
-                                             threads=8)
+                            elif 'lepton' in sys:
+                                totalGenWeight = events[f'evtGenWeight{s}'] 
+                                totalRecoWeight = totalGenWeight*events[f'{sys.split("_")[1]}{s}']*events[f'puWeightNom{s}']*events[f'l1prefiringWeightNom{s}']*events[f'btagWeightNom{s}']
+
+                            elif sys.startswith(('_isr','_fsr','_pdf')):#,'_pdf''):
+                                totalGenWeight = events[f'evtGenWeight{s}']*events[f'{sys.split("_")[1]}{s}']
+                                totalRecoWeight = totalGenWeight*events[f'puWeightNom{s}']*events[f'l1prefiringWeightNom{s}']*events[f'btagWeightNom{s}']*events[f'leptonWeightNom{s}']
+
+                    if (key.lower().startswith('reco')):
+                        if self.verbose: 
+                            print('all reco', key,s,sys, len(events[f'selRecoJets{s}{varToFill}'][selRecoMask]))
+                        output[key].fill(events[f'selRecoJets{s}{varToFill}'][selRecoMask],weight=totalRecoWeight[selRecoMask], threads=8)
 
                     # Stuff below should have diff wts already available to them so no need to touch anything down here
-                    if self.isMC and (not varToFill.startswith(tuple(self.reco_only_labels))):
+                    if self.isMC:# and (not varToFill.startswith(tuple(self.reco_only_labels))):
 
                         if (key.lower().startswith('true')) and self.isSigMC :
                             if self.verbose: print('true', key,s,sys, len(events[f'trueRecoJets{s}{varToFill}'][trueRecoMask]))
@@ -382,21 +489,25 @@ class nSubBasis_unfoldingHistoProd_WtopSel(processor.ProcessorABC):
                                              threads=8)
 
                         if (key.lower().startswith('genjet')):
-                            #events[f'trueRecoJets{s}{varToFill}'][trueRecoMask]
-                            if sys.endswith('nom'):
-                                output[key].fill(events[f'selGenJets_nom{varToFill}'][selGenMask],weight=totalGenWeight[selGenMask],
-                                             threads=8)#=self._listofHistograms(histoName) #hist.Hist("Events", hist.Cat("branch", branch), hist.Bin("value", branch, 100, 0, 1000))    
+                            if self.verbose: 
+                                print('all gen', key,s,sys, len(events[f'selGenJets_nom{varToFill}'][selGenMask]))
+                            
+                            output[key].fill(events[f'selGenJets_nom{varToFill}'][selGenMask],weight=totalGenWeight[selGenMask],
+                                             threads=8)
 
-                        elif (key.lower().startswith('accepgenjet')) and self.isSigMC:# and not key.startswith(('accep','miss')):
+                        elif (key.lower().startswith('accepgen')):
+                            if self.verbose: 
+                                print('accepgen', key,s,sys, len(events[f'accepGenJets{s}{varToFill}'][accepGenMask]))
                             output[key].fill(events[f'accepGenJets{s}{varToFill}'][accepGenMask],weight=totalGenWeight[accepGenMask],
                                              threads=8)
 
-                        elif (key.lower().startswith('missgenjet')) and self.isSigMC:
+                        elif (key.lower().startswith('missgenjet')):
+                            if self.verbose: 
+                                print('missgen', key,s,sys, len(events[f'selGenJets_nom{varToFill}'][missGenMask]))
                             output[key].fill(events[f'selGenJets_nom{varToFill}'][missGenMask],weight=totalGenWeight[missGenMask],
                                              threads=8)
                         
-                        elif ( 'resp' in key.lower() and not('miss' in key.lower())) and self.isSigMC:
-                            
+                        elif ( 'resp' in key.lower() and not('withmiss' in key.lower())) and self.isSigMC:
                             #fill matched entries with weight wgen*wxreco='totalrecoweight' (x=>excl.to reco)
                             output[key].fill(gen=events[f'accepGenJets{s}{varToFill}'][accepGenMask], reco=events[f'trueRecoJets{s}{varToFill}'][trueRecoMask],weight=totalRecoWeight[trueRecoMask],
                                              threads=8)
@@ -407,7 +518,7 @@ class nSubBasis_unfoldingHistoProd_WtopSel(processor.ProcessorABC):
                                              threads=8)     
                         
                         elif ('respwithmiss' in key.lower()) and self.isSigMC:
-                            
+                            if self.verbose: print("filling resp w. misses")
                             #fill matched entries with weight wgen*wxreco='totalrecoweight' (x=>excl.to reco)
                             output[key].fill(gen=events[f'accepGenJets{s}{varToFill}'][accepGenMask], reco=events[f'trueRecoJets{s}{varToFill}'][trueRecoMask], weight=totalRecoWeight[trueRecoMask],
                                              threads=8)
@@ -431,11 +542,11 @@ class nSubBasis_unfoldingHistoProd_WtopSel(processor.ProcessorABC):
                             
                             output[key].fill(response, weight=totalRecoWeight[zeroMask])
                             if 'noWt_' in key: output[key].fill(response)
-        if self.verbose: print("Histos filled!")
+        print("Histos filled!")
         l=[]
         for x,y in output.items(): #y.SetDirectory(0)
         
-            if self.sysUnc and self.onlyUnc and x.startswith(('accepgen','miss','true','fake' )) and '_nom' in x:
+            if self.sysUnc and self.onlyUnc and x.startswith(('accepgen','miss')) and '_nom' in x:
                 l.append(x)
             #elif self.isMC and not(self.isSigMC) and x.startswith(('accepgen','miss','true','fake','resol' )) and '_nom' in x:
             #    l.append(x)
@@ -465,15 +576,16 @@ class nSubBasis_unfoldingHistoProd_WtopSel(processor.ProcessorABC):
             for itype in self.listOfUnfHistTypes:
                 iJ=self.nJet[0] 
 
-                for sysUnc in self.sysSource:
+                for sysUnc in self.sysSources:
                     
                     for x, y in self.dict_variables_kinematics_AK8.items():
                         binning = y
                         if sysUnc.endswith('nom') or self.onlyUnc:
                             if not x in tuple(self.reco_only_labels): 
                                 dictOfHists[itype+iJ+x+sysUnc+isel] = (hist.Hist.new.Variable(binning,name=itype+iJ+x+sysUnc+isel, label=f'AK8 {itype} jet {x}', underflow=True,overflow=True).Weight())        
-                                
-                    if itype.startswith('truereco') and self.isMC and sysUnc.endswith('nom') and self.isSigMC:
+                            else: 
+                                dictOfHists[x[1:]+sysUnc+isel] = (hist.Hist.new.Variable(binning,name=x[1:]+sysUnc+isel, label=f'AK8 {itype} jet {x}', underflow=True,overflow=True).Weight())  
+                    if itype.startswith('truereco') and self.isMC and sysUnc.endswith('nom'):# and self.isSigMC:
                         dictOfHists['resol'+iJ+'_pt'+isel] = (hist.Hist.new.Regular(500, 0, 5, name='resol'+iJ+'_pt'+isel, label='AK8 reco/gen jet pt').Weight())
                         dictOfHists['resol'+iJ+'_msoftdrop'+isel] = (hist.Hist.new.Regular(500, 0, 5, name='resol'+iJ+'_msoftdrop'+isel, label='AK8 reco m_{SD}/gen jet m_{SD}').Weight())
                         dictOfHists['resol'+iJ+'_mass'+isel] = (hist.Hist.new.Regular(500, 0, 5, name='resol'+iJ+'_mass'+isel, label='AK8 reco inv. m/gen jet inv. m').Weight())
@@ -486,7 +598,7 @@ class nSubBasis_unfoldingHistoProd_WtopSel(processor.ProcessorABC):
                         
                         dictOfHists[itype+iJ+x+sysUnc+isel] = (hist.Hist.new.Variable(binning,name=itype+iJ+x+sysUnc+isel, label='AK8 '+itype+' jet #tau', underflow=True,overflow=True).Weight())
                         
-                        if itype.startswith('truereco') and self.isMC and self.isSigMC:
+                        if itype.startswith('truereco') and self.isMC: #and self.isSigMC:
 
                             dictOfHists['resp'+iJ+x+sysUnc+isel] = (
                                                                     hist.Hist.new
@@ -501,11 +613,11 @@ class nSubBasis_unfoldingHistoProd_WtopSel(processor.ProcessorABC):
                                                                             .Variable(binning,name='reco',label='AK8 reco jet'+x, underflow=True,overflow=True)
                                                                             .Weight()
                                                                            )
-                            if sysUnc.endswith('_nom') and self.isSigMC:
+                            if sysUnc.endswith('_nom'):# and self.isSigMC:
                                 dictOfHists['resol'+iJ+x+isel] = (hist.Hist.new.Regular(500, 0, 5, name='resol'+iJ+x+isel, label='AK8 reco/gen jet ', underflow=True,overflow=True).Weight())
                                 dictOfHists['noWt_resol'+iJ+x+isel] = (hist.Hist.new.Regular(500, 0, 5, name='noWt_resol'+iJ+x+isel, label='AK8 reco/gen jet ', underflow=True,overflow=True).Weight())
         
-
+        
         #build from list of histos for control plots
         if not(self.onlyUnc or self.sysUnc):
             for isel in self.selList:
@@ -534,7 +646,7 @@ class nSubBasis_unfoldingHistoProd_WtopSel(processor.ProcessorABC):
                             for x, y in self.dict_variables_kinematics_AK4Had.items():
                                 dictOfHists[itype+iO+x+sysUnc+isel] = (hist.Hist.new.Variable(y,name=itype+iO+x+sysUnc+isel, label=f'{itype} AK4 {x}').Weight())        
 
-                if self.verbose: print (self.dict_variables_reco.keys())
+                #if self.verbose: print (self.dict_variables_reco.keys())
 
                 for itype in self.dict_variables_reco:
                     bins=self.dict_variables_reco[itype]
@@ -547,7 +659,7 @@ class nSubBasis_unfoldingHistoProd_WtopSel(processor.ProcessorABC):
 
 
                 if self.isMC or self.isSigMC:
-                    if self.verbose: print (self.dict_variables_gen.keys())
+                    #if self.verbose: print (self.dict_variables_gen.keys())
 
                     for itype in self.dict_variables_gen:
                         bins=self.dict_variables_gen[itype]
@@ -557,8 +669,7 @@ class nSubBasis_unfoldingHistoProd_WtopSel(processor.ProcessorABC):
                         elif 'nGenLepBtags' in itype: dictOfHists[itype+sysUnc+isel] = (hist.Hist.new.Variable(bins,name=itype+sysUnc+isel, label=f'nBmatched_Gen (lept. hem.)').Weight())  
                         elif 'selGenHadHemDeltaR' in itype: dictOfHists[itype+sysUnc+isel] = (hist.Hist.new.Variable(bins,name=itype+sysUnc+isel, label=f'dR(AK8, AK4)').Weight())  
         
-        if self.verbose: print (dictOfHists)
-        
+        #if self.verbose: print (dictOfHists)
         return dictOfHists
     
     
@@ -573,17 +684,17 @@ class nSubBasis_unfoldingHistoProd_WtopSel(processor.ProcessorABC):
 
         if not self.isSigMC: #assurances against running into issues accidentally when processing non-signal MC
             self.wtSources=[]
-            wtUnc=False
+            self.wtUnc=False
 
         
         if self.wtUnc: 
-            self.sysSource = ['_nom'] + [ iwt+i for i in [ 'Up', 'Down' ] for iwt in self.wtSources if not iwt.endswith(('nom','pdfWeightAll')) ]
+            self.sysSources = ['_nom'] + [ iwt+i for i in [ 'Up', 'Down' ] for iwt in self.wtSources if not iwt.endswith(('nom','pdfWeightAll')) ]
             
             if 'pdfWeightAll' in self.wtSources: self.sysSources = self.sysSources+['pdfWeightAll'] 
-        #else: self.sysSource = ['_nom']
+        #else: self.sysSources = ['_nom']
             
-        #print (sysSources)
-        for sys in self.sysSource:
+        print (self.sysSources)
+        for sys in self.sysSources:
             #if not wtUnc and not sysUnc:
             for i in kinematic_labels+list(nSub_labels.keys()): 
                 
@@ -631,7 +742,7 @@ class nSubBasis_unfoldingHistoProd_WtopSel(processor.ProcessorABC):
                 reco_list.append("pdfWeightNom"+sys)
 
                 reco_list.append("totalRecoWeight"+sys)
-                reco_list.append(f"selRecoJets{sys}_msoftdrop_corr_PUPPI")#+sys)
+                if self.isMC: reco_list.append(f"selRecoJets{sys}_msoftdrop_corr_PUPPI")#+sys)
                     
                 reco_list.append("FlagRecoLeptHemBjet"+sys)
                 reco_list.append("selRecoHadHemDeltaR"+sys)
@@ -648,7 +759,7 @@ class nSubBasis_unfoldingHistoProd_WtopSel(processor.ProcessorABC):
                     
             elif (not self.isMC) and sys.endswith('nom'):
                 reco_list.append("totalRecoWeight"+sys)               
-                reco_list.append("FlagRecoLeptHemBjet"+sys)
+                #reco_list.append("FlagRecoLeptHemBjet"+sys)
                 reco_list.append("selRecoHadHemDeltaR"+sys)    
                 for i in self.dict_variables_reco:
                     reco_list.append(i+sys)
@@ -661,8 +772,10 @@ class nSubBasis_unfoldingHistoProd_WtopSel(processor.ProcessorABC):
         elif self.isMC and (not self.isSigMC): branchesToRead=gen_list+reco_list
         elif (not self.isMC): branchesToRead=reco_list
         
-        #if self.verbose: print(branchesToRead)
+        if self.verbose: 
+            print(branchesToRead)
+            print(reco_reweights_list)
+            print(gen_reweights_list)
 
         return branchesToRead
-    
     

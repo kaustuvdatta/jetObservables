@@ -43,8 +43,8 @@ echo Found Proxy in: $X509_USER_PROXY
 #fi
     '''
     #open('runPostProc'+options.datasets+options.year+options.onlyUnc+options.selection+'.sh', 'w').write(BASH_SCRIPT.format(**options.__dict__))
-    open('runPostProc'+options.datasets+options.onlyUnc+'_'+options.year+options.selection+'.sh', 'w').write(BASH_SCRIPT)
-    with open('runPostProc'+options.datasets+options.onlyUnc+'_'+options.year+options.selection+'.sh', 'a') as txtfile:
+    open('runPostProc'+options.datasets+options.onlyUnc+'_'+options.year+options.runEra+options.selection+'.sh', 'w').write(BASH_SCRIPT)
+    with open('runPostProc'+options.datasets+options.onlyUnc+'_'+options.year+options.runEra+options.selection+'.sh', 'a') as txtfile:
         cmd = "python "+options.pythonFile+" --sample "+options.datasets+" --selection "+options.selection+" --year "+options.year+" --runEra "+options.runEra+(" --onlyUnc "+options.onlyUnc if options.onlyUnc else "" )+(" --onlyTrees" if options.onlyTrees else "" )+(" --isSigMC" if options.isSigMC else "" )+(" --isBkgMC" if options.isBkgMC else "" )+'\nls\nfi'
         txtfile.write(cmd)
 
@@ -68,7 +68,8 @@ def submitJobs( job, inputFiles, unitJobs ):
     config.JobType.pluginName = 'Analysis'
     config.JobType.psetName = 'PSet.py'
     config.JobType.maxMemoryMB = 6000 #if (options.onlyUnc and options.onlyUnc.startswith('_je')) else 2500
-    if (options.onlyUnc and options.onlyUnc.startswith('_je')): config.JobType.maxJobRuntimeMin = 600
+    #if (options.onlyUnc and options.onlyUnc.startswith('_je')): 
+    config.JobType.maxJobRuntimeMin = 600
     config.JobType.numCores = 4
     config.JobType.allowUndistributedCMSSW = True
 
@@ -79,7 +80,7 @@ def submitJobs( job, inputFiles, unitJobs ):
 
     config.section_("Site")
     config.Site.storageSite = options.storageSite
-    config.Site.whitelist = ['T2_CH_*']
+    config.Site.whitelist = ['T2_CH_CSCS','T2_CH_CERN','T1_IT_*','T1_FR_*','T1_DE_*','T2_DE_*','T2_IT_*','T2_FR_*']
 
 
     def submit(config):
@@ -90,14 +91,14 @@ def submitJobs( job, inputFiles, unitJobs ):
             print hte.headers
 
 
-    config.JobType.scriptExe = 'runPostProc'+options.datasets+options.onlyUnc+'_'+options.year+options.selection+'.sh'
+    config.JobType.scriptExe = 'runPostProc'+options.datasets+options.onlyUnc+'_'+options.year+options.runEra+options.selection+'.sh'
     config.JobType.inputFiles = [ options.pythonFile ,'haddnano.py', 'keep_and_drop_Wtop.txt']
     config.JobType.sendPythonFolder  = True
     
     isMC = True
     config.JobType.sendPythonFolder  = True
     isDataFlag=False
-    isvNFlag=True if 'v2pt' in job else False
+    
     if job.startswith(('UL17_Single', 'UL17_JetHT', 'UL18_Single', 'UL18_JetHT', 'UL16_Single', 'UL16_JetHT', 'UL16_preVFP_Single', 'UL16_preVFP_JetHT', 'JetHT', 'SingleMuon')):
         isDataFlag=True
         if options.year.startswith('2016'):
@@ -112,38 +113,54 @@ def submitJobs( job, inputFiles, unitJobs ):
     #config.Data.splitting = 'Automatic'
     #config.Data.splitting = 'EventAwareLumiBased' #if job.startswith('QCD_HT') else 'FileBased'
     #config.Data.unitsPerJob = 900
-    config.Data.splitting = 'FileBased'
-    config.Data.unitsPerJob = unitJobs
+    config.Data.splitting = 'FileBased' if not('SingleMuon' in job) else 'LumiBased'
+    config.Data.unitsPerJob = unitJobs if config.Data.splitting=='FileBased' else 50
 
     # since the input will have no metadata information, output can not be put in DBS
     config.JobType.outputFiles = [ 'jetObservables_nanoskim.root', 'jetObservables_histograms.root']
     config.Data.outLFNDirBase = '/store/user/'+os.environ['USER']+'/jetObservables/'
 
     requestname = 'jetObs_Skimmer_'+ job.replace('_','').replace('-','')+options.onlyUnc+'_'+options.year +'_'+options.selection + '_' +options.version
-    print requestname
-    if len(requestname) > 100: requestname = (requestname[:95-len(requestname)])
+
+    if len(requestname) > 100: requestname = (requestname[:-(len(requestname)-100)])
+
     if os.path.isdir('crab_projects/crab_'+requestname):
         print '|-------> JOB '+requestname+' has already a folder. Please remove it.'
-        os.remove('runPostProc'+options.datasets+options.onlyUnc+'_'+options.year+options.selection+'.sh')
+        os.remove('runPostProc'+options.datasets+options.onlyUnc+'_'+options.year+options.runEra+options.selection+'.sh')
         return False
 
     print 'requestname = ', requestname
-
+    isvNFlag=True if 'v2pt' in inputFiles else False
     config.General.requestName = requestname
-    if isDataFlag or isvNFlag:#('QCD' in job or 'MuEn'in job) and (options.selection.startswith('_W') or options.selection.startswith('_top')):
+
+    if (isDataFlag and isvNFlag) or (isvNFlag and 'SingleMuon' not in job) :#('QCD' in job or 'MuEn'in job) and (options.selection.startswith('_W') or options.selection.startswith('_top')):
         s=['v2pt2','v2pt3','v2pt4']
-        flag = next((x for x in s if x in inputFiles), "")#x for x in s if x in inputFiles else ""
-        if not(flag==""): config.Data.outputDatasetTag = 'Run'+inputFiles.split('Run')[1].split(flag)[0]+'_jetObsSkim_'+options.onlyUnc+options.version+('EXT'+job.split('EXT')[1] if 'EXT' in job else '')
-        else: config.Data.outputDatasetTag = 'Run'+inputFiles.split('Run')[1].split(flag)[0]+'_jetObsSkim_'+options.onlyUnc+options.version+('EXT'+job.split('EXT')[1] if 'EXT' in job else '')
-    else: config.Data.outputDatasetTag = 'Run'+inputFiles.split('Run')[1].split('-106X')[0]+'_jetObsSkim_'+options.onlyUnc+options.selection+options.version+('EXT'+job.split('EXT')[1] if 'EXT' in job else '')
+        flag=""
+        for x in s:
+            if x in inputFiles: 
+                flag=x
+        #flag = next((x for x in s if x in inputFiles), "")#x for x in s if x in inputFiles else ""
+        #print (s,flag)
+        if not(flag==""): 
+            if 'APV' in inputFiles and options.year.endswith('VFP') :
+                flag='APV'+flag
+            config.Data.outputDatasetTag = 'Run'+inputFiles.split('Run')[1].split(flag)[0]+flag+'_jetObsSkim_'+options.onlyUnc+options.version+('EXT'+job.split('EXT')[1] if 'EXT' in job else '')
+        else:
+            k='PFNanoAOD-' if 'PFNanoAOD-' in inputFiles else 'PFNano-'
+            config.Data.outputDatasetTag = 'Run'+inputFiles.split('Run')[1].split(k)[0]+'jetObsSkim_'+options.onlyUnc+options.version+('EXT'+job.split('EXT')[1] if 'EXT' in job else '')#.outputDatasetTag
+    else: 
+        k='PFNanoAOD-' if 'PFNanoAOD-' in inputFiles else 'PFNano-'
+        config.Data.outputDatasetTag = 'Run'+inputFiles.split('Run')[1].split(k)[0]+'jetObsSkim_'+options.onlyUnc+options.version+('EXT'+job.split('EXT')[1] if 'EXT' in job else '')#.outputDatasetTag
 
     print 'Submitting ' + config.General.requestName + ', dataset = ' + job
-    print 'Configuration :'
+    print ('inputFiles=',inputFiles, 'outputDatasetTag=', config.Data.outputDatasetTag)
+    print 'Configuration :', options.year+options.runEra if 'SingleMuon' in job else ''
+
     print config
-    submit(config)
+    #submit(config)
     #try : submit(config)
     #except : print 'Not submitted.'
-    os.remove('runPostProc'+options.datasets+options.onlyUnc+'_'+options.year+options.selection+'.sh')
+    os.remove('runPostProc'+options.datasets+options.onlyUnc+'_'+options.year+options.runEra+options.selection+'.sh')
 
 
 
@@ -191,7 +208,7 @@ if __name__ == '__main__':
             '--runEra',
             action="store",
             help="Run era for data",
-            default="B"
+            default=""
             )
     parser.add_option(
         '--onlyUnc',
@@ -226,31 +243,35 @@ if __name__ == '__main__':
             if checkDict( sam, dictSamples )['selection'] != sel:   
                 print("wrong sel",sel)  
                 continue
-            if 'SingleMuon' in sam or sam.startswith(('JetHT', 'SingleMuon')):
-                for iera in checkDict( sam, dictSamples )[options.year]['nanoAOD']:
-                    processingSamples[ sam+'Run'+options.year+iera ] = [ checkDict( sam, dictSamples )[options.year]['nanoAOD'][iera], 1 ]
-                    options.runEra = iera
-                    print (iera,options.runEra)
+            if sam.startswith(('SingleMuon')):
+                if options.runEra=="":
+                    for iera in checkDict( sam, dictSamples )[options.year]['nanoAOD']:
+                        processingSamples[ sam+'Run'+options.year+iera ] = [ checkDict( sam, dictSamples )[options.year]['nanoAOD'][iera], 1 ]
+                        #options.runEra = iera
+                        #print (iera,options.runEra)
+                else:
+                    for iera in [options.runEra]:
+                        processingSamples[ sam+'Run'+options.year+iera ] = [ checkDict( sam, dictSamples )[options.year]['nanoAOD'][iera], 1 ]
             else:
                 tmpList = checkDict( sam, dictSamples )[options.year]['nanoAOD']
                 processingSamples[ sam ] = [ tmpList[0], 1 ]
                 if len(tmpList)>1:
                     for iext in range(1,len(tmpList)):
                         processingSamples[ sam+'EXT'+str(iext) ] = [ tmpList[iext], 1 ]
+                options.runEra=""
 
     if len(processingSamples)==0: print 'No sample found. \n Have a nice day :)'
 
     for isam in processingSamples:
-
+        if 'SingleMuon' in isam: options.runEra=isam.split(options.year)[1]
+        print(isam,options.runEra)
         if not processingSamples[isam][0]:
             print(' Sample ',isam,' does not have nanoAOD stored in datasets.py. Continuing with the next')
             continue
-        #if isam.startswith('QCD') or isam.startswith('JetHT'): options.selection = 'dijet'
-        #else: options.selection = 'Wtop'
-
+        
         options.datasets = isam
-        print('Creating bash file...')
+        print('Creating bash file for %s...'%(isam))
         createBash()
 
-        print ("dataset %s has %d files" % (processingSamples[isam], len(processingSamples[isam][0])))
+        print ("Submitting dataset %s" % (processingSamples[isam]))
         submitJobs( isam, processingSamples[isam][0], processingSamples[isam][1] )

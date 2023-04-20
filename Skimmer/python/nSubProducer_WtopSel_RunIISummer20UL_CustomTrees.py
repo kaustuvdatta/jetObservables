@@ -86,10 +86,20 @@ class nSubProd(Module):
         self.minLeptonicWPt = 150.
 
 
-        ### Kinematics Cuts Jets ###
+        ### Kinematics Cuts AK4 Jets ###
         self.minJetPt = 30.
         self.maxJetEta = 2.4
-        self.minBDisc = 0.3040   ### L: 0.0532, M: 0.3040, T: 0.7476, for DeepJet (ie, DeepFlavB)
+        if self.year=='2017':
+            self.minBDisc = 0.3040   ### L: 0.0532, M: 0.3040, T: 0.7476, for DeepJet (ie, DeepFlavB);https://btv-wiki.docs.cern.ch/ScaleFactors/UL2017/
+
+        elif self.year=='2018':
+            self.minBDisc = 0.2783   ### L: 0.0490, M: 0.2783, T: 0.7476; https://btv-wiki.docs.cern.ch/ScaleFactors/UL2018/
+
+        elif self.year=='2016_preVFP':
+            self.minBDisc = 0.2598   ### L: 0.0508, M: 0.2598, T: 0.6502; https://btv-wiki.docs.cern.ch/ScaleFactors/UL2016preVFP/
+
+        elif self.year=='2016':
+            self.minBDisc = 0.2489   ### L: 0.0480, M: 0.2489, T: 0.6377; https://btv-wiki.docs.cern.ch/ScaleFactors/UL2016postVFP/
 
         ### Kinenatic Cuts Muons ###
         self.minTightMuonPt = 55.

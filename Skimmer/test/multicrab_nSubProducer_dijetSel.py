@@ -37,8 +37,8 @@ mv python $CMSSW_BASE/python
 
 echo Found Proxy in: $X509_USER_PROXY
 '''
-    open('runPostProc'+options.datasets+options.onlyUnc+'_'+options.year+("_isSigMC" if options.isSigMC else "" )+'.sh', 'w').write(BASH_SCRIPT)
-    with open('runPostProc'+options.datasets+options.onlyUnc+'_'+options.year+("_isSigMC" if options.isSigMC else "" )+'.sh', 'a') as txtfile:
+    open('runPostProc'+options.datasets+options.onlyUnc+'_'+options.year+options.runEra+("_isSigMC" if options.isSigMC else "" )+'.sh', 'w').write(BASH_SCRIPT)
+    with open('runPostProc'+options.datasets+options.onlyUnc+'_'+options.year+options.runEra+("_isSigMC" if options.isSigMC else "" )+'.sh', 'a') as txtfile:
         cmd = "python "+options.pythonFile+" --sample "+options.datasets+" --selection "+options.selection+" --year "+options.year+" --runEra "+options.runEra+(" --onlyUnc "+options.onlyUnc if options.onlyUnc else "" )+(" --onlyTrees" if options.onlyTrees else "" )+(" --isSigMC" if options.isSigMC else "" )+'\nls\nfi'
         txtfile.write(cmd)
 
@@ -63,9 +63,11 @@ def submitJobs( job, inputFiles, unitJobs ):
     config.JobType.psetName = 'PSet.py'
     config.JobType.maxMemoryMB = 6000 #if (options.onlyUnc and options.onlyUnc.startswith('_je')) else 2500
     #if (options.onlyUnc and options.onlyUnc.startswith('_je')): 
-    config.JobType.maxJobRuntimeMin = 1200 if (options.onlyUnc and options.onlyUnc.startswith('_jes')) else 600
+    config.JobType.maxJobRuntimeMin = 1200 if (options.onlyUnc and options.onlyUnc.startswith('_jes')) else 800
     config.JobType.numCores = 4
     config.JobType.allowUndistributedCMSSW = True
+
+
 
     config.section_("Data")
     config.Data.inputDBS = 'phys03'
@@ -73,7 +75,7 @@ def submitJobs( job, inputFiles, unitJobs ):
 
     config.section_("Site")
     config.Site.storageSite = options.storageSite
-    config.Site.whitelist = ['T2_CH_CSCS','T2_CH_CERN','T1_IT_*','T1_FR_*','T2_IT_*','T2_FR_*'] #,'T2_DE_*','T1_IT_*','T1_FR_*','T2_IT_*','T2_FR_*']#,'T2_HU_*','T1_ES_*','T2_ES_*','T2_PT_*','T1_US_*']
+    config.Site.whitelist = ['T2_CH_CSCS','T2_CH_CERN','T1_IT_*','T1_FR_*','T1_DE_*','T2_DE_*','T2_IT_*','T2_FR_*'] #,'T2_DE_*','T1_IT_*','T1_FR_*','T2_IT_*','T2_FR_*']#,'T2_HU_*','T1_ES_*','T2_ES_*','T2_PT_*','T1_US_*']
 
 
     def submit(config):
@@ -84,7 +86,7 @@ def submitJobs( job, inputFiles, unitJobs ):
             print hte.headers
 
 
-    config.JobType.scriptExe = 'runPostProc'+options.datasets+options.onlyUnc+'_'+options.year+("_isSigMC" if options.isSigMC else "" )+'.sh'
+    config.JobType.scriptExe = 'runPostProc'+options.datasets+options.onlyUnc+'_'+options.year+options.runEra+("_isSigMC" if options.isSigMC else "" )+'.sh'
     config.JobType.inputFiles = [ options.pythonFile ,'haddnano.py', 'keep_and_drop_dijet.txt']#, 'keep_and_drop.txt']
     #if (options.onlyUnc and options.onlyUnc.startswith('_jes')): config.JobType.maxJobRuntimeMin = 2000 
     config.JobType.sendPythonFolder  = True
@@ -100,7 +102,7 @@ def submitJobs( job, inputFiles, unitJobs ):
     config.Data.inputDataset = inputFiles
     
     config.Data.splitting ='LumiBased' if isDataFlag else 'FileBased'#( (('JetHT' in job) or ('1000to1500' in job) or ('2000' in job) or ('500to700' in job)) and options.onlyUnc.startswith('_je') and not ('JetHT' in job)) else 'FileBased'#'Automatic'
-    config.Data.unitsPerJob = 25 if config.Data.splitting=='LumiBased' else unitJobs#unitJobs#'Automatic'
+    config.Data.unitsPerJob = 50 if config.Data.splitting=='LumiBased' else unitJobs#unitJobs#'Automatic'
     if not(config.Data.splitting)=='LumiBased': config.Data.unitsPerJob = 1 if ('MLM' in job) else unitJobs
     #config.Data.totalUnits = -1
     #config.Data.splitting = 'FileBased'
@@ -119,7 +121,7 @@ def submitJobs( job, inputFiles, unitJobs ):
 
     if os.path.isdir('crab_projects/crab_'+requestname):
         print '|-------> JOB '+requestname+' has already a folder. Please remove it.'
-        os.remove('runPostProc'+options.datasets+options.onlyUnc+'_'+options.year+("_isSigMC" if options.isSigMC else "" )+'.sh')
+        os.remove('runPostProc'+options.datasets+options.onlyUnc+'_'+options.year+options.runEra+("_isSigMC" if options.isSigMC else "" )+'.sh')
         return False
 
     print 'requestname = ', requestname
@@ -127,12 +129,12 @@ def submitJobs( job, inputFiles, unitJobs ):
     if isDataFlag: config.Data.outputDatasetTag = 'Run'+inputFiles.split('Run')[1].split('v2pt2')[0]+'_jetObsSkim_'+options.onlyUnc+options.version+('EXT'+job.split('EXT')[1] if 'EXT' in job else '')
     else: config.Data.outputDatasetTag = 'Run'+inputFiles.split('Run')[1].split('-106X')[0]+'_jetObsSkim_'+options.onlyUnc+options.version+('EXT'+job.split('EXT')[1] if 'EXT' in job else '')
     print 'Submitting ' + config.General.requestName + ', dataset = ' + job
-    print 'Configuration :'
+    print 'Configuration :', options.year+options.runEra if 'JetHT' in job else ''
     print config
     submit(config)
     #try : submit(config)
     #except : print 'Not submitted.'
-    os.remove('runPostProc'+options.datasets+options.onlyUnc+'_'+options.year+("_isSigMC" if options.isSigMC else "" )+'.sh')
+    os.remove('runPostProc'+options.datasets+options.onlyUnc+'_'+options.year+options.runEra+("_isSigMC" if options.isSigMC else "" )+'.sh')
 
 
 
@@ -180,7 +182,7 @@ if __name__ == '__main__':
             '--runEra',
             action="store",
             help="Run era for data",
-            default="B"
+            default=""
     )
     parser.add_option(
         '--onlyUnc',
@@ -209,20 +211,31 @@ if __name__ == '__main__':
         if sam.startswith( options.datasets ) | options.datasets.startswith('all'):
             if checkDict( sam, dictSamples )['selection'] != options.selection: continue
             if sam.startswith(('JetHT', 'SingleMuon')):
-                for iera in checkDict( sam, dictSamples )[options.year]['nanoAOD']:
-                    processingSamples[ sam+'Run'+options.year+iera ] = [ checkDict( sam, dictSamples )[options.year]['nanoAOD'][iera], 1 ]
-                    options.runEra = iera
+                if options.runEra=="":
+                    for iera in checkDict( sam, dictSamples )[options.year]['nanoAOD']:
+                        #print(sam,iera)
+                        processingSamples[ sam+'Run'+options.year+iera ] = [ checkDict( sam, dictSamples )[options.year]['nanoAOD'][iera], 1 ]
+                else:
+                    for iera in [options.runEra]:
+                        #print(sam,iera)
+                        processingSamples[ sam+'Run'+options.year+iera ] = [ checkDict( sam, dictSamples )[options.year]['nanoAOD'][iera], 1 ]
+                #print(sam,options,args)
             else:
                 tmpList = checkDict( sam, dictSamples )[options.year]['nanoAOD']
                 processingSamples[ sam ] = [ tmpList[0], 1 ]
                 if len(tmpList)>1:
                     for iext in range(1,len(tmpList)):
                         processingSamples[ sam+'EXT'+str(iext) ] = [ tmpList[iext], 1 ]
-                #options.runEra = '' 
+                options.runEra = ''
+        
+    #print(processingSamples)
+ 
     if len(processingSamples)==0: print 'No sample found. \n Have a nice day :)'
 
-    for isam in processingSamples:
 
+    for isam in processingSamples:
+        if 'JetHT' in isam: options.runEra = isam.split(options.year)[1]#iera
+        print (isam,options.runEra)
         if not processingSamples[isam][0]:
             print(' Sample ',isam,' does not have nanoAOD stored in datasets.py. Continuing with the next')
             continue
@@ -230,8 +243,9 @@ if __name__ == '__main__':
         #else: options.selection = 'Wtop'
 
         options.datasets = isam
-        print('Creating bash file...')
+        print('Creating bash file for %s...'%(isam))
         createBash()
 
-        print ("dataset %s has %d files" % (processingSamples[isam], len(processingSamples[isam][0])))
+        print ("Submitting dataset %s" % (processingSamples[isam]))#, len(processingSamples[isam][0])))
         submitJobs( isam, processingSamples[isam][0], processingSamples[isam][1] )
+
