@@ -157,7 +157,7 @@ def submitJobs( job, inputFiles, unitJobs ):
     print 'Configuration :', options.year+options.runEra if 'SingleMuon' in job else ''
 
     print config
-    #submit(config)
+    submit(config)
     #try : submit(config)
     #except : print 'Not submitted.'
     os.remove('runPostProc'+options.datasets+options.onlyUnc+'_'+options.year+options.runEra+options.selection+'.sh')
