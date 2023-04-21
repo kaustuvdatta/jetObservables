@@ -481,12 +481,13 @@ def runTUnfold(
                 if ih.endswith(ivar+'_nom'+sel): allHistos[ 'allBkgHisto' ].Add( fakeHistos[ih] )
                 if ih.endswith(ivar+'_nom'+sel+'_genBin'): allHistos[ 'allBkgHistoGenBin' ].Add( fakeHistos[ih] )
             plotSimpleComparison( dataHistos[ 'data_reco'+ivar+'_nom'+sel ].Clone(), 'data', allHistos[ 'allBkgHisto' ].Clone(), 'Bkg+fakes', ivar+'_from'+('Data' if process.startswith('data') else 'MC')+'_'+signalLabel+"_TestDataBkgFakes", rebinX=1, version=sel+'_'+version, outputDir=outputDir )
-        if process.startswith('MC'):
-            allHistos[ 'dataHisto' ] = dataHistostrue[ 'data_reco'+ivar+'_nom'+sel ].Clone()
-            allHistos[ 'dataHistoGenBin' ] = dataHistostrue[ 'data_reco'+ivar+'_nom'+sel+'_genBin'].Clone()
-        else:
-            allHistos[ 'dataHisto' ] = dataHistos[ 'data_reco'+ivar+'_nom'+sel ].Clone()
-            allHistos[ 'dataHistoGenBin' ] = dataHistos[ 'data_reco'+ivar+'_nom'+sel+'_genBin'].Clone()
+            
+            if process.startswith('MC'):
+                allHistos[ 'dataHisto' ] = dataHistostrue[ 'data_reco'+ivar+'_nom'+sel ].Clone()
+                allHistos[ 'dataHistoGenBin' ] = dataHistostrue[ 'data_reco'+ivar+'_nom'+sel+'_genBin'].Clone()
+            else:
+                allHistos[ 'dataHisto' ] = dataHistos[ 'data_reco'+ivar+'_nom'+sel ].Clone()
+                allHistos[ 'dataHistoGenBin' ] = dataHistos[ 'data_reco'+ivar+'_nom'+sel+'_genBin'].Clone()
             
         if process.startswith('data') and not year.startswith('all'): #just for plotting
             allHistos[ 'dataMinusBkgs' ] = dataHistos[ 'data_reco'+ivar+'_nom'+sel ].Clone()
