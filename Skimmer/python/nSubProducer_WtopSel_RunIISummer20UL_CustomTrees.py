@@ -1096,9 +1096,13 @@ class nSubProd(Module):
                 self.leptonWeight=0.
             ####################################################
 
+
             self.puWeight = event.puWeight
+            self.l1PreFireWeight = event.L1PreFiringWeight_Nom
+            self.evtGenWeight = event.genWeight 
+
             #### Applying ALL remaining object-related weights ####
-            weight =  event.genWeight * self.puWeight * self.leptonWeight * self.btaggingWeight#btagweights['_nom'] # * self.topweight            
+            weight =  self.evtGenWeight  * self.puWeight * self.leptonWeight * self.btaggingWeight *  self.l1PreFireWeight #btagweights['_nom'] # * self.topweight            
             #self.totalRecoWeight = weight
 
         else:

@@ -151,7 +151,7 @@ def drawClosures(ivar, selection, process, year, lumi, genJetHisto, genJetHistoC
     unfoldHisto.SetMarkerColor(ROOT.kRed)
     unfoldHisto.SetLineColor(ROOT.kRed)
     unfoldHisto.SetLineWidth(2)
-    legend.AddEntry( unfoldHisto, ('MG5+Pythia8 (self-closure)' if process.startswith('MCSelfClosure') else 'MG5+P8 unf. w/ MG5+P8'), 'pe' )
+    legend.AddEntry( unfoldHisto, ('MG5-MLM + Pythia8 (self-closure)' if process.startswith('MCSelfClosure') else 'MG5-MLM + P8 unf. w/ MG5-MLM + P8'), 'pe' )
     
     #genJetHisto.Scale(1, 'width')
     #genJetHisto.Scale(scaleFactor)
@@ -160,7 +160,7 @@ def drawClosures(ivar, selection, process, year, lumi, genJetHisto, genJetHistoC
     genJetHisto.SetLineColor(ROOT.kBlue)
     genJetHisto.SetMarkerStyle(0)
     genJetHisto.SetLineStyle(2)
-    legend.AddEntry( genJetHisto, 'MG5+Pythia8 (gen)', 'lp' )
+    legend.AddEntry( genJetHisto, 'MG5-MLM+Pythia8 (gen)', 'lp' )
     unfoldHisto.GetYaxis().SetTitle( '#frac{1}{d#sigma} #frac{d#sigma}{d#'+labelX.split('#')[1]+'}' )
     #unfoldHisto.GetYaxis().SetTitleOffset(0.95)
     unfoldHisto.GetYaxis().SetTitleSize(0.05)
@@ -177,7 +177,7 @@ def drawClosures(ivar, selection, process, year, lumi, genJetHisto, genJetHistoC
         unfoldHistoCross.SetMarkerColor(ROOT.kRed+4)
         unfoldHistoCross.SetLineColor(ROOT.kRed+4)
         unfoldHistoCross.SetLineWidth(2)
-        legend.AddEntry( unfoldHistoCross, 'MG5+P8 unf. w/ P8+P8', 'pe' )
+        legend.AddEntry( unfoldHistoCross, 'MG5-MLM+P8 unf. w/ MG5-MLM+H7', 'pe' )
 
         #genJetHisto.Scale(1, 'width')
         #genJetHisto.Scale(scaleFactor)
@@ -186,7 +186,7 @@ def drawClosures(ivar, selection, process, year, lumi, genJetHisto, genJetHistoC
         genJetHistoCross.SetLineColor(ROOT.kMagenta)
         genJetHistoCross.SetMarkerStyle(0)
         genJetHistoCross.SetLineStyle(2)
-        legend.AddEntry( genJetHistoCross, 'Pythia8 (gen)', 'lp' )
+        legend.AddEntry( genJetHistoCross, 'MG5-MLM+H7 (gen)', 'lp' )
         
         unfoldHistoCross.Draw( "E same")
         genJetHistoCross.Draw( "histe same")
@@ -825,7 +825,7 @@ def drawUnfold( ivar, selection, process, year, lumi, dataJetHisto, genJetHisto,
     genJetHisto.SetLineColor(ROOT.kRed)
     genJetHisto.SetMarkerColor(ROOT.kRed)
     genJetHisto.SetMarkerStyle(25)
-    legend.AddEntry( genJetHisto, 'MG5+Pythia8', 'lp' )
+    legend.AddEntry( genJetHisto, 'MG5-MLM+Pythia8', 'lp' )
 
    
 
@@ -844,7 +844,7 @@ def drawUnfold( ivar, selection, process, year, lumi, dataJetHisto, genJetHisto,
     altMCHisto.SetLineColor(ROOT.kBlue)
     altMCHisto.SetMarkerColor(ROOT.kBlue)
     altMCHisto.SetMarkerStyle(25)
-    legend.AddEntry( altMCHisto, 'Pythia8', 'lp' )
+    legend.AddEntry( altMCHisto, 'MG5-MLM+Herwig7', 'lp' )
     altMCHisto.Draw("histe same")
     #unfoldHistowoUnc.Draw( "e1 same")
     #foldHisto.Draw( "histe same")
@@ -944,7 +944,7 @@ def drawUnfold( ivar, selection, process, year, lumi, dataJetHisto, genJetHisto,
     ratio_datastatUnc.GetXaxis().SetTitle( '#'+labelX.split('#')[1] )
     ratio_datastatUnc.GetYaxis().SetTitle( "Sim./Data" )
     ratio_datastatUnc.GetYaxis().SetTitleOffset( 0.5 )
-    ratio_datastatUnc.GetYaxis().SetRangeUser(-1., 3. )
+    ratio_datastatUnc.GetYaxis().SetRangeUser(-0., 2. )
     ratio_datastatUnc.GetYaxis().CenterTitle()
     ratio_datastatUnc.GetXaxis().SetLabelSize(0.12)
     ratio_datastatUnc.GetXaxis().SetTitleSize(0.12)
@@ -1369,11 +1369,11 @@ def drawUncertainties_normalizedshifts(ivar, unfoldHistoTotUnc, unfoldHistowoUnc
             normeduncerUnfoldHistoshiftsUp[k] = convert_syst_shift_to_error_ratio_hist(normeduncerUnfoldHistoshiftsUp[k].Clone(),                            
                                                                                        unfoldHistoTotUnc.Clone())
             
-            if 'ISR' in text or 'FSR' in text or 'JER' in text or ('PU' in text and 'DAMP' not in text) or 'PDF' in text:
-                normeduncerUnfoldHistoshiftsUp[k].SetLineStyle(2)
+            if 'ISR' in text or 'L1' in text or 'FSR' in text or 'JER' in text or ('PU' in text and 'DAMP' not in text) or 'PDF' in text:
+                normeduncerUnfoldHistoshiftsUp[k].SetLineStyle(2 if not('L1' in text) else 1)
                 normeduncerUnfoldHistoshiftsUp[k].SetLineColor(colors[dummy])
                 normeduncerUnfoldHistoshiftsUp[k].SetMarkerColor(colors[dummy])
-                normeduncerUnfoldHistoshiftsUp[k].SetMarkerSize(2)
+                normeduncerUnfoldHistoshiftsUp[k].SetMarkerSize(2 if not('L1' in text) else 1)
                 normeduncerUnfoldHistoshiftsUp[k].SetMarkerStyle(upstyles[up_counter])
                 #print (k,text, upstyles[up_counter], up_counter, dummy)
                 dummy=dummy+1    
@@ -1402,11 +1402,11 @@ def drawUncertainties_normalizedshifts(ivar, unfoldHistoTotUnc, unfoldHistowoUnc
             normeduncerUnfoldHistoshiftsDown[k] = convert_syst_shift_to_error_ratio_hist(normeduncerUnfoldHistoshiftsDown[k].Clone(),
                                                                                          unfoldHistoTotUnc.Clone())
               
-            if 'ISR' in text or 'FSR' in text or 'JER' in text or ('PU' in text and 'DAMP' not in text) or 'PDF' in text:
-                normeduncerUnfoldHistoshiftsDown[k].SetLineStyle(2)
+            if 'ISR' in text or 'L1' in text or 'FSR' in text or 'JER' in text or ('PU' in text and 'DAMP' not in text) or 'PDF' in text:
+                normeduncerUnfoldHistoshiftsDown[k].SetLineStyle(2 if not('L1' in text) else 1)
                 normeduncerUnfoldHistoshiftsDown[k].SetLineColor(colors[dummy])
                 normeduncerUnfoldHistoshiftsDown[k].SetMarkerColor(colors[dummy])
-                normeduncerUnfoldHistoshiftsDown[k].SetMarkerSize(2)
+                normeduncerUnfoldHistoshiftsDown[k].SetMarkerSize(2 if not('L1' in text) else 1)
                 normeduncerUnfoldHistoshiftsDown[k].SetMarkerStyle(downstyles[down_counter])
                 #print (k,text, downstyles[down_counter], down_counter, dummy)
                 down_counter=down_counter+1
@@ -1488,7 +1488,7 @@ def drawUncertainties_normalizedshifts(ivar, unfoldHistoTotUnc, unfoldHistowoUnc
     modelUnc.Scale(1,'width')
     modelUnc = convert_syst_shift_to_error_ratio_hist(modelUnc.Clone(), unfoldHistoTotUnc.Clone())
     modelUnc.SetLineStyle(1)
-    modelUnc.SetLineWidth(1)
+    modelUnc.SetLineWidth(2)
     modelUnc.SetMarkerSize(0)
     modelUnc.SetLineColor(colors[dummy])
     modelUnc.SetFillColor(0)
@@ -1509,10 +1509,10 @@ def drawUncertainties_normalizedshifts(ivar, unfoldHistoTotUnc, unfoldHistowoUnc
     totalErrHist.SetLineWidth(0)
     totalErrHist.GetYaxis().SetTitle('Variation/nominal')
     totalErrHist.GetYaxis().SetTitleSize(0.05)
-    totalErrHist.GetYaxis().SetRangeUser(-0.5,2.5)
+    totalErrHist.GetYaxis().SetRangeUser(0.,2.0)
     totalErrHist.GetXaxis().SetTitle('#'+labelX.split('#')[1])
     totalErrHist.SetLineStyle(2)
-    totalErrHist.SetFillColor(ROOT.kGray+3)
+    totalErrHist.SetFillColorAlpha(ROOT.kGray+3,0.9)
     totalErrHist.SetMarkerSize(0)
     totalErrHist.SetFillStyle(3154)
     totalErrHist.SetLineColor(1)
@@ -1522,7 +1522,7 @@ def drawUncertainties_normalizedshifts(ivar, unfoldHistoTotUnc, unfoldHistowoUnc
     dataStatErrHist.SetLineStyle(3)
     dataStatErrHist.SetMarkerSize(0)
     dataStatErrHist.SetFillStyle(3245)
-    dataStatErrHist.SetFillColor(ROOT.kAzure+7)
+    dataStatErrHist.SetFillColorAlpha(ROOT.kAzure+7,0.8)
     dataStatErrHist.SetLineColor(88)
     dataStatErrHist.Draw('E5 same')
     
@@ -1566,11 +1566,11 @@ def drawUncertainties_normalizedshifts(ivar, unfoldHistoTotUnc, unfoldHistowoUnc
     bkgSubErrHist = convert_error_bars_to_error_ratio_hist(bkgSubErrHist.Clone(),1)
     
     bkgSubErrHist.SetLineWidth(2)
-    bkgSubErrHist.SetLineStyle(7)
     h2.SetLineWidth(2)
+    bkgSubErrHist.SetLineStyle(7)
     h2.SetLineStyle(7)
-    bkgSubErrHist.SetLineColor(50)
     h2.SetLineColor(50)
+    bkgSubErrHist.SetLineColor(50)
     h2.SetMarkerSize(0)
     bkgSubErrHist.SetMarkerSize(0)
     bkgSubErrHist.Draw('L same ')
@@ -1773,3 +1773,87 @@ def createRecoBins(genBins):
         recoBins.append(genBins[i])
         #recoBins.append(b)
     return recoBins
+
+def makePSplot_simple(purity,stability,variables,var,outputDir,ext='pdf',dictHistos=OrderedDict(),bins=[0.,1.],sel='_dijetSel',year='2017',signalLabelBegin='QCD_HT_MG5+P8'):
+    if not os.path.exists(outputDir): os.makedirs(outputDir)
+    colorPallete = [ 0, 2, 4, 8, 12, 28, 30 ]
+
+    ROOT.gStyle.SetPadRightMargin(0.05)
+    canvas = ROOT.TCanvas('canvas', 'canvas', 750, 500)
+    #canvas.cd()
+    p=ROOT.TH1D("Purity",";;",len(bins)-1,array('d',bins))
+    s=ROOT.TH1D("Stability",";;",len(bins)-1,array('d',bins))
+    
+    for i in range(len(purity)):
+        p.SetBinContent(i+1,purity[i])
+        s.SetBinContent(i+1,stability[i])
+    
+    p.SetLineWidth(2)
+    p.SetLineColor(colorPallete[3])
+    #purity.SetLineStyle(1)
+    s.SetLineWidth(2)
+    s.SetLineColor(colorPallete[4])
+    
+    legend=ROOT.TLegend(0.15,0.15,0.90,0.35)
+    legend.SetFillStyle(0)
+    legend.SetBorderSize(0)
+    legend.SetLineColor(0)
+    legend.SetTextSize(0.04)
+    #legend.SetNColumns( 4 )
+    
+    
+    legend.AddEntry( p, 'Purity', 'l' )
+    legend.AddEntry( s,  'Stability' , 'l' )
+    
+    p.SetMaximum( 1. )
+    p.SetMinimum( 0.2 )
+    p.SetLineColor( ROOT.kBlack )
+    p.SetMarkerColor( ROOT.kBlack )
+    p.SetMarkerSize( 0.5 )
+    p.SetLineWidth( 2 )
+
+    s.SetLineColor( ROOT.kMagenta )
+    s.SetMarkerColor( ROOT.kMagenta )
+    s.SetMarkerSize( 0.5 )
+    s.SetLineWidth( 2 )
+    p.GetXaxis().SetTitle( variables[var]['label'] )
+    p.Draw('hist')
+    s.Draw('hist same')
+    
+    dictHistos[ 'purityGraph_'+var ] = p.Clone()
+    dictHistos[ 'stabilityGraph_'+var ] = s.Clone()
+
+    '''
+    numBins = numBins + dictHistos[ 'purityGraph_'+var ].GetNbinsX()
+    numBinsList.append(numBins)
+    multigraph = ROOT.THStack()
+    for i in dictHistos:
+        if i.endswith(var): multigraph.Add( dictHistos[i]  )
+
+    ROOT.gStyle.SetPadRightMargin(0.05)
+    canvas = ROOT.TCanvas('canvas', 'canvas', 750, 500)
+
+    multigraph.Draw("hist nostack")
+    multigraph.GetXaxis().SetTitle( variables[var]['label'] )
+    multigraph.GetYaxis().SetTitle( 'Percentage' )
+    multigraph.SetMaximum( 1.1 )
+    multigraph.GetYaxis().SetTitleOffset(0.8)
+    '''
+    #canvas.PlaceLegend()
+    legend.Draw()
+    CMS_lumi.extraText = "Simulation"
+    CMS_lumi.lumi_13TeV = "13 TeV, "+ ( '2016+2017+2018' if year.startswith('all') else year )
+    CMS_lumi.relPosX = 0.11
+    CMS_lumi.CMS_lumi(canvas, 4, 0)
+    '''
+    textBox=ROOT.TLatex()
+    textBox.SetNDC()
+    textBox.SetTextSize(0.04)
+    textBox.SetTextFont(62) ### 62 is bold, 42 is normal
+    '''
+    #textBox.DrawLatex(0.65, 0.75, sel.split('Sel')[0].split('_')[1]+' Selection' )
+    canvas.Update()
+    canvas.SaveAs(outputDir+var+'_'+signalLabelBegin+sel+'_Purity'+'_'+year+'.'+ext)
+    if ext.startswith('pdf'):
+        canvas.SaveAs(outputDir+var+'_'+signalLabelBegin+sel+'_Purity'+'_'+year+'.png')
+    return 1#numBins

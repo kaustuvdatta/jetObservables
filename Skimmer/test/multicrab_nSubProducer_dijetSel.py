@@ -61,10 +61,10 @@ def submitJobs( job, inputFiles, unitJobs ):
     config.section_("JobType")
     config.JobType.pluginName = 'Analysis'
     config.JobType.psetName = 'PSet.py'
-    config.JobType.maxMemoryMB = 6000 #if (options.onlyUnc and options.onlyUnc.startswith('_je')) else 2500
+    config.JobType.maxMemoryMB = 4000 #if (options.onlyUnc and options.onlyUnc.startswith('_je')) else 2500
     #if (options.onlyUnc and options.onlyUnc.startswith('_je')): 
     config.JobType.maxJobRuntimeMin = 1200 if (options.onlyUnc and options.onlyUnc.startswith('_jes')) else 800
-    config.JobType.numCores = 4
+    config.JobType.numCores = 2
     config.JobType.allowUndistributedCMSSW = True
 
 
@@ -182,7 +182,7 @@ if __name__ == '__main__':
             '--runEra',
             action="store",
             help="Run era for data",
-            default=""
+            default="B"
     )
     parser.add_option(
         '--onlyUnc',
@@ -226,7 +226,7 @@ if __name__ == '__main__':
                 if len(tmpList)>1:
                     for iext in range(1,len(tmpList)):
                         processingSamples[ sam+'EXT'+str(iext) ] = [ tmpList[iext], 1 ]
-                options.runEra = ''
+                #options.runEra = ''
         
     #print(processingSamples)
  

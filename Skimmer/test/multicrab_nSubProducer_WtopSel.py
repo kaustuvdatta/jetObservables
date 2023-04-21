@@ -154,7 +154,7 @@ def submitJobs( job, inputFiles, unitJobs ):
 
     print 'Submitting ' + config.General.requestName + ', dataset = ' + job
     print ('inputFiles=',inputFiles, 'outputDatasetTag=', config.Data.outputDatasetTag)
-    print 'Configuration :', options.year+options.runEra if 'SingleMuon' in job else ''
+    print 'Configuration :', options.year+options.runEra if 'SingleMuon' in job else ''#options.year+'dummyEra'+options.runEra
 
     print config
     submit(config)
@@ -208,7 +208,7 @@ if __name__ == '__main__':
             '--runEra',
             action="store",
             help="Run era for data",
-            default=""
+            default="B"
             )
     parser.add_option(
         '--onlyUnc',
@@ -258,7 +258,7 @@ if __name__ == '__main__':
                 if len(tmpList)>1:
                     for iext in range(1,len(tmpList)):
                         processingSamples[ sam+'EXT'+str(iext) ] = [ tmpList[iext], 1 ]
-                options.runEra=""
+                #options.runEra=""
 
     if len(processingSamples)==0: print 'No sample found. \n Have a nice day :)'
 

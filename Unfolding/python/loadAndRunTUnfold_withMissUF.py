@@ -88,7 +88,7 @@ def runTUnfold(
     print ("Labels:", signalLabelBegin,altSignalLabelBegin)
     
     
-    sysSignalLabelBegin = 'sysQCD_' 
+    sysSignalLabelBegin = 'sysMLMQCD_' 
     selection=sel
     
     
@@ -107,6 +107,7 @@ def runTUnfold(
                     signalLabel+'_truereco'+ivar+'_nom'+sel : dataFile[ivar+'_2016_preVFP'].Get(signalLabel+'_truereco'+ivar+'_nom'+sel),
                     signalLabel+'_fakereco'+ivar+'_nom'+sel : dataFile[ivar+'_2016_preVFP'].Get(signalLabel+'_fakereco'+ivar+'_nom'+sel),
                     signalLabel+'_accepgen'+ivar+'_nom'+sel : dataFile[ivar+'_2016_preVFP'].Get(signalLabel+'_accepgen'+ivar+'_nom'+sel),
+                    signalLabel+'_gen'+ivar+'_nom'+sel : dataFile[ivar+'_2016_preVFP'].Get(signalLabel+'_gen'+ivar+'_nom'+sel),
                     signalLabel+'_reco'+ivar+'_nom'+sel+'_genBin': dataFile[ivar+'_2016_preVFP'].Get(signalLabel+'_reco'+ivar+'_nom'+sel+'_genBin')
                     }
             signalHistos[ signalLabel+'_respWithMiss'+ivar+'_nom'+sel ].Add( dataFile[ivar+'_2016'].Get(signalLabel+'_respWithMiss'+ivar+'_nom'+sel) )
@@ -114,6 +115,7 @@ def runTUnfold(
             signalHistos[ signalLabel+'_truereco'+ivar+'_nom'+sel ].Add( dataFile[ivar+'_2016'].Get(signalLabel+'_truereco'+ivar+'_nom'+sel) )
             signalHistos[ signalLabel+'_fakereco'+ivar+'_nom'+sel ].Add( dataFile[ivar+'_2016'].Get(signalLabel+'_fakereco'+ivar+'_nom'+sel) )
             signalHistos[ signalLabel+'_accepgen'+ivar+'_nom'+sel ].Add( dataFile[ivar+'_2016'].Get(signalLabel+'_accepgen'+ivar+'_nom'+sel) )
+            signalHistos[ signalLabel+'_gen'+ivar+'_nom'+sel ].Add( dataFile[ivar+'_2016'].Get(signalLabel+'_gen'+ivar+'_nom'+sel) )
             signalHistos[ signalLabel+'_reco'+ivar+'_nom'+sel+'_genBin' ].Add( dataFile[ivar+'_2016'].Get(signalLabel+'_reco'+ivar+'_nom'+sel+'_genBin') )
             
             signalHistos[ signalLabel+'_respWithMiss'+ivar+'_nom'+sel ].Add( dataFile[ivar+'_2017'].Get(signalLabel+'_respWithMiss'+ivar+'_nom'+sel) )
@@ -121,6 +123,7 @@ def runTUnfold(
             signalHistos[ signalLabel+'_truereco'+ivar+'_nom'+sel ].Add( dataFile[ivar+'_2017'].Get(signalLabel+'_truereco'+ivar+'_nom'+sel) )
             signalHistos[ signalLabel+'_fakereco'+ivar+'_nom'+sel ].Add( dataFile[ivar+'_2017'].Get(signalLabel+'_fakereco'+ivar+'_nom'+sel) )
             signalHistos[ signalLabel+'_accepgen'+ivar+'_nom'+sel ].Add( dataFile[ivar+'_2017'].Get(signalLabel+'_accepgen'+ivar+'_nom'+sel) )
+            signalHistos[ signalLabel+'_gen'+ivar+'_nom'+sel ].Add( dataFile[ivar+'_2017'].Get(signalLabel+'_gen'+ivar+'_nom'+sel) )
             signalHistos[ signalLabel+'_reco'+ivar+'_nom'+sel+'_genBin' ].Add( dataFile[ivar+'_2017'].Get(signalLabel+'_reco'+ivar+'_nom'+sel+'_genBin') )
             
             signalHistos[ signalLabel+'_respWithMiss'+ivar+'_nom'+sel ].Add( dataFile[ivar+'_2018'].Get(signalLabel+'_respWithMiss'+ivar+'_nom'+sel) )
@@ -128,6 +131,7 @@ def runTUnfold(
             signalHistos[ signalLabel+'_truereco'+ivar+'_nom'+sel ].Add( dataFile[ivar+'_2018'].Get(signalLabel+'_truereco'+ivar+'_nom'+sel) )
             signalHistos[ signalLabel+'_fakereco'+ivar+'_nom'+sel ].Add( dataFile[ivar+'_2018'].Get(signalLabel+'_fakereco'+ivar+'_nom'+sel) )
             signalHistos[ signalLabel+'_accepgen'+ivar+'_nom'+sel ].Add( dataFile[ivar+'_2018'].Get(signalLabel+'_accepgen'+ivar+'_nom'+sel) )
+            signalHistos[ signalLabel+'_gen'+ivar+'_nom'+sel ].Add( dataFile[ivar+'_2018'].Get(signalLabel+'_gen'+ivar+'_nom'+sel) )
             signalHistos[ signalLabel+'_reco'+ivar+'_nom'+sel+'_genBin' ].Add( dataFile[ivar+'_2018'].Get(signalLabel+'_reco'+ivar+'_nom'+sel+'_genBin') )            
             if not process.startswith('MCSelfClosure'):
                 sysSignalHistos={}
@@ -316,7 +320,7 @@ def runTUnfold(
               
             if sel.startswith('_dijet'): 
                 if process.startswith("MC"):
-                    dataHistostrue = { 'data_reco'+k.split(('_truereco'))[1] : v for (k,v) in signalHistos.items() if ('_truereco' in k and not ('genBin' in k ))}
+                    dataHistostrue = { 'data_reco'+k.split(('_reco'))[1] : v for (k,v) in signalHistos.items() if ('_reco' in k and not ('genBin' in k ))}
                     dataHistostrue['data_reco'+ivar+'_nom'+sel+'_genBin'] = dataHistostrue['data_reco'+ivar+'_nom'+sel].Clone()
                     dataHistostrue['data_reco'+ivar+'_nom'+sel+'_genBin'] = dataHistostrue['data_reco'+ivar+'_nom'+sel+'_genBin'].Rebin( len(genBin)-1, 'data_reco'+ivar+'_nom'+sel+'_genBin', array( 'd', genBin ) )
                 else:
@@ -341,7 +345,7 @@ def runTUnfold(
 
             
             
-            else:#for W/top
+            else:
                 if process.startswith("MC"):
                     genBin = variables[ivar]['bins']
                     dataHistos = { 'data_reco'+k.split(('_truereco'))[1] : v for (k,v) in signalHistos.items() if ('_truereco' in k and not ('genBin' in k ))}
@@ -368,14 +372,14 @@ def runTUnfold(
                 allHistos[ 'allMCHistoGenBin' ].Add( signalHistos[ signalLabel+'_reco'+ivar+'_nom'+sel+'_genBin' ].Clone() )
 
             ### For dijet, scale QCD to data
-            scaleFactor=1
-            scaleFactorGenBin=1
-            altscaleFactor=1
-            altscaleFactorGenBin=1
+            scaleFactor=1.
+            scaleFactorGenBin=1.
+            altscaleFactor=1.
+            altscaleFactorGenBin=1.
             if sel.startswith('_dijet'):
                 scaleFactor = dataHistostrue['data_reco'+ivar+'_nom'+sel].Integral() / allHistos[ 'allMCHisto' ].Integral()
                 scaleFactorGenBin = dataHistostrue['data_reco'+ivar+'_nom'+sel+'_genBin'].Integral() / allHistos[ 'allMCHistoGenBin' ].Integral()
-                print ("SF genBin and recobin, respectively:",scaleFactor,scaleFactorGenBin)
+                print ("SF genBin and recobin, respectively, nominal reco:",scaleFactor,scaleFactorGenBin)
                 allHistos[ 'allMCHisto' ].Scale( scaleFactor )
                 allHistos[ 'allMCHistoGenBin' ].Scale( scaleFactorGenBin )
                 #if process=='data':
@@ -389,8 +393,10 @@ def runTUnfold(
                     elif ihsig.endswith('genBin'): signalHistos[ihsig].Scale( scaleFactorGenBin )
                     
                 if not process.startswith('MC'):
-                    scaleFactor_sys = 1.#dataHistostrue['data_reco'+ivar+'_nom'+sel].Integral() / allHistos[ 'allMCHisto' ].Integral()
-                    scaleFactorGenBin_sys = 1.#dataHistostrue['data_reco'+ivar+'_nom'+sel+'_genBin'].Integral() / allHistos[ 'allMCHistoGenBin' ].Integral()
+                    scaleFactor_sys = 1.
+                    scaleFactorGenBin_sys = 1.
+                    
+                    print(sysSignalLabels)
                     for sys in sysUncert:
                         if sys.startswith(('_model', '_CR', '_erdON', '_mtop', '_hdamp', '_Tune')): continue
                         s = [i for i in sysSignalLabels if sys in i]
@@ -404,12 +410,12 @@ def runTUnfold(
                             else:
                                 s=[s[0]]
                             #print (s[0]+'_reco'+ivar+sys+upDown+sel)
-                            scaleFactor_sys = dataHistostrue['data_reco'+ivar+'_nom'+sel].Integral() /  sysSignalHistos[s[0]+'_reco'+ivar+sys+'Up'+sel].Integral()
-                            scaleFactorGenBin_sys = dataHistostrue['data_reco'+ivar+'_nom'+sel+'_genBin'].Integral() /  sysSignalHistos[s[0]+'_reco'+ivar+sys+'Up'+sel+'_genBin'].Integral()
+                            scaleFactor_sys = scaleFactor#dataHistostrue['data_reco'+ivar+'_nom'+sel].Integral() /  sysSignalHistos[s[0]+'_reco'+ivar+sys+'Up'+sel].Integral()
+                            scaleFactorGenBin_sys = scaleFactorGenBin#dataHistostrue['data_reco'+ivar+'_nom'+sel+'_genBin'].Integral() /  sysSignalHistos[s[0]+'_reco'+ivar+sys+'Up'+sel+'_genBin'].Integral()
                         
                         elif len(s)==1 and ('jes' in sys or 'jer' in sys):
-                            scaleFactor_sys = dataHistostrue['data_reco'+ivar+'_nom'+sel].Integral() /  sysSignalHistos[s[0]+'_reco'+ivar+sys+'Up'+sel].Integral()
-                            scaleFactorGenBin_sys = dataHistostrue['data_reco'+ivar+'_nom'+sel+'_genBin'].Integral() /  sysSignalHistos[s[0]+'_reco'+ivar+sys+'Up'+sel+'_genBin'].Integral()
+                            scaleFactor_sys = scaleFactor#dataHistostrue['data_reco'+ivar+'_nom'+sel].Integral() /  sysSignalHistos[s[0]+'_reco'+ivar+sys+'Up'+sel].Integral()
+                            scaleFactorGenBin_sys = scaleFactorGenBin#dataHistostrue['data_reco'+ivar+'_nom'+sel+'_genBin'].Integral() /  sysSignalHistos[s[0]+'_reco'+ivar+sys+'Up'+sel+'_genBin'].Integral()
                          
                         elif len(s)==1 and ('Weight' in sys):
                             scaleFactor_sys=scaleFactor
@@ -434,10 +440,10 @@ def runTUnfold(
                 plotSimpleComparison( dataHistos['data_reco'+ivar+'_nom'+sel].Clone(), 'data', allHistos[ 'allMCHisto' ].Clone(), 'allBkgs', ivar+'_from'+('Data' if process.startswith('data') else 'MC')+'_'+signalLabel+"_nom", rebinX=1, version=sel+'_'+version, outputDir=outputDir )
                 
                 if not(process.startswith('MCSelfClosure')):
-                    if not(process.startswith('MC')):
-                        print("Rescaling alternate signal MC")
-                        altscaleFactor = dataHistos['data_reco'+ivar+'_nom'+sel].Integral() / (altSignalHistos[ altSignalLabel+'_reco'+ivar+'_nom'+sel ].Integral()  )
-                        altscaleFactorGenBin = dataHistos['data_reco'+ivar+'_nom'+sel+'_genBin'].Integral() / ( altSignalHistos[altSignalLabel+'_reco'+ivar+'_nom'+sel+'_genBin'].Integral() )
+                    #if not(process.startswith('MC')):
+                    print("Rescaling alternate signal MC")
+                    altscaleFactor = dataHistostrue['data_reco'+ivar+'_nom'+sel].Integral() / (altSignalHistos[ altSignalLabel+'_reco'+ivar+'_nom'+sel ].Integral()  )
+                    altscaleFactorGenBin = dataHistostrue['data_reco'+ivar+'_nom'+sel+'_genBin'].Integral() / ( altSignalHistos[altSignalLabel+'_reco'+ivar+'_nom'+sel+'_genBin'].Integral() )
                     print ("Alt MC SF genBin and recobin, respectively:",altscaleFactor,altscaleFactorGenBin)
 
                     #allHistos[ 'allAltSigMCHisto' ].Scale( scaleFactor )
@@ -604,7 +610,7 @@ def runTUnfold(
             for sys in sysUncert:
                 #print (sys)
                 
-                if sys.startswith(('_jer', '_isrWeight', '_fsrWeight', '_puWeight', '_pdfWeight', '_jes')):
+                if sys.startswith(('_jer', '_isrWeight', '_l1prefiringWeight', '_fsrWeight', '_puWeight', '_pdfWeight', '_jes')):
                     print('|------> TUnfolding adding %sUnc'%sys)
                     
                     s = [i for i in sysSignalLabels if sys in i]
@@ -1129,7 +1135,7 @@ def runTUnfold(
             drawUnfold(ivar=ivar, 
                        selection=sel, year=year,lumi=lumi, process=process,
                        dataJetHisto=allHistos[ 'dataHistoGenBin' ].Clone(),
-                       genJetHisto=signalHistos[ signalLabel+'_accepgen'+ivar+'_nom'+sel].Clone(),
+                       genJetHisto=signalHistos[ signalLabel+'_gen'+ivar+'_nom'+sel].Clone(),
                        unfoldHisto=allHistos[ 'unfoldHisto'+ivar ].Clone(),
                        unfoldHistowoUnc=allHistos[ 'unfoldHistowoUnc'+ivar ].Clone(),
                        foldHisto=tunfolder.GetFoldedOutput("folded"+ivar).Clone(),
@@ -1137,7 +1143,7 @@ def runTUnfold(
                        cov_datastat_tot=allHistos['cov_uncorr_data_'+ivar].Clone(),#ratiototUncHisto=ratioHistos[ 'TotalUnc'+ivar ].Clone(),
                        cov_tot=allHistos['cov'+ivar].Clone(),#ratioUncHisto=ratioHistos[ 'StatUnc'+ivar ].Clone(),
                        #ratiosystUncHisto =ratioHistos[ 'SystUnc'+ivar ].Clone(),
-                       altMCHisto =  altSignalHistos[altSignalLabel+'_accepgen'+ivar+'_nom'+sel].Clone(),
+                       altMCHisto =  altSignalHistos[altSignalLabel+'_gen'+ivar+'_nom'+sel].Clone(),
                        labelX=variables[ivar]['label'],
                        maxX=variables[ivar]['bins'][-1],
                        tlegendAlignment=variables[ivar]['alignLeg'],
@@ -1163,7 +1169,7 @@ def runTUnfold(
                 drawClosures(ivar=ivar, selection=sel, year=year, lumi=lumi, process=process,
                              genJetHistoCross=[], 
                              unfoldHistoCross=[] ,
-                                genJetHisto=signalHistos[signalLabel+'_respWithMiss'+ivar+'_nom'+sel].ProjectionX( signalLabel+'_respWithMiss'+ivar+'_nom'+sel+'_clone',0,signalHistos[signalLabel+'_respWithMiss'+ivar+'_nom'+sel].GetNbinsX()+1),
+                             genJetHisto=signalHistos[signalLabel+'_gen'+ivar+'_nom'+sel],
                              unfoldHisto=allHistos[ 'unfoldHisto'+ivar ].Clone(),
                              ratioUncHisto=ratioHistos[ 'StatUnc'+ivar ].Clone(),
                              ratiototUncHisto=ratioHistos[ 'TotalUnc'+ivar ].Clone(),
@@ -1269,7 +1275,7 @@ def runTUnfold(
 ############ Histogram loader and rebinner for inputs to unfolding script below ##############
 ##############################################################################################
 
-def loadHistograms(samples, var, sel, sysUnc=[], 
+def loadHistograms(samples, var, sel, sysUnc=[],
                    isMC=True, addGenInfo=True, respOnly=False, lumi=1., 
                        variables={}, year='2017', process='data', noRebin=False, outputFolder=None ):
     """docstring for loadHistograms"""
