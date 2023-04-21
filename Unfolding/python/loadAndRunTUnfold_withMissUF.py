@@ -304,32 +304,37 @@ def runTUnfold(
             
             ####### Fix fake and true reco ###nothing to fix here anymore :) 
             #print ("All signal histos:", signalHistos)
-            #signalHistos[signalLabel+'_truereco'+ivar+'_nom'+sel] = signalHistos[signalLabel+'_respWithMiss'+ivar+'_nom'+sel].ProjectionY()
+            
             signalHistos[signalLabel+'_fakereco'+ivar+'_nom'+sel] = signalHistos[signalLabel+'_reco'+ivar+'_nom'+sel].Clone()
             signalHistos[signalLabel+'_fakereco'+ivar+'_nom'+sel].Add( signalHistos[signalLabel+'_truereco'+ivar+'_nom'+sel], -1 )
 
-            #signalHistos[signalLabel+'_accepgen'+ivar+'_nom'+sel] = signalHistos[signalLabel+'_respWithMiss'+ivar+'_nom'+sel].ProjectionX()
+            
             signalHistos[signalLabel+'_missgen'+ivar+'_nom'+sel] = signalHistos[signalLabel+'_gen'+ivar+'_nom'+sel].Clone()
             signalHistos[signalLabel+'_missgen'+ivar+'_nom'+sel].Add( signalHistos[signalLabel+'_accepgen'+ivar+'_nom'+sel], -1 )
             
             if not process.startswith('MCSelfClosure'):
-                #print("All alt. signal MC histos:", altSignalHistos)
-                #altSignalHistos[altSignalLabel+'_truereco'+ivar+'_nom'+sel]= altSignalHistos[altSignalLabel+'_respWithMiss'+ivar+'_nom'+sel].ProjectionY()
+                
                 altSignalHistos[altSignalLabel+'_fakereco'+ivar+'_nom'+sel] = altSignalHistos[altSignalLabel+'_reco'+ivar+'_nom'+sel].Clone()
                 altSignalHistos[altSignalLabel+'_fakereco'+ivar+'_nom'+sel].Add( altSignalHistos[altSignalLabel+'_truereco'+ivar+'_nom'+sel], -1 )
 
-                #altSignalHistos[altSignalLabel+'_accepgen'+ivar+'_nom'+sel] = altSignalHistos[altSignalLabel+'_respWithMiss'+ivar+'_nom'+sel].ProjectionX()
+                
                 altSignalHistos[altSignalLabel+'_missgen'+ivar+'_nom'+sel] = altSignalHistos[altSignalLabel+'_gen'+ivar+'_nom'+sel].Clone()
                 altSignalHistos[altSignalLabel+'_missgen'+ivar+'_nom'+sel].Add( altSignalHistos[altSignalLabel+'_accepgen'+ivar+'_nom'+sel], -1 )          
               
             if sel.startswith('_dijet'): 
                 if process.startswith("MC"):
-                    dataHistostrue = { 'data_reco'+k.split(('_reco'))[1] : v for (k,v) in signalHistos.items() if ('_reco' in k and not ('genBin' in k ))}
+                    dataHistostrue = { 'data_reco'+k.split(('_truereco'))[1] : v for (k,v) in signalHistos.items() if ('_truereco' in k and not ('genBin' in k ))}
                     dataHistostrue['data_reco'+ivar+'_nom'+sel+'_genBin'] = dataHistostrue['data_reco'+ivar+'_nom'+sel].Clone()
                     dataHistostrue['data_reco'+ivar+'_nom'+sel+'_genBin'] = dataHistostrue['data_reco'+ivar+'_nom'+sel+'_genBin'].Rebin( len(genBin)-1, 'data_reco'+ivar+'_nom'+sel+'_genBin', array( 'd', genBin ) )
+                    
+                    dataHistos = { 'data_reco'+k.split(('_reco'))[1] : v for (k,v) in signalHistos.items() if ('_reco' in k and not ('genBin' in k ))}
+                    dataHistos['data_reco'+ivar+'_nom'+sel+'_genBin'] = dataHistos['data_reco'+ivar+'_nom'+sel].Clone()
+                    dataHistos['data_reco'+ivar+'_nom'+sel+'_genBin'] = dataHistos['data_reco'+ivar+'_nom'+sel+'_genBin'].Rebin( len(genBin)-1, 'data_reco'+ivar+'_nom'+sel+'_genBin', array( 'd', genBin ) )
+                    
                 else:
                     dataHistostrue = loadHistograms( dataFile, ivar, sel, isMC= False, sysUnc=[], respOnly=False, lumi=lumi, year=year, process=process, variables=variables,outputFolder=outputFolder)
-                    print (dataHistostrue)
+                    dataHistos = loadHistograms( dataFile, ivar, sel, isMC= False, sysUnc=[], respOnly=False, lumi=lumi, year=year, process=process, variables=variables,outputFolder=outputFolder)
+                    #print (dataHistostrue)
                 ######## Cross check: plotting data vs all MC Scaled
                 print ('|------> Cross check: plotting data vs all MC')
                 #print(dataHistostrue,'data_reco'+ivar+'_nom'+sel)
@@ -352,7 +357,7 @@ def runTUnfold(
             else:
                 if process.startswith("MC"):
                     genBin = variables[ivar]['bins']
-                    dataHistos = { 'data_reco'+k.split(('_truereco'))[1] : v for (k,v) in signalHistos.items() if ('_truereco' in k and not ('genBin' in k ))}
+                    #dataHistos = { 'data_reco'+k.split(('_truereco'))[1] : v for (k,v) in signalHistos.items() if ('_truereco' in k and not ('genBin' in k ))}
                     dataHistos['data_reco'+ivar+'_nom'+sel+'_genBin'] = dataHistos['data_reco'+ivar+'_nom'+sel].Clone()
                     dataHistos['data_reco'+ivar+'_nom'+sel+'_genBin'] = dataHistos['data_reco'+ivar+'_nom'+sel+'_genBin'].Rebin( len(genBin)-1, 'data_reco'+ivar+'_nom'+sel+'_genBin', array( 'd', genBin ) )
                 else:
@@ -381,8 +386,8 @@ def runTUnfold(
             altscaleFactor=1.
             altscaleFactorGenBin=1.
             if sel.startswith('_dijet'):
-                scaleFactor = dataHistostrue['data_reco'+ivar+'_nom'+sel].Integral() / allHistos[ 'allMCHisto' ].Integral()
-                scaleFactorGenBin = dataHistostrue['data_reco'+ivar+'_nom'+sel+'_genBin'].Integral() / allHistos[ 'allMCHistoGenBin' ].Integral()
+                scaleFactor = dataHistos['data_reco'+ivar+'_nom'+sel].Integral() / allHistos[ 'allMCHisto' ].Integral()
+                scaleFactorGenBin = dataHistos['data_reco'+ivar+'_nom'+sel+'_genBin'].Integral() / allHistos[ 'allMCHistoGenBin' ].Integral()
                 print ("SF genBin and recobin, respectively, nominal reco:",scaleFactor,scaleFactorGenBin)
                 allHistos[ 'allMCHisto' ].Scale( scaleFactor )
                 allHistos[ 'allMCHistoGenBin' ].Scale( scaleFactorGenBin )
@@ -396,7 +401,7 @@ def runTUnfold(
                         signalHistos[ihsig].Scale( scaleFactor )
                     elif ihsig.endswith('genBin'): signalHistos[ihsig].Scale( scaleFactorGenBin )
                     
-                if not process.startswith('MC'):
+                if not (process.startswith('MC')):
                     scaleFactor_sys = 1.
                     scaleFactorGenBin_sys = 1.
                     
@@ -434,13 +439,13 @@ def runTUnfold(
                                     sysSignalHistos[ihsig].Scale( scaleFactor )
                                 elif ihsig.endswith('genBin'): sysSignalHistos[ihsig].Scale( scaleFactorGenBin )
                 
-                if process.startswith("MC"):
-                    genBin = variables[ivar]['bins']
-                    dataHistos = { 'data_reco'+k.split(('_reco'))[1] : v for (k,v) in signalHistos.items()  if ('_reco' in k and not ('genBin' in k ))}
-                    dataHistos['data_reco'+ivar+'_nom'+sel+'_genBin'] = dataHistos['data_reco'+ivar+'_nom'+sel].Clone()
-                    dataHistos['data_reco'+ivar+'_nom'+sel+'_genBin'] = dataHistos['data_reco'+ivar+'_nom'+sel+'_genBin'].Rebin( len(genBin)-1, 'data_reco'+ivar+'_nom'+sel+'_genBin', array( 'd', genBin ) )
-                else: 
-                    dataHistos = copy.deepcopy(dataHistostrue)
+                #if process.startswith("MC"):
+                #    genBin = variables[ivar]['bins']
+                #    #dataHistos = { 'data_reco'+k.split(('_reco'))[1] : v for (k,v) in signalHistos.items()  if ('_reco' in k and not ('genBin' in k ))}
+                #    #dataHistos['data_reco'+ivar+'_nom'+sel+'_genBin'] = dataHistos['data_reco'+ivar+'_nom'+sel].Clone()
+                #    #dataHistos['data_reco'+ivar+'_nom'+sel+'_genBin'] = dataHistos['data_reco'+ivar+'_nom'+sel+'_genBin'].Rebin( len(genBin)-1, 'data_reco'+ivar+'_nom'+sel+'_genBin', array( 'd', genBin ) )
+                #else: 
+                #    dataHistos = copy.deepcopy(dataHistostrue)
                 plotSimpleComparison( dataHistos['data_reco'+ivar+'_nom'+sel].Clone(), 'data', allHistos[ 'allMCHisto' ].Clone(), 'allBkgs', ivar+'_from'+('Data' if process.startswith('data') else 'MC')+'_'+signalLabel+"_nom", rebinX=1, version=sel+'_'+version, outputDir=outputDir )
                 
                 if not(process.startswith('MCSelfClosure')):
@@ -476,7 +481,10 @@ def runTUnfold(
                 if ih.endswith(ivar+'_nom'+sel): allHistos[ 'allBkgHisto' ].Add( fakeHistos[ih] )
                 if ih.endswith(ivar+'_nom'+sel+'_genBin'): allHistos[ 'allBkgHistoGenBin' ].Add( fakeHistos[ih] )
             plotSimpleComparison( dataHistos[ 'data_reco'+ivar+'_nom'+sel ].Clone(), 'data', allHistos[ 'allBkgHisto' ].Clone(), 'Bkg+fakes', ivar+'_from'+('Data' if process.startswith('data') else 'MC')+'_'+signalLabel+"_TestDataBkgFakes", rebinX=1, version=sel+'_'+version, outputDir=outputDir )
-
+        if process.startswith('MC'):
+            allHistos[ 'dataHisto' ] = dataHistostrue[ 'data_reco'+ivar+'_nom'+sel ].Clone()
+            allHistos[ 'dataHistoGenBin' ] = dataHistostrue[ 'data_reco'+ivar+'_nom'+sel+'_genBin'].Clone()
+        else:
             allHistos[ 'dataHisto' ] = dataHistos[ 'data_reco'+ivar+'_nom'+sel ].Clone()
             allHistos[ 'dataHistoGenBin' ] = dataHistos[ 'data_reco'+ivar+'_nom'+sel+'_genBin'].Clone()
             
@@ -523,8 +531,8 @@ def runTUnfold(
         
         ######## plotting purity and stability for chosen binning scheme
         print ('|------> plotting purity and stability for chosen binning scheme')
-        #if 
-        getAndPlotPurity(signalHistos[signalLabel+'_respWithMiss'+ivar+'_nom'+sel].Clone().RebinY(2),genBin,variables,ivar,outputDir=outputDir,year=year)
+        #if
+        getAndPlotPurity(signalHistos[signalLabel+'_respWithMiss'+ivar+'_nom'+sel].Clone().RebinY(2),genBin,variables,ivar, outputDir=outputDir,year=year)
         
         ######## Cross check: plotting response matrix
         print ('|------> Cross check: plotting response matrix for signal')
