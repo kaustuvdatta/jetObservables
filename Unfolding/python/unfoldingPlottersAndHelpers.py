@@ -116,6 +116,456 @@ def plotSysComparison( nomHisto, dictUncHistos, outputName, labelX='', log=False
     if ext.startswith('pdf'):
         canUnc.SaveAs( outputDir + outputFileName.replace('pdf', 'png') )
     del canUnc
+
+    
+def drawDataMCReco( ivar, selection, year, lumi, process,
+                    dataJetHisto, nominal_recoJetHisto, alt_recoJetHisto,
+                    labelX, maxX, tlegendAlignment, outputName ):
+    """docstring for drawUnfold"""
+    print ("Drawing Data/MC")
+    ROOT.gStyle.SetPadRightMargin(0.05)
+    ROOT.gStyle.SetPadLeftMargin(0.15)
+    can = ROOT.TCanvas('can'+ivar, 'can'+ivar,  10, 10, 1500, 1500 )
+    pad1 = ROOT.TPad("pad1"+ivar, "Main",0,0.3,1.00,1.00,-1)
+    pad1.Draw()
+
+    pad1.cd()
+    pad1.SetTopMargin(0.08)
+    pad1.SetBottomMargin(0.02)
+    
+    if tlegendAlignment.startswith('right'): legend=ROOT.TLegend(0.65,0.67,0.90,0.9)
+
+    else: legend=ROOT.TLegend(0.20,0.67,0.40,0.9)
+    legend.SetFillStyle(0)
+    legend.SetTextSize(0.035)
+    legend.SetBorderSize(0)
+    
+    
+    dataHisto = normalise_hist(dataJetHisto.Clone())
+    recoHisto = normalise_hist(nominal_recoJetHisto.Clone())
+    altrecoHisto = normalise_hist(alt_recoJetHisto.Clone())
+    
+    dataHisto.Scale(1, 'width')  ### divide by bin width
+    #dataHisto.Scale(1/dataHisto.Integral(), 'width')  ### divide by bin width
+    dataHisto.SetMarkerStyle(8)
+    dataHisto.SetMarkerSize(2)
+    dataHisto.SetMarkerColor(ROOT.kBlack)
+    dataHisto.SetLineColor(ROOT.kBlack)
+    legend.AddEntry( dataHisto, 'Data', 'pe' )
+    
+    recoHisto.Scale(1, 'width')
+    #genJetHisto.Scale(scaleFactor)
+    #genJetHisto.Scale(1/genJetHisto.Integral(), 'width')  ### divide by bin width
+    recoHisto.SetLineWidth(2)
+    recoHisto.SetLineColor(ROOT.kRed)
+    recoHisto.SetMarkerColor(ROOT.kRed)
+    recoHisto.SetMarkerStyle(25)
+    legend.AddEntry( recoHisto, 'MG5-MLM+Pythia8', 'lp' )
+
+   
+
+    dataHisto.GetYaxis().SetTitle( '#frac{1}{dN} #frac{dN}{d#'+labelX.split('#')[1]+'}' )
+    #dataHisto.GetYaxis().SetTitleOffset(0.95)
+    dataHisto.GetYaxis().SetTitleSize(0.05)
+    dataHisto.SetMaximum( 1.6*max([ recoHisto.GetMaximum(), dataHisto.GetMaximum()] )  )
+    dataHisto.SetMinimum(0.)
+    #pad1.GetYaxis().SetRangeUser(0,1.5*max([ genJetHisto.GetMaximum(), dataHisto.GetMaximum()] ) )
+
+    dataHisto.Draw( "E")
+    recoHisto.Draw( "histe same")
+
+    altrecoHisto.Scale(1, 'width')  ### divide by bin width
+    altrecoHisto.SetLineWidth(2)
+    altrecoHisto.SetLineColor(ROOT.kBlue)
+    altrecoHisto.SetMarkerColor(ROOT.kBlue)
+    altrecoHisto.SetMarkerStyle(25)
+    legend.AddEntry( altrecoHisto, 'MG5-MLM+Herwig7', 'lp' )
+    altrecoHisto.Draw("histe same")
+    
+    
+    selText = textBox.Clone()
+    selText.SetTextFont(42)
+    selText.SetTextSize(0.045)
+
+    selText.SetNDC()
+
+    if selection.startswith("_dijet"): seltext = 'Central Dijet'#( 'Central' if 'Central' in labelX  else 'Outer' )+' dijet region'
+    elif selection.startswith("_W"): seltext = 'Boosted W region'
+    elif selection.startswith("_top"): seltext = 'Boosted top region'
+    selText.DrawLatex( ( 0.21 if tlegendAlignment.startswith('right') else 0.55 ), 0.87, seltext )
+
+    selText = textBox.Clone()
+    selText.SetTextFont(42)
+    selText.SetTextSize(0.042)
+
+    selText.SetNDC()
+    
+    if selection.startswith("_dijet"): seltext = 'p_{T}>200 GeV' 
+    elif selection.startswith("_W"): seltext = 'p_{T}>200 GeV, 65#leqm_{SD}<115 GeV' 
+    elif selection.startswith("_top"): seltext = 'p_{T}>350 GeV, 140#leqm_{SD}<220 GeV'
+    selText.DrawLatex( ( 0.21 if tlegendAlignment.startswith('right') else 0.55 ), 0.78, seltext )
+
+    
+    legend.Draw()
+    if process.startswith('data'):
+        CMS_lumi.extraText = "Preliminary"
+        CMS_lumi.lumi_13TeV = ('#leq' if selection.startswith('dijet') else '')+str( round( (lumi/1000.), 2 ) )+" fb^{-1}, 13 TeV"+('' if year.startswith('all') else ", "+( '2016+2017+2018' if year.startswith('all') else year ) )
+    else:
+        CMS_lumi.extraText = "Simulation Preliminary"
+        CMS_lumi.lumi_13TeV = "13 TeV, "+ ( '2016+2017+2018' if year.startswith('all') else year )
+    CMS_lumi.relPosX = 0.12
+    CMS_lumi.CMS_lumi(pad1, 4, 0)
+    
+    
+    can.cd()
+    pad2 = ROOT.TPad("pad2"+ivar, "Ratio",0,0.00,1.00,0.30,-1);
+    ROOT.gStyle.SetOptFit(1)
+    pad2.SetGrid()
+    pad2.SetTopMargin(0.)
+    pad2.SetBottomMargin(0.3)
+    pad2.Draw()
+    pad2.cd()
+    
+    
+    tmpPad2= pad2.DrawFrame( 0, 0., maxX, 1.9 )
+    #print (labelX)
+    tmpPad2.GetYaxis().SetTitle( "Sim./Data" )
+    tmpPad2.GetYaxis().SetTitleOffset( 0.5 )
+    tmpPad2.GetYaxis().SetRangeUser(0.4, 1.6 )
+    tmpPad2.GetYaxis().CenterTitle()
+    tmpPad2.GetXaxis().SetTitle( '#'+labelX.split('#')[1] )
+    tmpPad2.SetLabelSize(0.12, 'x')
+    tmpPad2.SetTitleSize(0.12, 'x')
+    tmpPad2.SetLabelSize(0.12, 'y')
+    tmpPad2.SetTitleSize(0.12, 'y')
+    tmpPad2.SetNdivisions(505, 'x')
+    tmpPad2.SetNdivisions(505, 'y')
+    pad2.Modified()
+    pad2.Update()
+    pad2.Draw()
+    can.Update()
+    
+    
+    ratio_nominal = ROOT.TGraphAsymmErrors()
+    ratio_nominal.Divide( recoHisto, dataHisto, 'pois' )
+    ratio_nominal.SetLineColor(ROOT.kRed)
+    ratio_nominal.SetMarkerColor(ROOT.kRed)
+    ratio_nominal.GetXaxis().SetTitle( '#'+labelX.split('#')[1] )
+    #ratio_nominal.GetYaxis().SetTitle( "Sim./Data" )
+    #ratio_nominal.GetYaxis().SetTitleOffset( 0.5 )
+    #ratio_nominal.GetYaxis().SetRangeUser(0., 2. )
+    #ratio_nominal.GetYaxis().CenterTitle()
+    ratio_nominal.GetXaxis().SetLabelSize(0.12)
+    ratio_nominal.GetXaxis().SetTitleSize(0.12)
+    #ratio_nominal.GetYaxis().SetLabelSize(0.12)
+    #ratio_nominal.GetYaxis().SetTitleSize(0.12)
+    ratio_nominal.GetXaxis().SetNdivisions(505)
+    #ratio_nominal.GetYaxis().SetNdivisions(505)
+    ratio_nominal.SetMarkerStyle(25)
+    ratio_nominal.Draw('P0 same')
+    
+    ratio_altMC = ROOT.TGraphAsymmErrors()
+    ratio_altMC.Divide( altrecoHisto, dataHisto, 'pois' )
+    ratio_altMC.SetLineColor(ROOT.kBlue)
+    ratio_altMC.SetMarkerColor(ROOT.kBlue)
+    ratio_altMC.SetMarkerStyle(25)
+    
+    ratio_altMC.Draw('P0 same')
+    
+    ratioLegend=ROOT.TLegend(0.20,0.85,0.80,0.95)
+    ratioLegend.SetTextSize(0.07)
+    ratioLegend.SetNColumns(2)
+    ratioLegend.SetFillColorAlpha(10,0.6)
+    ratioLegend.SetBorderSize(0)
+    #ratioLegend.SetTextSize(0.1)
+    ratioLegend.AddEntry( ratio_altMC, 'MG5-MLM+P8', 'lp' )
+    ratioLegend.AddEntry( ratio_nominal, 'MG5-MLM+H7', 'lp' )
+    #ratioLegend.AddEntry( ratiosystUncHisto, 'Syst.', 'f' )
+    ratioLegend.Draw()
+    png = outputName.split('.pdf')[0]+'.png'
+    can.SaveAs(outputName)
+    can.SaveAs(png)
+    ROOT.gStyle.SetPadRightMargin(0.09)     ## reseating
+    ROOT.gStyle.SetPadLeftMargin(0.12)
+                    
+
+def drawUnfold( ivar, selection, process, year, lumi, dataJetHisto, genJetHisto, unfoldHisto, unfoldHistowoUnc, altMCHisto,
+               foldHisto, recoJetHisto, cov_tot, cov_datastat_tot, labelX, maxX, tlegendAlignment, outputName ):
+    """docstring for drawUnfold"""
+    print ("Drawing unfolding")
+    ROOT.gStyle.SetPadRightMargin(0.05)
+    ROOT.gStyle.SetPadLeftMargin(0.15)
+    can = ROOT.TCanvas('can'+ivar, 'can'+ivar,  10, 10, 1500, 1500 )
+    pad1 = ROOT.TPad("pad1"+ivar, "Main",0,0.3,1.00,1.00,-1)
+    pad1.Draw()
+
+    pad1.cd()
+    pad1.SetTopMargin(0.08)
+    pad1.SetBottomMargin(0.02)
+    
+    if tlegendAlignment.startswith('right'): legend=ROOT.TLegend(0.65,0.67,0.90,0.9)
+
+    else: legend=ROOT.TLegend(0.20,0.67,0.40,0.9)
+    legend.SetFillStyle(0)
+    legend.SetTextSize(0.035)
+    legend.SetBorderSize(0)
+    
+    #bins = variables[ivar]['bins']
+
+    unfoldHistoTot = unfoldHisto.Clone()
+    #print (unfoldHisto)
+    #use unnormed unfold histo to build the jacobian for the correct propagation of errors
+    #via the covariance matrix, from the normalise -> the unnormalised space
+    normed_cov_tot_matrix, normed_cov_tot = GetNormalizedTMatrixandTH2(cov_tot.Clone(),"normed_cov_tot", unfoldHisto.Clone())
+    
+    normed_cov_datastat_tot_matrix, normed_cov_datastat_tot = GetNormalizedTMatrixandTH2(cov_datastat_tot.Clone(),"normed_cov_dastat_tot", unfoldHisto.Clone())
+    '''
+    normed_cov_bkgsub_tot_matrix, normed_cov_bkgsub_tot = GetNormalizedTMatrixandTH2(cov_bkg_tot.Clone(),
+                                                                                     "normed_cov_tot",
+                                                                                     unfoldHistoTotUnc)
+    
+    normed_cov_rmstat_tot_matrix, normed_cov_rmstat_tot = GetNormalizedTMatrixandTH2(cov_rmstat_tot.Clone(),
+                                                                                     "normed_cov_rmstat_tot", 
+                                                                                     unfoldHistoTotUnc)
+    '''
+    
+    #print (unfoldHisto)
+
+    
+    unfoldHistoDataStatErr = normalise_hist(unfoldHisto.Clone())    
+    unfoldHisto = normalise_hist(unfoldHisto.Clone())    
+    dataJetHisto = normalise_hist(dataJetHisto.Clone())
+    genJetHisto = normalise_hist(genJetHisto.Clone())
+    unfoldHistowoUnc = normalise_hist_divide_bin_width(unfoldHistowoUnc.Clone())
+    altMCHisto = normalise_hist(altMCHisto.Clone())
+    foldHisto = normalise_hist(foldHisto.Clone())
+    recoJetHisto = normalise_hist(recoJetHisto.Clone())
+    #print (unfoldHisto)
+
+    #norm = unfoldHistoTot.Integral("width")/unfoldHisto.Integral("width")
+    
+    #normed_cov_tot = cov_tot.Clone()
+    #normed_cov_tot.Scale(1./(norm*norm))
+    #scale_th2_bin_widths(normed_cov_tot, variables[ivar]['bins'])
+    #normed_cov_datastat_tot = cov_datastat_tot.Clone()
+    #normed_cov_datastat_tot.Scale(1./(norm*norm))
+    #scale_th2_bin_widths(normed_cov_datastat_tot, variables[ivar]['bins'])   
+                                                         
+    
+    
+    for ibin in range(1, unfoldHisto.GetNbinsX()+1):
+        tot_err = normed_cov_tot.GetBinContent(ibin,ibin)
+        tot_datastaterr = normed_cov_datastat_tot.GetBinContent(ibin,ibin)
+        
+        if tot_err<=0.: tot_err=0.
+        else: tot_err = np.sqrt(tot_err)
+        
+        if tot_datastaterr<=0.: tot_datastaterr=0.
+        else: tot_datastaterr = np.sqrt(tot_datastaterr)    
+        
+        unfoldHisto.SetBinError(ibin,tot_err)
+        unfoldHistoDataStatErr.SetBinError(ibin,tot_datastaterr)
+            
+        
+    unfoldHistoDataStatErr.Scale(1,'width')
+    #dataIntegral = dataJetHisto.Integral()
+    #unfoldIntegral = unfoldHisto.Integral()
+    #tmpMax = float(unfoldHisto.GetMaximum())
+    
+    unfoldHisto.Scale(1, 'width')  ### divide by bin width
+    #unfoldHisto.Scale(1/unfoldHisto.Integral(), 'width')  ### divide by bin width
+    unfoldHisto.SetMarkerStyle(8)
+    unfoldHisto.SetMarkerSize(2)
+    unfoldHisto.SetMarkerColor(ROOT.kBlack)
+    unfoldHisto.SetLineColor(ROOT.kBlack)
+    legend.AddEntry( unfoldHisto, 'Data', 'pe' )
+    
+    genJetHisto.Scale(1, 'width')
+    #genJetHisto.Scale(scaleFactor)
+    #genJetHisto.Scale(1/genJetHisto.Integral(), 'width')  ### divide by bin width
+    genJetHisto.SetLineWidth(2)
+    genJetHisto.SetLineColor(ROOT.kRed)
+    genJetHisto.SetMarkerColor(ROOT.kRed)
+    genJetHisto.SetMarkerStyle(25)
+    legend.AddEntry( genJetHisto, 'MG5-MLM+Pythia8', 'lp' )
+
+   
+
+    unfoldHisto.GetYaxis().SetTitle( '#frac{1}{dN} #frac{dN}{d#'+labelX.split('#')[1]+'}' )
+    #unfoldHisto.GetYaxis().SetTitleOffset(0.95)
+    unfoldHisto.GetYaxis().SetTitleSize(0.05)
+    unfoldHisto.SetMaximum( 1.6*max([ genJetHisto.GetMaximum(), unfoldHisto.GetMaximum()] )  )
+    unfoldHisto.SetMinimum(0.)
+    #pad1.GetYaxis().SetRangeUser(0,1.5*max([ genJetHisto.GetMaximum(), unfoldHisto.GetMaximum()] ) )
+
+    unfoldHisto.Draw( "E")
+    genJetHisto.Draw( "histe same")
+
+    altMCHisto.Scale(1, 'width')  ### divide by bin width
+    altMCHisto.SetLineWidth(2)
+    altMCHisto.SetLineColor(ROOT.kBlue)
+    altMCHisto.SetMarkerColor(ROOT.kBlue)
+    altMCHisto.SetMarkerStyle(25)
+    legend.AddEntry( altMCHisto, 'MG5-MLM+Herwig7', 'lp' )
+    altMCHisto.Draw("histe same")
+    #unfoldHistowoUnc.Draw( "e1 same")
+    #foldHisto.Draw( "histe same")
+    #if selfClosure: foldHisto.Draw( "histe same")
+    #dataJetHisto.Draw( "histe same")
+    #recoJetHisto.Draw( "histe same")
+    #if process.startswith('data'): recoJetHisto.Draw( "hist same")
+    
+    selText = textBox.Clone()
+    selText.SetTextFont(42)
+    selText.SetTextSize(0.045)
+
+    selText.SetNDC()
+
+    if selection.startswith("_dijet"): seltext = 'Central Dijet'#( 'Central' if 'Central' in labelX  else 'Outer' )+' dijet region'
+    elif selection.startswith("_W"): seltext = 'Boosted W region'
+    elif selection.startswith("_top"): seltext = 'Boosted top region'
+    selText.DrawLatex( ( 0.21 if tlegendAlignment.startswith('right') else 0.55 ), 0.87, seltext )
+
+    selText = textBox.Clone()
+    selText.SetTextFont(42)
+    selText.SetTextSize(0.042)
+
+    selText.SetNDC()
+    
+    if selection.startswith("_dijet"): seltext = 'p_{T}>200 GeV' 
+    elif selection.startswith("_W"): seltext = 'p_{T}>200 GeV, 65#leqm_{SD}<115 GeV' 
+    elif selection.startswith("_top"): seltext = 'p_{T}>350 GeV, 140#leqm_{SD}<220 GeV'
+    selText.DrawLatex( ( 0.21 if tlegendAlignment.startswith('right') else 0.55 ), 0.78, seltext )
+
+    
+    legend.Draw()
+    if process.startswith('data'):
+        CMS_lumi.extraText = "Preliminary"
+        CMS_lumi.lumi_13TeV = ('#leq' if selection.startswith('dijet') else '')+str( round( (lumi/1000.), 2 ) )+" fb^{-1}, 13 TeV"+('' if year.startswith('all') else ", "+( '2016+2017+2018' if year.startswith('all') else year ) )
+    else:
+        CMS_lumi.extraText = "Simulation Preliminary"
+        CMS_lumi.lumi_13TeV = "13 TeV, "+ ( '2016+2017+2018' if year.startswith('all') else year )
+    CMS_lumi.relPosX = 0.12
+    CMS_lumi.CMS_lumi(pad1, 4, 0)
+    
+    
+    can.cd()
+    pad2 = ROOT.TPad("pad2"+ivar, "Ratio",0,0.00,1.00,0.30,-1);
+    ROOT.gStyle.SetOptFit(1)
+    pad2.SetGrid()
+    pad2.SetTopMargin(0.)
+    pad2.SetBottomMargin(0.3)
+    pad2.Draw()
+    pad2.cd()
+    
+    ratio_datastatUnc = unfoldHistowoUnc.Clone()
+    ratio_datastatUnc.Divide(unfoldHistoDataStatErr)
+    #ratio_datastatUnc.Reset()
+    ratio_totalUnc = unfoldHistowoUnc.Clone()
+    ratio_totalUnc.Divide(unfoldHisto)
+    #ratio_totalUnc.Reset()
+    '''
+    for ibin in range(0, unfoldHisto.GetNbinsX()):
+        
+        tot_err = unfoldHisto.GetBinError(ibin)
+        tot_datastaterr = unfoldHistoDataStatErr.GetBinError(ibin)
+        bc = unfoldHisto.GetBinContent(ibin)
+        
+        ratio_datastatUnc.SetBinContent(ibin,1.)
+        ratio_totalUnc.SetBinContent(ibin,1.)
+                                         
+        if bc>0.:
+            ratio_datastatUnc.SetBinError(ibin,tot_datastaterr/bc)
+            ratio_totalUnc.SetBinError(ibin,tot_err/bc)
+   
+    '''
+    tmpPad2= pad2.DrawFrame( 0, 0., maxX, 1.9 )
+    print (labelX)
+    #tmpPad2.GetXaxis().SetTitle( labelX )
+    tmpPad2.GetYaxis().SetTitle( "Sim./Data" )
+    tmpPad2.GetYaxis().SetTitleOffset( 0.5 )
+    tmpPad2.GetYaxis().SetRangeUser(0., 2. )
+    #tmpPad2.GetXaxis().SetRangeUser(unfoldHisto.GetBinLowEdge(1),unfoldHisto.GetBinLowEdge(unfoldHisto.GetNbinsX()+2) )   
+    tmpPad2.GetYaxis().CenterTitle()
+    tmpPad2.SetLabelSize(0.12, 'x')
+    tmpPad2.SetTitleSize(0.12, 'x')
+    tmpPad2.SetLabelSize(0.12, 'y')
+    tmpPad2.SetTitleSize(0.12, 'y')
+    tmpPad2.SetNdivisions(505, 'x')
+    tmpPad2.SetNdivisions(505, 'y')
+    pad2.Modified()
+    pad2.Update()
+    pad2.Draw()
+    can.Update()
+    
+    #hRatioDown.Draw('P same')
+    ratio_datastatUnc.SetFillColor(ROOT.kAzure+7)
+    ratio_datastatUnc.SetLineColor(0)
+    ratio_datastatUnc.SetLineWidth(0)
+    ratio_datastatUnc.SetFillStyle(3245)
+    ratio_datastatUnc.GetXaxis().SetTitle( '#'+labelX.split('#')[1] )
+    ratio_datastatUnc.GetYaxis().SetTitle( "Sim./Data" )
+    ratio_datastatUnc.GetYaxis().SetTitleOffset( 0.5 )
+    ratio_datastatUnc.GetYaxis().SetRangeUser(0.25, 2.25 )
+    ratio_datastatUnc.GetYaxis().CenterTitle()
+    ratio_datastatUnc.GetXaxis().SetLabelSize(0.12)
+    ratio_datastatUnc.GetXaxis().SetTitleSize(0.12)
+    ratio_datastatUnc.GetYaxis().SetLabelSize(0.12)
+    ratio_datastatUnc.GetYaxis().SetTitleSize(0.12)
+    ratio_datastatUnc.GetXaxis().SetNdivisions(505)
+    ratio_datastatUnc.GetYaxis().SetNdivisions(505)
+    ratio_datastatUnc.SetMarkerStyle(0)
+    ratio_datastatUnc.SetMarkerSize(0)
+    #ratio_datastatUnc.Scale(1,'width')
+    ratio_datastatUnc.Draw('E5')
+
+    ratio_totalUnc.SetFillColor(ROOT.kGray+3)
+    ratio_totalUnc.SetLineColor(0)
+    ratio_totalUnc.SetLineWidth(0)
+    ratio_totalUnc.SetFillStyle(3254)
+    ratio_totalUnc.SetMarkerStyle(0)
+    ratio_totalUnc.SetMarkerSize(0)
+    #ratio_totalUnc.Scale(1,'width')    
+    ratio_totalUnc.Draw('E5 SAME')
+    
+    #ratiosystUncHisto.SetFillColor(9)
+    #ratiosystUncHisto.SetLineColor(0)
+    #ratiosystUncHisto.SetFillStyle(3006)
+    #ratiosystUncHisto.SetMarkerStyle(0)
+    #ratiosystUncHisto.Scale(1,'width')    
+    #ratiosystUncHisto.Draw('E3 same')
+
+    hRatioUp = ROOT.TGraphAsymmErrors()
+    hRatioUp.Divide( genJetHisto, unfoldHisto, 'pois' )
+    hRatioUp.SetLineColor(ROOT.kRed)
+    hRatioUp.SetMarkerColor(ROOT.kRed)
+    #hRatioUp.SetLineWidth(2)
+    hRatioUp.SetMarkerStyle(25)
+    hRatioUp.Draw('P0 same')
+    
+    hRatioUp2 = ROOT.TGraphAsymmErrors()
+    hRatioUp2.Divide( altMCHisto, unfoldHisto, 'pois' )
+    hRatioUp2.SetLineColor(ROOT.kBlue)
+    hRatioUp2.SetMarkerColor(ROOT.kBlue)
+    #hRatioUp.SetLineWidth(2)
+    hRatioUp2.SetMarkerStyle(25)
+    hRatioUp2.Draw('P0 same')
+    
+    ratioLegend=ROOT.TLegend(0.20,0.85,0.80,0.95)
+    ratioLegend.SetTextSize(0.095)
+    ratioLegend.SetNColumns(3)
+    ratioLegend.SetFillColorAlpha(10,0.6)
+    ratioLegend.SetBorderSize(0)
+    #ratioLegend.SetTextSize(0.1)
+    ratioLegend.AddEntry( ratio_totalUnc, 'Data total unc.', 'f' )
+    ratioLegend.AddEntry( ratio_datastatUnc, 'Data stat. unc.', 'f' )
+    #ratioLegend.AddEntry( ratiosystUncHisto, 'Syst.', 'f' )
+    ratioLegend.Draw()
+    png = outputName.split('.pdf')[0]+'.png'
+    can.SaveAs(outputName)
+    can.SaveAs(png)
+    ROOT.gStyle.SetPadRightMargin(0.09)     ## reseating
+    ROOT.gStyle.SetPadLeftMargin(0.12)    
     
 def drawClosures(ivar, selection, process, year, lumi, genJetHisto, genJetHistoCross, unfoldHisto, unfoldHistoCross,
                  ratioUncHisto, ratiototUncHisto, ratiosystUncHisto, labelX, maxX, tlegendAlignment, outputName ):
@@ -372,7 +822,7 @@ def combinePlots( name, dictHistos, numBins, mainHistoLabel, otherHisto, otherHi
         pad1.cd()
         #pad1.SetLogy()
         dictHistos['combData'].GetXaxis().SetNdivisions(100)
-        dictHistos['combData'].GetYaxis().SetTitle( '#frac{1}{d#sigma} #frac{d#sigma}{d#tau_{X}}' )
+        dictHistos['combData'].GetYaxis().SetTitle( '#frac{1}{dN} #frac{dN}{d#tau_{X}}' )
         dictHistos['combData'].GetYaxis().SetTitleSize( 0.06 )
         dictHistos['combData'].GetYaxis().SetTitleOffset( 0.6 )
         dictHistos['combData'].SetMaximum( dictHistos['combUnfold'].GetMaximum()*1.2 )
@@ -729,441 +1179,7 @@ def makeJacobian(aTH1, aJac):
             if i==j: aJac[i][j]=1.*(N-aTH1.GetBinContent(i))/N**2 
             else: aJac[i][j]=(-1.*aTH1.GetBinContent(i))/N**2 
                 
-def drawDataMCReco( ivar, selection, year, lumi, process,
-                    dataJetHisto, nominal_recoJetHisto, alt_recoJetHisto,
-                    labelX, maxX, tlegendAlignment, outputName ):
-    """docstring for drawUnfold"""
-    print ("Drawing Data/MC")
-    ROOT.gStyle.SetPadRightMargin(0.05)
-    ROOT.gStyle.SetPadLeftMargin(0.15)
-    can = ROOT.TCanvas('can'+ivar, 'can'+ivar,  10, 10, 1500, 1500 )
-    pad1 = ROOT.TPad("pad1"+ivar, "Main",0,0.3,1.00,1.00,-1)
-    pad1.Draw()
 
-    pad1.cd()
-    pad1.SetTopMargin(0.08)
-    pad1.SetBottomMargin(0.02)
-    
-    if tlegendAlignment.startswith('right'): legend=ROOT.TLegend(0.65,0.67,0.90,0.9)
-
-    else: legend=ROOT.TLegend(0.20,0.67,0.40,0.9)
-    legend.SetFillStyle(0)
-    legend.SetTextSize(0.035)
-    legend.SetBorderSize(0)
-    
-    
-    dataHisto = normalise_hist(dataJetHisto.Clone())
-    recoHisto = normalise_hist(nominal_recoJetHisto.Clone())
-    altrecoHisto = normalise_hist(alt_recoJetHisto.Clone())
-    
-    dataHisto.Scale(1, 'width')  ### divide by bin width
-    #dataHisto.Scale(1/dataHisto.Integral(), 'width')  ### divide by bin width
-    dataHisto.SetMarkerStyle(8)
-    dataHisto.SetMarkerSize(2)
-    dataHisto.SetMarkerColor(ROOT.kBlack)
-    dataHisto.SetLineColor(ROOT.kBlack)
-    legend.AddEntry( dataHisto, 'Data', 'pe' )
-    
-    recoHisto.Scale(1, 'width')
-    #genJetHisto.Scale(scaleFactor)
-    #genJetHisto.Scale(1/genJetHisto.Integral(), 'width')  ### divide by bin width
-    recoHisto.SetLineWidth(2)
-    recoHisto.SetLineColor(ROOT.kRed)
-    recoHisto.SetMarkerColor(ROOT.kRed)
-    recoHisto.SetMarkerStyle(25)
-    legend.AddEntry( recoHisto, 'MG5-MLM+Pythia8', 'lp' )
-
-   
-
-    dataHisto.GetYaxis().SetTitle( '#frac{1}{dN} #frac{dN}{d#'+labelX.split('#')[1]+'}' )
-    #dataHisto.GetYaxis().SetTitleOffset(0.95)
-    dataHisto.GetYaxis().SetTitleSize(0.05)
-    dataHisto.SetMaximum( 1.6*max([ recoHisto.GetMaximum(), dataHisto.GetMaximum()] )  )
-    dataHisto.SetMinimum(0.)
-    #pad1.GetYaxis().SetRangeUser(0,1.5*max([ genJetHisto.GetMaximum(), dataHisto.GetMaximum()] ) )
-
-    dataHisto.Draw( "E")
-    recoHisto.Draw( "histe same")
-
-    altrecoHisto.Scale(1, 'width')  ### divide by bin width
-    altrecoHisto.SetLineWidth(2)
-    altrecoHisto.SetLineColor(ROOT.kBlue)
-    altrecoHisto.SetMarkerColor(ROOT.kBlue)
-    altrecoHisto.SetMarkerStyle(25)
-    legend.AddEntry( altrecoHisto, 'MG5-MLM+Herwig7', 'lp' )
-    altrecoHisto.Draw("histe same")
-    
-    
-    selText = textBox.Clone()
-    selText.SetTextFont(42)
-    selText.SetTextSize(0.045)
-
-    selText.SetNDC()
-
-    if selection.startswith("_dijet"): seltext = 'Central Dijet'#( 'Central' if 'Central' in labelX  else 'Outer' )+' dijet region'
-    elif selection.startswith("_W"): seltext = 'Boosted W region'
-    elif selection.startswith("_top"): seltext = 'Boosted top region'
-    selText.DrawLatex( ( 0.21 if tlegendAlignment.startswith('right') else 0.55 ), 0.87, seltext )
-
-    selText = textBox.Clone()
-    selText.SetTextFont(42)
-    selText.SetTextSize(0.042)
-
-    selText.SetNDC()
-    
-    if selection.startswith("_dijet"): seltext = 'p_{T}>200 GeV' 
-    elif selection.startswith("_W"): seltext = 'p_{T}>200 GeV, 65#leqm_{SD}<115 GeV' 
-    elif selection.startswith("_top"): seltext = 'p_{T}>350 GeV, 140#leqm_{SD}<220 GeV'
-    selText.DrawLatex( ( 0.21 if tlegendAlignment.startswith('right') else 0.55 ), 0.78, seltext )
-
-    
-    legend.Draw()
-    if process.startswith('data'):
-        CMS_lumi.extraText = "Preliminary"
-        CMS_lumi.lumi_13TeV = ('#leq' if selection.startswith('dijet') else '')+str( round( (lumi/1000.), 2 ) )+" fb^{-1}, 13 TeV"+('' if year.startswith('all') else ", "+( '2016+2017+2018' if year.startswith('all') else year ) )
-    else:
-        CMS_lumi.extraText = "Simulation Preliminary"
-        CMS_lumi.lumi_13TeV = "13 TeV, "+ ( '2016+2017+2018' if year.startswith('all') else year )
-    CMS_lumi.relPosX = 0.12
-    CMS_lumi.CMS_lumi(pad1, 4, 0)
-    
-    
-    can.cd()
-    pad2 = ROOT.TPad("pad2"+ivar, "Ratio",0,0.00,1.00,0.30,-1);
-    ROOT.gStyle.SetOptFit(1)
-    pad2.SetGrid()
-    pad2.SetTopMargin(0.)
-    pad2.SetBottomMargin(0.3)
-    pad2.Draw()
-    pad2.cd()
-    
-    
-    tmpPad2= pad2.DrawFrame( 0, 0., maxX, 1.9 )
-    #print (labelX)
-    tmpPad2.GetYaxis().SetTitle( "Sim./Data" )
-    tmpPad2.GetYaxis().SetTitleOffset( 0.5 )
-    tmpPad2.GetYaxis().SetRangeUser(0., 2. )
-    tmpPad2.GetYaxis().CenterTitle()
-    tmpPad2.SetLabelSize(0.12, 'x')
-    tmpPad2.SetTitleSize(0.12, 'x')
-    tmpPad2.SetLabelSize(0.12, 'y')
-    tmpPad2.SetTitleSize(0.12, 'y')
-    tmpPad2.SetNdivisions(505, 'x')
-    tmpPad2.SetNdivisions(505, 'y')
-    pad2.Modified()
-    pad2.Update()
-    pad2.Draw()
-    can.Update()
-    
-    
-    ratio_nominal = ROOT.TGraphAsymmErrors()
-    ratio_nominal.Divide( recoHisto, dataHisto, 'pois' )
-    ratio_nominal.SetLineColor(ROOT.kRed)
-    ratio_nominal.SetMarkerColor(ROOT.kRed)
-    ratio_nominal.SetMarkerStyle(25)
-    ratio_nominal.Draw('P0 same')
-    
-    ratio_altMC = ROOT.TGraphAsymmErrors()
-    ratio_altMC.Divide( altrecoHisto, dataHisto, 'pois' )
-    ratio_altMC.SetLineColor(ROOT.kBlue)
-    ratio_altMC.SetMarkerColor(ROOT.kBlue)
-    ratio_altMC.SetMarkerStyle(25)
-    ratio_altMC.Draw('P0 same')
-    
-    ratioLegend=ROOT.TLegend(0.20,0.85,0.80,0.95)
-    ratioLegend.SetTextSize(0.07)
-    ratioLegend.SetNColumns(2)
-    ratioLegend.SetFillColorAlpha(10,0.6)
-    ratioLegend.SetBorderSize(0)
-    #ratioLegend.SetTextSize(0.1)
-    ratioLegend.AddEntry( ratio_altMC, 'MG5-MLM+P8', 'lp' )
-    ratioLegend.AddEntry( ratio_nominal, 'MG5-MLM+H7', 'lp' )
-    #ratioLegend.AddEntry( ratiosystUncHisto, 'Syst.', 'f' )
-    ratioLegend.Draw()
-    png = outputName.split('.pdf')[0]+'.png'
-    can.SaveAs(outputName)
-    can.SaveAs(png)
-    ROOT.gStyle.SetPadRightMargin(0.09)     ## reseating
-    ROOT.gStyle.SetPadLeftMargin(0.12)
-                    
-
-def drawUnfold( ivar, selection, process, year, lumi, dataJetHisto, genJetHisto, unfoldHisto, unfoldHistowoUnc, altMCHisto,
-               foldHisto, recoJetHisto, cov_tot, cov_datastat_tot, labelX, maxX, tlegendAlignment, outputName ):
-    """docstring for drawUnfold"""
-    print ("Drawing unfolding")
-    ROOT.gStyle.SetPadRightMargin(0.05)
-    ROOT.gStyle.SetPadLeftMargin(0.15)
-    can = ROOT.TCanvas('can'+ivar, 'can'+ivar,  10, 10, 1500, 1500 )
-    pad1 = ROOT.TPad("pad1"+ivar, "Main",0,0.3,1.00,1.00,-1)
-    pad1.Draw()
-
-    pad1.cd()
-    pad1.SetTopMargin(0.08)
-    pad1.SetBottomMargin(0.02)
-    
-    if tlegendAlignment.startswith('right'): legend=ROOT.TLegend(0.65,0.67,0.90,0.9)
-
-    else: legend=ROOT.TLegend(0.20,0.67,0.40,0.9)
-    legend.SetFillStyle(0)
-    legend.SetTextSize(0.035)
-    legend.SetBorderSize(0)
-    
-    #bins = variables[ivar]['bins']
-
-    unfoldHistoTot = unfoldHisto.Clone()
-    #print (unfoldHisto)
-    #use unnormed unfold histo to build the jacobian for the correct propagation of errors
-    #via the covariance matrix, from the normalise -> the unnormalised space
-    normed_cov_tot_matrix, normed_cov_tot = GetNormalizedTMatrixandTH2(cov_tot.Clone(),"normed_cov_tot", unfoldHisto.Clone())
-    
-    normed_cov_datastat_tot_matrix, normed_cov_datastat_tot = GetNormalizedTMatrixandTH2(cov_datastat_tot.Clone(),"normed_cov_dastat_tot", unfoldHisto.Clone())
-    '''
-    normed_cov_bkgsub_tot_matrix, normed_cov_bkgsub_tot = GetNormalizedTMatrixandTH2(cov_bkg_tot.Clone(),
-                                                                                     "normed_cov_tot",
-                                                                                     unfoldHistoTotUnc)
-    
-    normed_cov_rmstat_tot_matrix, normed_cov_rmstat_tot = GetNormalizedTMatrixandTH2(cov_rmstat_tot.Clone(),
-                                                                                     "normed_cov_rmstat_tot", 
-                                                                                     unfoldHistoTotUnc)
-    '''
-    
-    #print (unfoldHisto)
-
-    
-    unfoldHistoDataStatErr = normalise_hist(unfoldHisto.Clone())    
-    unfoldHisto = normalise_hist(unfoldHisto.Clone())    
-    dataJetHisto = normalise_hist(dataJetHisto.Clone())
-    genJetHisto = normalise_hist(genJetHisto.Clone())
-    unfoldHistowoUnc = normalise_hist_divide_bin_width(unfoldHistowoUnc.Clone())
-    altMCHisto = normalise_hist(altMCHisto.Clone())
-    foldHisto = normalise_hist(foldHisto.Clone())
-    recoJetHisto = normalise_hist(recoJetHisto.Clone())
-    #print (unfoldHisto)
-
-    #norm = unfoldHistoTot.Integral("width")/unfoldHisto.Integral("width")
-    
-    #normed_cov_tot = cov_tot.Clone()
-    #normed_cov_tot.Scale(1./(norm*norm))
-    #scale_th2_bin_widths(normed_cov_tot, variables[ivar]['bins'])
-    #normed_cov_datastat_tot = cov_datastat_tot.Clone()
-    #normed_cov_datastat_tot.Scale(1./(norm*norm))
-    #scale_th2_bin_widths(normed_cov_datastat_tot, variables[ivar]['bins'])   
-                                                         
-    
-    
-    for ibin in range(1, unfoldHisto.GetNbinsX()+1):
-        tot_err = normed_cov_tot.GetBinContent(ibin,ibin)
-        tot_datastaterr = normed_cov_datastat_tot.GetBinContent(ibin,ibin)
-        
-        if tot_err<=0.: tot_err=0.
-        else: tot_err = np.sqrt(tot_err)
-        
-        if tot_datastaterr<=0.: tot_datastaterr=0.
-        else: tot_datastaterr = np.sqrt(tot_datastaterr)    
-        
-        unfoldHisto.SetBinError(ibin,tot_err)
-        unfoldHistoDataStatErr.SetBinError(ibin,tot_datastaterr)
-            
-        
-    unfoldHistoDataStatErr.Scale(1,'width')
-    #dataIntegral = dataJetHisto.Integral()
-    #unfoldIntegral = unfoldHisto.Integral()
-    #tmpMax = float(unfoldHisto.GetMaximum())
-    
-    unfoldHisto.Scale(1, 'width')  ### divide by bin width
-    #unfoldHisto.Scale(1/unfoldHisto.Integral(), 'width')  ### divide by bin width
-    unfoldHisto.SetMarkerStyle(8)
-    unfoldHisto.SetMarkerSize(2)
-    unfoldHisto.SetMarkerColor(ROOT.kBlack)
-    unfoldHisto.SetLineColor(ROOT.kBlack)
-    legend.AddEntry( unfoldHisto, 'Data', 'pe' )
-    
-    genJetHisto.Scale(1, 'width')
-    #genJetHisto.Scale(scaleFactor)
-    #genJetHisto.Scale(1/genJetHisto.Integral(), 'width')  ### divide by bin width
-    genJetHisto.SetLineWidth(2)
-    genJetHisto.SetLineColor(ROOT.kRed)
-    genJetHisto.SetMarkerColor(ROOT.kRed)
-    genJetHisto.SetMarkerStyle(25)
-    legend.AddEntry( genJetHisto, 'MG5-MLM+Pythia8', 'lp' )
-
-   
-
-    unfoldHisto.GetYaxis().SetTitle( '#frac{1}{d#sigma} #frac{d#sigma}{d#'+labelX.split('#')[1]+'}' )
-    #unfoldHisto.GetYaxis().SetTitleOffset(0.95)
-    unfoldHisto.GetYaxis().SetTitleSize(0.05)
-    unfoldHisto.SetMaximum( 1.6*max([ genJetHisto.GetMaximum(), unfoldHisto.GetMaximum()] )  )
-    unfoldHisto.SetMinimum(0.)
-    #pad1.GetYaxis().SetRangeUser(0,1.5*max([ genJetHisto.GetMaximum(), unfoldHisto.GetMaximum()] ) )
-
-    unfoldHisto.Draw( "E")
-    genJetHisto.Draw( "histe same")
-
-    altMCHisto.Scale(1, 'width')  ### divide by bin width
-    altMCHisto.SetLineWidth(2)
-    altMCHisto.SetLineColor(ROOT.kBlue)
-    altMCHisto.SetMarkerColor(ROOT.kBlue)
-    altMCHisto.SetMarkerStyle(25)
-    legend.AddEntry( altMCHisto, 'MG5-MLM+Herwig7', 'lp' )
-    altMCHisto.Draw("histe same")
-    #unfoldHistowoUnc.Draw( "e1 same")
-    #foldHisto.Draw( "histe same")
-    #if selfClosure: foldHisto.Draw( "histe same")
-    #dataJetHisto.Draw( "histe same")
-    #recoJetHisto.Draw( "histe same")
-    #if process.startswith('data'): recoJetHisto.Draw( "hist same")
-    
-    selText = textBox.Clone()
-    selText.SetTextFont(42)
-    selText.SetTextSize(0.045)
-
-    selText.SetNDC()
-
-    if selection.startswith("_dijet"): seltext = 'Central Dijet'#( 'Central' if 'Central' in labelX  else 'Outer' )+' dijet region'
-    elif selection.startswith("_W"): seltext = 'Boosted W region'
-    elif selection.startswith("_top"): seltext = 'Boosted top region'
-    selText.DrawLatex( ( 0.21 if tlegendAlignment.startswith('right') else 0.55 ), 0.87, seltext )
-
-    selText = textBox.Clone()
-    selText.SetTextFont(42)
-    selText.SetTextSize(0.042)
-
-    selText.SetNDC()
-    
-    if selection.startswith("_dijet"): seltext = 'p_{T}>200 GeV' 
-    elif selection.startswith("_W"): seltext = 'p_{T}>200 GeV, 65#leqm_{SD}<115 GeV' 
-    elif selection.startswith("_top"): seltext = 'p_{T}>350 GeV, 140#leqm_{SD}<220 GeV'
-    selText.DrawLatex( ( 0.21 if tlegendAlignment.startswith('right') else 0.55 ), 0.78, seltext )
-
-    
-    legend.Draw()
-    if process.startswith('data'):
-        CMS_lumi.extraText = "Preliminary"
-        CMS_lumi.lumi_13TeV = ('#leq' if selection.startswith('dijet') else '')+str( round( (lumi/1000.), 2 ) )+" fb^{-1}, 13 TeV"+('' if year.startswith('all') else ", "+( '2016+2017+2018' if year.startswith('all') else year ) )
-    else:
-        CMS_lumi.extraText = "Simulation Preliminary"
-        CMS_lumi.lumi_13TeV = "13 TeV, "+ ( '2016+2017+2018' if year.startswith('all') else year )
-    CMS_lumi.relPosX = 0.12
-    CMS_lumi.CMS_lumi(pad1, 4, 0)
-    
-    
-    can.cd()
-    pad2 = ROOT.TPad("pad2"+ivar, "Ratio",0,0.00,1.00,0.30,-1);
-    ROOT.gStyle.SetOptFit(1)
-    pad2.SetGrid()
-    pad2.SetTopMargin(0.)
-    pad2.SetBottomMargin(0.3)
-    pad2.Draw()
-    pad2.cd()
-    
-    ratio_datastatUnc = unfoldHistowoUnc.Clone()
-    ratio_datastatUnc.Divide(unfoldHistoDataStatErr)
-    #ratio_datastatUnc.Reset()
-    ratio_totalUnc = unfoldHistowoUnc.Clone()
-    ratio_totalUnc.Divide(unfoldHisto)
-    #ratio_totalUnc.Reset()
-    '''
-    for ibin in range(0, unfoldHisto.GetNbinsX()):
-        
-        tot_err = unfoldHisto.GetBinError(ibin)
-        tot_datastaterr = unfoldHistoDataStatErr.GetBinError(ibin)
-        bc = unfoldHisto.GetBinContent(ibin)
-        
-        ratio_datastatUnc.SetBinContent(ibin,1.)
-        ratio_totalUnc.SetBinContent(ibin,1.)
-                                         
-        if bc>0.:
-            ratio_datastatUnc.SetBinError(ibin,tot_datastaterr/bc)
-            ratio_totalUnc.SetBinError(ibin,tot_err/bc)
-   
-    '''
-    tmpPad2= pad2.DrawFrame( 0, 0., maxX, 1.9 )
-    print (labelX)
-    #tmpPad2.GetXaxis().SetTitle( labelX )
-    tmpPad2.GetYaxis().SetTitle( "Sim./Data" )
-    tmpPad2.GetYaxis().SetTitleOffset( 0.5 )
-    tmpPad2.GetYaxis().SetRangeUser(0., 2. )
-    #tmpPad2.GetXaxis().SetRangeUser(unfoldHisto.GetBinLowEdge(1),unfoldHisto.GetBinLowEdge(unfoldHisto.GetNbinsX()+2) )   
-    tmpPad2.GetYaxis().CenterTitle()
-    tmpPad2.SetLabelSize(0.12, 'x')
-    tmpPad2.SetTitleSize(0.12, 'x')
-    tmpPad2.SetLabelSize(0.12, 'y')
-    tmpPad2.SetTitleSize(0.12, 'y')
-    tmpPad2.SetNdivisions(505, 'x')
-    tmpPad2.SetNdivisions(505, 'y')
-    pad2.Modified()
-    pad2.Update()
-    pad2.Draw()
-    can.Update()
-    
-    #hRatioDown.Draw('P same')
-    ratio_datastatUnc.SetFillColor(ROOT.kAzure+7)
-    ratio_datastatUnc.SetLineColor(0)
-    ratio_datastatUnc.SetLineWidth(0)
-    ratio_datastatUnc.SetFillStyle(3245)
-    ratio_datastatUnc.GetXaxis().SetTitle( '#'+labelX.split('#')[1] )
-    ratio_datastatUnc.GetYaxis().SetTitle( "Sim./Data" )
-    ratio_datastatUnc.GetYaxis().SetTitleOffset( 0.5 )
-    ratio_datastatUnc.GetYaxis().SetRangeUser(0., 2. )
-    ratio_datastatUnc.GetYaxis().CenterTitle()
-    ratio_datastatUnc.GetXaxis().SetLabelSize(0.12)
-    ratio_datastatUnc.GetXaxis().SetTitleSize(0.12)
-    ratio_datastatUnc.GetYaxis().SetLabelSize(0.12)
-    ratio_datastatUnc.GetYaxis().SetTitleSize(0.12)
-    ratio_datastatUnc.GetXaxis().SetNdivisions(505)
-    ratio_datastatUnc.GetYaxis().SetNdivisions(505)
-    ratio_datastatUnc.SetMarkerStyle(0)
-    ratio_datastatUnc.SetMarkerSize(0)
-    #ratio_datastatUnc.Scale(1,'width')
-    ratio_datastatUnc.Draw('E5')
-
-    ratio_totalUnc.SetFillColor(ROOT.kGray+3)
-    ratio_totalUnc.SetLineColor(0)
-    ratio_totalUnc.SetLineWidth(0)
-    ratio_totalUnc.SetFillStyle(3254)
-    ratio_totalUnc.SetMarkerStyle(0)
-    ratio_totalUnc.SetMarkerSize(0)
-    #ratio_totalUnc.Scale(1,'width')    
-    ratio_totalUnc.Draw('E5 SAME')
-    
-    #ratiosystUncHisto.SetFillColor(9)
-    #ratiosystUncHisto.SetLineColor(0)
-    #ratiosystUncHisto.SetFillStyle(3006)
-    #ratiosystUncHisto.SetMarkerStyle(0)
-    #ratiosystUncHisto.Scale(1,'width')    
-    #ratiosystUncHisto.Draw('E3 same')
-
-    hRatioUp = ROOT.TGraphAsymmErrors()
-    hRatioUp.Divide( genJetHisto, unfoldHisto, 'pois' )
-    hRatioUp.SetLineColor(ROOT.kRed)
-    hRatioUp.SetMarkerColor(ROOT.kRed)
-    #hRatioUp.SetLineWidth(2)
-    hRatioUp.SetMarkerStyle(25)
-    hRatioUp.Draw('P0 same')
-    
-    hRatioUp2 = ROOT.TGraphAsymmErrors()
-    hRatioUp2.Divide( altMCHisto, unfoldHisto, 'pois' )
-    hRatioUp2.SetLineColor(ROOT.kBlue)
-    hRatioUp2.SetMarkerColor(ROOT.kBlue)
-    #hRatioUp.SetLineWidth(2)
-    hRatioUp2.SetMarkerStyle(25)
-    hRatioUp2.Draw('P0 same')
-    
-    ratioLegend=ROOT.TLegend(0.20,0.85,0.80,0.95)
-    ratioLegend.SetTextSize(0.095)
-    ratioLegend.SetNColumns(3)
-    ratioLegend.SetFillColorAlpha(10,0.6)
-    ratioLegend.SetBorderSize(0)
-    #ratioLegend.SetTextSize(0.1)
-    ratioLegend.AddEntry( ratio_totalUnc, 'Data total unc.', 'f' )
-    ratioLegend.AddEntry( ratio_datastatUnc, 'Data stat. unc.', 'f' )
-    #ratioLegend.AddEntry( ratiosystUncHisto, 'Syst.', 'f' )
-    ratioLegend.Draw()
-    png = outputName.split('.pdf')[0]+'.png'
-    can.SaveAs(outputName)
-    can.SaveAs(png)
-    ROOT.gStyle.SetPadRightMargin(0.09)     ## reseating
-    ROOT.gStyle.SetPadLeftMargin(0.12)
     
 def drawUncertainties(ivar, unfoldHistoTotUnc,
                       uncerUnfoldHisto, cov_tot, cov_datastat_tot, cov_rmstat_tot, cov_bkg_tot,
