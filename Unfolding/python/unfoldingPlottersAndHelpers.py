@@ -131,12 +131,13 @@ def drawClosures(ivar, selection, process, year, lumi, genJetHisto, genJetHistoC
     pad2.Draw()
 
     pad1.cd()
+    pad1.SetTopMargin(0.08)
+    pad1.SetBottomMargin(0.02)
+    if tlegendAlignment.startswith('right'): legend=ROOT.TLegend(0.55,0.67,0.85,0.9)
 
-    if tlegendAlignment.startswith('right'): legend=ROOT.TLegend(0.65,0.65,0.90,0.88)
-
-    else: legend=ROOT.TLegend(0.20,0.65,0.40,0.88)
+    else: legend=ROOT.TLegend(0.20,0.67,0.40,0.9)
     legend.SetFillStyle(0)
-    legend.SetTextSize(0.03)
+    legend.SetTextSize(0.035)
     legend.SetBorderSize(0)
 
     dataIntegral = genJetHisto.Integral()
@@ -151,7 +152,7 @@ def drawClosures(ivar, selection, process, year, lumi, genJetHisto, genJetHistoC
     unfoldHisto.SetMarkerColor(ROOT.kRed)
     unfoldHisto.SetLineColor(ROOT.kRed)
     unfoldHisto.SetLineWidth(2)
-    legend.AddEntry( unfoldHisto, ('MG5-MLM + Pythia8 (self-closure)' if process.startswith('MCSelfClosure') else 'MG5-MLM + P8 unf. w/ MG5-MLM + P8'), 'pe' )
+    legend.AddEntry( unfoldHisto, ('MG5-MLM+Pythia8 (self-closure)' if process.startswith('MCSelfClosure') else 'MG5-MLM+P8 unf. w/ MG5-MLM+P8'), 'pe' )
     
     #genJetHisto.Scale(1, 'width')
     #genJetHisto.Scale(scaleFactor)
@@ -161,7 +162,7 @@ def drawClosures(ivar, selection, process, year, lumi, genJetHisto, genJetHistoC
     genJetHisto.SetMarkerStyle(0)
     genJetHisto.SetLineStyle(2)
     legend.AddEntry( genJetHisto, 'MG5-MLM+Pythia8 (gen)', 'lp' )
-    unfoldHisto.GetYaxis().SetTitle( '#frac{1}{d#sigma} #frac{d#sigma}{d#'+labelX.split('#')[1]+'}' )
+    unfoldHisto.GetYaxis().SetTitle( '#frac{1}{dN} #frac{dN}{d#'+labelX.split('#')[1]+'}' )
     #unfoldHisto.GetYaxis().SetTitleOffset(0.95)
     unfoldHisto.GetYaxis().SetTitleSize(0.05)
     unfoldHisto.SetMaximum( 1.5*max([ genJetHisto.GetMaximum(), unfoldHisto.GetMaximum()] )  )
@@ -261,6 +262,9 @@ def drawClosures(ivar, selection, process, year, lumi, genJetHisto, genJetHistoC
     can.SaveAs(png)
     ROOT.gStyle.SetPadRightMargin(0.09)     ## reseating
     ROOT.gStyle.SetPadLeftMargin(0.12)
+    
+    
+
     
 def draw2D( ivar, histo, varInfo, outputDir, outputLabel='data', addCorrelation=False, addCondition=False, addInvertedMatrix=False,ext='pdf',selection='_dijetSel',version='vNew',year='2017' ):
 
@@ -725,7 +729,163 @@ def makeJacobian(aTH1, aJac):
             if i==j: aJac[i][j]=1.*(N-aTH1.GetBinContent(i))/N**2 
             else: aJac[i][j]=(-1.*aTH1.GetBinContent(i))/N**2 
                 
-                
+def drawDataMCReco( ivar, selection, year, lumi, process,
+                    dataJetHisto, nominal_recoJetHisto, alt_recoJetHisto,
+                    labelX, maxX, tlegendAlignment, outputName ):
+    """docstring for drawUnfold"""
+    print ("Drawing Data/MC")
+    ROOT.gStyle.SetPadRightMargin(0.05)
+    ROOT.gStyle.SetPadLeftMargin(0.15)
+    can = ROOT.TCanvas('can'+ivar, 'can'+ivar,  10, 10, 1500, 1500 )
+    pad1 = ROOT.TPad("pad1"+ivar, "Main",0,0.3,1.00,1.00,-1)
+    pad1.Draw()
+
+    pad1.cd()
+    pad1.SetTopMargin(0.08)
+    pad1.SetBottomMargin(0.02)
+    
+    if tlegendAlignment.startswith('right'): legend=ROOT.TLegend(0.65,0.67,0.90,0.9)
+
+    else: legend=ROOT.TLegend(0.20,0.67,0.40,0.9)
+    legend.SetFillStyle(0)
+    legend.SetTextSize(0.035)
+    legend.SetBorderSize(0)
+    
+    
+    dataHisto = normalise_hist(dataJetHisto.Clone())
+    recoHisto = normalise_hist(nominal_recoJetHisto.Clone())
+    altrecoHisto = normalise_hist(alt_recoJetHisto.Clone())
+    
+    dataHisto.Scale(1, 'width')  ### divide by bin width
+    #dataHisto.Scale(1/dataHisto.Integral(), 'width')  ### divide by bin width
+    dataHisto.SetMarkerStyle(8)
+    dataHisto.SetMarkerSize(2)
+    dataHisto.SetMarkerColor(ROOT.kBlack)
+    dataHisto.SetLineColor(ROOT.kBlack)
+    legend.AddEntry( dataHisto, 'Data', 'pe' )
+    
+    recoHisto.Scale(1, 'width')
+    #genJetHisto.Scale(scaleFactor)
+    #genJetHisto.Scale(1/genJetHisto.Integral(), 'width')  ### divide by bin width
+    recoHisto.SetLineWidth(2)
+    recoHisto.SetLineColor(ROOT.kRed)
+    recoHisto.SetMarkerColor(ROOT.kRed)
+    recoHisto.SetMarkerStyle(25)
+    legend.AddEntry( recoHisto, 'MG5-MLM+Pythia8', 'lp' )
+
+   
+
+    dataHisto.GetYaxis().SetTitle( '#frac{1}{dN} #frac{dN}{d#'+labelX.split('#')[1]+'}' )
+    #dataHisto.GetYaxis().SetTitleOffset(0.95)
+    dataHisto.GetYaxis().SetTitleSize(0.05)
+    dataHisto.SetMaximum( 1.6*max([ recoHisto.GetMaximum(), dataHisto.GetMaximum()] )  )
+    dataHisto.SetMinimum(0.)
+    #pad1.GetYaxis().SetRangeUser(0,1.5*max([ genJetHisto.GetMaximum(), dataHisto.GetMaximum()] ) )
+
+    dataHisto.Draw( "E")
+    recoHisto.Draw( "histe same")
+
+    altrecoHisto.Scale(1, 'width')  ### divide by bin width
+    altrecoHisto.SetLineWidth(2)
+    altrecoHisto.SetLineColor(ROOT.kBlue)
+    altrecoHisto.SetMarkerColor(ROOT.kBlue)
+    altrecoHisto.SetMarkerStyle(25)
+    legend.AddEntry( altrecoHisto, 'MG5-MLM+Herwig7', 'lp' )
+    altrecoHisto.Draw("histe same")
+    
+    
+    selText = textBox.Clone()
+    selText.SetTextFont(42)
+    selText.SetTextSize(0.045)
+
+    selText.SetNDC()
+
+    if selection.startswith("_dijet"): seltext = 'Central Dijet'#( 'Central' if 'Central' in labelX  else 'Outer' )+' dijet region'
+    elif selection.startswith("_W"): seltext = 'Boosted W region'
+    elif selection.startswith("_top"): seltext = 'Boosted top region'
+    selText.DrawLatex( ( 0.21 if tlegendAlignment.startswith('right') else 0.55 ), 0.87, seltext )
+
+    selText = textBox.Clone()
+    selText.SetTextFont(42)
+    selText.SetTextSize(0.042)
+
+    selText.SetNDC()
+    
+    if selection.startswith("_dijet"): seltext = 'p_{T}>200 GeV' 
+    elif selection.startswith("_W"): seltext = 'p_{T}>200 GeV, 65#leqm_{SD}<115 GeV' 
+    elif selection.startswith("_top"): seltext = 'p_{T}>350 GeV, 140#leqm_{SD}<220 GeV'
+    selText.DrawLatex( ( 0.21 if tlegendAlignment.startswith('right') else 0.55 ), 0.78, seltext )
+
+    
+    legend.Draw()
+    if process.startswith('data'):
+        CMS_lumi.extraText = "Preliminary"
+        CMS_lumi.lumi_13TeV = ('#leq' if selection.startswith('dijet') else '')+str( round( (lumi/1000.), 2 ) )+" fb^{-1}, 13 TeV"+('' if year.startswith('all') else ", "+( '2016+2017+2018' if year.startswith('all') else year ) )
+    else:
+        CMS_lumi.extraText = "Simulation Preliminary"
+        CMS_lumi.lumi_13TeV = "13 TeV, "+ ( '2016+2017+2018' if year.startswith('all') else year )
+    CMS_lumi.relPosX = 0.12
+    CMS_lumi.CMS_lumi(pad1, 4, 0)
+    
+    
+    can.cd()
+    pad2 = ROOT.TPad("pad2"+ivar, "Ratio",0,0.00,1.00,0.30,-1);
+    ROOT.gStyle.SetOptFit(1)
+    pad2.SetGrid()
+    pad2.SetTopMargin(0.)
+    pad2.SetBottomMargin(0.3)
+    pad2.Draw()
+    pad2.cd()
+    
+    
+    tmpPad2= pad2.DrawFrame( 0, 0., maxX, 1.9 )
+    #print (labelX)
+    tmpPad2.GetYaxis().SetTitle( "Sim./Data" )
+    tmpPad2.GetYaxis().SetTitleOffset( 0.5 )
+    tmpPad2.GetYaxis().SetRangeUser(0., 2. )
+    tmpPad2.GetYaxis().CenterTitle()
+    tmpPad2.SetLabelSize(0.12, 'x')
+    tmpPad2.SetTitleSize(0.12, 'x')
+    tmpPad2.SetLabelSize(0.12, 'y')
+    tmpPad2.SetTitleSize(0.12, 'y')
+    tmpPad2.SetNdivisions(505, 'x')
+    tmpPad2.SetNdivisions(505, 'y')
+    pad2.Modified()
+    pad2.Update()
+    pad2.Draw()
+    can.Update()
+    
+    
+    ratio_nominal = ROOT.TGraphAsymmErrors()
+    ratio_nominal.Divide( recoHisto, dataHisto, 'pois' )
+    ratio_nominal.SetLineColor(ROOT.kRed)
+    ratio_nominal.SetMarkerColor(ROOT.kRed)
+    ratio_nominal.SetMarkerStyle(25)
+    ratio_nominal.Draw('P0 same')
+    
+    ratio_altMC = ROOT.TGraphAsymmErrors()
+    ratio_altMC.Divide( altrecoHisto, dataHisto, 'pois' )
+    ratio_altMC.SetLineColor(ROOT.kBlue)
+    ratio_altMC.SetMarkerColor(ROOT.kBlue)
+    ratio_altMC.SetMarkerStyle(25)
+    ratio_altMC.Draw('P0 same')
+    
+    ratioLegend=ROOT.TLegend(0.20,0.85,0.80,0.95)
+    ratioLegend.SetTextSize(0.07)
+    ratioLegend.SetNColumns(2)
+    ratioLegend.SetFillColorAlpha(10,0.6)
+    ratioLegend.SetBorderSize(0)
+    #ratioLegend.SetTextSize(0.1)
+    ratioLegend.AddEntry( ratio_altMC, 'MG5-MLM+P8', 'lp' )
+    ratioLegend.AddEntry( ratio_nominal, 'MG5-MLM+H7', 'lp' )
+    #ratioLegend.AddEntry( ratiosystUncHisto, 'Syst.', 'f' )
+    ratioLegend.Draw()
+    png = outputName.split('.pdf')[0]+'.png'
+    can.SaveAs(outputName)
+    can.SaveAs(png)
+    ROOT.gStyle.SetPadRightMargin(0.09)     ## reseating
+    ROOT.gStyle.SetPadLeftMargin(0.12)
+                    
 
 def drawUnfold( ivar, selection, process, year, lumi, dataJetHisto, genJetHisto, unfoldHisto, unfoldHistowoUnc, altMCHisto,
                foldHisto, recoJetHisto, cov_tot, cov_datastat_tot, labelX, maxX, tlegendAlignment, outputName ):
@@ -922,7 +1082,7 @@ def drawUnfold( ivar, selection, process, year, lumi, dataJetHisto, genJetHisto,
     #tmpPad2.GetXaxis().SetTitle( labelX )
     tmpPad2.GetYaxis().SetTitle( "Sim./Data" )
     tmpPad2.GetYaxis().SetTitleOffset( 0.5 )
-    tmpPad2.GetYaxis().SetRangeUser(-1., 3. )
+    tmpPad2.GetYaxis().SetRangeUser(0., 2. )
     #tmpPad2.GetXaxis().SetRangeUser(unfoldHisto.GetBinLowEdge(1),unfoldHisto.GetBinLowEdge(unfoldHisto.GetNbinsX()+2) )   
     tmpPad2.GetYaxis().CenterTitle()
     tmpPad2.SetLabelSize(0.12, 'x')
@@ -944,7 +1104,7 @@ def drawUnfold( ivar, selection, process, year, lumi, dataJetHisto, genJetHisto,
     ratio_datastatUnc.GetXaxis().SetTitle( '#'+labelX.split('#')[1] )
     ratio_datastatUnc.GetYaxis().SetTitle( "Sim./Data" )
     ratio_datastatUnc.GetYaxis().SetTitleOffset( 0.5 )
-    ratio_datastatUnc.GetYaxis().SetRangeUser(-0., 2. )
+    ratio_datastatUnc.GetYaxis().SetRangeUser(0., 2. )
     ratio_datastatUnc.GetYaxis().CenterTitle()
     ratio_datastatUnc.GetXaxis().SetLabelSize(0.12)
     ratio_datastatUnc.GetXaxis().SetTitleSize(0.12)
