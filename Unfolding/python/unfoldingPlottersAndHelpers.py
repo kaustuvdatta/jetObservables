@@ -119,13 +119,17 @@ def plotSysComparison( nomHisto, dictUncHistos, outputName, labelX='', log=False
 
     
 def drawDataMCReco( ivar, selection, year, lumi, process,
-                    dataJetHisto, nominal_recoJetHisto, alt_recoJetHisto,
+                    dataJetHisto, nominal_recoJetHisto, 
+                    alt0_recoJetHisto,alt1_recoJetHisto,alt2_recoJetHisto,
                     labelX, maxX, tlegendAlignment, outputName ):
     """docstring for drawUnfold"""
     print ("Drawing Data/MC")
     ROOT.gStyle.SetPadRightMargin(0.05)
     ROOT.gStyle.SetPadLeftMargin(0.15)
     can = ROOT.TCanvas('can'+ivar, 'can'+ivar,  10, 10, 1500, 1500 )
+    if 'pt' in ivar.lower():
+        can.SetLogy()
+        outputName.replace('DataMC','DataMC_logPlot')
     pad1 = ROOT.TPad("pad1"+ivar, "Main",0,0.3,1.00,1.00,-1)
     pad1.Draw()
 
@@ -139,11 +143,13 @@ def drawDataMCReco( ivar, selection, year, lumi, process,
     legend.SetFillStyle(0)
     legend.SetTextSize(0.035)
     legend.SetBorderSize(0)
-    
+    print(dataJetHisto,nominal_recoJetHisto,alt0_recoJetHisto,alt1_recoJetHisto,alt2_recoJetHisto)
     
     dataHisto = normalise_hist(dataJetHisto.Clone())
     recoHisto = normalise_hist(nominal_recoJetHisto.Clone())
-    altrecoHisto = normalise_hist(alt_recoJetHisto.Clone())
+    alt0recoHisto = normalise_hist(alt0_recoJetHisto.Clone())
+    alt1recoHisto = normalise_hist(alt1_recoJetHisto.Clone())
+    alt2recoHisto = normalise_hist(alt2_recoJetHisto.Clone())
     
     dataHisto.Scale(1, 'width')  ### divide by bin width
     #dataHisto.Scale(1/dataHisto.Integral(), 'width')  ### divide by bin width
@@ -162,9 +168,18 @@ def drawDataMCReco( ivar, selection, year, lumi, process,
     recoHisto.SetMarkerStyle(25)
     legend.AddEntry( recoHisto, 'MG5-MLM+Pythia8', 'lp' )
 
-   
+    print(labelX)
 
-    dataHisto.GetYaxis().SetTitle( '#frac{1}{dN} #frac{dN}{d#'+labelX.split('#')[1]+'}' )
+    try: 
+        dataHisto.GetYaxis().SetTitle( '#frac{1}{dN} #frac{dN}{d#'+labelX.split('#')[1]+'}' )
+    except IndexError: 
+        try: 
+            #print('#frac{1}{dN} #frac{dN}{d'+labelX.split('AK8 jet ')[1]+'}') 
+            dataHisto.GetYaxis().SetTitle( '#frac{1}{dN} #frac{dN}{d'+labelX.split('AK8 jet ')[1]+'}' )
+        except IndexError:
+            #print('#frac{1}{dN} #frac{dN}{d'+labelX.split('good_')[1]+'}') 
+            dataHisto.GetYaxis().SetTitle('#frac{1}{dN} #frac{dN}{d'+labelX.split('_')[1]+'}' )
+    print(dataHisto.GetYaxis().GetTitle())
     #dataHisto.GetYaxis().SetTitleOffset(0.95)
     dataHisto.GetYaxis().SetTitleSize(0.05)
     dataHisto.SetMaximum( 1.6*max([ recoHisto.GetMaximum(), dataHisto.GetMaximum()] )  )
@@ -174,13 +189,30 @@ def drawDataMCReco( ivar, selection, year, lumi, process,
     dataHisto.Draw( "E")
     recoHisto.Draw( "histe same")
 
-    altrecoHisto.Scale(1, 'width')  ### divide by bin width
-    altrecoHisto.SetLineWidth(2)
-    altrecoHisto.SetLineColor(ROOT.kBlue)
-    altrecoHisto.SetMarkerColor(ROOT.kBlue)
-    altrecoHisto.SetMarkerStyle(25)
-    legend.AddEntry( altrecoHisto, 'MG5-MLM+Herwig7', 'lp' )
-    altrecoHisto.Draw("histe same")
+    alt0recoHisto.Scale(1, 'width')  ### divide by bin width
+    alt0recoHisto.SetLineWidth(2)
+    alt0recoHisto.SetLineColor(ROOT.kBlue)
+    alt0recoHisto.SetMarkerColor(ROOT.kBlue)
+    alt0recoHisto.SetMarkerStyle(25)
+    legend.AddEntry( alt0recoHisto, 'MG5-MLM+Herwig7', 'lp' )
+    alt0recoHisto.Draw("histe same")
+    
+    alt1recoHisto.Scale(1, 'width')  ### divide by bin width
+    alt1recoHisto.SetLineWidth(2)
+    alt1recoHisto.SetLineColor(ROOT.kViolet)
+    alt1recoHisto.SetMarkerColor(ROOT.kViolet)
+    alt1recoHisto.SetMarkerStyle(25)
+    legend.AddEntry( alt1recoHisto, 'MG5+Pythia8', 'lp' )
+    alt1recoHisto.Draw("histe same")
+    
+    
+    alt2recoHisto.Scale(1, 'width')  ### divide by bin width
+    alt2recoHisto.SetLineWidth(2)
+    alt2recoHisto.SetLineColor(ROOT.kGray+4)
+    alt2recoHisto.SetMarkerColor(ROOT.kGray+4)
+    alt2recoHisto.SetMarkerStyle(25)
+    legend.AddEntry( alt2recoHisto, 'Pythia8', 'lp' )
+    alt2recoHisto.Draw("histe same")
     
     
     selText = textBox.Clone()
@@ -231,9 +263,10 @@ def drawDataMCReco( ivar, selection, year, lumi, process,
     #print (labelX)
     tmpPad2.GetYaxis().SetTitle( "Sim./Data" )
     tmpPad2.GetYaxis().SetTitleOffset( 0.5 )
-    tmpPad2.GetYaxis().SetRangeUser(0.4, 1.6 )
+    tmpPad2.GetYaxis().SetRangeUser(-0.5, 2.5 )
     tmpPad2.GetYaxis().CenterTitle()
-    tmpPad2.GetXaxis().SetTitle( '#'+labelX.split('#')[1] )
+    try: tmpPad2.GetXaxis().SetTitle( '#'+labelX.split('#')[1] )
+    except IndexError: tmpPad2.GetXaxis().SetTitle(labelX)
     tmpPad2.SetLabelSize(0.12, 'x')
     tmpPad2.SetTitleSize(0.12, 'x')
     tmpPad2.SetLabelSize(0.12, 'y')
@@ -250,7 +283,8 @@ def drawDataMCReco( ivar, selection, year, lumi, process,
     ratio_nominal.Divide( recoHisto, dataHisto, 'pois' )
     ratio_nominal.SetLineColor(ROOT.kRed)
     ratio_nominal.SetMarkerColor(ROOT.kRed)
-    ratio_nominal.GetXaxis().SetTitle( '#'+labelX.split('#')[1] )
+    try:  ratio_nominal.GetXaxis().SetTitle( '#'+labelX.split('#')[1] )
+    except IndexError: ratio_nominal.GetXaxis().SetTitle( labelX )
     #ratio_nominal.GetYaxis().SetTitle( "Sim./Data" )
     #ratio_nominal.GetYaxis().SetTitleOffset( 0.5 )
     #ratio_nominal.GetYaxis().SetRangeUser(0., 2. )
@@ -264,22 +298,40 @@ def drawDataMCReco( ivar, selection, year, lumi, process,
     ratio_nominal.SetMarkerStyle(25)
     ratio_nominal.Draw('P0 same')
     
-    ratio_altMC = ROOT.TGraphAsymmErrors()
-    ratio_altMC.Divide( altrecoHisto, dataHisto, 'pois' )
-    ratio_altMC.SetLineColor(ROOT.kBlue)
-    ratio_altMC.SetMarkerColor(ROOT.kBlue)
-    ratio_altMC.SetMarkerStyle(25)
+    ratio_alt0MC = ROOT.TGraphAsymmErrors()
+    ratio_alt0MC.Divide( alt0recoHisto, dataHisto, 'pois' )
+    ratio_alt0MC.SetLineColor(ROOT.kBlue)
+    ratio_alt0MC.SetMarkerColor(ROOT.kBlue)
+    ratio_alt0MC.SetMarkerStyle(25)
     
-    ratio_altMC.Draw('P0 same')
+    ratio_alt0MC.Draw('P0 same')
     
-    ratioLegend=ROOT.TLegend(0.20,0.85,0.80,0.95)
-    ratioLegend.SetTextSize(0.07)
-    ratioLegend.SetNColumns(2)
+    ratio_alt1MC = ROOT.TGraphAsymmErrors()
+    ratio_alt1MC.Divide( alt1recoHisto, dataHisto, 'pois' )
+    ratio_alt1MC.SetLineColor(ROOT.kViolet)
+    ratio_alt1MC.SetMarkerColor(ROOT.kViolet)
+    ratio_alt1MC.SetMarkerStyle(25)
+    
+    ratio_alt1MC.Draw('P0 same')
+    
+    ratio_alt2MC = ROOT.TGraphAsymmErrors()
+    ratio_alt2MC.Divide( alt2recoHisto, dataHisto, 'pois' )
+    ratio_alt2MC.SetLineColor(ROOT.kGray+4)
+    ratio_alt2MC.SetMarkerColor(ROOT.kGray+4)
+    ratio_alt2MC.SetMarkerStyle(25)
+    
+    ratio_alt2MC.Draw('P0 same')
+    
+    ratioLegend=ROOT.TLegend(0.20,0.85,0.8,0.95)
+    ratioLegend.SetTextSize(0.06)
+    ratioLegend.SetNColumns(4)
     ratioLegend.SetFillColorAlpha(10,0.6)
     ratioLegend.SetBorderSize(0)
     #ratioLegend.SetTextSize(0.1)
-    ratioLegend.AddEntry( ratio_altMC, 'MG5-MLM+P8', 'lp' )
-    ratioLegend.AddEntry( ratio_nominal, 'MG5-MLM+H7', 'lp' )
+    ratioLegend.AddEntry( ratio_nominal, 'MG5-MLM+P8', 'lp' )
+    ratioLegend.AddEntry( ratio_alt0MC, 'MG5-MLM+H7', 'lp' )
+    ratioLegend.AddEntry( ratio_alt1MC, 'MG5+P8', 'lp' )
+    ratioLegend.AddEntry( ratio_alt2MC, 'P8+P8', 'lp' )
     #ratioLegend.AddEntry( ratiosystUncHisto, 'Syst.', 'f' )
     ratioLegend.Draw()
     png = outputName.split('.pdf')[0]+'.png'

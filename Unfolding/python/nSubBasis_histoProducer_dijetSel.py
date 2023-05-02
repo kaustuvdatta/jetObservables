@@ -533,7 +533,7 @@ class nSubBasis_unfoldingHistoProd_DijetsCentral(processor.ProcessorABC):
                 reco_list.append("totalRecoWeight"+sys)
                 reco_list.append("good_nPVs"+sys)
                 for itrigger in self.triggerTable.keys():    
-                    triggerBit_list.append(f'HLT_{itrigger}')
+                    if not(self.year.endswith('VFP') and self.era=='B'): triggerBit_list.append(f'HLT_{itrigger}')
                     triggerBit_list.append(f'passHLT_{itrigger}')
                 
                 if '2018' in self.year or '2017' in self.year: 
@@ -555,20 +555,22 @@ class nSubBasis_unfoldingHistoProd_DijetsCentral(processor.ProcessorABC):
 
 
 class nSubBasis_unfoldingHistoProd_DijetsForward(processor.ProcessorABC):
-    
-    def __init__(self, sampleName, sysSource=[],year='2017', era='', isMC=True, isSigMC=True, saveParquet=False,
-                 onlyUnc='', wtUnc=False, sampleDict=dictSamples,test=False, sysUnc=False,verbose=False,splitCount='0'):#isaltSigMC=False,
+
+    def __init__(self, sampleName, sysSource=[],year='2017', era='', isMC=True, isSigMC=True, 
+                 onlyUnc='', wtUnc=False, sampleDict=dictSamples,test=False, sysUnc=False, 
+                 saveParquet=False, verbose=True, splitCount='0'):
         self.test=test
         self.year = year
         self.isMC = isMC
         self.isSigMC = isSigMC
         self.era = era
         #self.isaltSigMC = isaltSigMC
-        self.splitCount=splitCount
+
         self.verbose=verbose
         self.onlyUnc = onlyUnc
         self.wtUnc = wtUnc
         self.sysUnc = sysUnc
+        self.splitCount=splitCount
         self.saveParquet=saveParquet
         
         self.dictSamples = sampleDict
@@ -679,8 +681,8 @@ class nSubBasis_unfoldingHistoProd_DijetsForward(processor.ProcessorABC):
         
         ### Uncertainties
         self.sysSource = ['_nom'] + [ isys+i for i in [ 'Up', 'Down' ] for isys in sysSource if not( isys.endswith('nom') or self.sysUnc) ]
-        self.sysWeightList = ( '_pu', '_isr')#, '_fsr','_pdf', '_l1prefiring' ) #'_ps',
-        self.wtSources=['_puWeight','_isrWeight']#,'_fsrWeight','_pdfWeight', '_l1prefiringWeight'] if self.wtUnc else [] 
+        self.sysWeightList = ( '_pu', '_pdf', '_isr', '_fsr', '_l1prefiring' ) #'_ps',
+        self.wtSources=['_puWeight','_isrWeight','_fsrWeight','_pdfWeight', '_l1prefiringWeight'] if self.wtUnc else [] 
         if self.onlyUnc: self.sysSource = ['_nom'] + [ onlyUnc+i for i in [ 'Up', 'Down' ] ] #################### Not using for right now
         
         #puWeights used only to change reco event weight (up/down) without application to gen weight, others applied to modify the genweight [and thereby also the recoWeight(=self.genWeight*self.puWeights)]
@@ -757,7 +759,7 @@ class nSubBasis_unfoldingHistoProd_DijetsForward(processor.ProcessorABC):
                     thistrigInd=triggerList.index(itrigger)
                     othertrigsInds=[i for i in range(0,len(triggerList)) if i!=thistrigInd]
                     
-                    selRecoMasks[itrigger]=(events[f'totalRecoWeight{sys}']!=0.) & (events[f'passHLT_{itrigger}']==1 ) & ((events[f'selRecoJetsF{sys}_pt']>itrValues[self.year][0]) | (events[f'selRecoJetsF{sys}_pt']>itrValues[self.year][0])) & ((events[f'selRecoJets{sys}_pt']  < itrValues[self.year][1]) & (events[f'selRecoJetsF{sys}_pt']  < itrValues[self.year][1]))
+                    selRecoMasks[itrigger]=(events[f'totalRecoWeight{sys}']!=0.) & (events[f'passHLT_{itrigger}']==1 ) & ((events[f'selRecoJetsF{sys}_pt']>itrValues[self.year][0]) | (events[f'selRecoJets{sys}_pt']>itrValues[self.year][0])) & ((events[f'selRecoJets{sys}_pt']  < itrValues[self.year][1]) & (events[f'selRecoJetsF{sys}_pt']  < itrValues[self.year][1]))
                     
                     if self.saveParquet: 
                         
@@ -769,12 +771,6 @@ class nSubBasis_unfoldingHistoProd_DijetsForward(processor.ProcessorABC):
                             print(f"Saving the following .parquet file: {self.inputDir[0].split('jetObservables/')[0]+'jetObservables/Dijets_rootToParquet/'+self.inputDir[0].split('kadatta/jetObservables/')[1].split('/')[0]+'_UL'+self.year+self.era+f'_nomWts_ForwardJet_V2_{self.splitCount}.parquet'}")
                             ak.to_parquet(events, (self.inputDir[0].split('jetObservables/')[0]+'jetObservables/Dijets_rootToParquet/'+self.inputDir[0].split('kadatta/jetObservables/')[1].split('/')[0]+'_UL'+self.year+self.era+f'_nomWts_ForwardJet_V2_{self.splitCount}.parquet'))                                    
                     
-                   
-                    #if not(('500' in itrigger) and (self.year!='2017' or self.year!='2018')) and not(('450' in itrigger or '500' in itrigger) and (self.year.startswith('2016'))):
-                    #    #avoiding doing the below for unprescaled triggers in each year (should I use the custom pass_HLT flags instead?check diff) to prevent duplicate events passing the prescaled triggers
-                    #for t in othertrigsInds:
-                    #    selRecoMasks[itrigger]=(selRecoMasks[itrigger]) & (events[f'HLT_{triggerList[t]}']==0 )
-                    
             else: 
                 print (f'something fishy in what type of sample you want me to load, recheck input config') 
             
@@ -783,11 +779,13 @@ class nSubBasis_unfoldingHistoProd_DijetsForward(processor.ProcessorABC):
                 
                 
                 listOfOutputHistosNames = [k for k,h in output.items() if ((sys in k) or ('resol' in k and not(sys in k)))] #prevent needless iterations
+                if self.verbose: print(listOfOutputHistosNames)                 
                 for k in listOfOutputHistosNames:
                     key=k
                     
                     ############### Safety checks ##################
                     if not(sys in key) and not('resol' in key): 
+                        if self.verbose: print(listOfOutputHistosNames)                         
                         continue
 
                     if not( self.isMC) and not('AK8PF' in key):
@@ -1000,7 +998,7 @@ class nSubBasis_unfoldingHistoProd_DijetsForward(processor.ProcessorABC):
 
         if not self.isSigMC: #assurances against running into issues accidentally when processing non-signal MC
             self.wtSources=[]
-            wtUnc=False
+            self.wtUnc=False
 
         
         if self.wtUnc: 
@@ -1044,10 +1042,13 @@ class nSubBasis_unfoldingHistoProd_DijetsForward(processor.ProcessorABC):
                 reco_list.append("totalRecoWeight"+sys)
                 reco_list.append("good_nPVs"+sys)
                 for itrigger in self.triggerTable.keys():    
-                    triggerBit_list.append(f'HLT_{itrigger}')
+                    if not(self.year.endswith('VFP') and self.era=='B'): triggerBit_list.append(f'HLT_{itrigger}')
                     triggerBit_list.append(f'passHLT_{itrigger}')
                 
-                if '2018' in self.year: triggerBit_list.append(f'passHLT_{itrigger}')
+                if '2018' in self.year or '2017' in self.year: 
+                    triggerBit_list.append(f'passHLT_AK8PFJet550')
+                    triggerBit_list.append(f'HLT_AK8PFJet550')
+                
                     
             elif (self.isMC and self.isSigMC) and self.wtUnc and not(sys.endswith('_nom') or  self.sysUnc):
                 if 'pu' in sys: reco_reweights_list.append(sys.split('_')[1]+'_nom')

@@ -393,42 +393,44 @@ def runTUnfold(
                     scaleFactorGenBin_sys = 1.
                     
                     print(sysSignalLabels)
+                    print(sysUncert)
                     for sys in sysUncert:
                         if sys.startswith(('_model', '_CR', '_erdON', '_mtop', '_hdamp', '_Tune')): continue
                         s = [i for i in sysSignalLabels if sys in i]
-                        if verbose: print (sys,s)
-                        if len(s)>1:
-                            if ('2016' in sys or '2017' in sys or '2018' in sys):
+                        print (sys,s)
+                        for upDown in ["Up","Down"]:
+                            if len(s)>1:
+                                if ('2016' in sys or '2017' in sys or '2018' in sys):
 
-                                if '2016' in sys: s=[s[1]]
-                                elif '2017' in sys: s=[s[1]]
-                                elif '2018' in sys: s=[s[1]]
-                            else:
-                                s=[s[0]]
-                            #print (s[0]+'_reco'+ivar+sys+upDown+sel)
-                            scaleFactor_sys = scaleFactor if not(sys.startswith(('_jes','_jer','_pu', '_l1')) else dataHistos['data_reco'+ivar+'_nom'+sel].Integral() /  sysSignalHistos[s[0]+'_reco'+ivar+sys+'Up'+sel].Integral()
-                            scaleFactorGenBin_sys = scaleFactorGenBin  if not(sys.startswith(('_jes','_jer','_pu', '_l1')) else dataHistos['data_reco'+ivar+'_nom'+sel+'_genBin'].Integral() /  sysSignalHistos[s[0]+'_reco'+ivar+sys+'Up'+sel+'_genBin'].Integral()
-                        
-                        elif len(s)==1 and ('jes' in sys or 'jer' in sys):
-                            #scaleFactor_sys = scaleFactor#dataHistostrue['data_reco'+ivar+'_nom'+sel].Integral() /  sysSignalHistos[s[0]+'_reco'+ivar+sys+'Up'+sel].Integral()
-                            #scaleFactorGenBin_sys = scaleFactorGenBin#dataHistostrue['data_reco'+ivar+'_nom'+sel+'_genBin'].Integral() /  sysSignalHistos[s[0]+'_reco'+ivar+sys+'Up'+sel+'_genBin'].Integral()
-                             scaleFactor_sys = scaleFactor if not(sys.startswith(('_jes','_jer','_pu', '_l1')) else dataHistos['data_reco'+ivar+'_nom'+sel].Integral() /  sysSignalHistos[s[0]+'_reco'+ivar+sys+'Up'+sel].Integral()
-                            scaleFactorGenBin_sys = scaleFactorGenBin  if not(sys.startswith(('_jes','_jer','_pu', '_l1')) else dataHistos['data_reco'+ivar+'_nom'+sel+'_genBin'].Integral() /  sysSignalHistos[s[0]+'_reco'+ivar+sys+'Up'+sel+'_genBin'].Integral()
-                        
-                        elif len(s)==1 and ('Weight' in sys):
-                            #scaleFactor_sys=scaleFactor
-                            #scaleFactorGenBin_sys=scaleFactorGenBin
-                            scaleFactor_sys = scaleFactor if not(sys.startswith(('_jes','_jer','_pu', '_l1')) else dataHistos['data_reco'+ivar+'_nom'+sel].Integral() /  sysSignalHistos[s[0]+'_reco'+ivar+sys+'Up'+sel].Integral()
-                            scaleFactorGenBin_sys = scaleFactorGenBin  if not(sys.startswith(('_jes','_jer','_pu', '_l1')) else dataHistos['data_reco'+ivar+'_nom'+sel+'_genBin'].Integral() /  sysSignalHistos[s[0]+'_reco'+ivar+sys+'Up'+sel+'_genBin'].Integral()
-                        
-                        for ihsig in sysSignalHistos:
-                            if sys in ihsig:
-                                if verbose: print ("SF genBin and recobin, respectively:",sys,scaleFactor_sys,scaleFactorGenBin_sys)
+                                    if '2016' in sys: s=[s[1]]
+                                    elif '2017' in sys: s=[s[1]]
+                                    elif '2018' in sys: s=[s[1]]
+                                else:
+                                    s=[s[0]]
+                                #print (s[0]+'_reco'+ivar+sys+upDown+sel)
+                                scaleFactor_sys = scaleFactor if not(sys.startswith(('_jes','_jer'))) else dataHistos['data_reco'+ivar+'_nom'+sel].Integral() /  sysSignalHistos[s[0]+'_reco'+ivar+sys+upDown+sel].Integral()
+                                scaleFactorGenBin_sys = scaleFactorGenBin  if not(sys.startswith(('_jes','_jer'))) else dataHistos['data_reco'+ivar+'_nom'+sel+'_genBin'].Integral() /  sysSignalHistos[s[0]+'_reco'+ivar+sys+upDown+sel+'_genBin'].Integral()
 
-                                if ihsig.endswith(sel):
-                                    #print (ihsig)
-                                    sysSignalHistos[ihsig].Scale( scaleFactor )
-                                elif ihsig.endswith('genBin'): sysSignalHistos[ihsig].Scale( scaleFactorGenBin )
+                            elif len(s)==1 and ('jes' in sys or 'jer' in sys):
+                                #scaleFactor_sys = scaleFactor#dataHistostrue['data_reco'+ivar+'_nom'+sel].Integral() /  sysSignalHistos[s[0]+'_reco'+ivar+sys+upDown+sel].Integral()
+                                #scaleFactorGenBin_sys = scaleFactorGenBin#dataHistostrue['data_reco'+ivar+'_nom'+sel+'_genBin'].Integral() /  sysSignalHistos[s[0]+'_reco'+ivar+sys+upDown+sel+'_genBin'].Integral()
+                                scaleFactor_sys = scaleFactor if not(sys.startswith(('_jes','_jer'))) else dataHistos['data_reco'+ivar+'_nom'+sel].Integral() /  sysSignalHistos[s[0]+'_reco'+ivar+sys+upDown+sel].Integral()
+                                scaleFactorGenBin_sys = scaleFactorGenBin  if not(sys.startswith(('_jes','_jer'))) else dataHistos['data_reco'+ivar+'_nom'+sel+'_genBin'].Integral() /  sysSignalHistos[s[0]+'_reco'+ivar+sys+upDown+sel+'_genBin'].Integral()
+
+                            elif len(s)==1 and ('Weight' in sys):
+                                #scaleFactor_sys=scaleFactor
+                                #scaleFactorGenBin_sys=scaleFactorGenBin
+                                scaleFactor_sys = scaleFactor if not(sys.startswith(('_jes','_jer'))) else dataHistos['data_reco'+ivar+'_nom'+sel].Integral() /  sysSignalHistos[s[0]+'_reco'+ivar+sys+upDown+sel].Integral()
+                                scaleFactorGenBin_sys = scaleFactorGenBin  if not(sys.startswith(('_jes','_jer'))) else dataHistos['data_reco'+ivar+'_nom'+sel+'_genBin'].Integral() /  sysSignalHistos[s[0]+'_reco'+ivar+sys+upDown+sel+'_genBin'].Integral()
+
+                            for ihsig in sysSignalHistos:
+                                if sys+upDown in ihsig:
+                                    print ("SF genBin and recobin, respectively:",sys+upDown,scaleFactor_sys,scaleFactorGenBin_sys)
+
+                                    if ihsig.endswith(sel):
+                                        #print (ihsig)
+                                        sysSignalHistos[ihsig].Scale( scaleFactor_sys )
+                                    elif ihsig.endswith('genBin'): sysSignalHistos[ihsig].Scale( scaleFactorGenBin_sys )
                 
                 #if process.startswith("MC"):
                 #    genBin = variables[ivar]['bins']
@@ -1294,7 +1296,7 @@ def runTUnfold(
 ##############################################################################################
 
 def loadHistograms(samples, var, sel, sysUnc=[],
-                   isMC=True, addGenInfo=True, respOnly=False, lumi=1., 
+                   isMC=True, addGenInfo=True, respOnly=False, lumi=1., noResp=False,
                        variables={}, year='2017', process='data', noRebin=False, outputFolder=None ):
     """docstring for loadHistograms"""
 
@@ -1320,21 +1322,22 @@ def loadHistograms(samples, var, sel, sysUnc=[],
         
         if isMC and addGenInfo and not flip:
             tmpList = tmpList + [ 'gen'+var+syst+sel for syst in SYSUNC if 'nom' in syst] 
-            tmpList = tmpList + [ 'accepgen'+var+syst+sel for syst in SYSUNC ]
-            tmpList = tmpList + [ 'truereco'+var+syst+sel for syst in SYSUNC ]
-            tmpList = tmpList + [ 'respWithMiss'+var+syst+sel for syst in SYSUNC]
+            if not(noResp):tmpList = tmpList + [ 'accepgen'+var+syst+sel for syst in SYSUNC ]
+            if not(noResp):tmpList = tmpList + [ 'truereco'+var+syst+sel for syst in SYSUNC ]
+            tmpList = tmpList + [ 'reco'+var+syst+sel for syst in SYSUNC ]
+            if not(noResp): tmpList = tmpList + [ 'respWithMiss'+var+syst+sel for syst in SYSUNC]
         
         elif isMC and addGenInfo and flip: 
             tmpList = tmpList + [ 'gen'+var+'_nom'+sel]
-            #tmpList = tmpList + ['reco'+var+syst+sel for syst in tmpSYSUNC]
-            tmpList = tmpList + ['respWithMiss'+var+syst+sel for syst in tmpSYSUNC]
+            tmpList = tmpList + ['reco'+var+syst+sel for syst in tmpSYSUNC]
+            if not(noResp): tmpList = tmpList + ['respWithMiss'+var+syst+sel for syst in tmpSYSUNC]
             #tmpList = tmpList + ['respWithMiss'+var+syst+sel for syst in tmpSYSUNC]
         
         if respOnly and not flip: 
-            tmpList = [ 'respWithMiss'+var+syst+sel for syst in SYSUNC] 
+            if not(noResp): tmpList = [ 'respWithMiss'+var+syst+sel for syst in SYSUNC] 
             #print (SYSUNC,tmpList)
         elif respOnly and flip: 
-            tmpList = ['respWithMiss'+var+syst+sel for syst in tmpSYSUNC ] #+ [ 'missgen'+var+sel ]
+            if not(noResp): tmpList = ['respWithMiss'+var+syst+sel for syst in tmpSYSUNC ] #+ [ 'missgen'+var+sel ]
             
         #print(isam,tmpList,samples[isam][0])
         print (f'Processing {isam}')#,filename={samples[isam][0]}')
@@ -1408,7 +1411,7 @@ def loadHistograms(samples, var, sel, sysUnc=[],
                             #print(ih,jh,tmpHistos[ih].Integral())
                             
                         if goodflag and (jh.endswith('0'+ih.split('Inf')[1])) and not ('Inf' in jh ) and sys in ih and sys in jh :
-                            if ('_recoJet' in ih and '_recoJet' in jh) or ('truerecoJet' in ih and 'truerecoJet' in jh) or ('fakerecoJet' in ih and 'fakerecoJet' in jh) or ('_genJet' in ih and '_genJet' in jh) or  ('accepgenJet' in ih and 'accepgenJet' in jh) or ('missgenJet' in ih and 'missgenJet' in jh) or ('respWithMissJet' in ih and 'respWithMissJet' in jh):
+                            if ('_recoJet' in ih and '_recoJet' in jh) or ('truerecoJet' in ih and 'truerecoJet' in jh) or ('fakerecoJet' in ih and 'fakerecoJet' in jh) or ('_genJet' in ih and '_genJet' in jh) or  ('accepgenJet' in ih and 'accepgenJet' in jh) or ('missgenJet' in ih and 'missgenJet' in jh) or ('respWithMissJet' in ih and 'respWithMissJet' in jh) or ('good' in ih and 'good' in jh):
                                 if ('genBin' in ih and 'genBin' in  jh) or (not('genBin' in ih) and not('genBin' in  jh)):
                                     #print(goodflag,ih,jh,tmpHistos[ih].Integral())
 
@@ -1421,6 +1424,7 @@ def loadHistograms(samples, var, sel, sysUnc=[],
                     else:
                         allHistos_upd.update(copy.deepcopy(tmpHistos))
                         c+=1
+                    
             allHistos=copy.deepcopy(allHistos_upd)
         #else:
             
@@ -1438,8 +1442,8 @@ def loadHistograms(samples, var, sel, sysUnc=[],
                 else:
                     genBin = variables[var]['bins']
                     recoBin = variables[var]['bins_reco']
-                    #print(genBin,recoBin)
                 if not('respWithMiss' in ih):
+                    #print(genBin,recoBin)
 
                     if len(variables[var]['bins'])==1:
                         if 'recoJet' in ih:
@@ -1470,7 +1474,13 @@ def loadHistograms(samples, var, sel, sysUnc=[],
 
                         tmpHisto.SetDirectory(0)
                         allHistos[ih] = copy.deepcopy(tmpHisto.Clone())
-                        
+        if noRebin: 
+            allHistosUpd = copy.deepcopy(allHistos)
+            for ih in allHistos:
+                if 'recoJet' in ih:
+                    allHistosUpd[ih+'_genBin'] = allHistos[ih].Clone()
+                    allHistosUpd[ih+'_genBin'].Rebin(2)
+            allHistos.update(allHistosUpd)
         if samples and outputFolder: 
             outputRootName = outputFolder.split('jetObservables_histograms')[0] + f"/{sel.replace('_','')}/{year}" + '/loadedHistograms_main_'+process+isam+var+year+'.root'
             print ('|------> Saving histograms in rootfile: ', outputRootName)
@@ -1617,39 +1627,83 @@ def getAndPlotPurity(h_resp_rebinned,gen_bins,variables,var,outputDir='../Result
 def runPlots_DijetSel(
                         dataFile, sigFiles, bkgFiles, variables, sel, sysUncert, process, ext, lumi=1., sysSignalLabels=[],
                         year='2017',runMLU=False, sysSigFiles=[], varSigFiles=[], outputFolder='../Results',
-                        version='_Feb23', mainMC='MLM_HTbin', altMC='H7MLM_HTbin', verbose=False
+                        version='_Feb23', main='MLM_HTbin', alt0='H7MLM_HTbin', alt1='HTbin', alt2='Ptbin',
+                        verbose=False
                       ):
     
     
     colors = [ 2, 4,  9, 8, 28, 30, 42, 13, 12, 40, 46, 3, 24, 26, 41, 45, 48, 49, 37, 38, 33, 17]
 
-    if mainMC.startswith('MLM_HTbin'):
+    
+
+    if main.startswith('MLM_HTbin'):
         signalLabelBegin = 'MLMQCD_HT'
         signalLabel = 'MLMQCD_HT2000toInf'
 
-    elif mainMC.startswith('HTbin'):
+    elif main.startswith('HTbin'):
         signalLabelBegin = 'QCD_HT'
         signalLabel = 'QCD_HT2000toInf'
 
-    elif mainMC.startswith('H7MLM_HTbin'):
+    elif main.startswith('Ptbin'):
+        signalLabelBegin = 'QCD_Pt_'
+        signalLabel = 'QCD_Pt_3200toInf'
+
+    elif main.startswith('H7MLM_HTbin'):
         signalLabelBegin = 'H7MLMQCD_HT'
         signalLabel = 'H7MLMQCD_HT2000toInf'
 
-    if altMC.startswith('MLM_HTbin'):
-        altSignalLabelBegin = 'MLMQCD_HT'
-        altSignalLabel = 'MLMQCD_HT2000toInf'
+    sysSignalLabelBegin = 'sysMLMQCD' 
+
+    if alt0.startswith('MLM_HTbin'):
+        alt0SignalLabelBegin = 'MLMQCD_HT'
+        alt0SignalLabel = 'MLMQCD_HT2000toInf'
+
+    elif alt0.startswith('HTbin'):
+        alt0SignalLabelBegin = 'QCD_HT'
+        alt0SignalLabel = 'QCD_HT2000toInf'
+
+    elif alt0.startswith('Ptbin'):
+        alt0SignalLabelBegin = 'QCD_Pt_'
+        alt0SignalLabel = 'QCD_Pt_3200toInf'
+
+    elif alt0.startswith('H7MLM_HTbin'):
+        alt0SignalLabelBegin = 'H7MLMQCD_HT'
+        alt0SignalLabel = 'H7MLMQCD_HT2000toInf'
+
+    if alt1.startswith('MLM_HTbin'):
+        alt1SignalLabelBegin = 'MLMQCD_HT'
+        alt1SignalLabel = 'MLMQCD_HT2000toInf'
+
+    elif alt1.startswith('HTbin'):
+        alt1SignalLabelBegin = 'QCD_HT'
+        alt1SignalLabel = 'QCD_HT2000toInf'
+
+    elif alt1.startswith('Ptbin'):
+        alt1SignalLabelBegin = 'QCD_Pt_'
+        alt1SignalLabel = 'QCD_Pt_3200toInf'
+
+    elif alt1.startswith('H7MLM_HTbin'):
+        alt1SignalLabelBegin = 'H7MLMQCD_HT'
+        alt1SignalLabel = 'H7MLMQCD_HT2000toInf'
+        
+    if alt2.startswith('MLM_HTbin'):
+        alt2SignalLabelBegin = 'MLMQCD_HT'
+        alt2SignalLabel = 'MLMQCD_HT2000toInf'
+
+    elif alt2.startswith('HTbin'):
+        alt2SignalLabelBegin = 'QCD_HT'
+        alt2SignalLabel = 'QCD_HT2000toInf'
+
+    elif alt2.startswith('Ptbin'):
+        alt2SignalLabelBegin = 'QCD_Pt_'
+        alt2SignalLabel = 'QCD_Pt_3200toInf'
+
+    elif alt2.startswith('H7MLM_HTbin'):
+        alt2SignalLabelBegin = 'H7MLMQCD_HT'
+        alt2SignalLabel = 'H7MLMQCD_HT2000toInf'
     
-    elif altMC.startswith('HTbin'):
-        altSignalLabelBegin = 'QCD_HT'
-        altSignalLabel = 'QCD_HT2000toInf'
     
-    elif altMC.startswith('H7MLM_HTbin'):
-        altSignalLabelBegin = 'H7MLMQCD_HT'
-        altSignalLabel = 'H7MLMQCD_HT2000toInf'
-        #altSignalLabel = 'QCD_Pt-15to7000'
-    
-    
-    print ("Labels:", signalLabelBegin,altSignalLabelBegin)
+    print ("Labels:", signalLabelBegin,alt0SignalLabelBegin,alt1SignalLabelBegin)#,alt2SignalLabelBegin)
     
     
     sysSignalLabelBegin = 'sysMLMQCD_' 
@@ -1684,24 +1738,61 @@ def runPlots_DijetSel(
             
                         
             if not('self' in process.lower()):
-                altSignalHistos = {
-                    altSignalLabel+'_reco'+ivar+'_nom'+sel : dataFile[ivar+'_2016_preVFP'].Get(altSignalLabel+'_reco'+ivar+'_nom'+sel),
-                    altSignalLabel+'_gen'+ivar+'_nom'+sel : dataFile[ivar+'_2016_preVFP'].Get(altSignalLabel+'_gen'+ivar+'_nom'+sel),
-                    altSignalLabel+'_reco'+ivar+'_nom'+sel+'_genBin' : dataFile[ivar+'_2016_preVFP'].Get(altSignalLabel+'_reco'+ivar+'_nom'+sel+'_genBin'),
+                alt0SignalHistos = {
+                    alt0SignalLabel+'_reco'+ivar+'_nom'+sel : dataFile[ivar+'_2016_preVFP'].Get(alt0SignalLabel+'_reco'+ivar+'_nom'+sel),
+                    alt0SignalLabel+'_gen'+ivar+'_nom'+sel : dataFile[ivar+'_2016_preVFP'].Get(alt0SignalLabel+'_gen'+ivar+'_nom'+sel),
+                    alt0SignalLabel+'_reco'+ivar+'_nom'+sel+'_genBin' : dataFile[ivar+'_2016_preVFP'].Get(alt0SignalLabel+'_reco'+ivar+'_nom'+sel+'_genBin'),
                     }
 
-                altSignalHistos[ altSignalLabel+'_reco'+ivar+'_nom'+sel ].Add( dataFile[ivar+'_2016'].Get(altSignalLabel+'_reco'+ivar+'_nom'+sel) )
-                altSignalHistos[ altSignalLabel+'_gen'+ivar+'_nom'+sel].Add( dataFile[ivar+'_2016'].Get(altSignalLabel+'_gen'+ivar+'_nom'+sel) )
-                altSignalHistos[altSignalLabel+'_reco'+ivar+'_nom'+sel+'_genBin'].Add( dataFile[ivar+'_2016'].Get(altSignalLabel+'_reco'+ivar+'_nom'+sel+'_genBin') )
+                alt0SignalHistos[ alt0SignalLabel+'_reco'+ivar+'_nom'+sel ].Add( dataFile[ivar+'_2016'].Get(alt0SignalLabel+'_reco'+ivar+'_nom'+sel) )
+                alt0SignalHistos[ alt0SignalLabel+'_gen'+ivar+'_nom'+sel].Add( dataFile[ivar+'_2016'].Get(alt0SignalLabel+'_gen'+ivar+'_nom'+sel) )
+                alt0SignalHistos[alt0SignalLabel+'_reco'+ivar+'_nom'+sel+'_genBin'].Add( dataFile[ivar+'_2016'].Get(alt0SignalLabel+'_reco'+ivar+'_nom'+sel+'_genBin') )
 
-                altSignalHistos[ altSignalLabel+'_reco'+ivar+'_nom'+sel ].Add( dataFile[ivar+'_2017'].Get(altSignalLabel+'_reco'+ivar+'_nom'+sel) )
-                altSignalHistos[ altSignalLabel+'_gen'+ivar+'_nom'+sel].Add( dataFile[ivar+'_2017'].Get(altSignalLabel+'_gen'+ivar+'_nom'+sel) )
-                altSignalHistos[altSignalLabel+'_reco'+ivar+'_nom'+sel+'_genBin'].Add( dataFile[ivar+'_2017'].Get(altSignalLabel+'_reco'+ivar+'_nom'+sel+'_genBin') )
+                alt0SignalHistos[ alt0SignalLabel+'_reco'+ivar+'_nom'+sel ].Add( dataFile[ivar+'_2017'].Get(alt0SignalLabel+'_reco'+ivar+'_nom'+sel) )
+                alt0SignalHistos[ alt0SignalLabel+'_gen'+ivar+'_nom'+sel].Add( dataFile[ivar+'_2017'].Get(alt0SignalLabel+'_gen'+ivar+'_nom'+sel) )
+                alt0SignalHistos[alt0SignalLabel+'_reco'+ivar+'_nom'+sel+'_genBin'].Add( dataFile[ivar+'_2017'].Get(alt0SignalLabel+'_reco'+ivar+'_nom'+sel+'_genBin') )
 
-                altSignalHistos[ altSignalLabel+'_reco'+ivar+'_nom'+sel ].Add( dataFile[ivar+'_2018'].Get(altSignalLabel+'_reco'+ivar+'_nom'+sel) )
-                altSignalHistos[ altSignalLabel+'_gen'+ivar+'_nom'+sel].Add( dataFile[ivar+'_2018'].Get(altSignalLabel+'_gen'+ivar+'_nom'+sel) )
-                altSignalHistos[altSignalLabel+'_reco'+ivar+'_nom'+sel+'_genBin'].Add( dataFile[ivar+'_2018'].Get(altSignalLabel+'_reco'+ivar+'_nom'+sel+'_genBin') )
+                alt0SignalHistos[ alt0SignalLabel+'_reco'+ivar+'_nom'+sel ].Add( dataFile[ivar+'_2018'].Get(alt0SignalLabel+'_reco'+ivar+'_nom'+sel) )
+                alt0SignalHistos[ alt0SignalLabel+'_gen'+ivar+'_nom'+sel].Add( dataFile[ivar+'_2018'].Get(alt0SignalLabel+'_gen'+ivar+'_nom'+sel) )
+                alt0SignalHistos[alt0SignalLabel+'_reco'+ivar+'_nom'+sel+'_genBin'].Add( dataFile[ivar+'_2018'].Get(alt0SignalLabel+'_reco'+ivar+'_nom'+sel+'_genBin') )
+                
+                alt1SignalHistos = {
+                    alt1SignalLabel+'_reco'+ivar+'_nom'+sel : dataFile[ivar+'_2016_preVFP'].Get(alt1SignalLabel+'_reco'+ivar+'_nom'+sel),
+                    alt1SignalLabel+'_gen'+ivar+'_nom'+sel : dataFile[ivar+'_2016_preVFP'].Get(alt1SignalLabel+'_gen'+ivar+'_nom'+sel),
+                    alt1SignalLabel+'_reco'+ivar+'_nom'+sel+'_genBin' : dataFile[ivar+'_2016_preVFP'].Get(alt1SignalLabel+'_reco'+ivar+'_nom'+sel+'_genBin'),
+                    }
 
+                alt1SignalHistos[ alt1SignalLabel+'_reco'+ivar+'_nom'+sel ].Add( dataFile[ivar+'_2016'].Get(alt1SignalLabel+'_reco'+ivar+'_nom'+sel) )
+                alt1SignalHistos[ alt1SignalLabel+'_gen'+ivar+'_nom'+sel].Add( dataFile[ivar+'_2016'].Get(alt1SignalLabel+'_gen'+ivar+'_nom'+sel) )
+                alt1SignalHistos[alt1SignalLabel+'_reco'+ivar+'_nom'+sel+'_genBin'].Add( dataFile[ivar+'_2016'].Get(alt1SignalLabel+'_reco'+ivar+'_nom'+sel+'_genBin') )
+
+                alt1SignalHistos[ alt1SignalLabel+'_reco'+ivar+'_nom'+sel ].Add( dataFile[ivar+'_2017'].Get(alt1SignalLabel+'_reco'+ivar+'_nom'+sel) )
+                alt1SignalHistos[ alt1SignalLabel+'_gen'+ivar+'_nom'+sel].Add( dataFile[ivar+'_2017'].Get(alt1SignalLabel+'_gen'+ivar+'_nom'+sel) )
+                alt1SignalHistos[alt1SignalLabel+'_reco'+ivar+'_nom'+sel+'_genBin'].Add( dataFile[ivar+'_2017'].Get(alt1SignalLabel+'_reco'+ivar+'_nom'+sel+'_genBin') )
+
+                alt1SignalHistos[ alt1SignalLabel+'_reco'+ivar+'_nom'+sel ].Add( dataFile[ivar+'_2018'].Get(alt1SignalLabel+'_reco'+ivar+'_nom'+sel) )
+                alt1SignalHistos[ alt1SignalLabel+'_gen'+ivar+'_nom'+sel].Add( dataFile[ivar+'_2018'].Get(alt1SignalLabel+'_gen'+ivar+'_nom'+sel) )
+                alt1SignalHistos[alt1SignalLabel+'_reco'+ivar+'_nom'+sel+'_genBin'].Add( dataFile[ivar+'_2018'].Get(alt1SignalLabel+'_reco'+ivar+'_nom'+sel+'_genBin') )
+                
+                
+                alt2SignalHistos = {
+                    alt2SignalLabel+'_reco'+ivar+'_nom'+sel : dataFile[ivar+'_2016_preVFP'].Get(alt2SignalLabel+'_reco'+ivar+'_nom'+sel),
+                    alt2SignalLabel+'_gen'+ivar+'_nom'+sel : dataFile[ivar+'_2016_preVFP'].Get(alt2SignalLabel+'_gen'+ivar+'_nom'+sel),
+                    alt2SignalLabel+'_reco'+ivar+'_nom'+sel+'_genBin' : dataFile[ivar+'_2016_preVFP'].Get(alt2SignalLabel+'_reco'+ivar+'_nom'+sel+'_genBin'),
+                    }
+
+                alt2SignalHistos[ alt2SignalLabel+'_reco'+ivar+'_nom'+sel ].Add( dataFile[ivar+'_2016'].Get(alt2SignalLabel+'_reco'+ivar+'_nom'+sel) )
+                alt2SignalHistos[ alt2SignalLabel+'_gen'+ivar+'_nom'+sel].Add( dataFile[ivar+'_2016'].Get(alt2SignalLabel+'_gen'+ivar+'_nom'+sel) )
+                alt2SignalHistos[alt2SignalLabel+'_reco'+ivar+'_nom'+sel+'_genBin'].Add( dataFile[ivar+'_2016'].Get(alt2SignalLabel+'_reco'+ivar+'_nom'+sel+'_genBin') )
+
+                alt2SignalHistos[ alt2SignalLabel+'_reco'+ivar+'_nom'+sel ].Add( dataFile[ivar+'_2017'].Get(alt2SignalLabel+'_reco'+ivar+'_nom'+sel) )
+                alt2SignalHistos[ alt2SignalLabel+'_gen'+ivar+'_nom'+sel].Add( dataFile[ivar+'_2017'].Get(alt2SignalLabel+'_gen'+ivar+'_nom'+sel) )
+                alt2SignalHistos[alt2SignalLabel+'_reco'+ivar+'_nom'+sel+'_genBin'].Add( dataFile[ivar+'_2017'].Get(alt2SignalLabel+'_reco'+ivar+'_nom'+sel+'_genBin') )
+
+                alt2SignalHistos[ alt2SignalLabel+'_reco'+ivar+'_nom'+sel ].Add( dataFile[ivar+'_2018'].Get(alt2SignalLabel+'_reco'+ivar+'_nom'+sel) )
+                alt2SignalHistos[ alt2SignalLabel+'_gen'+ivar+'_nom'+sel].Add( dataFile[ivar+'_2018'].Get(alt2SignalLabel+'_gen'+ivar+'_nom'+sel) )
+                alt2SignalHistos[alt2SignalLabel+'_reco'+ivar+'_nom'+sel+'_genBin'].Add( dataFile[ivar+'_2018'].Get(alt2SignalLabel+'_reco'+ivar+'_nom'+sel+'_genBin') )
+                
 
             if process.startswith('data'):
                 allHistos = {
@@ -1734,13 +1825,16 @@ def runPlots_DijetSel(
             print('|-------> Running single year '+year)
             ### Getting input histos
             mainSigFiles = { k:v for (k,v) in sigFiles.items() if k.startswith(signalLabelBegin)  }
-            signalHistos = loadHistograms( mainSigFiles, ivar, sel, sysUnc=[], respOnly=False, lumi=lumi, year=year, process=process, variables=variables,outputFolder=outputFolder )
-            tmp2SigFiles = { k:v for (k,v) in sigFiles.items() if k.startswith(altSignalLabelBegin)  }
-            
-            if not process.startswith('MCSelfClosure'): altSignalHistos = loadHistograms( tmp2SigFiles, ivar, sel, sysUnc=[], isMC=True, respOnly=False, lumi=lumi, year=year, process=process, variables=variables,outputFolder=outputFolder )
-            
-            if not process.endswith('Closure'): sysSignalHistos = loadHistograms( sysSigFiles, ivar, sel, sysUnc=sysUncert, respOnly=False, isMC=True, lumi=lumi, year=year, process=process, variables=variables,outputFolder=outputFolder)
-            
+            signalHistos = loadHistograms( mainSigFiles, ivar, sel, sysUnc=[], respOnly=False, lumi=lumi, noResp=True, year=year, process=process, variables=variables,outputFolder=outputFolder,noRebin=True if not('tau'in ivar ) else False)
+            tmp2SigFiles = { k:v for (k,v) in sigFiles.items() if k.startswith(alt0SignalLabelBegin)  }
+            tmp3SigFiles = { k:v for (k,v) in sigFiles.items() if k.startswith(alt1SignalLabelBegin)  }
+            tmp4SigFiles = { k:v for (k,v) in sigFiles.items() if k.startswith(alt2SignalLabelBegin)  }
+            bkgHistos = {}
+            if not process.startswith('MC'): 
+                alt0SignalHistos = loadHistograms( tmp2SigFiles, ivar, sel, sysUnc=[], isMC=True, respOnly=False, lumi=lumi, noResp=True, year=year, process=process, variables=variables,outputFolder=outputFolder,noRebin=True if not('tau'in ivar ) else False)
+                alt1SignalHistos = loadHistograms( tmp3SigFiles, ivar, sel, sysUnc=[], isMC=True, respOnly=False, lumi=lumi, noResp=True, year=year, process=process, variables=variables,outputFolder=outputFolder,noRebin=True if not('tau'in ivar ) else False)
+                alt2SignalHistos = loadHistograms( tmp4SigFiles, ivar, sel, sysUnc=[], isMC=True, respOnly=False, lumi=lumi, noResp=True, year=year, process=process, variables=variables,outputFolder=outputFolder,noRebin=True if not('tau'in ivar ) else False)
+                       
             if sel.startswith('_dijet'): 
                 if process.startswith("MC"):
                     dataHistostrue = { 'data_reco'+k.split(('_truereco'))[1] : v for (k,v) in signalHistos.items() if ('_truereco' in k and not ('genBin' in k ))}
@@ -1752,9 +1846,9 @@ def runPlots_DijetSel(
                     dataHistos['data_reco'+ivar+'_nom'+sel+'_genBin'] = dataHistos['data_reco'+ivar+'_nom'+sel+'_genBin'].Rebin( len(genBin)-1, 'data_reco'+ivar+'_nom'+sel+'_genBin', array( 'd', genBin ) )
                     
                 else:
-                    dataHistostrue = loadHistograms( dataFile, ivar, sel, isMC= False, sysUnc=[], respOnly=False, lumi=lumi, year=year, process=process, variables=variables,outputFolder=outputFolder)
-                    dataHistos = loadHistograms( dataFile, ivar, sel, isMC= False, sysUnc=[], respOnly=False, lumi=lumi, year=year, process=process, variables=variables,outputFolder=outputFolder)
-                    #print (dataHistostrue)
+                    dataHistostrue = loadHistograms( dataFile, ivar, sel, isMC= False, sysUnc=[], respOnly=False, lumi=lumi, year=year, process=process, variables=variables,outputFolder=outputFolder,noResp=True,noRebin=True if not('tau'in ivar ) else False)
+                    dataHistos = loadHistograms( dataFile, ivar, sel, isMC= False, sysUnc=[], respOnly=False, lumi=lumi, year=year, process=process, variables=variables,outputFolder=outputFolder,noResp=True,noRebin=True if not('tau'in ivar ) else False)
+                    print (dataHistostrue,dataHistos)
                 
                 allHistos = {}
                 allHistos[ 'allBkgHisto' ] = dataHistostrue['data_reco'+ivar+'_nom'+sel].Clone()
@@ -1795,21 +1889,45 @@ def runPlots_DijetSel(
                     elif ihsig.endswith('genBin'): signalHistos[ihsig].Scale( scaleFactorGenBin )
                     
                 
-                plotSimpleComparison( dataHistos['data_reco'+ivar+'_nom'+sel].Clone(), 'data', allHistos[ 'allMCHisto' ].Clone(), 'allBkgs', ivar+'_from'+('Data' if process.startswith('data') else 'MC')+'_'+signalLabel+"_nom", rebinX=1, version=sel+'_'+version, outputDir=outputDir )
+                #plotSimpleComparison( dataHistos['data_reco'+ivar+'_nom'+sel].Clone(), 'data', allHistos[ 'allMCHisto' ].Clone(), 'allBkgs', ivar+'_from'+('Data' if process.startswith('data') else 'MC')+'_'+signalLabel+"_nom", rebinX=1, version=sel+'_'+version, outputDir=outputDir )
                 
                 if not(process.startswith('MCSelfClosure')):
                     #if not(process.startswith('MC')):
                     print("Rescaling alternate signal MC")
-                    altscaleFactor = dataHistos['data_reco'+ivar+'_nom'+sel].Integral() / (altSignalHistos[ altSignalLabel+'_reco'+ivar+'_nom'+sel ].Integral()  )
-                    altscaleFactorGenBin = dataHistos['data_reco'+ivar+'_nom'+sel+'_genBin'].Integral() / ( altSignalHistos[altSignalLabel+'_reco'+ivar+'_nom'+sel+'_genBin'].Integral() )
+                    
+                    ###### H7
+                    altscaleFactor = dataHistos['data_reco'+ivar+'_nom'+sel].Integral() / (alt0SignalHistos[ alt0SignalLabel+'_reco'+ivar+'_nom'+sel ].Integral()  )
+                    altscaleFactorGenBin = dataHistos['data_reco'+ivar+'_nom'+sel+'_genBin'].Integral() / ( alt0SignalHistos[alt0SignalLabel+'_reco'+ivar+'_nom'+sel+'_genBin'].Integral() )
                     print ("Alt MC SF genBin and recobin, respectively:",altscaleFactor,altscaleFactorGenBin)
 
-                    for ihsig in altSignalHistos:
+                    for ihsig in alt0SignalHistos:
                         if ihsig.endswith(sel):
                             #print (ihsig)
-                            altSignalHistos[ihsig].Scale( altscaleFactor )
-                        elif ihsig.endswith('genBin'): altSignalHistos[ihsig].Scale( altscaleFactorGenBin )
+                            alt0SignalHistos[ihsig].Scale( altscaleFactor )
+                        elif ihsig.endswith('genBin'): alt0SignalHistos[ihsig].Scale( altscaleFactorGenBin )
+                    ###### MG5(no MLM)
+                    altscaleFactor = dataHistos['data_reco'+ivar+'_nom'+sel].Integral() / (alt1SignalHistos[ alt1SignalLabel+'_reco'+ivar+'_nom'+sel ].Integral()  )
+                    altscaleFactorGenBin = dataHistos['data_reco'+ivar+'_nom'+sel+'_genBin'].Integral() / ( alt1SignalHistos[alt1SignalLabel+'_reco'+ivar+'_nom'+sel+'_genBin'].Integral() )
+                    print ("Alt MC SF genBin and recobin, respectively:",altscaleFactor,altscaleFactorGenBin)
+
+                    for ihsig in alt1SignalHistos:
+                        if ihsig.endswith(sel):
+                            #print (ihsig)
+                            alt1SignalHistos[ihsig].Scale( altscaleFactor )
+                        elif ihsig.endswith('genBin'): alt1SignalHistos[ihsig].Scale( altscaleFactorGenBin )
+                            
+                    ###### P8
+                    altscaleFactor = dataHistos['data_reco'+ivar+'_nom'+sel].Integral() / (alt2SignalHistos[ alt2SignalLabel+'_reco'+ivar+'_nom'+sel ].Integral()  )
+                    altscaleFactorGenBin = dataHistos['data_reco'+ivar+'_nom'+sel+'_genBin'].Integral() / ( alt2SignalHistos[alt2SignalLabel+'_reco'+ivar+'_nom'+sel+'_genBin'].Integral() )
+                    print ("Alt MC SF genBin and recobin, respectively:",altscaleFactor,altscaleFactorGenBin)
+
+                    for ihsig in alt2SignalHistos:
+                        if ihsig.endswith(sel):
+                            #print (ihsig)
+                            alt2SignalHistos[ihsig].Scale( altscaleFactor )
+                        elif ihsig.endswith('genBin'): alt2SignalHistos[ihsig].Scale( altscaleFactorGenBin )
                 
+                                            
             
             if process.startswith('MC'):
                 allHistos[ 'dataHisto' ] = dataHistostrue[ 'data_reco'+ivar+'_nom'+sel ].Clone()
@@ -1861,7 +1979,9 @@ def runPlots_DijetSel(
                            selection=sel, year=year,lumi=lumi, process=process,
                            dataJetHisto=allHistos[ 'dataHistoGenBin' ].Clone(),
                            nominal_recoJetHisto = signalHistos[ signalLabel+'_reco'+ivar+'_nom'+sel+'_genBin' ].Clone(),
-                           alt_recoJetHisto =  altSignalHistos[ altSignalLabel+'_reco'+ivar+'_nom'+sel+'_genBin' ].Clone(),
+                           alt0_recoJetHisto =  alt0SignalHistos[ alt0SignalLabel+'_reco'+ivar+'_nom'+sel+'_genBin' ].Clone(),
+                           alt1_recoJetHisto =  alt1SignalHistos[ alt1SignalLabel+'_reco'+ivar+'_nom'+sel+'_genBin' ].Clone(),
+                           alt2_recoJetHisto =  alt2SignalHistos[ alt2SignalLabel+'_reco'+ivar+'_nom'+sel+'_genBin' ].Clone(),
                            labelX=variables[ivar]['label'],
                            maxX=variables[ivar]['bins'][-1],
                            tlegendAlignment=variables[ivar]['alignLeg'],
@@ -1871,22 +1991,25 @@ def runPlots_DijetSel(
         ######### Saving Histograms
         def renamingHistos( dictHistos ):
             for isam, hist in dictHistos.items():
+                print(isam,hist)
                 ihis = hist.Clone()
                 ihis.SetName(isam)
                 ihis.SetTitle(isam)
                 ihis.Write()
 
-        outputRootName = outputDir+'/outputHistograms_main_'+signalLabel+'_alt_'+altSignalLabel+'.root'
+        outputRootName = outputDir+'/DataMC_main_'+signalLabel+'_alt0_'+alt0SignalLabel+'.root'
         print ('|------> Saving histograms in rootfile: ', outputRootName)
         outputRoot = ROOT.TFile.Open( outputRootName, 'recreate' )
         renamingHistos( signalHistos )
         if not('self' in process.lower()):
-            renamingHistos( altSignalHistos )
+            renamingHistos( alt0SignalHistos )
+            renamingHistos( alt1SignalHistos )
+            #renamingHistos( alt2SignalHistos )
         
         renamingHistos( dataHistos )
         renamingHistos( allHistos )
         
-        tunfolder.Write()
+        #tunfolder.Write()
         outputRoot.Close()
 
         #print ('|------> Saving histograms in yodafile: ', outputRootName.replace('.root', '.yoda'))
