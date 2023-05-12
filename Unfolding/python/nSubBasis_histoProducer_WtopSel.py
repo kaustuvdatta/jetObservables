@@ -1,10 +1,3 @@
-'''
-import uproot
-from uproot import *
-import coffea
-'''
-
-
 from coffea import processor
 import coffea.processor
 from coffea.processor import defaultdict_accumulator,dict_accumulator#,IterativeExecutor,FuturesExecutor
@@ -62,66 +55,66 @@ class nSubBasis_unfoldingHistoProd_WtopSel(processor.ProcessorABC):
 
         self.dict_variables_kinematics_AK8 = {
 
-                                            "_pt": np.array([i for i in np.arange(170., 2570., 10.)]),
-                                            "_eta": np.array([i for i in np.arange(-2.2, 2.2, 0.2)]),
-                                            "_y": np.array([i for i in np.arange(-2.2, 2.2, 0.2)]),
-                                            "_phi": np.array([i for i in np.arange(-3.2, 3.2, 0.2)]),
-                                            "_mass": np.array([i for i in np.arange(0., 300., 5.)]),
-                                            "_msoftdrop": np.array([i for i in np.arange(0., 300, 5.)]),
+                                            "_pt": np.array([i for i in np.arange(170., 2510., 10.)]) if 'WSel' in selection else  np.array([i for i in np.arange(300., 2510., 10.)]),
+                                            "_eta": np.array([i for i in np.arange(-2.2, 2.4, 0.2)]),
+                                            "_y": np.array([i for i in np.arange(-2.2, 2.4, 0.2)]),
+                                            "_phi": np.array([i for i in np.arange(-3.2, 3.4, 0.2)]),
+                                            "_mass": np.array([i for i in np.arange(0., 305., 5.)]),
+                                            "_msoftdrop": np.array([i for i in np.arange(0., 305., 5.)]),
 
                                         } 
 
         self.dict_variables_kinematics_Muon = {
 
-                                            "_pt": np.array([i for i in np.arange(170., 2570., 10.)]),
-                                            "_eta": np.array([i for i in np.arange(-2.2, 2.2, 0.2)]),
-                                            "_y": np.array([i for i in np.arange(-2.2, 2.2, 0.2)]),
-                                            "_phi": np.array([i for i in np.arange(-3.2, 3.2, 0.2)]),
-                                            "_mass": np.array([i for i in np.arange(0., 300., 5.)]),
+                                            "_pt": np.array([i for i in np.arange(50., 1610., 10.)]),
+                                            "_eta": np.array([i for i in np.arange(-2.2, 2.4, 0.2)]),
+                                            "_y": np.array([i for i in np.arange(-2.2, 2.4, 0.2)]),
+                                            "_phi": np.array([i for i in np.arange(-3.2, 3.4, 0.2)]),
+                                            "_mass": np.array([i for i in np.arange(0., 305., 5.)]),
 
                                         } 
 
         self.dict_variables_kinematics_LeptW = {
 
-                                            "_pt": np.array([i for i in np.arange(170., 2570., 10.)]),
-                                            "_eta": np.array([i for i in np.arange(-2.2, 2.2, 0.2)]),
-                                            "_y": np.array([i for i in np.arange(-2.2, 2.2, 0.2)]),
-                                            "_phi": np.array([i for i in np.arange(-3.2, 3.2, 0.2)]),
-                                            "_mass": np.array([i for i in np.arange(0., 300., 5.)]),
+                                            "_pt": np.array([i for i in np.arange(100., 1810., 10.)]),
+                                            "_eta": np.array([i for i in np.arange(-2.2, 2.4, 0.2)]),
+                                            "_y": np.array([i for i in np.arange(-2.2, 2.4, 0.2)]),
+                                            "_phi": np.array([i for i in np.arange(-3.2, 3.4, 0.2)]),
+                                            "_mass": np.array([i for i in np.arange(0., 305., 5.)]),
 
                                         } 
 
         self.dict_variables_kinematics_AK4Had = {
 
-                                            "_pt": np.array([i for i in np.arange(170., 2570., 10.)]),
-                                            "_eta": np.array([i for i in np.arange(-2.2, 2.2, 0.2)]),
-                                            "_y": np.array([i for i in np.arange(-2.2, 2.2, 0.2)]),
-                                            "_phi": np.array([i for i in np.arange(-3.2, 3.2, 0.2)]),
-                                            "_mass": np.array([i for i in np.arange(0., 300., 5.)]),
+                                            "_pt": np.array([i for i in np.arange(30., 1810., 10.)]),
+                                            "_eta": np.array([i for i in np.arange(-2.2, 2.4, 0.2)]),
+                                            "_y": np.array([i for i in np.arange(-2.2, 2.4, 0.2)]),
+                                            "_phi": np.array([i for i in np.arange(-3.2, 3.4, 0.2)]),
+                                            "_mass": np.array([i for i in np.arange(0., 305., 5.)]),
 
                                         }
 
         self.dict_variables_kinematics_MET = {
 
-                                            "_pt": np.array([i for i in np.arange(170., 2570., 10.)]),
-                                            "_phi": np.array([i for i in np.arange(-3.2, 3.2, 0.2)]),
+                                            "_pt": np.array([i for i in np.arange(30., 1010., 10.)]),
+                                            "_phi": np.array([i for i in np.arange(-3.2, 3.4, 0.2)]),
 
                                         } 
 
         self.dict_variables_reco = { 
-                                        "good_nPVs": np.array([i for i in np.arange(0., 100, 1.)]),
-                                        "nRecoBtags": np.array([i for i in np.arange(0., 4, 1.)]),
-                                        "nRecoHadBtags": np.array([i for i in np.arange(0., 3, 1.)]),
-                                        "nRecoLepBtags": np.array([i for i in np.arange(0., 3, 1.)]),
-                                        "selRecoHadHemDeltaR": np.array([i for i in np.arange(0., 1., 0.05)]),
+                                        "good_nPVs": np.array([i for i in np.arange(0., 101, 1.)]),
+                                        "nRecoBtags": np.array([i for i in np.arange(0., 6, 1.)]),
+                                        "nRecoHadBtags": np.array([i for i in np.arange(0., 6, 1.)]),
+                                        "nRecoLepBtags": np.array([i for i in np.arange(0., 6, 1.)]),
+                                        "selRecoHadHemDeltaR": np.array([i for i in np.arange(0., 1.8, 0.05)]),
 
                                    }   
         
         self.dict_variables_gen = { 
-                                        "nGenBtags": np.array([i for i in np.arange(0., 4., 1.)]),
-                                        "nGenHadBtags": np.array([i for i in np.arange(0., 3., 1.)]),
-                                        "nGenLepBtags": np.array([i for i in np.arange(0., 3., 1.)]),
-                                        "selGenHadHemDeltaR": np.array([i for i in np.arange(0., 1., 0.05)]),
+                                        "nGenBtags": np.array([i for i in np.arange(0., 6., 1.)]),
+                                        "nGenHadBtags": np.array([i for i in np.arange(0., 6., 1.)]),
+                                        "nGenLepBtags": np.array([i for i in np.arange(0., 6., 1.)]),
+                                        "selGenHadHemDeltaR": np.array([i for i in np.arange(0., 1.8, 0.05)]),
 
                                    }   
         self.dict_variables_toUnfold = {
@@ -141,12 +134,12 @@ class nSubBasis_unfoldingHistoProd_WtopSel(processor.ProcessorABC):
                     "_tau_2_3": np.array([(i/1000) for i in np.arange(0.*1000, 0.2*1001)]),
                     "_tau_2_4": np.array([(i/1000) for i in np.arange(0.*1000, 0.2*1001)]),
                     "_tau_2_5": np.array([(i/1000) for i in np.arange(0.*1000, 0.2*1001)]),
-                    "_tau21": np.array([(i/1000) for i in np.arange(0.*1000, 1.6*1001)]),#for one-pass kT minimization as per CMS
-                    "_tau32": np.array([(i/1000) for i in np.arange(0.*1000, 1.6*1001)]),#for one-pass kT minimization as per CMS
-                    "_tau21_WTA": np.array([(i/1000) for i in np.arange(0.*1000, 1.4*1001)]),#for WTA-kT for comparison
-                    "_tau32_WTA": np.array([(i/1000) for i in np.arange(0.*1000, 1.4*1001)]),#for WTA-kT for comparison
-                    "_tau21_exkT": np.array([(i/1000) for i in np.arange(0.*1000, 2.*1001)]),#for excl.-kT and E-scheme as per basis
-                    "_tau32_exkT": np.array([(i/1000) for i in np.arange(0.*1000, 2.*1001)]),#for excl.-kT and E-scheme as per basis
+                    "_tau21": np.array([(i/1000) for i in np.arange(0.*1000, 1.4*1001)]),#for one-pass kT minimization as per CMS
+                    "_tau32": np.array([(i/1000) for i in np.arange(0.*1000, 1.4*1001)]),#for one-pass kT minimization as per CMS
+                    "_tau21_WTA": np.array([(i/1000) for i in np.arange(0.*1000, 1.2*1001)]),#for WTA-kT for comparison
+                    "_tau32_WTA": np.array([(i/1000) for i in np.arange(0.*1000, 1.2*1001)]),#for WTA-kT for comparison
+                    "_tau21_exkT": np.array([(i/1000) for i in np.arange(0.*1000, 1.6*1001)]),#for excl.-kT and E-scheme as per basis
+                    "_tau32_exkT": np.array([(i/1000) for i in np.arange(0.*1000, 1.6*1001)]),#for excl.-kT and E-scheme as per basis
                     #"_mass": np.array([(i/2.0) for i in np.arange(0.*2, 300*2.1)]),
                     #"_msoftdrop": np.array([(i/2.0) for i in np.arange(0.*2, 300*2.1)]),
                     #"_pt": np.array([(i/2.0) for i in np.arange(170.*2, 2500.*2.1)]),
@@ -179,7 +172,10 @@ class nSubBasis_unfoldingHistoProd_WtopSel(processor.ProcessorABC):
         self.W_ptmin = 200.
         self.W_mSDmin = 60.
         self.W_mSDmax = 120.
-
+        self.LeptW_ptmin = 150.
+        self.Mu_ptmin = 55.
+        self.MET_ptmin = 50.
+        self.AK4_ptmin = 30.
     #@property
     #def accumulator(self):
     #    return self._accumulator    
@@ -206,14 +202,14 @@ class nSubBasis_unfoldingHistoProd_WtopSel(processor.ProcessorABC):
             s='_nom' if (sys.startswith(self.sysWeightList)) else sys
             
                 
-            topRecoMask = (events[f'selRecoJets{s}_pt']>self.top_ptmin) & (events[f'selRecoJets{s}_mass']>self.top_mSDmin) & (events[f'selRecoJets{s}_mass']<self.top_mSDmax) & (events[f'selRecoHadHemDeltaR{s}']<0.8) & (events[f'totalRecoWeight{s}']!=0.)
+            topRecoMask = (events[f'selRecoJets{s}_pt']>self.top_ptmin) & (events[f'selRecoJets{s}_msoftdrop']>self.top_mSDmin) & (events[f'selRecoJets{s}_msoftdrop']<self.top_mSDmax) & (events[f'selRecoHadHemDeltaR{s}']<0.8) & (events[f'selRecoAK4bjetHadHem{s}_pt']>self.AK4_ptmin) & (events[f'selRecoLeptW{s}_pt']>self.LeptW_ptmin ) & (events[f'selRecoMu{s}_pt']>self.Mu_ptmin ) & (events[f'selRecoMET{s}_pt']>self.MET_ptmin ) & (events[f'totalRecoWeight{s}']!=0.)
 
-            WRecoMask = (events[f'selRecoJets{s}_pt']>self.W_ptmin) & (events[f'selRecoJets{s}_mass']>self.W_mSDmin) & (events[f'selRecoJets{s}_mass']<self.W_mSDmax) & (events[f'selRecoHadHemDeltaR{s}']>0.8) & (events[f'selRecoHadHemDeltaR{s}']<1.6) & (events[f'totalRecoWeight{s}']!=0.)
+            WRecoMask = (events[f'selRecoJets{s}_pt']>self.W_ptmin) & (events[f'selRecoJets{s}_msoftdrop']>self.W_mSDmin) & (events[f'selRecoJets{s}_msoftdrop']<self.W_mSDmax) & (events[f'selRecoHadHemDeltaR{s}']>0.8) & (events[f'selRecoAK4bjetHadHem{s}_pt']>self.AK4_ptmin) & (events[f'selRecoHadHemDeltaR{s}']<1.6) & (events[f'selRecoLeptW{s}_pt']>self.LeptW_ptmin ) & (events[f'selRecoMu{s}_pt']>self.Mu_ptmin ) & (events[f'selRecoMET{s}_pt']>self.MET_ptmin ) & (events[f'totalRecoWeight{s}']!=0.)
 
             if self.isMC:# or self.isSigMC:                       
-                topGenMask = (events[f'selGenJets_nom_pt']>self.top_ptmin) & (events[f'selGenJets_nom_mass']>self.top_mSDmin) & (events[f'selGenJets_nom_mass']<self.top_mSDmax) & (events[f'selGenHadHemDeltaR_nom']<0.8) & (events[f'evtGenWeight_nom'] !=0.)
+                topGenMask = (events[f'selGenJets_nom_pt']>self.top_ptmin) & (events[f'selGenJets_nom_msoftdrop']>self.top_mSDmin) & (events[f'selGenJets_nom_msoftdrop']<self.top_mSDmax) & (events[f'selGenHadHemDeltaR_nom']<0.8) & (events[f'selGenAK4bjetHadHem_nom_pt']>self.AK4_ptmin) & (events[f'selGenLeptW_nom_pt']>self.LeptW_ptmin ) & (events[f'selGenMu_nom_pt']>self.Mu_ptmin ) & (events[f'selGenMET_nom_pt']>self.MET_ptmin ) & (events[f'evtGenWeight_nom'] !=0.) 
 
-                WGenMask = (events[f'selGenJets_nom_pt']>self.W_ptmin) & (events[f'selGenJets_nom_mass']>self.W_mSDmin) & (events[f'selGenJets_nom_mass']<self.W_mSDmax) & (events[f'selGenHadHemDeltaR_nom']>0.8) & (events[f'selGenHadHemDeltaR_nom']<1.6) & (events[f'evtGenWeight_nom'] !=0.)
+                WGenMask = (events[f'selGenJets_nom_pt']>self.W_ptmin) & (events[f'selGenJets_nom_msoftdrop']>self.W_mSDmin) & (events[f'selGenJets_nom_msoftdrop']<self.W_mSDmax) & (events[f'selGenHadHemDeltaR_nom']>0.8) & (events[f'selGenHadHemDeltaR_nom']<1.6) & (events[f'selGenAK4bjetHadHem_nom_pt']>self.AK4_ptmin) & (events[f'selGenLeptW_nom_pt']>self.LeptW_ptmin ) & (events[f'selGenMu_nom_pt']>self.Mu_ptmin ) & (events[f'selGenMET_nom_pt']>self.MET_ptmin ) & (events[f'evtGenWeight_nom'] !=0.)
 
             if self.verbose:
                 print(s,sys,len(events[topRecoMask]),len(events[topGenMask]),len(events[WRecoMask]),len(events[WGenMask]))
@@ -357,7 +353,7 @@ class nSubBasis_unfoldingHistoProd_WtopSel(processor.ProcessorABC):
                     
                 
                 if sys.endswith('nom'):
-                    listOfMiscOutputHistosNames = [k for k,h in output.items() if ((not ('Jet' in k) and ('nom' in k)) and ('Mu' in k or 'LeptW' in k or 'MET' in k or 'AK4bjetHadHem' in k or 'nPV' in k))]
+                    listOfMiscOutputHistosNames = [k for k,h in output.items() if ((not ('Jet' in k) and ('nom' in k)) and ('Mu' in k or 'LeptW' in k or 'MET' in k or 'AK4bjetHadHem' in k or 'nPV' in k or 'DeltaR' in k or 'Btag' in k))]
                     
                     if self.verbose: 
                         print (listOfMiscOutputHistosNames[0:10], sys)
@@ -372,39 +368,45 @@ class nSubBasis_unfoldingHistoProd_WtopSel(processor.ProcessorABC):
                         if 'Mu' in key: 
                             dicto=self.dict_variables_kinematics_Muon
                             for i in dicto:
-                                if 'reco' in key.lower(): 
-                                    output[key].fill(events[f'selRecoMu{s}{i}'][selRecoMask],weight=totalRecoWeight[selRecoMask], threads=4)
-                                elif 'gen' in key.lower():
-                                    output[key].fill(events[f'selGenMu{s}{i}'][selGenMask],weight=totalGenWeight[selGenMask], threads=4)
+                                if i in key:
+                                    if 'reco' in key.lower(): 
+                                        output[key].fill(events[f'selRecoMu{s}{i}'][selRecoMask],weight=totalRecoWeight[selRecoMask], threads=4)
+                                    elif 'gen' in key.lower():
+                                        output[key].fill(events[f'selGenMu{s}{i}'][selGenMask],weight=totalGenWeight[selGenMask], threads=4)
 
                         elif 'MET' in key: 
                             dicto=self.dict_variables_kinematics_MET
                             for i in dicto:
-                                if 'reco' in key.lower(): 
-                                    output[key].fill(events[f'selRecoMET{s}{i}'][selRecoMask],weight=totalRecoWeight[selRecoMask], threads=4)
-                                elif 'gen' in key.lower():
-                                    output[key].fill(events[f'selGenMET{s}{i}'][selGenMask],weight=totalGenWeight[selGenMask], threads=4)
+                                if i in key:
+                                    if 'reco' in key.lower(): 
+                                        output[key].fill(events[f'selRecoMET{s}{i}'][selRecoMask],weight=totalRecoWeight[selRecoMask], threads=4)
+                                    elif 'gen' in key.lower():
+                                        output[key].fill(events[f'selGenMET{s}{i}'][selGenMask],weight=totalGenWeight[selGenMask], threads=4)
 
                         elif 'LeptW' in key: 
                             dicto=self.dict_variables_kinematics_LeptW
                             for i in dicto:
-                                if 'reco' in key.lower(): 
-                                    output[key].fill(events[f'selRecoLeptW{s}{i}'][selRecoMask],weight=totalRecoWeight[selRecoMask], threads=4)
-                                elif 'gen' in key.lower():
-                                    output[key].fill(events[f'selGenLeptW{s}{i}'][selGenMask],weight=totalGenWeight[selGenMask], threads=4)
+                                if i in key:
+                                    if 'reco' in key.lower(): 
+                                        output[key].fill(events[f'selRecoLeptW{s}{i}'][selRecoMask],weight=totalRecoWeight[selRecoMask], threads=4)
+                                    elif 'gen' in key.lower():
+                                        output[key].fill(events[f'selGenLeptW{s}{i}'][selGenMask],weight=totalGenWeight[selGenMask], threads=4)
 
-                        elif 'AK4bjetHadHem' in key: 
+                        elif 'AK4bjetHadHem' in key and not ('DeltaR' in key): 
                             dicto=self.dict_variables_kinematics_AK4Had
                             for i in dicto:
-                                if 'reco' in key.lower(): 
-                                    output[key].fill(events[f'selRecoAK4bjetHadHem{s}{i}'][selRecoMask],weight=totalRecoWeight[selRecoMask], threads=4)
-                                elif 'gen' in key.lower():
-                                    output[key].fill(events[f'selGenAK4bjetHadHem{s}{i}'][selGenMask],weight=totalGenWeight[selGenMask], threads=4)
+                                if i in key:
+                                    if 'reco' in key.lower(): 
+                                        output[key].fill(events[f'selRecoAK4bjetHadHem{s}{i}'][selRecoMask], weight=totalRecoWeight[selRecoMask], threads=4)
+                                    elif 'gen' in key.lower() and self.isMC:
+                                        output[key].fill(events[f'selGenAK4bjetHadHem{s}{i}'][selGenMask], weight=totalGenWeight[selGenMask], threads=4)
                 
-                        elif 'HadHemDeltaR' in key:
+                        elif 'DeltaR' in key:
+                            #print("DeltaR",key)
                             if 'reco' in key.lower():
+                                print(events[f'selRecoHadHemDeltaR{s}'][selRecoMask],events[f'selGenHadHemDeltaR{s}'][selGenMask]if self.isMC else None)
                                 output[key].fill(events[f'selRecoHadHemDeltaR{s}'][selRecoMask], weight=totalRecoWeight[selRecoMask] )
-                            elif 'gen' in key.lower():
+                            elif 'gen' in key.lower() and self.isMC:
                                 output[key].fill(events[f'selGenHadHemDeltaR{s}'][selGenMask], weight=totalGenWeight[selGenMask])
                                   
                         elif 'good_nPVs' in key:
@@ -413,8 +415,20 @@ class nSubBasis_unfoldingHistoProd_WtopSel(processor.ProcessorABC):
                         elif 'nRecoBtags' in key:
                             output[key].fill(events[f'nRecoBtags{s}'][selRecoMask], weight=totalRecoWeight[selRecoMask] )
                             
-                        elif 'nGenBtags' in key:
+                        elif 'nGenBtags' in key and self.isMC:
                             output[key].fill(events[f'nGenBtags{s}'][selGenMask], weight=totalRecoWeight[selGenMask] )
+                                               
+                        elif 'nRecoHadBtags' in key:
+                            output[key].fill(events[f'nRecoHadBtags{s}'][selRecoMask], weight=totalRecoWeight[selRecoMask] )
+                            
+                        elif 'nGenHadBtags' in key and self.isMC:
+                            output[key].fill(events[f'nGenHadBtags{s}'][selGenMask], weight=totalRecoWeight[selGenMask] )
+                        
+                        elif 'nRecoLepBtags' in key:
+                            output[key].fill(events[f'nRecoLepBtags{s}'][selRecoMask], weight=totalRecoWeight[selRecoMask] )
+                            
+                        elif 'nGenLepBtags' in key and self.isMC:
+                            output[key].fill(events[f'nGenLepBtags{s}'][selGenMask], weight=totalRecoWeight[selGenMask] )
                                   
                 listOfJetOutputHistosNames = [k for k,h in output.items() if ((('Jet' in k) and (sys in k)) or ('resol' in k and not(sys in k)))] #prevent needless iterations
                 if self.verbose: print (listOfJetOutputHistosNames[0:10],sys,s)
@@ -630,7 +644,7 @@ class nSubBasis_unfoldingHistoProd_WtopSel(processor.ProcessorABC):
 
                         #making control histos only for nominal case for now
                             
-                        if 'muon' in iO.lower():
+                        if 'mu' in iO.lower():
                             for x, y in self.dict_variables_kinematics_Muon.items():
                                 dictOfHists[itype+iO+x+sysUnc+isel] = (hist.Hist.new.Variable(y,name=itype+iO+x+sysUnc+isel, label=f'{itype} muon {x}').Weight())        
                                 
