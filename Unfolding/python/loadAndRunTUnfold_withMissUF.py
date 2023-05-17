@@ -1,5 +1,5 @@
 from collections import OrderedDict
-import copy
+i mport copy
 import pprint 
 import ROOT
 import numpy as np
@@ -53,13 +53,13 @@ textBox.SetTextAlign(12)
 def runTUnfold(
                 dataFile, sigFiles, bkgFiles, variables, sel, sysUncert, process, ext, lumi=1., sysSignalLabels=[],
                 year='2017',runMLU=False, sysSigFiles=[], varSigFiles=[], outputFolder='../Results',
-                version='_Feb23', mainMC='HTbin', altMC='Ptbin',verbose=False
+                version='_Feb23', mainMC='MLM_HTbin', altMC='H7MLM_HTbin', alt1='Ptbin', alt2='HTbin', verbose=False
               ):
     
     
     colors = [ 2, 4,  9, 8, 28, 30, 42, 13, 12, 40, 46, 3, 24, 26, 41, 45, 48, 49, 37, 38, 33, 17]
 
-    if mainMC.startswith('MLM_HTbin'):
+        if mainMC.startswith('MLM_HTbin'):
         signalLabelBegin = 'MLMQCD_HT'
         signalLabel = 'MLMQCD_HT2000toInf'
 
@@ -67,25 +67,66 @@ def runTUnfold(
         signalLabelBegin = 'QCD_HT'
         signalLabel = 'QCD_HT2000toInf'
 
+    elif mainMC.startswith('Ptbin'):
+        signalLabelBegin = 'QCD_Pt_'
+        signalLabel = 'QCD_Pt_3200toInf'
+
     elif mainMC.startswith('H7MLM_HTbin'):
         signalLabelBegin = 'H7MLMQCD_HT'
         signalLabel = 'H7MLMQCD_HT2000toInf'
 
-    if altMC.startswith('MLM_HTbin'):
+    sysSignalLabelBegin = 'sysMLMQCD' 
+
+    if altMCstartswith('MLM_HTbin'):
         altSignalLabelBegin = 'MLMQCD_HT'
         altSignalLabel = 'MLMQCD_HT2000toInf'
-    
-    elif altMC.startswith('HTbin'):
+
+    elif altMCstartswith('HTbin'):
         altSignalLabelBegin = 'QCD_HT'
         altSignalLabel = 'QCD_HT2000toInf'
-    
-    elif altMC.startswith('H7MLM_HTbin'):
+
+    elif altMCstartswith('Ptbin'):
+        altSignalLabelBegin = 'QCD_Pt_'
+        altSignalLabel = 'QCD_Pt_3200toInf'
+
+    elif altMCstartswith('H7MLM_HTbin'):
         altSignalLabelBegin = 'H7MLMQCD_HT'
         altSignalLabel = 'H7MLMQCD_HT2000toInf'
-        #altSignalLabel = 'QCD_Pt-15to7000'
+
+    if alt1.startswith('MLM_HTbin'):
+        alt1SignalLabelBegin = 'MLMQCD_HT'
+        alt1SignalLabel = 'MLMQCD_HT2000toInf'
+
+    elif alt1.startswith('HTbin'):
+        alt1SignalLabelBegin = 'QCD_HT'
+        alt1SignalLabel = 'QCD_HT2000toInf'
+
+    elif alt1.startswith('Ptbin'):
+        alt1SignalLabelBegin = 'QCD_Pt_'
+        alt1SignalLabel = 'QCD_Pt_3200toInf'
+
+    elif alt1.startswith('H7MLM_HTbin'):
+        alt1SignalLabelBegin = 'H7MLMQCD_HT'
+        alt1SignalLabel = 'H7MLMQCD_HT2000toInf'
+        
+    if alt2.startswith('MLM_HTbin'):
+        alt2SignalLabelBegin = 'MLMQCD_HT'
+        alt2SignalLabel = 'MLMQCD_HT2000toInf'
+
+    elif alt2.startswith('HTbin'):
+        alt2SignalLabelBegin = 'QCD_HT'
+        alt2SignalLabel = 'QCD_HT2000toInf'
+
+    elif alt2.startswith('Ptbin'):
+        alt2SignalLabelBegin = 'QCD_Pt_'
+        alt2SignalLabel = 'QCD_Pt_3200toInf'
+
+    elif alt2.startswith('H7MLM_HTbin'):
+        alt2SignalLabelBegin = 'H7MLMQCD_HT'
+        alt2SignalLabel = 'H7MLMQCD_HT2000toInf'
     
     
-    print ("Labels:", signalLabelBegin,altSignalLabelBegin)
+    print ("Labels:", signalLabelBegin,altSignalLabelBegin, alt1SignalLabelBegin, alt2SignalLabelBegin)
     
     
     sysSignalLabelBegin = 'sysMLMQCD_' 
@@ -279,10 +320,17 @@ def runTUnfold(
             mainSigFiles = { k:v for (k,v) in sigFiles.items() if k.startswith(signalLabelBegin)  }
             signalHistos = loadHistograms( mainSigFiles, ivar, sel, sysUnc=[], respOnly=False, lumi=lumi, year=year, process=process, variables=variables,outputFolder=outputFolder )
             tmp2SigFiles = { k:v for (k,v) in sigFiles.items() if k.startswith(altSignalLabelBegin)  }
+            alt1SigFiles = { k:v for (k,v) in sigFiles.items() if k.startswith(alt1SignalLabelBegin)  }
+            alt2SigFiles = { k:v for (k,v) in sigFiles.items() if k.startswith(alt2SignalLabelBegin)  }
+
+
+            if not process.startswith('MCSelfClosure'): 
+                altSignalHistos = loadHistograms( tmp2SigFiles, ivar, sel, sysUnc=[], isMC=True, respOnly=False, lumi=lumi, year=year, process=process, variables=variables,outputFolder=outputFolder )
+                alt1SignalHistos = loadHistograms( alt1SigFiles, ivar, sel, sysUnc=[], isMC=True, respOnly=False, lumi=lumi, year=year, process=process, variables=variables,outputFolder=outputFolder )
+                alt2SignalHistos = loadHistograms( alt2SigFiles, ivar, sel, sysUnc=[], isMC=True, respOnly=False, lumi=lumi, year=year, process=process, variables=variables,outputFolder=outputFolder )
             
-            if not process.startswith('MCSelfClosure'): altSignalHistos = loadHistograms( tmp2SigFiles, ivar, sel, sysUnc=[], isMC=True, respOnly=False, lumi=lumi, year=year, process=process, variables=variables,outputFolder=outputFolder )
-            
-            if not process.endswith('Closure'): sysSignalHistos = loadHistograms( sysSigFiles, ivar, sel, sysUnc=sysUncert, respOnly=False, isMC=True, lumi=lumi, year=year, process=process, variables=variables,outputFolder=outputFolder)
+            if not process.endswith('Closure'): 
+                sysSignalHistos = loadHistograms( sysSigFiles, ivar, sel, sysUnc=sysUncert, respOnly=False, isMC=True, lumi=lumi, year=year, process=process, variables=variables,outputFolder=outputFolder)
             
             #if process.startswith('data'):# and selection.startswith(('_W','_top')): varSignalHistos = loadHistograms( varSigFiles, ivar, sel, sysUnc=[], respOnly=False, isMC=True, lumi=lumi, year=year, process=process, variables=variables)
             bkgHistos = {}#loadHistograms( bkgFiles, ivar, sel, sysUnc=[], lumi=lumi, year=year, process=process, variables=variables,outputFolder=outputFolder ) if process.startswith('data') else {}
@@ -302,11 +350,20 @@ def runTUnfold(
             if not process.startswith('MCSelfClosure'):
                 
                 altSignalHistos[altSignalLabel+'_fakereco'+ivar+'_nom'+sel] = altSignalHistos[altSignalLabel+'_reco'+ivar+'_nom'+sel].Clone()
-                altSignalHistos[altSignalLabel+'_fakereco'+ivar+'_nom'+sel].Add( altSignalHistos[altSignalLabel+'_truereco'+ivar+'_nom'+sel], -1 )
-
-                
+                altSignalHistos[altSignalLabel+'_fakereco'+ivar+'_nom'+sel].Add( altSignalHistos[altSignalLabel+'_truereco'+ivar+'_nom'+sel], -1 )                
                 altSignalHistos[altSignalLabel+'_missgen'+ivar+'_nom'+sel] = altSignalHistos[altSignalLabel+'_gen'+ivar+'_nom'+sel].Clone()
-                altSignalHistos[altSignalLabel+'_missgen'+ivar+'_nom'+sel].Add( altSignalHistos[altSignalLabel+'_accepgen'+ivar+'_nom'+sel], -1 )          
+                altSignalHistos[altSignalLabel+'_missgen'+ivar+'_nom'+sel].Add( altSignalHistos[altSignalLabel+'_accepgen'+ivar+'_nom'+sel], -1 ) 
+
+                alt1SignalHistos[alt1SignalLabel+'_fakereco'+ivar+'_nom'+sel] = alt1SignalHistos[alt1SignalLabel+'_reco'+ivar+'_nom'+sel].Clone()
+                alt1SignalHistos[alt1SignalLabel+'_fakereco'+ivar+'_nom'+sel].Add( alt1SignalHistos[alt1SignalLabel+'_truereco'+ivar+'_nom'+sel], -1 )                
+                alt1SignalHistos[alt1SignalLabel+'_missgen'+ivar+'_nom'+sel] = alt1SignalHistos[alt1SignalLabel+'_gen'+ivar+'_nom'+sel].Clone()
+                alt1SignalHistos[alt1SignalLabel+'_missgen'+ivar+'_nom'+sel].Add( alt1SignalHistos[alt1SignalLabel+'_accepgen'+ivar+'_nom'+sel], -1 )                 
+
+                alt2SignalHistos[alt2SignalLabel+'_fakereco'+ivar+'_nom'+sel] = alt2SignalHistos[alt2SignalLabel+'_reco'+ivar+'_nom'+sel].Clone()
+                alt2SignalHistos[alt2SignalLabel+'_fakereco'+ivar+'_nom'+sel].Add( alt2SignalHistos[alt2SignalLabel+'_truereco'+ivar+'_nom'+sel], -1 )                
+                alt2SignalHistos[alt2SignalLabel+'_missgen'+ivar+'_nom'+sel] = alt2SignalHistos[alt2SignalLabel+'_gen'+ivar+'_nom'+sel].Clone()
+                alt2SignalHistos[alt2SignalLabel+'_missgen'+ivar+'_nom'+sel].Add( alt2SignalHistos[alt2SignalLabel+'_accepgen'+ivar+'_nom'+sel], -1 ) 
+
               
             if sel.startswith('_dijet'): 
                 if process.startswith("MC"):
@@ -455,7 +512,32 @@ def runTUnfold(
                             #print (ihsig)
                             altSignalHistos[ihsig].Scale( altscaleFactor )
                         elif ihsig.endswith('genBin'): altSignalHistos[ihsig].Scale( altscaleFactorGenBin )
-                
+
+                    print("Rescaling alternate signal MC 2")
+                    altscaleFactor = dataHistos['data_reco'+ivar+'_nom'+sel].Integral() / (alt1SignalHistos[ alt1SignalLabel+'_reco'+ivar+'_nom'+sel ].Integral()  )
+                    altscaleFactorGenBin = dataHistos['data_reco'+ivar+'_nom'+sel+'_genBin'].Integral() / ( alt1SignalHistos[alt1SignalLabel+'_reco'+ivar+'_nom'+sel+'_genBin'].Integral() )
+                    print ("Alt MC 2 SF genBin and recobin, respectively:",altscaleFactor,altscaleFactorGenBin)
+
+                    #allHistos[ 'allAltSigMCHisto' ].Scale( scaleFactor )
+                    #allHistos[ 'allAltSigMCHistoGenBin' ].Scale( altscaleFactorGenBin )
+                    for ihsig in alt1SignalHistos:
+                        if ihsig.endswith(sel):
+                            #print (ihsig)
+                            alt1SignalHistos[ihsig].Scale( altscaleFactor )
+                        elif ihsig.endswith('genBin'): alt1SignalHistos[ihsig].Scale( altscaleFactorGenBin )
+                    
+                    print("Rescaling alternate signal MC 3")
+                    altscaleFactor = dataHistos['data_reco'+ivar+'_nom'+sel].Integral() / (alt2SignalHistos[ alt2SignalLabel+'_reco'+ivar+'_nom'+sel ].Integral()  )
+                    altscaleFactorGenBin = dataHistos['data_reco'+ivar+'_nom'+sel+'_genBin'].Integral() / ( alt2SignalHistos[alt2SignalLabel+'_reco'+ivar+'_nom'+sel+'_genBin'].Integral() )
+                    print ("Alt MC 3 SF genBin and recobin, respectively:",altscaleFactor,altscaleFactorGenBin)
+
+                    #allHistos[ 'allAltSigMCHisto' ].Scale( scaleFactor )
+                    #allHistos[ 'allAltSigMCHistoGenBin' ].Scale( altscaleFactorGenBin )
+                    for ihsig in alt2SignalHistos:
+                        if ihsig.endswith(sel):
+                            #print (ihsig)
+                            alt2SignalHistos[ihsig].Scale( altscaleFactor )
+                        elif ihsig.endswith('genBin'): alt2SignalHistos[ihsig].Scale( altscaleFactorGenBin )
                 
 
             print ('|------> Unfolding '+ivar)
@@ -576,11 +658,32 @@ def runTUnfold(
                                             )
 
             ##### Defining input (data recoJet )
-            print ('|------> TUnfolding adding input:')
+            print ('|------> TUnfolding adding inputs for cross closure test:')
             #tunfolder.SetInput( dataHistos[ 'data_reco'+ivar+'_nom'+sel ].Clone() )
             #print (allHistos.keys())
             tunfolder_cross.SetInput( allHistos[ 'dataHisto' ])
-        
+            
+
+            tunfolder_cross2 = ROOT.TUnfoldDensity(
+                                            alt1SignalHistos[alt1SignalLabel+'_respWithMiss'+ivar+'_nom'+sel], ### response matrix. According to TUnfold, this distribution does NOT have to be normalized
+                                            ROOT.TUnfold.kHistMapOutputHoriz,  #### kHistMapOutputVert if x->reco and y->gen, kHistMapOutputHoriz if x->gen and y->reco
+                                            ROOT.TUnfold.kRegModeCurvature,   ##### Regularization Mode : ROOT.TUnfold.kRegModeCurvature regularizes based on the 2nd derivative of the output. More information wrt the other options can be gained from reading the source code
+                                            ROOT.TUnfold.kEConstraintNone,    ##### Constraint : TUnfold.kEConstraintNone meaning we do not constrain further, the other option is to force constraint of area. (Need to look into this!!)
+                                            ROOT.TUnfoldDensity.kDensityModeBinWidth  ##### Density Mode: ROOT.TUnfoldDensity.kDensityModeBinWidth uses the bin width to normalize the event rate in a given bin, accounting for non-uniformity in bin widths as discussed in section 7.2.1 of the TUnfold paper
+                                            )
+            tunfolder_cross2.SetInput( allHistos[ 'dataHisto' ])
+            
+            tunfolder_cross3 = ROOT.TUnfoldDensity(
+                                            alt2SignalHistos[alt2SignalLabel+'_respWithMiss'+ivar+'_nom'+sel], ### response matrix. According to TUnfold, this distribution does NOT have to be normalized
+                                            ROOT.TUnfold.kHistMapOutputHoriz,  #### kHistMapOutputVert if x->reco and y->gen, kHistMapOutputHoriz if x->gen and y->reco
+                                            ROOT.TUnfold.kRegModeCurvature,   ##### Regularization Mode : ROOT.TUnfold.kRegModeCurvature regularizes based on the 2nd derivative of the output. More information wrt the other options can be gained from reading the source code
+                                            ROOT.TUnfold.kEConstraintNone,    ##### Constraint : TUnfold.kEConstraintNone meaning we do not constrain further, the other option is to force constraint of area. (Need to look into this!!)
+                                            ROOT.TUnfoldDensity.kDensityModeBinWidth  ##### Density Mode: ROOT.TUnfoldDensity.kDensityModeBinWidth uses the bin width to normalize the event rate in a given bin, accounting for non-uniformity in bin widths as discussed in section 7.2.1 of the TUnfold paper
+                                            )
+            tunfolder_cross3.SetInput( allHistos[ 'dataHisto' ])
+            
+
+
         if process.startswith('data'):
             print ("Subtracting backgrounds")
             dummy=0
@@ -643,7 +746,7 @@ def runTUnfold(
                         sysSignalHistos[s[0]+'_respWithMiss'+ivar+sys+upDown+sel].Draw("colz")
                         can2DNorm.SaveAs(outputDir+ivar+'_from'+('Data' if process.startswith('data') else 'MC')+'_'+s[0]+sel+upDown+'Normalized_responseMatrix'+version+'.'+ext)
 
-                #### adding model uncertainty
+                #### adding model uncertainty *namely, PS uncertainty, a la MG5MLM+P8 vs MG5MLM+H7)
                 elif sys.startswith(('_model')):
                     #if not process.startswith('MCSelfClosure'):
                     #print('|------> TUnfolding adding modelUnc')
@@ -657,7 +760,38 @@ def runTUnfold(
                     altSignalHistos[altSignalLabel+'_respWithMiss'+ivar+'_nom'+sel].Draw("colz")
                     can2DNorm.SaveAs(outputDir+ivar+'_from'+('Data' if process.startswith('data') else 'MC')+'_'+altSignalLabel+sel+'Normalized_alt_responseMatrix'+version+'.'+ext)
                     dictUncHistos[sys] = altSignalHistos[altSignalLabel+'_reco'+ivar+'_nom'+sel].Clone()
-            
+                
+                #### adding model uncertainty *namely, PS uncertainty, a la MG5MLM+P8 vs MG5MLM+H7)
+                elif sys.startswith(('_genPS')):
+                    #if not process.startswith('MCSelfClosure'):
+                    #print('|------> TUnfolding adding modelUnc')
+                    tunfolder.AddSysError(
+                                        alt1SignalHistos[alt1SignalLabel+'_respWithMiss'+ivar+'_nom'+sel],
+                                        'genPSUncTotal',
+                                        ROOT.TUnfold.kHistMapOutputHoriz,
+                                        ROOT.TUnfoldSys.kSysErrModeMatrix, #### kSysErrModeMatrix the histogram sysError corresponds to an alternative response matrix. kSysErrModeShift the content of the histogram sysError are the absolute shifts of the response matrix. kSysErrModeRelative the content of the histogram sysError specifies the relative uncertainties
+                                        )
+                    can2DNorm = ROOT.TCanvas(ivar+'can2DNormAlt1Signal', ivar+'can2DNormAlt1Signal', 750, 500 )
+                    alt1SignalHistos[alt1SignalLabel+'_respWithMiss'+ivar+'_nom'+sel].Draw("colz")
+                    can2DNorm.SaveAs(outputDir+ivar+'_from'+('Data' if process.startswith('data') else 'MC')+'_'+alt1SignalLabel+sel+'Normalized_alt1_responseMatrix'+version+'.'+ext)
+                    dictUncHistos[sys] = alt1SignalHistos[alt1SignalLabel+'_reco'+ivar+'_nom'+sel].Clone()
+                
+                #### adding model uncertainty *namely, PS uncertainty, a la MG5MLM+P8 vs MG5MLM+H7)
+                elif sys.startswith(('_mergeScheme')):
+                    #if not process.startswith('MCSelfClosure'):
+                    #print('|------> TUnfolding adding modelUnc')
+                    tunfolder.AddSysError(
+                                        alt2SignalHistos[alt2SignalLabel+'_respWithMiss'+ivar+'_nom'+sel],
+                                        'mergeSchemeUncTotal',
+                                        ROOT.TUnfold.kHistMapOutputHoriz,
+                                        ROOT.TUnfoldSys.kSysErrModeMatrix, #### kSysErrModeMatrix the histogram sysError corresponds to an alternative response matrix. kSysErrModeShift the content of the histogram sysError are the absolute shifts of the response matrix. kSysErrModeRelative the content of the histogram sysError specifies the relative uncertainties
+                                        )
+                    can2DNorm = ROOT.TCanvas(ivar+'can2DNormAlt2Signal', ivar+'can2DNormAlt2Signal', 750, 500 )
+                    alt2SignalHistos[alt2SignalLabel+'_respWithMiss'+ivar+'_nom'+sel].Draw("colz")
+                    can2DNorm.SaveAs(outputDir+ivar+'_from'+('Data' if process.startswith('data') else 'MC')+'_'+alt2SignalLabel+sel+'Normalized_alt2_responseMatrix'+version+'.'+ext)
+                    dictUncHistos[sys] = alt2SignalHistos[alt2SignalLabel+'_reco'+ivar+'_nom'+sel].Clone()
+                
+
             
                 elif sys.startswith('_hdamp'): 
                     #if process.startswith('MC'): continue
