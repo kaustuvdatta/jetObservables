@@ -1,3 +1,10 @@
+'''
+import uproot
+from uproot import *
+import coffea
+'''
+
+
 from coffea import processor
 import coffea.processor
 from coffea.processor import defaultdict_accumulator,dict_accumulator#,IterativeExecutor,FuturesExecutor
@@ -55,18 +62,18 @@ class nSubBasis_unfoldingHistoProd_WtopSel(processor.ProcessorABC):
 
         self.dict_variables_kinematics_AK8 = {
 
-                                            "_pt": np.array([i for i in np.arange(170., 2510., 10.)]) if 'WSel' in selection else  np.array([i for i in np.arange(300., 2510., 10.)]),
+                                            "_pt": np.array([i for i in np.arange(170., 2580., 10.)]) if 'WSel' in selection else  np.array([i for i in np.arange(300., 2510., 10.)]),
                                             "_eta": np.array([i for i in np.arange(-2.2, 2.4, 0.2)]),
                                             "_y": np.array([i for i in np.arange(-2.2, 2.4, 0.2)]),
                                             "_phi": np.array([i for i in np.arange(-3.2, 3.4, 0.2)]),
-                                            "_mass": np.array([i for i in np.arange(0., 305., 5.)]),
-                                            "_msoftdrop": np.array([i for i in np.arange(0., 305., 5.)]),
+                                            "_mass": np.array([i for i in np.arange(0., 350., 5.)]),
+                                            "_msoftdrop": np.array([i for i in np.arange(0., 350., 5.)]),
 
                                         } 
 
         self.dict_variables_kinematics_Muon = {
 
-                                            "_pt": np.array([i for i in np.arange(50., 1610., 10.)]),
+                                            "_pt": np.array([i for i in np.arange(50., 1860., 10.)]),
                                             "_eta": np.array([i for i in np.arange(-2.2, 2.4, 0.2)]),
                                             "_y": np.array([i for i in np.arange(-2.2, 2.4, 0.2)]),
                                             "_phi": np.array([i for i in np.arange(-3.2, 3.4, 0.2)]),
@@ -76,7 +83,7 @@ class nSubBasis_unfoldingHistoProd_WtopSel(processor.ProcessorABC):
 
         self.dict_variables_kinematics_LeptW = {
 
-                                            "_pt": np.array([i for i in np.arange(100., 1810., 10.)]),
+                                            "_pt": np.array([i for i in np.arange(100., 2110., 10.)]),
                                             "_eta": np.array([i for i in np.arange(-2.2, 2.4, 0.2)]),
                                             "_y": np.array([i for i in np.arange(-2.2, 2.4, 0.2)]),
                                             "_phi": np.array([i for i in np.arange(-3.2, 3.4, 0.2)]),
@@ -86,7 +93,7 @@ class nSubBasis_unfoldingHistoProd_WtopSel(processor.ProcessorABC):
 
         self.dict_variables_kinematics_AK4Had = {
 
-                                            "_pt": np.array([i for i in np.arange(30., 1810., 10.)]),
+                                            "_pt": np.array([i for i in np.arange(30., 2040., 10.)]),
                                             "_eta": np.array([i for i in np.arange(-2.2, 2.4, 0.2)]),
                                             "_y": np.array([i for i in np.arange(-2.2, 2.4, 0.2)]),
                                             "_phi": np.array([i for i in np.arange(-3.2, 3.4, 0.2)]),
@@ -96,7 +103,7 @@ class nSubBasis_unfoldingHistoProd_WtopSel(processor.ProcessorABC):
 
         self.dict_variables_kinematics_MET = {
 
-                                            "_pt": np.array([i for i in np.arange(30., 1010., 10.)]),
+                                            "_pt": np.array([i for i in np.arange(30., 1240., 10.)]),
                                             "_phi": np.array([i for i in np.arange(-3.2, 3.4, 0.2)]),
 
                                         } 
@@ -106,7 +113,7 @@ class nSubBasis_unfoldingHistoProd_WtopSel(processor.ProcessorABC):
                                         "nRecoBtags": np.array([i for i in np.arange(0., 6, 1.)]),
                                         "nRecoHadBtags": np.array([i for i in np.arange(0., 6, 1.)]),
                                         "nRecoLepBtags": np.array([i for i in np.arange(0., 6, 1.)]),
-                                        "selRecoHadHemDeltaR": np.array([i for i in np.arange(0., 1.8, 0.05)]),
+                                        "selRecoHadHemDeltaR": np.array([i for i in np.arange(0., 2.05, 0.05)]),
 
                                    }   
         
@@ -114,7 +121,7 @@ class nSubBasis_unfoldingHistoProd_WtopSel(processor.ProcessorABC):
                                         "nGenBtags": np.array([i for i in np.arange(0., 6., 1.)]),
                                         "nGenHadBtags": np.array([i for i in np.arange(0., 6., 1.)]),
                                         "nGenLepBtags": np.array([i for i in np.arange(0., 6., 1.)]),
-                                        "selGenHadHemDeltaR": np.array([i for i in np.arange(0., 1.8, 0.05)]),
+                                        "selGenHadHemDeltaR": np.array([i for i in np.arange(0., 2.05, 0.05)]),
 
                                    }   
         self.dict_variables_toUnfold = {
@@ -170,12 +177,13 @@ class nSubBasis_unfoldingHistoProd_WtopSel(processor.ProcessorABC):
         self.top_mSDmin = 140.
         self.top_mSDmax = 250.
         self.W_ptmin = 200.
-        self.W_mSDmin = 60.
+        self.W_mSDmin = 65.
         self.W_mSDmax = 120.
         self.LeptW_ptmin = 150.
         self.Mu_ptmin = 55.
         self.MET_ptmin = 50.
         self.AK4_ptmin = 30.
+        self.genWeights = []
     #@property
     #def accumulator(self):
     #    return self._accumulator    
@@ -201,18 +209,38 @@ class nSubBasis_unfoldingHistoProd_WtopSel(processor.ProcessorABC):
             
             s='_nom' if (sys.startswith(self.sysWeightList)) else sys
             
+            ############ building event masks ############
+            
+            topRecoMask = (events[f'selRecoJets{s}_pt']>self.top_ptmin) & (events[f'selRecoJets{s}_msoftdrop']>self.top_mSDmin) & (events[f'selRecoJets{s}_msoftdrop']<self.top_mSDmax) & (events[f'selRecoHadHemDeltaR{s}']<0.8) & (events[f'selRecoLeptW{s}_pt']>self.LeptW_ptmin ) & (events[f'selRecoMu{s}_pt']>self.Mu_ptmin ) & (events[f'selRecoMET{s}_pt']>self.MET_ptmin ) & (events[f'totalRecoWeight{s}']!=0.) #& (events[f'nRecoBtags_nom']>1) & (events[f'nRecoHadBtags_nom']==1) 
+
+            WRecoMask = (events[f'selRecoJets{s}_pt']>self.W_ptmin) & (events[f'selRecoJets{s}_msoftdrop']>self.W_mSDmin) & (events[f'selRecoJets{s}_msoftdrop']<self.W_mSDmax) & (events[f'selRecoHadHemDeltaR{s}']>0.8) & (events[f'selRecoHadHemDeltaR{s}']<1.6) & (events[f'selRecoLeptW{s}_pt']>self.LeptW_ptmin ) & (events[f'selRecoMu{s}_pt']>self.Mu_ptmin ) & (events[f'selRecoMET{s}_pt']>self.MET_ptmin ) & (events[f'totalRecoWeight{s}']!=0.) #& (events[f'nRecoBtags_nom']>1) & (events[f'nRecoHadBtags_nom']==1) 
+            
+            if self.isMC:# or self.isSigMC:    
+                if sys.startswith(('_isr','_fsr','_pdf')):#,'_pdf''):
+                    extraWeights = events[f'{sys.split("_")[1]}{s}']
                 
-            topRecoMask = (events[f'selRecoJets{s}_pt']>self.top_ptmin) & (events[f'selRecoJets{s}_msoftdrop']>self.top_mSDmin) & (events[f'selRecoJets{s}_msoftdrop']<self.top_mSDmax) & (events[f'selRecoHadHemDeltaR{s}']<0.8) & (events[f'selRecoAK4bjetHadHem{s}_pt']>self.AK4_ptmin) & (events[f'selRecoLeptW{s}_pt']>self.LeptW_ptmin ) & (events[f'selRecoMu{s}_pt']>self.Mu_ptmin ) & (events[f'selRecoMET{s}_pt']>self.MET_ptmin ) & (events[f'totalRecoWeight{s}']!=0.)
+                    self.genWeights = events['evtGenWeight_nom']*extraWeights
+                    #genWeightsW = events['genWeight'][WRecoMask]*extraWeights[WRecoMask]
+                else:
+                    self.genWeights = events['evtGenWeight_nom']
+                    #genWeightsW = events['genWeight'][WRecoMask]
+                    
+                    
+                #if '_WSel' in self.selList:
+                #    self.genWeights=genWeightsW
 
-            WRecoMask = (events[f'selRecoJets{s}_pt']>self.W_ptmin) & (events[f'selRecoJets{s}_msoftdrop']>self.W_mSDmin) & (events[f'selRecoJets{s}_msoftdrop']<self.W_mSDmax) & (events[f'selRecoHadHemDeltaR{s}']>0.8) & (events[f'selRecoAK4bjetHadHem{s}_pt']>self.AK4_ptmin) & (events[f'selRecoHadHemDeltaR{s}']<1.6) & (events[f'selRecoLeptW{s}_pt']>self.LeptW_ptmin ) & (events[f'selRecoMu{s}_pt']>self.Mu_ptmin ) & (events[f'selRecoMET{s}_pt']>self.MET_ptmin ) & (events[f'totalRecoWeight{s}']!=0.)
+                #elif '_topSel' in self.selList: 
+                #    self.genWeights=genWeightstop
+                
+                topGenMask = (events[f'selGenJets_nom_pt']>self.top_ptmin) & (events[f'selGenJets_nom_msoftdrop']>self.top_mSDmin) & (events[f'selGenJets_nom_msoftdrop']<self.top_mSDmax) & (events[f'selGenHadHemDeltaR_nom']<0.8) & (events[f'selGenLeptW_nom_pt']>self.LeptW_ptmin ) & (events[f'selGenMu_nom_pt']>self.Mu_ptmin ) & (events[f'selGenMET_nom_pt']>self.MET_ptmin ) & (events[f'evtGenWeight_nom']!=0.) #& (events[f'nGenBtags_nom']>1) & (events[f'nGenHadBtags_nom']==1) 
 
-            if self.isMC:# or self.isSigMC:                       
-                topGenMask = (events[f'selGenJets_nom_pt']>self.top_ptmin) & (events[f'selGenJets_nom_msoftdrop']>self.top_mSDmin) & (events[f'selGenJets_nom_msoftdrop']<self.top_mSDmax) & (events[f'selGenHadHemDeltaR_nom']<0.8) & (events[f'selGenAK4bjetHadHem_nom_pt']>self.AK4_ptmin) & (events[f'selGenLeptW_nom_pt']>self.LeptW_ptmin ) & (events[f'selGenMu_nom_pt']>self.Mu_ptmin ) & (events[f'selGenMET_nom_pt']>self.MET_ptmin ) & (events[f'evtGenWeight_nom'] !=0.) 
+                WGenMask = (events[f'selGenJets_nom_pt']>self.W_ptmin) & (events[f'selGenJets_nom_msoftdrop']>self.W_mSDmin) & (events[f'selGenJets_nom_msoftdrop']<self.W_mSDmax) & (events[f'selGenHadHemDeltaR_nom']>0.8)  & (events[f'selGenHadHemDeltaR_nom']<1.6) & (events[f'selGenLeptW_nom_pt']>self.LeptW_ptmin ) & (events[f'selGenMu_nom_pt']>self.Mu_ptmin ) & (events[f'selGenMET_nom_pt']>self.MET_ptmin ) & (events[f'evtGenWeight_nom']!=0.) #& (events[f'nGenBtags_nom']>1) & (events[f'nGenHadBtags_nom']==1) 
 
-                WGenMask = (events[f'selGenJets_nom_pt']>self.W_ptmin) & (events[f'selGenJets_nom_msoftdrop']>self.W_mSDmin) & (events[f'selGenJets_nom_msoftdrop']<self.W_mSDmax) & (events[f'selGenHadHemDeltaR_nom']>0.8) & (events[f'selGenHadHemDeltaR_nom']<1.6) & (events[f'selGenAK4bjetHadHem_nom_pt']>self.AK4_ptmin) & (events[f'selGenLeptW_nom_pt']>self.LeptW_ptmin ) & (events[f'selGenMu_nom_pt']>self.Mu_ptmin ) & (events[f'selGenMET_nom_pt']>self.MET_ptmin ) & (events[f'evtGenWeight_nom'] !=0.)
-
+            
+            
+            
             if self.verbose:
-                print(s,sys,len(events[topRecoMask]),len(events[topGenMask]),len(events[WRecoMask]),len(events[WGenMask]))
+                print(s, sys, len(events[topRecoMask]), len(events[topGenMask]), len(events[WRecoMask]), len(events[WGenMask]), len(self.genWeights))
 
             if self.isSigMC:# and not(sys.startswith(self.sysWeightList)):
                 
@@ -225,12 +253,12 @@ class nSubBasis_unfoldingHistoProd_WtopSel(processor.ProcessorABC):
 
                 
                 if '_WSel' in self.selList:
-                    WtopRecoMask = (WRecoMask) & (~(topRecoMask|topGenMask))
-                    WtopGenMask = (WGenMask) & (~(topRecoMask|topGenMask))
+                    WtopRecoMask = (WRecoMask) #& (~(topRecoMask|topGenMask))
+                    WtopGenMask = (WGenMask) #& (~(topRecoMask|topGenMask))
 
                 elif '_topSel' in self.selList: 
-                    WtopRecoMask = (topRecoMask) & (~(WRecoMask|WGenMask))
-                    WtopGenMask = (topGenMask) & (~(WGenMask|WRecoMask))    
+                    WtopRecoMask = (topRecoMask) #& (~(WRecoMask|WGenMask))
+                    WtopGenMask = (topGenMask) #& (~(WGenMask|WRecoMask))    
 
             
                         
@@ -250,6 +278,7 @@ class nSubBasis_unfoldingHistoProd_WtopSel(processor.ProcessorABC):
                 
                 
                 if self.saveParquet:
+                    
                     events['selRecoMask']=selRecoMask
                     events['selGenMask']=selGenMask
                     events['trueRecoMask']=trueRecoMask
@@ -276,12 +305,12 @@ class nSubBasis_unfoldingHistoProd_WtopSel(processor.ProcessorABC):
                 
 
                 if '_WSel' in self.selList:
-                    WtopRecoMask = (WRecoMask) & (~(topRecoMask|topGenMask))
-                    WtopGenMask = (WGenMask) & (~(topRecoMask|topGenMask))
+                    WtopRecoMask = (WRecoMask) #& (~(topRecoMask|topGenMask))
+                    WtopGenMask = (WGenMask) #& (~(topRecoMask|topGenMask))
 
                 elif '_topSel' in self.selList: 
-                    WtopRecoMask = (topRecoMask) & (~(WRecoMask|WGenMask))
-                    WtopGenMask = (topGenMask) & (~(WGenMask|WRecoMask))    
+                    WtopRecoMask = (topRecoMask) #& (~(WRecoMask|WGenMask))
+                    WtopGenMask = (topGenMask) #& (~(WGenMask|WRecoMask))    
 
             
                         
@@ -319,10 +348,10 @@ class nSubBasis_unfoldingHistoProd_WtopSel(processor.ProcessorABC):
             elif not(self.isMC) and sys.endswith('nom'): 
                 
                 if '_WSel' in self.selList:
-                    WtopRecoMask = (WRecoMask) & (~(topRecoMask))
+                    WtopRecoMask = (WRecoMask) #& (~(topRecoMask))
 
                 elif '_topSel' in self.selList: 
-                    WtopRecoMask = (topRecoMask) & (~(WRecoMask))
+                    WtopRecoMask = (topRecoMask) #& (~(WRecoMask))
 
                        
                 selRecoMask = (WtopRecoMask) 
@@ -358,7 +387,7 @@ class nSubBasis_unfoldingHistoProd_WtopSel(processor.ProcessorABC):
                     if self.verbose: 
                         print (listOfMiscOutputHistosNames[0:10], sys)
                     
-                    totalRecoWeight = events[f'evtGenWeight_nom']*events[f'puWeightNom{s}']*events[f'l1prefiringWeightNom{s}']*events[f'btagWeightNom{s}']*events[f'leptonWeightNom{s}'] if self.isMC else events[f'totalRecoWeight_nom']
+                    totalRecoWeight = events[f'puWeightNom{s}']*events[f'l1prefiringWeightNom{s}']*events[f'btagWeightNom{s}']*events[f'leptonWeightNom{s}']*self.genWeights if self.isMC else events[f'totalRecoWeight_nom']#events[f'evtGenWeight_nom']*
                     totalGenWeight = events[f'evtGenWeight_nom'] if self.isMC else None
 
                     for histos in listOfMiscOutputHistosNames:
@@ -404,7 +433,7 @@ class nSubBasis_unfoldingHistoProd_WtopSel(processor.ProcessorABC):
                         elif 'DeltaR' in key:
                             #print("DeltaR",key)
                             if 'reco' in key.lower():
-                                print(events[f'selRecoHadHemDeltaR{s}'][selRecoMask],events[f'selGenHadHemDeltaR{s}'][selGenMask]if self.isMC else None)
+                                print(events[f'selRecoHadHemDeltaR{s}'][trueRecoMask],events[f'selGenHadHemDeltaR{s}'][accepGenMask]if self.isMC else None)
                                 output[key].fill(events[f'selRecoHadHemDeltaR{s}'][selRecoMask], weight=totalRecoWeight[selRecoMask] )
                             elif 'gen' in key.lower() and self.isMC:
                                 output[key].fill(events[f'selGenHadHemDeltaR{s}'][selGenMask], weight=totalGenWeight[selGenMask])
@@ -458,7 +487,7 @@ class nSubBasis_unfoldingHistoProd_WtopSel(processor.ProcessorABC):
                     # Decide what weights to use
                     if not (sys.startswith(self.sysWeightList)):
                         s=sys
-                        totalRecoWeight = events[f'evtGenWeight_nom']*events[f'puWeightNom{s}']*events[f'l1prefiringWeightNom{s}']*events[f'btagWeightNom{s}']*events[f'leptonWeightNom{s}'] if self.isMC else events[f'totalRecoWeight_nom']
+                        totalRecoWeight = self.genWeights*events[f'puWeightNom{s}']*events[f'l1prefiringWeightNom{s}']*events[f'btagWeightNom{s}']*events[f'leptonWeightNom{s}'] if self.isMC else events[f'totalRecoWeight_nom']
                         totalGenWeight = events[f'evtGenWeight_nom'] if self.isMC else None
                     else:
                         if self.isSigMC:
@@ -466,23 +495,23 @@ class nSubBasis_unfoldingHistoProd_WtopSel(processor.ProcessorABC):
                             #print(f'{sys.split("_")[1]}{s}')
                             if 'pu' in sys:
                                 totalGenWeight = events[f'evtGenWeight{s}'] 
-                                totalRecoWeight = totalGenWeight*events[f'{sys.split("_")[1]}{s}']*events[f'l1prefiringWeightNom{s}']*events[f'btagWeightNom{s}']*events[f'leptonWeightNom{s}']
+                                totalRecoWeight = self.genWeights*events[f'{sys.split("_")[1]}{s}']*events[f'l1prefiringWeightNom{s}']*events[f'btagWeightNom{s}']*events[f'leptonWeightNom{s}']
 
                             elif 'l1' in sys:
                                 totalGenWeight = events[f'evtGenWeight{s}'] 
-                                totalRecoWeight = totalGenWeight*events[f'{sys.split("_")[1]}{s}']*events[f'puWeightNom{s}']*events[f'btagWeightNom{s}']*events[f'leptonWeightNom{s}']
+                                totalRecoWeight = self.genWeights*events[f'{sys.split("_")[1]}{s}']*events[f'puWeightNom{s}']*events[f'btagWeightNom{s}']*events[f'leptonWeightNom{s}']
 
                             elif 'btag' in sys:
                                 totalGenWeight = events[f'evtGenWeight{s}'] 
-                                totalRecoWeight = totalGenWeight*events[f'{sys.split("_")[1]}{s}']*events[f'puWeightNom{s}']*events[f'l1prefiringWeightNom{s}']*events[f'leptonWeightNom{s}']
+                                totalRecoWeight = self.genWeights*events[f'{sys.split("_")[1]}{s}']*events[f'puWeightNom{s}']*events[f'l1prefiringWeightNom{s}']*events[f'leptonWeightNom{s}']
 
                             elif 'lepton' in sys:
                                 totalGenWeight = events[f'evtGenWeight{s}'] 
-                                totalRecoWeight = totalGenWeight*events[f'{sys.split("_")[1]}{s}']*events[f'puWeightNom{s}']*events[f'l1prefiringWeightNom{s}']*events[f'btagWeightNom{s}']
+                                totalRecoWeight = self.genWeights*events[f'{sys.split("_")[1]}{s}']*events[f'puWeightNom{s}']*events[f'l1prefiringWeightNom{s}']*events[f'btagWeightNom{s}']
 
                             elif sys.startswith(('_isr','_fsr','_pdf')):#,'_pdf''):
                                 totalGenWeight = events[f'evtGenWeight{s}']*events[f'{sys.split("_")[1]}{s}']
-                                totalRecoWeight = totalGenWeight*events[f'puWeightNom{s}']*events[f'l1prefiringWeightNom{s}']*events[f'btagWeightNom{s}']*events[f'leptonWeightNom{s}']
+                                totalRecoWeight = self.genWeights*events[f'puWeightNom{s}']*events[f'l1prefiringWeightNom{s}']*events[f'btagWeightNom{s}']*events[f'leptonWeightNom{s}']
 
                     if (key.lower().startswith('reco')):
                         if self.verbose: 
@@ -782,8 +811,8 @@ class nSubBasis_unfoldingHistoProd_WtopSel(processor.ProcessorABC):
                 if 'pu' in sys or 'l1' in sys or 'lepton' in sys or 'btag' in sys: reco_reweights_list.append(sys.split('_')[1]+'_nom')
                 else: gen_reweights_list.append(sys.split('_')[1]+'_nom')
 
-        if self.isSigMC: branchesToRead=gen_list+reco_list+gen_reweights_list+reco_reweights_list
-        elif self.isMC and (not self.isSigMC): branchesToRead=gen_list+reco_list
+        if self.isSigMC: branchesToRead=gen_list+reco_list+gen_reweights_list+reco_reweights_list+['genWeight']
+        elif self.isMC and (not self.isSigMC): branchesToRead=gen_list+reco_list+['genWeight']
         elif (not self.isMC): branchesToRead=reco_list
         
         if self.verbose: 

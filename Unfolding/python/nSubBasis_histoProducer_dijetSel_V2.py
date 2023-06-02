@@ -104,41 +104,41 @@ class nSubBasis_unfoldingHistoProd_Dijets(processor.ProcessorABC):
         self.triggerTable[ 'AK8PFJet500' ] = {
                                                 '2016_preVFP' : [ 635,   10000000. ],
                                                 '2016' : [ 635,   1000000. ],
-                                                '2017' : [ 653.,  1000000. ],
+                                                '2017' : [ 653,  1000000. ],
                                                 '2018' : [ 661,   1000000. ],
                                                 }
         
         
         self.dict_variables_toUnfold = {
                     
-                                "_tau_0p5_1": np.array([(i/200) for i in np.arange(0.*200, 1.*201)]),
-                                "_tau_0p5_2": np.array([(i/200) for i in np.arange(0.*200, 0.9*201)]),
-                                "_tau_0p5_3": np.array([(i/200) for i in np.arange(0.*200, 0.8*201)]),
-                                "_tau_0p5_4": np.array([(i/200) for i in np.arange(0.*200, 0.7*201)]),
-                                "_tau_0p5_5": np.array([(i/200) for i in np.arange(0.*200, 0.7*201)]),
-                                "_tau_1_1": np.array([(i/200) for i in np.arange(0.*200, 0.9*201)]),
-                                "_tau_1_2": np.array([(i/200) for i in np.arange(0.*200, 0.6*201)]),
-                                "_tau_1_3": np.array([(i/200) for i in np.arange(0.*200, 0.4*201)]),
-                                "_tau_1_4": np.array([(i/200) for i in np.arange(0.*200, 0.3*201)]),
-                                "_tau_1_5": np.array([(i/200) for i in np.arange(0.*200, 0.3*201)]),
-                                "_tau_2_1": np.array([(i/200) for i in np.arange(0.*200, 0.5*201)]),
-                                "_tau_2_2": np.array([(i/200) for i in np.arange(0.*200, 0.3*201)]),
-                                "_tau_2_3": np.array([(i/200) for i in np.arange(0.*200, 0.2*201)]),
-                                "_tau_2_4": np.array([(i/200) for i in np.arange(0.*200, 0.2*201)]),
-                                "_tau_2_5": np.array([(i/200) for i in np.arange(0.*200, 0.2*201)]),
-                                "_tau21": np.array([(i/200) for i in np.arange(0.*200, 1.6*201)]),#for one-pass kT minimization as per CMS
-                                "_tau32": np.array([(i/200) for i in np.arange(0.*200, 1.6*201)]),#for one-pass kT minimization as per CMS
-                                "_tau21_WTA": np.array([(i/200) for i in np.arange(0.*200, 1.4*201)]),#for WTA-kT for comparison
-                                "_tau32_WTA": np.array([(i/200) for i in np.arange(0.*200, 1.4*201)]),#for WTA-kT for comparison
-                                "_tau21_exkT": np.array([(i/200) for i in np.arange(0.*200, 2.*201)]),#for excl.-kT and E-scheme as per basis
-                                "_tau32_exkT": np.array([(i/200) for i in np.arange(0.*200, 2.*201)]),#for excl.-kT and E-scheme as per basis
+                                "_tau_0p5_1": np.array([(i/400) for i in np.arange(0.*400, 1.*401)]),
+                                "_tau_0p5_2": np.array([(i/400) for i in np.arange(0.*400, 0.9*401)]),
+                                "_tau_0p5_3": np.array([(i/400) for i in np.arange(0.*400, 0.8*401)]),
+                                "_tau_0p5_4": np.array([(i/400) for i in np.arange(0.*400, 0.7*401)]),
+                                "_tau_0p5_5": np.array([(i/400) for i in np.arange(0.*400, 0.7*401)]),
+                                "_tau_1_1": np.array([(i/400) for i in np.arange(0.*400, 0.9*401)]),
+                                "_tau_1_2": np.array([(i/400) for i in np.arange(0.*400, 0.6*401)]),
+                                "_tau_1_3": np.array([(i/400) for i in np.arange(0.*400, 0.4*401)]),
+                                "_tau_1_4": np.array([(i/400) for i in np.arange(0.*400, 0.3*401)]),
+                                "_tau_1_5": np.array([(i/400) for i in np.arange(0.*400, 0.3*401)]),
+                                "_tau_2_1": np.array([(i/400) for i in np.arange(0.*400, 0.5*401)]),
+                                "_tau_2_2": np.array([(i/400) for i in np.arange(0.*400, 0.3*401)]),
+                                "_tau_2_3": np.array([(i/400) for i in np.arange(0.*400, 0.2*401)]),
+                                "_tau_2_4": np.array([(i/400) for i in np.arange(0.*400, 0.2*401)]),
+                                "_tau_2_5": np.array([(i/400) for i in np.arange(0.*400, 0.2*401)]),
+                                "_tau21": np.array([(i/400) for i in np.arange(0.*400, 1.6*401)]),#for one-pass kT minimization as per CMS
+                                "_tau32": np.array([(i/400) for i in np.arange(0.*400, 1.6*401)]),#for one-pass kT minimization as per CMS
+                                "_tau21_WTA": np.array([(i/400) for i in np.arange(0.*400, 1.4*401)]),#for WTA-kT for comparison
+                                "_tau32_WTA": np.array([(i/400) for i in np.arange(0.*400, 1.4*401)]),#for WTA-kT for comparison
+                                "_tau21_exkT": np.array([(i/400) for i in np.arange(0.*400, 2.*401)]),#for excl.-kT and E-scheme as per basis
+                                "_tau32_exkT": np.array([(i/400) for i in np.arange(0.*400, 2.*401)]),#for excl.-kT and E-scheme as per basis
 
                                }
         self.kinematic_labels = ['_pt','_eta', '_y', '_phi', '_mass', '_msoftdrop']
         self.reco_only_labels = ['_good_nPVs']
 
         self.dict_variables_kinematics = {
-                                            "_pt": np.array([i for i in np.arange(70., 3570., 25.)]),
+                                            "_pt": np.array([i for i in np.arange(70., 3570., 5.)]),
                                             "_eta": np.array([i for i in np.arange(-2.2, 2.3, 0.1)]),
                                             "_y": np.array([i for i in np.arange(-2.2, 2.3, 0.1)]),
                                             "_phi": np.array([i for i in np.arange(-3.2, 3.3, 0.1)]),
@@ -154,6 +154,7 @@ class nSubBasis_unfoldingHistoProd_Dijets(processor.ProcessorABC):
 
         self.wtSources=['_puWeight','_isrWeight','_fsrWeight','_pdfWeight', '_l1prefiringWeight'] if self.wtUnc else [] 
         self.recoWtSources=['_pu', '_l1'] if self.isMC else [] 
+        self.genWeights = []
         
         if self.onlyUnc: self.sysSource = ['_nom'] + [ onlyUnc+i for i in [ 'Up', 'Down' ] ] 
 
@@ -184,6 +185,19 @@ class nSubBasis_unfoldingHistoProd_Dijets(processor.ProcessorABC):
             ##############################
             #### Building event masks ####
             ############################## 
+            
+            s = '_nom' if sys.startswith(self.sysWeightList) else sys
+            
+            if self.isMC:
+                if sys.startswith(('_isr','_fsr','_pdf')):#,'_pdf''):
+                    extraWeights = events[f'{sys.split("_")[1]}{s}']
+                
+                    self.genWeights = events['genWeight']*extraWeights
+                    #genWeightsW = events['genWeight'][WRecoMask]*extraWeights[WRecoMask]
+                else:
+                    self.genWeights = events['genWeight']
+                    #genWeightsW = events['genWeight'][WRecoMask]
+            
             if self.isMC and self.isSigMC:# or self.isaltSigMC:
                 
                 s='_nom' if (sys.startswith(self.sysWeightList)) else sys
@@ -315,7 +329,7 @@ class nSubBasis_unfoldingHistoProd_Dijets(processor.ProcessorABC):
                     if not (sys.startswith(self.sysWeightList)):
                         s=sys
                         
-                        totalRecoWeight = events[f'evtGenWeight_nom']*events[f'puWeightNom{s}']*events[f'l1prefiringWeightNom{s}']  if self.isMC else events[f'totalRecoWeight_nom']
+                        totalRecoWeight = self.genWeights*events[f'puWeightNom{s}']*events[f'l1prefiringWeightNom{s}']  if self.isMC else events[f'totalRecoWeight_nom']
                         totalGenWeight = events[f'evtGenWeight_nom'] if self.isMC else None
 
                     else:
@@ -323,17 +337,17 @@ class nSubBasis_unfoldingHistoProd_Dijets(processor.ProcessorABC):
                         if 'pu' in sys:
                             if self.verbose: print(s,sys,key,f'evtGenWeight{s}',f'{sys.split("_")[1]}{s}')                            
                             totalGenWeight = events[f'evtGenWeight{s}'] 
-                            totalRecoWeight = totalGenWeight*events[f'{sys.split("_")[1]}{s}']*events[f'l1prefiringWeightNom{s}']
+                            totalRecoWeight = self.genWeights*events[f'{sys.split("_")[1]}{s}']*events[f'l1prefiringWeightNom{s}']
                             
                         elif 'l1' in sys:
                             if self.verbose: print(s,sys,key,f'evtGenWeight{s}',f'{sys.split("_")[1]}{s}')                           
                             totalGenWeight = events[f'evtGenWeight{s}'] 
-                            totalRecoWeight = totalGenWeight*events[f'{sys.split("_")[1]}{s}']*events[f'puWeightNom{s}']
+                            totalRecoWeight = self.genWeights*events[f'{sys.split("_")[1]}{s}']*events[f'puWeightNom{s}']
                             
                         elif sys.startswith(('_isr','_fsr','_pdf')):#,'_pdf''):
                             if self.verbose: print(s,sys,key,f'evtGenWeight{s}',f'{sys.split("_")[1]}{s}')
                             totalGenWeight = events[f'evtGenWeight{s}']*events[f'{sys.split("_")[1]}{s}']
-                            totalRecoWeight = totalGenWeight*events[f'puWeightNom{s}']*events[f'l1prefiringWeightNom{s}']
+                            totalRecoWeight = self.genWeights*events[f'puWeightNom{s}']*events[f'l1prefiringWeightNom{s}']
 
                     if (key.lower().startswith(('reco','good'))):
                         if 'nPV' in key:
@@ -567,7 +581,8 @@ class nSubBasis_unfoldingHistoProd_Dijets(processor.ProcessorABC):
                 reco_list.append("puWeightNom"+sys)
                 reco_list.append("l1prefiringWeightNom"+sys)
                 reco_list.append("totalRecoWeight"+sys)
-                if not ("evtGenWeight_nom" in gen_list): gen_list.append("evtGenWeight_nom")#+sys)
+                if not ("evtGenWeight_nom" in gen_list): 
+                    gen_list.append("evtGenWeight_nom")#+sys)
                 reco_list.append("good_nPVs"+sys)
                 
             elif (not self.isMC) and sys.endswith('nom'):
@@ -585,8 +600,8 @@ class nSubBasis_unfoldingHistoProd_Dijets(processor.ProcessorABC):
                 if 'pu' in sys or 'l1' in sys: reco_reweights_list.append(sys.split('_')[1]+'_nom')
                 else: gen_reweights_list.append(sys.split('_')[1]+'_nom')
 
-        if self.isSigMC: branchesToRead=gen_list+reco_list+gen_reweights_list+reco_reweights_list
-        elif self.isMC and (not self.isSigMC): branchesToRead=gen_list+reco_list
+        if self.isSigMC: branchesToRead=gen_list+reco_list+gen_reweights_list+reco_reweights_list+['genWeight']
+        elif self.isMC and (not self.isSigMC): branchesToRead=gen_list+reco_list+['genWeight']
         elif (not self.isMC): branchesToRead=reco_list+triggerBit_list
         if self.verbose: 
             print("Prepared branches to read",branchesToRead)        

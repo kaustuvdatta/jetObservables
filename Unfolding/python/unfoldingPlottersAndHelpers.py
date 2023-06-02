@@ -34,7 +34,7 @@ canvas = {}
 textBox=ROOT.TLatex()
 textBox.SetTextSize(0.10)
 textBox.SetTextAlign(12)
-
+from root_numpy import hist2array
 ##########################################################################
 
 #################### Helpers/plotters for unfoldings #####################
@@ -121,35 +121,59 @@ def plotSysComparison( nomHisto, dictUncHistos, outputName, labelX='', log=False
 def drawDataMCReco( ivar, selection, year, lumi, process,
                     dataJetHisto, nominal_recoJetHisto, 
                     alt0_recoJetHisto,alt1_recoJetHisto,alt2_recoJetHisto,
-                    labelX, maxX, tlegendAlignment, outputName ):
+                    labelX, jetType, maxX, tlegendAlignment, outputName,log=False ):
     """docstring for drawUnfold"""
     print ("Drawing Data/MC")
     ROOT.gStyle.SetPadRightMargin(0.05)
     ROOT.gStyle.SetPadLeftMargin(0.15)
     can = ROOT.TCanvas('can'+ivar, 'can'+ivar,  10, 10, 1500, 1500 )
-    if 'pt' in ivar.lower():
-        can.SetLogy()
-        outputName.replace('DataMC','DataMC_logPlot')
+    #can.cd()
+    if log==True:
+        #print(ivar,outputName)
+        outputName=outputName.replace("DataMC_","DataMC_logPlot_")
+        #dataJetHisto.Rebin(2)
+        #nominal_recoJetHisto.Rebin(2)
+        #alt0_recoJetHisto.Rebin(2)
+        #alt1_recoJetHisto.Rebin(2)
+        #alt2_recoJetHisto.Rebin(2)
+        #can.SetLogy()
+        #print(ivar,outputName)
+        
     pad1 = ROOT.TPad("pad1"+ivar, "Main",0,0.3,1.00,1.00,-1)
+    pad2 = ROOT.TPad("pad2"+ivar, "Ratio",0,0.00,1.00,0.30,-1);
     pad1.Draw()
-
+    pad2.Draw()
+    can.cd()
     pad1.cd()
+    #if log==True:
+    #    #can.SetLogy()
+    #    pad1.SetLogy(1)
+    #    #pad1.Modified()
+    #    pad1.Update()
+    #    pad1.Draw()
+    #    #can.Update()
+    #else:
+    #    pad1.Draw()
     pad1.SetTopMargin(0.08)
     pad1.SetBottomMargin(0.02)
     
-    if tlegendAlignment.startswith('right'): legend=ROOT.TLegend(0.65,0.67,0.90,0.9)
+    if tlegendAlignment.startswith('right'): 
+        legend=ROOT.TLegend(0.64,0.6,0.9,0.79)
+        #legend=ROOT.TLegend(0.65,0.6,0.90,0.8)
 
-    else: legend=ROOT.TLegend(0.20,0.67,0.40,0.9)
+    else: 
+        #legend=ROOT.TLegend(0.20,0.6,0.40,0.8)
+        legend=ROOT.TLegend(0.19,0.6,0.40,0.79)
     legend.SetFillStyle(0)
-    legend.SetTextSize(0.035)
+    legend.SetTextSize(0.03 )
     legend.SetBorderSize(0)
     print(dataJetHisto,nominal_recoJetHisto,alt0_recoJetHisto,alt1_recoJetHisto,alt2_recoJetHisto)
     
-    dataHisto = normalise_hist(dataJetHisto.Clone())
-    recoHisto = normalise_hist(nominal_recoJetHisto.Clone())
-    alt0recoHisto = normalise_hist(alt0_recoJetHisto.Clone())
-    alt1recoHisto = normalise_hist(alt1_recoJetHisto.Clone())
-    alt2recoHisto = normalise_hist(alt2_recoJetHisto.Clone())
+    dataHisto = dataJetHisto.Clone()#normalise_hist
+    recoHisto = nominal_recoJetHisto.Clone()#normalise_hist
+    alt0recoHisto = alt0_recoJetHisto.Clone()#normalise_hist
+    alt1recoHisto = alt1_recoJetHisto.Clone()#normalise_hist
+    alt2recoHisto = alt2_recoJetHisto.Clone()#normalise_hist
     
     dataHisto.Scale(1, 'width')  ### divide by bin width
     #dataHisto.Scale(1/dataHisto.Integral(), 'width')  ### divide by bin width
@@ -170,24 +194,33 @@ def drawDataMCReco( ivar, selection, year, lumi, process,
 
     print(labelX)
 
-    try: 
-        dataHisto.GetYaxis().SetTitle( '#frac{1}{dN} #frac{dN}{d#'+labelX.split('#')[1]+'}' )
-    except IndexError: 
-        try: 
-            #print('#frac{1}{dN} #frac{dN}{d'+labelX.split('AK8 jet ')[1]+'}') 
-            dataHisto.GetYaxis().SetTitle( '#frac{1}{dN} #frac{dN}{d'+labelX.split('AK8 jet ')[1]+'}' )
-        except IndexError:
-            #print('#frac{1}{dN} #frac{dN}{d'+labelX.split('good_')[1]+'}') 
-            dataHisto.GetYaxis().SetTitle('#frac{1}{dN} #frac{dN}{d'+labelX.split('_')[1]+'}' )
-    print(dataHisto.GetYaxis().GetTitle())
-    #dataHisto.GetYaxis().SetTitleOffset(0.95)
+    if 'tau' in ivar:
+        dataHisto.GetYaxis().SetTitle( '#frac{dN}{d#'+labelX.split('#')[1]+'}'+'    [A.U.]' )##frac{1}{dN} 
+        print( '#frac{dN}{d#'+labelX.split('#')[1]+'}')
+    else:
+        bw = np.round(recoHisto.GetXaxis().GetBinLowEdge(2)-recoHisto.GetXaxis().GetBinLowEdge(1),3)
+        dataHisto.GetYaxis().SetTitle( f' [Events/{bw} '+ ( 'GeV]' if 'pt' in ivar or 'mass' in ivar or 'softdrop' in ivar else ']') ) 
+        
+    
+    dataHisto.GetYaxis().SetTitleOffset(1.15)
+    dataHisto.GetYaxis().CenterTitle()
     dataHisto.GetYaxis().SetTitleSize(0.05)
-    dataHisto.SetMaximum( 1.6*max([ recoHisto.GetMaximum(), dataHisto.GetMaximum()] )  )
-    dataHisto.SetMinimum(0.)
+    dataHisto.GetYaxis().SetLabelSize(0.05)
+    dataHisto.GetXaxis().SetTitleSize(0.0)
+    dataHisto.GetXaxis().SetLabelSize(0.0)
+    dataHisto.GetXaxis().SetTickLength(0.)
+    
+    dataHisto.SetMaximum( 1.8*max([ recoHisto.GetMaximum(), dataHisto.GetMaximum()] ) if not('pt') in ivar else 40.*max([ recoHisto.GetMaximum(), dataHisto.GetMaximum()] )  )
+    dataHisto.SetMinimum(0. if not log else 1.)
     #pad1.GetYaxis().SetRangeUser(0,1.5*max([ genJetHisto.GetMaximum(), dataHisto.GetMaximum()] ) )
-
-    dataHisto.Draw( "E")
-    recoHisto.Draw( "histe same")
+    
+    dataHisto.SetTitle('')
+    can.SetTitle('')
+    ROOT.TGaxis.SetMaxDigits(4)#,'y')
+    #ROOT.TGaxis.SetExponentOffset(-5,0,'y')
+        
+    dataHisto.Draw( "E1")
+    recoHisto.Draw( "histe1 same")
 
     alt0recoHisto.Scale(1, 'width')  ### divide by bin width
     alt0recoHisto.SetLineWidth(2)
@@ -195,7 +228,7 @@ def drawDataMCReco( ivar, selection, year, lumi, process,
     alt0recoHisto.SetMarkerColor(ROOT.kBlue)
     alt0recoHisto.SetMarkerStyle(25)
     legend.AddEntry( alt0recoHisto, 'MG5-MLM+Herwig7', 'lp' )
-    alt0recoHisto.Draw("histe same")
+    alt0recoHisto.Draw("histe1 same")
     
     alt1recoHisto.Scale(1, 'width')  ### divide by bin width
     alt1recoHisto.SetLineWidth(2)
@@ -203,7 +236,7 @@ def drawDataMCReco( ivar, selection, year, lumi, process,
     alt1recoHisto.SetMarkerColor(ROOT.kViolet)
     alt1recoHisto.SetMarkerStyle(25)
     legend.AddEntry( alt1recoHisto, 'MG5+Pythia8', 'lp' )
-    alt1recoHisto.Draw("histe same")
+    alt1recoHisto.Draw("histe1 same")
     
     
     alt2recoHisto.Scale(1, 'width')  ### divide by bin width
@@ -212,45 +245,45 @@ def drawDataMCReco( ivar, selection, year, lumi, process,
     alt2recoHisto.SetMarkerColor(ROOT.kGray+4)
     alt2recoHisto.SetMarkerStyle(25)
     legend.AddEntry( alt2recoHisto, 'Pythia8', 'lp' )
-    alt2recoHisto.Draw("histe same")
+    alt2recoHisto.Draw("histe1 same")
+    if log: ROOT.gPad.SetLogy()
+    else: ROOT.gPad.SetLogy(0)
     
-    
-    selText = textBox.Clone()
-    selText.SetTextFont(42)
-    selText.SetTextSize(0.045)
-
-    selText.SetNDC()
-
-    if selection.startswith("_dijet"): seltext = 'Central Dijet'#( 'Central' if 'Central' in labelX  else 'Outer' )+' dijet region'
-    elif selection.startswith("_W"): seltext = 'Boosted W region'
-    elif selection.startswith("_top"): seltext = 'Boosted top region'
-    selText.DrawLatex( ( 0.21 if tlegendAlignment.startswith('right') else 0.55 ), 0.87, seltext )
-
     selText = textBox.Clone()
     selText.SetTextFont(42)
     selText.SetTextSize(0.042)
 
     selText.SetNDC()
+
+    if selection.startswith("_dijet"): seltext = ( 'Central Dijet' if 'Central' in jetType  else 'Forward Dijet' )#+' dijet region'
+    elif selection.startswith("_W"): seltext = 'Boosted W region'
+    elif selection.startswith("_top"): seltext = 'Boosted top region'
+    selText.DrawLatex( ( 0.65 if tlegendAlignment.startswith('right') else 0.2 ), 0.88, seltext )
+
+    selText = textBox.Clone()
+    selText.SetTextFont(42)
+    selText.SetTextSize(0.04)
+
+    selText.SetNDC()
     
-    if selection.startswith("_dijet"): seltext = 'p_{T}>200 GeV' 
+    if selection.startswith("_dijet") and 'Central' in jetType : seltext = 'p_{T}>200 GeV' 
+    elif selection.startswith("_dijet") and 'Forward' in jetType : seltext = 'p_{T}>200 GeV' 
     elif selection.startswith("_W"): seltext = 'p_{T}>200 GeV, 65#leqm_{SD}<115 GeV' 
     elif selection.startswith("_top"): seltext = 'p_{T}>350 GeV, 140#leqm_{SD}<220 GeV'
-    selText.DrawLatex( ( 0.21 if tlegendAlignment.startswith('right') else 0.55 ), 0.78, seltext )
+    selText.DrawLatex( ( 0.65 if tlegendAlignment.startswith('right') else 0.2 ), 0.83, seltext )
 
     
     legend.Draw()
     if process.startswith('data'):
         CMS_lumi.extraText = "Preliminary"
-        CMS_lumi.lumi_13TeV = ('#leq' if selection.startswith('dijet') else '')+str( round( (lumi/1000.), 2 ) )+" fb^{-1}, 13 TeV"+('' if year.startswith('all') else ", "+( '2016+2017+2018' if year.startswith('all') else year ) )
+        CMS_lumi.lumi_13TeV = ('#leq' if 'dijet' in selection else '')+str( round( (lumi/1000.), 2 ) )+" fb^{-1}, 13 TeV"+", " +( '2016+2017+2018' if year.startswith('all') else year ) 
     else:
         CMS_lumi.extraText = "Simulation Preliminary"
         CMS_lumi.lumi_13TeV = "13 TeV, "+ ( '2016+2017+2018' if year.startswith('all') else year )
-    CMS_lumi.relPosX = 0.12
-    CMS_lumi.CMS_lumi(pad1, 4, 0)
-    
+    CMS_lumi.relPosX = 0.08
+    CMS_lumi.CMS_lumi(pad1, 4, 10 if tlegendAlignment.startswith('right') else 3) 
     
     can.cd()
-    pad2 = ROOT.TPad("pad2"+ivar, "Ratio",0,0.00,1.00,0.30,-1);
     ROOT.gStyle.SetOptFit(1)
     pad2.SetGrid()
     pad2.SetTopMargin(0.)
@@ -259,18 +292,20 @@ def drawDataMCReco( ivar, selection, year, lumi, process,
     pad2.cd()
     
     
-    tmpPad2= pad2.DrawFrame( 0, 0., maxX, 1.9 )
+    tmpPad2= pad2.DrawFrame( recoHisto.GetXaxis().GetBinLowEdge(1), 0., maxX, 1.9 )
     #print (labelX)
-    tmpPad2.GetYaxis().SetTitle( "Sim./Data" )
+    tmpPad2.GetYaxis().SetTitle( "Data/Sim." )
     tmpPad2.GetYaxis().SetTitleOffset( 0.5 )
-    tmpPad2.GetYaxis().SetRangeUser(-0.5, 2.5 )
+    tmpPad2.GetYaxis().SetRangeUser(0.1, 2.1 )
     tmpPad2.GetYaxis().CenterTitle()
-    try: tmpPad2.GetXaxis().SetTitle( '#'+labelX.split('#')[1] )
-    except IndexError: tmpPad2.GetXaxis().SetTitle(labelX)
+    
+       
+    if 'tau' in ivar: tmpPad2.GetXaxis().SetTitle( '#'+labelX.split('#')[1] )
+    else: tmpPad2.GetXaxis().SetTitle(labelX)
     tmpPad2.SetLabelSize(0.12, 'x')
     tmpPad2.SetTitleSize(0.12, 'x')
-    tmpPad2.SetLabelSize(0.12, 'y')
-    tmpPad2.SetTitleSize(0.12, 'y')
+    tmpPad2.SetLabelSize(0.1, 'y')
+    tmpPad2.SetTitleSize(0.1, 'y')
     tmpPad2.SetNdivisions(505, 'x')
     tmpPad2.SetNdivisions(505, 'y')
     pad2.Modified()
@@ -278,49 +313,55 @@ def drawDataMCReco( ivar, selection, year, lumi, process,
     pad2.Draw()
     can.Update()
     
+    #divHist=recoHisto.Clone()
+    #divHist.Divide(dataHisto)#,'pois')
+    #l_bins = [recoHisto.GetXaxis().GetBinLowEdge(i) for i in range(1,divHist.GetNbinsX()+2)]
+    #x_bins = [(l_bins[i]+(l_bins[i+1]))/2. for i in range(len(l_bins)-1)]
+    #y_vals=hist2array(divHist)
+    #print(x_bins,y_vals)
     
-    ratio_nominal = ROOT.TGraphAsymmErrors()
-    ratio_nominal.Divide( recoHisto, dataHisto, 'pois' )
+    ratio_nominal = ROOT.TGraphAsymmErrors()#len(l_bins)-1,x_bins,y_vals)
+    ratio_nominal.Divide( dataHisto,recoHisto, 'pois' )
     ratio_nominal.SetLineColor(ROOT.kRed)
     ratio_nominal.SetMarkerColor(ROOT.kRed)
-    try:  ratio_nominal.GetXaxis().SetTitle( '#'+labelX.split('#')[1] )
-    except IndexError: ratio_nominal.GetXaxis().SetTitle( labelX )
+    #if 'tau' in ivar:  ratio_nominal.GetXaxis().SetTitle( '#'+labelX.split('#')[1] )
+    #else: ratio_nominal.GetXaxis().SetTitle( labelX )
     #ratio_nominal.GetYaxis().SetTitle( "Sim./Data" )
     #ratio_nominal.GetYaxis().SetTitleOffset( 0.5 )
     #ratio_nominal.GetYaxis().SetRangeUser(0., 2. )
     #ratio_nominal.GetYaxis().CenterTitle()
-    ratio_nominal.GetXaxis().SetLabelSize(0.12)
-    ratio_nominal.GetXaxis().SetTitleSize(0.12)
+    #ratio_nominal.GetXaxis().SetLabelSize(0.12)
+    #ratio_nominal.GetXaxis().SetTitleSize(0.12)
     #ratio_nominal.GetYaxis().SetLabelSize(0.12)
     #ratio_nominal.GetYaxis().SetTitleSize(0.12)
     ratio_nominal.GetXaxis().SetNdivisions(505)
     #ratio_nominal.GetYaxis().SetNdivisions(505)
     ratio_nominal.SetMarkerStyle(25)
-    ratio_nominal.Draw('P0 same')
+    ratio_nominal.Draw('PE1 ')
     
     ratio_alt0MC = ROOT.TGraphAsymmErrors()
-    ratio_alt0MC.Divide( alt0recoHisto, dataHisto, 'pois' )
+    ratio_alt0MC.Divide(  dataHisto, alt0recoHisto,'pois' )
     ratio_alt0MC.SetLineColor(ROOT.kBlue)
     ratio_alt0MC.SetMarkerColor(ROOT.kBlue)
     ratio_alt0MC.SetMarkerStyle(25)
     
-    ratio_alt0MC.Draw('P0 same')
+    ratio_alt0MC.Draw('PE1 same')
     
     ratio_alt1MC = ROOT.TGraphAsymmErrors()
-    ratio_alt1MC.Divide( alt1recoHisto, dataHisto, 'pois' )
+    ratio_alt1MC.Divide(  dataHisto,alt1recoHisto, 'pois' )
     ratio_alt1MC.SetLineColor(ROOT.kViolet)
     ratio_alt1MC.SetMarkerColor(ROOT.kViolet)
     ratio_alt1MC.SetMarkerStyle(25)
     
-    ratio_alt1MC.Draw('P0 same')
+    ratio_alt1MC.Draw('PE1 same')
     
     ratio_alt2MC = ROOT.TGraphAsymmErrors()
-    ratio_alt2MC.Divide( alt2recoHisto, dataHisto, 'pois' )
+    ratio_alt2MC.Divide(  dataHisto, alt2recoHisto, 'pois' )
     ratio_alt2MC.SetLineColor(ROOT.kGray+4)
     ratio_alt2MC.SetMarkerColor(ROOT.kGray+4)
     ratio_alt2MC.SetMarkerStyle(25)
     
-    ratio_alt2MC.Draw('P0 same')
+    ratio_alt2MC.Draw('PE1 same')
     
     ratioLegend=ROOT.TLegend(0.20,0.85,0.8,0.95)
     ratioLegend.SetTextSize(0.06)
@@ -333,10 +374,12 @@ def drawDataMCReco( ivar, selection, year, lumi, process,
     ratioLegend.AddEntry( ratio_alt1MC, 'MG5+P8', 'lp' )
     ratioLegend.AddEntry( ratio_alt2MC, 'P8+P8', 'lp' )
     #ratioLegend.AddEntry( ratiosystUncHisto, 'Syst.', 'f' )
+    pad2.Update()
     ratioLegend.Draw()
     png = outputName.split('.pdf')[0]+'.png'
     can.SaveAs(outputName)
     can.SaveAs(png)
+    print(outputName,png)
     ROOT.gStyle.SetPadRightMargin(0.09)     ## reseating
     ROOT.gStyle.SetPadLeftMargin(0.12)
                     
@@ -443,7 +486,10 @@ def drawUnfold( ivar, selection, process, year, lumi, dataJetHisto, genJetHisto,
 
    
 
-    unfoldHisto.GetYaxis().SetTitle( '#frac{1}{dN} #frac{dN}{d#'+labelX.split('#')[1]+'}' )
+    if 'tau' in labelX: 
+        unfoldHisto.GetYaxis().SetTitle( '#frac{1}{dN} #frac{dN}{d#'+labelX.split('#')[1]+'} A.U.' )
+    else:
+        unfoldHisto.GetYaxis().SetTitle( '#frac{1}{dN} #frac{dN}{d#'+labelX.split('#')[1] )
     #unfoldHisto.GetYaxis().SetTitleOffset(0.95)
     unfoldHisto.GetYaxis().SetTitleSize(0.05)
     unfoldHisto.SetMaximum( 1.6*max([ genJetHisto.GetMaximum(), unfoldHisto.GetMaximum()] )  )
@@ -561,7 +607,8 @@ def drawUnfold( ivar, selection, process, year, lumi, dataJetHisto, genJetHisto,
     ratio_datastatUnc.GetYaxis().SetRangeUser(0.25, 2.25 )
     ratio_datastatUnc.GetYaxis().CenterTitle()
     ratio_datastatUnc.GetXaxis().SetLabelSize(0.12)
-    ratio_datastatUnc.GetXaxis().SetTitleSize(0.12)
+    ratio_datastatUnc.GetXaxis().SetTitleSize(0.13)
+    ratio_datastatUnc.GetXaxis().SetTitleOffset(0.3)
     ratio_datastatUnc.GetYaxis().SetLabelSize(0.12)
     ratio_datastatUnc.GetYaxis().SetTitleSize(0.12)
     ratio_datastatUnc.GetXaxis().SetNdivisions(505)

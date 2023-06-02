@@ -1,4 +1,4 @@
-# Changelog Oct '22: 
+    # Changelog Oct '22: 
 # 1a) updated to correct PS/pdfWeight variation implementation, 
 # 1b) added in 2016 trigger turn ons calculated by Alejandro
 # 2) added better functionality for storing the nominal selection trees (to be updated for systematics, needs a bit more refactoring)
@@ -150,7 +150,7 @@ class nSubProd(Module):
         self.triggerTable[ 'AK8PFJet500' ] = {
                     '2016_preVFP' : [ 635,   10000000. ],
                     '2016' : [ 635,   1000000. ],
-                    '2017' : [ 653.,  1000000., 1.00, 1.00, 1.00, 1.00, 1.00 ],
+                    '2017' : [ 653,  1000000., 1.00, 1.00, 1.00, 1.00, 1.00 ],
                     '2018' : [ 661,   1000000., 1, 1, 1, 1 ],
                     }
         #self.triggerTable[ 'AK8PFJet550' ] = {
@@ -277,7 +277,7 @@ class nSubProd(Module):
 
     #############################################################################
     def addP4Hists(self, s, t ):
-        self.addObject( ROOT.TH1F(s+'_pt'+t,  ';p_{T} (GeV)',   200, 0, 2000) )
+        self.addObject( ROOT.TH1F(s+'_pt'+t,  ';p_{T} (GeV)',   200, 0, 3000) )
         self.addObject( ROOT.TH1F(s+'_eta'+t, ';#eta', 100, -2.5, 2.5 ) )
         self.addObject( ROOT.TH1F(s+'_y'+t, ';y', 100, -2.5, 2.5 ) )
         self.addObject( ROOT.TH1F(s+'_phi'+t, ';#phi', 100, -3.5, 3.5) )
@@ -307,6 +307,7 @@ class nSubProd(Module):
 
             self.out.branch( 'eventCategory_nom',  "I")
             self.out.branch( 'totalRecoWeight_nom', "F" )
+            self.out.branch( 'passRecoSel_nom', "I" )
             self.out.branch( 'recoSelectedEventNumber_nom', "L" )
             self.out.branch( 'good_nPVs_nom', "F" )
             #self.out.branch( 'eventWithBadPFCands', "L" )
@@ -323,11 +324,15 @@ class nSubProd(Module):
                 #if sys.startswith('_nom'): self.out.branch( 'eventWithBadPFCands', "L" )
 
                 self.out.branch( 'totalRecoWeight'+sys, "F" )
+                self.out.branch( 'passRecoSel'+sys, "I" )
                 self.out.branch( 'puWeightNom'+sys, "F" )
                 self.out.branch( 'l1prefiringWeightNom'+sys, "F")
 
                 self.out.branch( 'good_nPVs'+sys, "F" )
-                if sys.startswith('_nom'): self.out.branch( 'evtGenWeight'+sys, "F" )
+
+                if sys.startswith('_nom'): 
+                    self.out.branch( 'evtGenWeight'+sys, "F" )
+                    self.out.branch( 'passGenSel'+sys, "I" )
 
                 self.out.branch( 'recoSelectedEventNumber'+sys, "L" )
                 if sys.startswith('_nom'): self.out.branch( 'genSelectedEventNumber'+sys, "L" )
@@ -448,8 +453,13 @@ class nSubProd(Module):
                 
                 self.puWeight = event.puWeight
                 self.evtGenWeight=event.genWeight
-                self.l1PreFireWeight = event.L1PreFiringWeight_Nom                
-                self.totalRecoWeight = event.genWeight*event.puWeight*event.L1PreFiringWeight_Nom  
+                try: 
+                    self.l1PreFireWeight = event.L1PreFiringWeight_Nom                
+                    self.totalRecoWeight = event.genWeight*event.puWeight*event.L1PreFiringWeight_Nom 
+                except RuntimeError:  # to deal with 2018 QCD_Pt samples not having the l1 weight branches for some reason
+                    self.l1PreFireWeight = 1.
+                    self.totalRecoWeight = event.genWeight*event.puWeight*1.#event.L1PreFiringWeight_Nom 
+                 
                 if not sys.startswith(('_jes', '_jer')):
                    
                     selRecoJets[sys] = selRecoJets['_nom']
@@ -481,12 +491,17 @@ class nSubProd(Module):
                         
                         self.puWeightUp = event.puWeightUp
                         self.puWeightDown = event.puWeightDown
-                        self.l1PreFireWeightUp = event.L1PreFiringWeight_Up
-                        self.l1PreFireWeightDown = event.L1PreFiringWeight_Dn
+                        try:
+                            self.l1PreFireWeightUp = event.L1PreFiringWeight_Up
+                            self.l1PreFireWeightDown = event.L1PreFiringWeight_Dn
+                        except RuntimeError:
+                            self.l1PreFireWeightUp = 1.
+                            self.l1PreFireWeightDown = 1.
                     
                 else: 
                     #could remove this else block, doesn't do anything (will remove when running final check)
-                    self.totalRecoWeight = event.genWeight*event.puWeight#self.totalRecoWeight*self.puWeight
+                    try: self.totalRecoWeight = event.genWeight*event.puWeight*event.L1PreFiringWeight_Nom #self.totalRecoWeight*self.puWeight
+                    except RuntimeError: self.totalRecoWeight = event.genWeight*event.puWeight*1.
             else: 
                 self.totalRecoWeight=1.        
             
@@ -638,6 +653,7 @@ class nSubProd(Module):
             if not self.isMC:
                 self.out.fillBranch( 'eventCategory'+sys, self.eventCategory )
                 self.out.fillBranch( 'totalRecoWeight'+sys, self.totalRecoWeight if passRecoSel[sys] else 0.)
+                self.out.fillBranch( 'passRecoSel'+sys, 1 if passRecoSel[sys] else 0)
                 self.out.fillBranch( 'good_nPVs'+sys, getattr( event, 'PV_npvsGood') if passRecoSel[sys] else 0.)
                 for x in self.triggerTable.keys():
                     self.out.fillBranch( 'passHLT_'+x, 1 if getattr(event, 'HLT_'+x)==1 and passRecoSel[sys] else 0)
@@ -648,21 +664,23 @@ class nSubProd(Module):
             else:
                 self.out.fillBranch( 'eventCategory'+sys, self.eventCategory )
                 self.out.fillBranch( 'totalRecoWeight'+sys, self.totalRecoWeight if passRecoSel[sys] else 0.)
+                self.out.fillBranch( 'passRecoSel'+sys, 1 if passRecoSel[sys] else 0)
                 self.out.fillBranch( 'puWeightNom'+sys, self.puWeight if passRecoSel[sys] else 0.)
                 self.out.fillBranch( 'l1prefiringWeightNom'+sys, self.l1PreFireWeight if passRecoSel[sys] else 0.)
                 self.out.fillBranch( 'good_nPVs'+sys, getattr( event, 'PV_npvsGood') if passRecoSel[sys] else 0.)
                 if sys.startswith('_nom'): 
-                    self.out.fillBranch( 'evtGenWeight'+sys, self.evtGenWeight if passGenSel else 0.) 
-                
+                    self.out.fillBranch( 'evtGenWeight'+sys, self.evtGenWeight if passGenSel or passRecoSel[sys] else 0.) 
+                    self.out.fillBranch( 'passGenSel'+sys, 1 if passGenSel else 0) 
+                    
                 if self.isSigMC and not self.onlyUnc:
-                    self.out.fillBranch( 'pdfWeightNom'+sys, self.pdfWeight if passGenSel else 0.)
-                    self.out.fillBranch( 'pdfWeightAll'+sys, self.pdfWeightAll if passGenSel else np.zeros((103,),dtype=np.float32))
-                    self.out.fillBranch( 'pdfWeightUp'+sys, self.pdfWeightUp if passGenSel else 0.)
-                    self.out.fillBranch( 'pdfWeightDown'+sys, self.pdfWeightDown if passGenSel else 0.)
-                    self.out.fillBranch( 'isrWeightUp'+sys, self.isrWeightUp if passGenSel else 0.)
-                    self.out.fillBranch( 'isrWeightDown'+sys, self.isrWeightDown if passGenSel else 0.)
-                    self.out.fillBranch( 'fsrWeightUp'+sys, self.fsrWeightUp if passGenSel else 0.)
-                    self.out.fillBranch( 'fsrWeightDown'+sys, self.fsrWeightDown if passGenSel else 0.)
+                    self.out.fillBranch( 'pdfWeightNom'+sys, self.pdfWeight if passGenSel or passRecoSel[sys] else 0.)
+                    self.out.fillBranch( 'pdfWeightAll'+sys, self.pdfWeightAll if passGenSel or passRecoSel[sys] else np.zeros((103,),dtype=np.float32))
+                    self.out.fillBranch( 'pdfWeightUp'+sys, self.pdfWeightUp if passGenSel or passRecoSel[sys] else 0.)
+                    self.out.fillBranch( 'pdfWeightDown'+sys, self.pdfWeightDown if passGenSel or passRecoSel[sys] else 0.)
+                    self.out.fillBranch( 'isrWeightUp'+sys, self.isrWeightUp if passGenSel or passRecoSel[sys] else 0.)
+                    self.out.fillBranch( 'isrWeightDown'+sys, self.isrWeightDown if passGenSel or passRecoSel[sys]  else 0.)
+                    self.out.fillBranch( 'fsrWeightUp'+sys, self.fsrWeightUp if passGenSel or passRecoSel[sys] else 0.)
+                    self.out.fillBranch( 'fsrWeightDown'+sys, self.fsrWeightDown if passGenSel or passRecoSel[sys] else 0.)
                     self.out.fillBranch( 'puWeightUp'+sys, self.puWeightUp if passRecoSel[sys] else 0.)
                     self.out.fillBranch( 'puWeightDown'+sys, self.puWeightDown if passRecoSel[sys] else 0.)
                     self.out.fillBranch( 'l1prefiringWeightUp'+sys, self.l1PreFireWeightUp if passRecoSel[sys] else 0.)
@@ -781,7 +799,16 @@ class nSubProd(Module):
         weight=1.
 
         if self.isMC:
-            weight = event.puWeight * event.genWeight
+            try: 
+                l1PreFireWeight = event.L1PreFiringWeight_Nom                
+            except RuntimeError:  # to deal with 2018 QCD_Pt samples not having the l1 weight branches for some reason
+                l1PreFireWeight = 1.
+
+            self.puWeight = event.puWeight
+            self.l1PreFireWeight = l1PreFireWeight
+            self.evtGenWeight = event.genWeight 
+
+            weight = self.puWeight * self.l1PreFireWeight * self.evtGenWeight
             
         else:
             weight = 1 #self.triggerWeight

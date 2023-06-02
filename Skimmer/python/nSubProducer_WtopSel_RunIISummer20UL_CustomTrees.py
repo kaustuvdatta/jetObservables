@@ -372,6 +372,7 @@ class nSubProd(Module):
             
             self.out.branch('recoEventCategory_nom',  "I") 
             self.out.branch('totalRecoWeight_nom', "F" )
+            self.out.branch('passRecoSel_nom', "I" )
             #nRecoBtags=1 for evt. cat. 0; 2 for evt. cat. 1; >2 for evt. cat. 1 as well, 0 for evt. cat. -1
             # the nRecoBtags branch allow us to check if any other AK4 was a b-tagged jet except for the one we do the dR selections on
             self.out.branch('nRecoBtags_nom',  "I") 
@@ -381,6 +382,8 @@ class nSubProd(Module):
             self.out.branch('good_nPVs_nom', "F" )
             self.out.branch('FlagRecoLeptHemBjet_nom', "I")
             self.out.branch('selRecoHadHemDeltaR_nom', "F" ) # dR(lead AK8, lead b-tagged AK4 in had. hem.)
+            self.out.branch('selRecoHadHemDeltaPhi_nom', "F" ) # dR(lead AK8, lead b-tagged AK4 in had. hem.)
+            self.out.branch('selRecoHadHemDeltaRap_nom', "F" ) # dR(lead AK8, lead b-tagged AK4 in had. hem.)
             
             tmplistAK8.append('selRecoJets_nom')
             tmplistMuon.append('selRecoMu_nom')
@@ -399,6 +402,7 @@ class nSubProd(Module):
                 #                -1 for no selection 
                 self.out.branch('recoEventCategory'+sys,  "I") 
                 self.out.branch('totalRecoWeight'+sys, "F" )
+                self.out.branch('passRecoSel'+sys, "I" )
                 #nRecoBtags=1 for evt. cat. 0; 2 for evt. cat. 1; >2 for evt. cat. 1 as well, 0 for evt. cat. -1
                 self.out.branch('nRecoBtags'+sys,  "I") 
                 self.out.branch('nRecoHadBtags'+sys,  "I") 
@@ -420,10 +424,13 @@ class nSubProd(Module):
                 
                 # For tagging W vs. top, holds info on deltaR between b-jet and AK8jet
                 self.out.branch('selRecoHadHemDeltaR'+sys,"F")
+                self.out.branch('selRecoHadHemDeltaPhi'+sys,"F")
+                self.out.branch('selRecoHadHemDeltaRap'+sys,"F")
 
                 if sys.startswith('_nom'): 
                     self.out.branch('genEventCategory'+sys,  "I") 
                     self.out.branch('evtGenWeight'+sys, "F" )  # nominal generator weight for evt.
+                    self.out.branch('passGenSel'+sys, "I" )  # nominal generator weight for evt.
                     self.out.branch('genSelectedEventNumber'+sys, "L" )
 
                     #nGenBtags=1 for evt. cat. 0; 2 for evt. cat. 1; >2 for evt. cat. 1 as well, 0 for evt. cat. -1
@@ -435,6 +442,8 @@ class nSubProd(Module):
 
                     # For tagging W vs. top, holds info on deltaR between b-jet and AK8jet
                     self.out.branch('selGenHadHemDeltaR'+sys, "F")
+                    self.out.branch('selGenHadHemDeltaPhi'+sys, "F")
+                    self.out.branch('selGenHadHemDeltaRap'+sys, "F")
 
                 
                 if self.isSigMC and not self.onlyUnc: 
@@ -667,8 +676,8 @@ class nSubProd(Module):
             passGenSel=False
             iGenSel=None
         else:
-            passGenSel, iGenSel, selGendR_AK8_hadAK4b, selGenMuons, selGenAK4bjets, selGenAK4bhadjets, selGenLeptW, selGenJets, selGenMET = self.genSelection(event) 
-        passRecoSel, iRecoSel, selRecodR_AK8_hadAK4b, selRecoMuons, selRecoAK4bjets, selRecoAK4bhadjets, selRecoLeptW, selRecoJets, selRecoMET = self.recoSelection(event) 
+            passGenSel, iGenSel, selGendR_AK8_hadAK4b, selGendPhi_AK8_hadAK4b, selGendRap_AK8_hadAK4b, selGenMuons, selGenAK4bjets, selGenAK4bhadjets, selGenLeptW, selGenJets, selGenMET = self.genSelection(event) 
+        passRecoSel, iRecoSel, selRecodR_AK8_hadAK4b, selRecodPhi_AK8_hadAK4b, selRecodRap_AK8_hadAK4b, selRecoMuons, selRecoAK4bjets, selRecoAK4bhadjets, selRecoLeptW, selRecoJets, selRecoMET = self.recoSelection(event) 
         #print (selRecodR_AK8_hadAK4b)
         if not self.isMC:
             if not passRecoSel['_nom']: 
@@ -920,8 +929,12 @@ class nSubProd(Module):
                 self.out.fillBranch( 'nRecoHadBtags'+sys, len(selRecoAK4bhadjets[sys]) if passRecoSel[sys] else 0)
                 self.out.fillBranch( 'nRecoLepBtags'+sys, len(recoleptHemBjets) if passRecoSel[sys] else 0)
                 self.out.fillBranch( 'selRecoHadHemDeltaR'+sys, selRecodR_AK8_hadAK4b[sys] if passRecoSel[sys] else 929.)
+                self.out.fillBranch( 'selRecoHadHemDeltaPhi'+sys, selRecodPhi_AK8_hadAK4b[sys] if passRecoSel[sys] else 929.)
+                self.out.fillBranch( 'selRecoHadHemDeltaRap'+sys, selRecodRap_AK8_hadAK4b[sys] if passRecoSel[sys] else 929.)
                 self.out.fillBranch( 'FlagRecoLeptHemBjet'+sys, 1 if (passRecoSel[sys] and len(recoleptHemBjets)>0) else 0)
                 self.out.fillBranch( 'totalRecoWeight'+sys, self.totalRecoWeight if passRecoSel[sys] else 0.)
+                
+                self.out.fillBranch( 'passRecoSel'+sys, 1 if passRecoSel[sys] else 0)
                 
 
             else:
@@ -931,9 +944,14 @@ class nSubProd(Module):
                 self.out.fillBranch( 'nRecoHadBtags'+sys, len(selRecoAK4bhadjets[sys]) if passRecoSel[sys] else 0)
                 self.out.fillBranch( 'nRecoLepBtags'+sys, len(recoleptHemBjets) if passRecoSel[sys] else 0)
                 self.out.fillBranch( 'selRecoHadHemDeltaR'+sys, selRecodR_AK8_hadAK4b[sys] if passRecoSel[sys] else 929.)            
+                self.out.fillBranch( 'selRecoHadHemDeltaPhi'+sys, selRecodPhi_AK8_hadAK4b[sys] if passRecoSel[sys] else 929.)            
+                self.out.fillBranch( 'selRecoHadHemDeltaRap'+sys, selRecodRap_AK8_hadAK4b[sys] if passRecoSel[sys] else 929.)            
                 self.out.fillBranch( 'FlagRecoLeptHemBjet'+sys, 1 if (passRecoSel[sys] and len(recoleptHemBjets)>0) else 0)
                 self.out.fillBranch( 'FlagDeltaRMatchedBjets'+sys, self.alsoDeltaRMatchedB if (passRecoSel[sys] and passGenSel) else 0)
+                
                 self.out.fillBranch( 'totalRecoWeight'+sys, self.totalRecoWeight if passRecoSel[sys] else 0.)
+                self.out.fillBranch( 'passRecoSel'+sys, 1 if passRecoSel[sys] else 0)
+                
                 self.out.fillBranch( 'puWeightNom'+sys, self.puWeight if passRecoSel[sys] else 0.)
                 self.out.fillBranch( 'l1prefiringWeightNom'+sys, self.l1PreFireWeight if passRecoSel[sys] else 0.)
                 self.out.fillBranch( 'btagWeightNom'+sys, self.btaggingWeight if passRecoSel[sys] else 0.)
@@ -945,20 +963,24 @@ class nSubProd(Module):
                     self.out.fillBranch( 'nGenHadBtags'+sys, len(selRecoAK4bhadjets) if passGenSel else 0)
                     self.out.fillBranch( 'nGenLepBtags'+sys, len(genleptHemBjets) if passGenSel else 0)
                     self.out.fillBranch( 'selGenHadHemDeltaR'+sys, selGendR_AK8_hadAK4b if passGenSel else 929.)
+                    self.out.fillBranch( 'selGenHadHemDeltaPhi'+sys, selGendPhi_AK8_hadAK4b if passGenSel else 929.)
+                    self.out.fillBranch( 'selGenHadHemDeltaRap'+sys, selGendRap_AK8_hadAK4b if passGenSel else 929.)
                     self.out.fillBranch( 'FlagGenLeptHemBjet'+sys, 1 if (passGenSel and len(genleptHemBjets)>0) else 0)
-                    self.out.fillBranch( 'evtGenWeight'+sys, self.evtGenWeight if passGenSel else 0.) 
+                    
+                    self.out.fillBranch( 'evtGenWeight'+sys, self.evtGenWeight if passGenSel or passRecoSel[sys] else 0.) 
+                    self.out.fillBranch( 'passGenSel'+sys, 1 if passGenSel else 0) 
 
                 if self.isSigMC and not self.onlyUnc:
-                    self.out.fillBranch( 'pdfWeightNom'+sys, self.pdfWeight if passGenSel else 0.)
-                    self.out.fillBranch( 'pdfWeightAll'+sys, self.pdfWeightAll if passGenSel else np.zeros((103,),dtype=np.float32))
-                    self.out.fillBranch( 'pdfWeightUp'+sys, self.pdfWeightUp if passGenSel else 0.)
-                    self.out.fillBranch( 'pdfWeightDown'+sys, self.pdfWeightDown if passGenSel else 0.)
+                    self.out.fillBranch( 'pdfWeightNom'+sys, self.pdfWeight if passGenSel or passRecoSel[sys] else 0.)
+                    self.out.fillBranch( 'pdfWeightAll'+sys, self.pdfWeightAll if passGenSel or passRecoSel[sys] else np.zeros((103,),dtype=np.float32))
+                    self.out.fillBranch( 'pdfWeightUp'+sys, self.pdfWeightUp if passGenSel or passRecoSel[sys] else 0.)
+                    self.out.fillBranch( 'pdfWeightDown'+sys, self.pdfWeightDown if passGenSel or passRecoSel[sys] else 0.)
                     
-                    self.out.fillBranch( 'isrWeightUp'+sys, self.isrWeightUp if passGenSel else 0.)
-                    self.out.fillBranch( 'isrWeightDown'+sys, self.isrWeightDown if passGenSel else 0.)
+                    self.out.fillBranch( 'isrWeightUp'+sys, self.isrWeightUp if passGenSel or passRecoSel[sys] else 0.)
+                    self.out.fillBranch( 'isrWeightDown'+sys, self.isrWeightDown if passGenSel or passRecoSel[sys] else 0.)
                     
-                    self.out.fillBranch( 'fsrWeightUp'+sys, self.fsrWeightUp if passGenSel else 0.)
-                    self.out.fillBranch( 'fsrWeightDown'+sys, self.fsrWeightDown if passGenSel else 0.)
+                    self.out.fillBranch( 'fsrWeightUp'+sys, self.fsrWeightUp if passGenSel or passRecoSel[sys] else 0.)
+                    self.out.fillBranch( 'fsrWeightDown'+sys, self.fsrWeightDown if passGenSel or passRecoSel[sys] else 0.)
                     
                     self.out.fillBranch( 'puWeightUp'+sys, self.puWeightUp if passRecoSel[sys] else 0.)
                     self.out.fillBranch( 'puWeightDown'+sys, self.puWeightDown if passRecoSel[sys] else 0.)
@@ -1001,10 +1023,13 @@ class nSubProd(Module):
         met = Object(event, 'MET')    
         
         ########### Lepton selection ###############
-        recoElectrons  = [x for x in electrons if x.pt > self.minLooseElectronPt and x.cutBased >= 2 and ((self.range1ElectronEta[0]<abs(x.eta)<self.range1ElectronEta[1]) or (self.range2ElectronEta[0]<abs(x.eta)<self.range2ElectronEta[1]))] #only loose selection for e
-        recoMuons = [x for x in muons if x.pt > self.minTightMuonPt and abs(x.p4().Eta()) < self.maxMuonEta and x.tightId and abs(x.dxy)<0.2 and abs(x.dz)<0.5 and x.isGlobal and x.isTracker and x.highPtId and x.tkRelIso<0.3] #  applying tight selection on muons already here since we only veto for loose muons and loose electrons in event
+        # only loose selection for electrons, to veto on
+        recoElectrons  = [x for x in electrons if x.pt > self.minLooseElectronPt and x.cutBased >= 2 and ((self.range1ElectronEta[0]<abs(x.eta)<self.range1ElectronEta[1]) or (self.range2ElectronEta[0]<abs(x.eta)<self.range2ElectronEta[1]))] 
+        # applying tight selection on muons here
         # descriptors for id/iso selectors used provided in: 
         # https://twiki.cern.ch/twiki/bin/viewauth/CMS/SWGuideMuonIdRun2#HighPt_Muon
+        recoMuons = [x for x in muons if x.pt > self.minTightMuonPt and abs(x.p4().Eta()) < self.maxMuonEta and x.tightId and abs(x.dxy)<0.2 and abs(x.dz)<0.5 and x.isGlobal and x.isTracker and x.highPtId and x.tkRelIso<0.3] 
+        
         recoElectrons.sort(key=lambda x:x.pt, reverse=True)
         recoMuons.sort(key=lambda x:x.pt,reverse=True)
 
@@ -1014,7 +1039,7 @@ class nSubProd(Module):
 
         ################### MET  #######################
         MET = ROOT.TLorentzVector()
-        MET.SetPtEtaPhiM(met.pt, 0., met.phi, 0.)#met.sumEt)
+        MET.SetPtEtaPhiM(met.pt, 0., met.phi, 0.)
         ################################################
 
 
@@ -1033,6 +1058,8 @@ class nSubProd(Module):
         passSel = {}
         iSel = {}
         recodR_AK8_hadAK4b = {}
+        recodRap_AK8_hadAK4b = {}
+        recodPhi_AK8_hadAK4b = {}
         recoAK4bhadjets = {}
         for sys in self.sysSource:
              
@@ -1051,7 +1078,7 @@ class nSubProd(Module):
             # leading hadr. hem. AK4),==1 high pT mu, no further leptons passing criteria, 
             # large MET, large lept. W pT
 
-            passSel[sys], iSel[sys], recodR_AK8_hadAK4b[sys], recoAK4bhadjets[sys] = self.WtopSelection( False, event, recoMuons, recoElectrons, recoAK4jets, recoAK4bjets, recoAK8jets[sys], MET, sys)
+            passSel[sys], iSel[sys], recodR_AK8_hadAK4b[sys], recodPhi_AK8_hadAK4b[sys], recodRap_AK8_hadAK4b[sys], recoAK4bhadjets[sys] = self.WtopSelection( False, event, recoMuons, recoElectrons, recoAK4jets, recoAK4bjets, recoAK8jets[sys], MET, sys)
             
             #print (recodR_AK8_hadAK4b,recoAK4bhadjets)
             # fill in relevant arrays like had hem AK4 b's, objects like 
@@ -1101,7 +1128,7 @@ class nSubProd(Module):
             self.l1PreFireWeight = event.L1PreFiringWeight_Nom
             self.evtGenWeight = event.genWeight 
 
-            #### Applying ALL remaining object-related weights ####
+            #### Applying all reco weights for control histos ####
             weight =  self.evtGenWeight  * self.puWeight * self.leptonWeight * self.btaggingWeight *  self.l1PreFireWeight #btagweights['_nom'] # * self.topweight            
             #self.totalRecoWeight = weight
 
@@ -1410,7 +1437,7 @@ class nSubProd(Module):
                         #getattr( self, 'leptonicWMT'+'_topSel').Fill( lW.Mt() , weight)
 
 
-        return passSel, iSel, recodR_AK8_hadAK4b, recoMuons, recoAK4bjets, recoAK4bhadjets, recoleptW, recoAK8jets, MET
+        return passSel, iSel, recodR_AK8_hadAK4b, recodPhi_AK8_hadAK4b, recodRap_AK8_hadAK4b, recoMuons, recoAK4bjets, recoAK4bhadjets, recoleptW, recoAK8jets, MET
 
     #############################################################################
     def genSelection( self, event ):
@@ -1467,7 +1494,7 @@ class nSubProd(Module):
         
         ##### Applying selection
         #### Creating Nsub basis, filling histos and creating branches IF passSel
-        passSel, iSel, gendR_AK8_hadAK4b, genAK4bhadjets = self.WtopSelection( True, event, genMuons, genElectrons, genAK4jets, genAK4bjets, genAK8jets, genMET, '' )
+        passSel, iSel, gendR_AK8_hadAK4b, gendPhi_AK8_hadAK4b, gendRap_AK8_hadAK4b, genAK4bhadjets = self.WtopSelection( True, event, genMuons, genElectrons, genAK4jets, genAK4bjets, genAK8jets, genMET, '' )
 
         #### Weight
         weight = event.genWeight
@@ -1702,7 +1729,7 @@ class nSubProd(Module):
                     
 
 
-        return passSel, iSel, gendR_AK8_hadAK4b, genMuons, genAK4bjets, genAK4bhadjets, genleptW, genAK8jets, genMET
+        return passSel, iSel, gendR_AK8_hadAK4b, gendPhi_AK8_hadAK4b, gendRap_AK8_hadAK4b, genMuons, genAK4bjets, genAK4bhadjets, genleptW, genAK8jets, genMET
 
     #############################################################################
     def WtopSelection( self, isGen, event, muons, electrons, AK4jets, AK4bjets, AK8jets, MET, ptLabel):
@@ -1731,11 +1758,13 @@ class nSubProd(Module):
                 # the leading leptonic hemisphere AK4 (not requiring this to be a b-tagged AK4 currently),  
                 # additionally, ensure hadronic hemisphere's topology is boosted, with the leptonic W pT cut 
                 # (ie, the leptonic top's decay products )
+
                 leadJetpT = getattr( AK8jets[0], 'pt'+ptLabel )
                 leadJetmass = AK8jets[0].msoftdrop if isGen else AK8jets[0].msoftdrop_nom #should this be: getattr( AK8jets[0], 'mosftdrop'+ptLabel ) ??? 
 
                 # find hadronic hemisphere AK4's within dR<1.6 of AK8 and btagged
                 # if exactly one b-tagged AK4 close to AK8 keep event
+
                 if not isGen: 
                     AK4hadbjets = [x for x in AK4jets if self.DrRapPhi(x.p4(),AK8jets[0].p4())<1.6 and x.btagDeepFlavB > self.minBDisc]
                     AK4hadbjets.sort(key=lambda x:x.pt,reverse=True) 
@@ -1745,10 +1774,14 @@ class nSubProd(Module):
 
                 if len(AK4hadbjets)>0: 
                     dR_leadJet_leadhadAK4 = self.DrRapPhi(AK4hadbjets[0].p4(),AK8jets[0].p4()) 
+                    dPhi_leadJet_leadhadAK4 = AK4hadbjets[0].p4().DeltaPhi(AK8jets[0].p4()) 
+                    dRap_leadJet_leadhadAK4 = AK4hadbjets[0].p4().Rapidity() - AK8jets[0].p4().Rapidity()
                 else: 
-                    dR_leadJet_leadhadAK4 = -929
-                    return False, None, dR_leadJet_leadhadAK4, []
-                #print(dR_leadJet_leadhadAK4)
+                    dR_leadJet_leadhadAK4 = 929
+                    dPhi_leadJet_leadhadAK4 = 929
+                    dRap_leadJet_leadhadAK4 = 929
+                    return False, None, dR_leadJet_leadhadAK4, dPhi_leadJet_leadhadAK4, dRap_leadJet_leadhadAK4, []
+
                 if self.evtSelection.startswith('_Wtop'):
                     if leadJetmass>self.minleadJetMass and leadJetpT>self.minLeadAK8JetPtW and (len(AK4hadbjets)==1):
                         # apply a lowish inv. mass and pT cut to get rid of extra events, 
@@ -1756,24 +1789,27 @@ class nSubProd(Module):
                         # store deltaR of leading (b-tagged) hadronic hemisphere AK4, if any 
                         # keeping the chosen had hem b-jets to return to do plots with them
                         
-                        return True, '_WtopSel', dR_leadJet_leadhadAK4, AK4hadbjets
+                        return True, '_WtopSel', dR_leadJet_leadhadAK4, dPhi_leadJet_leadhadAK4, dRap_leadJet_leadhadAK4, AK4hadbjets
                     else: 
-                        return False, None, dR_leadJet_leadhadAK4, AK4hadbjets
+                        return False, None, dR_leadJet_leadhadAK4, dPhi_leadJet_leadhadAK4, dRap_leadJet_leadhadAK4, AK4hadbjets
+
                 elif 'WSel' in self.evtSelection: 
                     if (((leadJetmass<self.maxSDMassW) and (leadJetmass>=self.minSDMassW)) and (leadJetpT>self.minLeadAK8JetPtW)) and (len(AK4hadbjets)==1) and (dR_leadJet_leadhadAK4>0.8 and dR_leadJet_leadhadAK4<1.6): 
                         #print (leptWpT.Mt(),isGen)                           
-                        return True, '_WSel', dR_leadJet_leadhadAK4, AK4hadbjets 
-                    else: return False, None, dR_leadJet_leadhadAK4, AK4hadbjets
+                        return True, '_WSel', dR_leadJet_leadhadAK4, dPhi_leadJet_leadhadAK4, dRap_leadJet_leadhadAK4, AK4hadbjets 
+                    else: 
+                        return False, None, dR_leadJet_leadhadAK4, dPhi_leadJet_leadhadAK4, dRap_leadJet_leadhadAK4, AK4hadbjets
 
                 elif '_topSel' in self.evtSelection:
                     if ((leadJetmass/ (1 if isGen else AK8jets[0].msoftdrop_corr_PUPPI) >= self.minSDMassTop) and (leadJetmass/(1 if isGen else AK8jets[0].msoftdrop_corr_PUPPI) < self.maxSDMassTop) and (leadJetpT> self.minLeadAK8JetPtTop)) and (len(AK4hadbjets)==1) and (dR_leadJet_leadhadAK4<=0.8): # 
-                        return True, '_topSel', dR_leadJet_leadhadAK4, AK4hadbjets
-                    else: return False, None, dR_leadJet_leadhadAK4, AK4hadbjets   
+                        return True, '_topSel', dR_leadJet_leadhadAK4, dPhi_leadJet_leadhadAK4, dRap_leadJet_leadhadAK4, AK4hadbjets
+                    else: 
+                        return False, None, dR_leadJet_leadhadAK4, dPhi_leadJet_leadhadAK4, dRap_leadJet_leadhadAK4, AK4hadbjets   
                 
             #returning no had hem b jet info in these following two return statements since as per the requirements in these if blocks, 
             #the hadronic hemisphere is not entirely reconstructable as per the constraints above
-            else: return False, None, -929, [] 
-        else: return False, None, -929, []
+            else: return False, None, 929, 929, 929, [] 
+        else: return False, None, 929, 929, 929, []
         
 
        
