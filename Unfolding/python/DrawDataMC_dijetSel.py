@@ -46,8 +46,7 @@ textBox.SetTextAlign(12)
 def runPlots_WtopSel(
                         dataFile, sigFiles, bkgFiles, variables, sel, sysUncert, process, ext, lumi=1., sysSignalLabels=[],
                         year='2017',runMLU=False, sysSigFiles=[], varSigFiles=[], outputFolder='../Results',
-                        version='_May23', main='TTToSemiLeptonic', alt0='TTJets', alt1='HTbin', alt2='Ptbin',
-                        verbose=False
+                        version='_May23', main='TTToSemiLeptonic', alt0='TTJets', verbose=False
                       ):
     
     

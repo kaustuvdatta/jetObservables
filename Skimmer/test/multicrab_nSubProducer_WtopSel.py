@@ -80,7 +80,7 @@ def submitJobs( job, inputFiles, unitJobs ):
 
     config.section_("Site")
     config.Site.storageSite = options.storageSite
-    config.Site.whitelist = ['T2_CH_CSCS','T2_CH_CERN','T1_IT_*','T1_FR_*','T1_DE_*','T2_DE_*','T2_IT_*','T2_FR_*']
+    config.Site.whitelist = ['T2_CH_CSCS','T2_CH_CERN','T1_IT_*','T1_FR_*','T1_DE_*','T2_DE_*','T2_IT_*','T2_FR_*','T2_AT_*','T2_BE_*','T2_ES_*','T1_ES_*']
 
 
     def submit(config):

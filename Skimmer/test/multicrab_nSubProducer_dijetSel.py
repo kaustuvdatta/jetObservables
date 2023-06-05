@@ -61,10 +61,10 @@ def submitJobs( job, inputFiles, unitJobs ):
     config.section_("JobType")
     config.JobType.pluginName = 'Analysis'
     config.JobType.psetName = 'PSet.py'
-    config.JobType.maxMemoryMB = 4000 #if (options.onlyUnc and options.onlyUnc.startswith('_je')) else 2500
+    config.JobType.maxMemoryMB = 6000 #if (options.onlyUnc and options.onlyUnc.startswith('_je')) else 2500
     #if (options.onlyUnc and options.onlyUnc.startswith('_je')): 
-    config.JobType.maxJobRuntimeMin = 1200 if (options.onlyUnc and options.onlyUnc.startswith('_jes')) else 800
-    config.JobType.numCores = 2
+    config.JobType.maxJobRuntimeMin = 1200 if (options.onlyUnc and options.onlyUnc.startswith('_je')) else 800
+    config.JobType.numCores = 4
     config.JobType.allowUndistributedCMSSW = True
 
 
@@ -75,7 +75,7 @@ def submitJobs( job, inputFiles, unitJobs ):
 
     config.section_("Site")
     config.Site.storageSite = options.storageSite
-    config.Site.whitelist = ['T2_CH_CSCS','T2_CH_CERN','T1_IT_*','T1_FR_*','T1_DE_*','T2_DE_*','T2_IT_*','T2_FR_*'] #,'T2_DE_*','T1_IT_*','T1_FR_*','T2_IT_*','T2_FR_*']#,'T2_HU_*','T1_ES_*','T2_ES_*','T2_PT_*','T1_US_*']
+    config.Site.whitelist = ['T2_CH_CSCS','T2_CH_CERN','T1_IT_*','T1_FR_*','T1_DE_*','T2_DE_*','T2_IT_*','T2_FR_*','T2_AT_*','T2_BE_*','T2_ES_*','T1_ES_*'] #'T2_PT_*','T1_US_*']
 
 
     def submit(config):
@@ -103,7 +103,7 @@ def submitJobs( job, inputFiles, unitJobs ):
     
     config.Data.splitting ='LumiBased' if isDataFlag else 'FileBased'#( (('JetHT' in job) or ('1000to1500' in job) or ('2000' in job) or ('500to700' in job)) and options.onlyUnc.startswith('_je') and not ('JetHT' in job)) else 'FileBased'#'Automatic'
     config.Data.unitsPerJob = 50 if config.Data.splitting=='LumiBased' else unitJobs#unitJobs#'Automatic'
-    if not(config.Data.splitting)=='LumiBased': config.Data.unitsPerJob = 1 if ('MLM' in job) else unitJobs
+    if not(config.Data.splitting)=='LumiBased': config.Data.unitsPerJob = 5 if ('MLM' in job and not('H7' in job or 'herwig' in job.lower())) else unitJobs
     #config.Data.totalUnits = -1
     #config.Data.splitting = 'FileBased'
     #config.Data.unitsPerJob = 2 if (options.onlyUnc and options.onlyUnc.startswith('_jes')) else unitJobs

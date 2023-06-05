@@ -9,10 +9,6 @@ drop Flag_*
 #keep GenPartAK8*
 #keep GenMET*
 #keep GenPart*
-keep HLT_Mu50
-keep HLT_Mu100
-keep HLT_TkMu50
-keep HLT_TkMu100
 #keep HLT_PFHT*
 #keep HLT_*AK8*
 #keep Jet*
@@ -25,6 +21,10 @@ keep HLT_TkMu100
 #keep PuppiMET*
 
 #keep Jet_btag*
+keep HLT_Mu50
+keep HLT_Mu100
+keep HLT_TkMu50
+keep HLT_TkMu100
 keep btagWeight*
 keep Flag*
 keep nReco*
@@ -50,6 +50,6 @@ keep accepgenSel*
 keep recoSel*
 keep truerecoSel*
 keep good_*
+keep passGen*
+keep passReco*
 #keep L1PreFiringWeight*
-keep PFCands*
-keep GenCand*

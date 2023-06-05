@@ -1,10 +1,3 @@
-'''
-import uproot
-from uproot import *
-import coffea
-'''
-
-
 from coffea import processor
 import coffea.processor
 from coffea.processor import defaultdict_accumulator,dict_accumulator#,IterativeExecutor,FuturesExecutor
@@ -23,11 +16,26 @@ import numba
 import gc
 
 class nSubBasis_unfoldingHistoProd_WtopSel(processor.ProcessorABC):
+
+    #####################################################################################################################################
+    #####################################################################################################################################  
+    # Relevant info wrt. what mode to run the W/top sample processing on, pargmatic choice: noDeltaR, purest=massAndDeltaR (a la AL,SM) #
+    ##_________________________________________________________________________________________________________________________________##
+    #|      selection mode      |                                      details                                                         |#
+    #|---------------------------------------------------------------------------------------------------------------------------------|#
+    #|                          |                                                                                                      |#
+    #|       massAndDeltaR      |                  AK8jet softdropped mass cut with dR(AK8,had.hem. b-jet)                             |#
+    #|          noDeltaR        |           mass cut, and requiring exactly 1 b-tagged had. hem. AK4 and overall >1 btags              |#
+    #|         onlyDeltaR       |   no mass cut, req. dR(AK8,had.hem. b-jet) and exactly 1 b-tagged had. hem. AK4 and overall >1 btags |#
+    #|---------------------------------------------------------------------------------------------------------------------------------|#
+    #|_________________________________________________________________________________________________________________________________|#
+    #####################################################################################################################################
+    #####################################################################################################################################
     
     def __init__(self, sampleName, selection='_topSel', withLeptHemBtag=False, sysSources=[],year='2017', era='', 
-                 isMC=True, isSigMC=True, onlyUnc='', wtUnc=False, verbose=True, saveParquet=False, splitCount='0',
-                 sampleDict=dictSamples, test=False, sysUnc=False):
-
+                 isMC=True, isSigMC=True, onlyUnc='', wtUnc=False, verbose=False, saveParquet=False, splitCount='0',
+                 sampleDict=dictSamples, test=False, sysUnc=False, selectionmode='massAndDeltaR'): 
+    
         self.test=test
         self.year = year
         self.isMC = isMC
@@ -42,6 +50,7 @@ class nSubBasis_unfoldingHistoProd_WtopSel(processor.ProcessorABC):
         self.sampleName = sampleName
         self.verbose=verbose
         self.saveParquet=saveParquet
+        self.mode=selectionmode
         
         if (not self.isMC) and self.era=='': print (f'Data-loading error: You need to specify what era if you want to work with while handling data' )
         
@@ -57,23 +66,23 @@ class nSubBasis_unfoldingHistoProd_WtopSel(processor.ProcessorABC):
         self.selObjects = ['Mu','LeptW','MET','AK4bjetHadHem']
 
         self.kinematic_labels=['_pt','_eta', '_y', '_phi', '_mass', '_msoftdrop']
-        self.reco_only_labels=['good_nPVs','nRecoBtags','nRecoHadBtags','nRecoLepBtags', 'selRecoHadHemDeltaR']
-        self.gen_only_labels=['nGenBtags','nGenHadBtags','nGenLepBtags', 'selGenHadHemDeltaR']
+        self.reco_only_labels=['good_nPVs','nRecoBtags','nRecoHadBtags','nRecoLepBtags', 'selRecoHadHemDeltaR', 'selRecoHadHemDeltaPhi', 'selRecoHadHemDeltaRap']
+        self.gen_only_labels=['nGenBtags','nGenHadBtags','nGenLepBtags', 'selGenHadHemDeltaR', 'selGenHadHemDeltaPhi', 'selGenHadHemDeltaRap']
 
         self.dict_variables_kinematics_AK8 = {
 
-                                            "_pt": np.array([i for i in np.arange(170., 2580., 10.)]) if 'WSel' in selection else  np.array([i for i in np.arange(300., 2510., 10.)]),
+                                            "_pt": np.array([i for i in np.arange(170., 2580., 10.)]) if 'WSel' in selection else  np.array([i for i in np.arange(300., 2580., 10.)]),
                                             "_eta": np.array([i for i in np.arange(-2.2, 2.4, 0.2)]),
                                             "_y": np.array([i for i in np.arange(-2.2, 2.4, 0.2)]),
                                             "_phi": np.array([i for i in np.arange(-3.2, 3.4, 0.2)]),
-                                            "_mass": np.array([i for i in np.arange(0., 350., 5.)]),
-                                            "_msoftdrop": np.array([i for i in np.arange(0., 350., 5.)]),
+                                            "_mass": np.array([i for i in np.arange(0., 145., 5.)]) if 'WSel' in selection else  np.array([i for i in np.arange(100., 405., 5.)]),
+                                            "_msoftdrop": np.array([i for i in np.arange(0., 145., 5.)]) if 'WSel' in selection else  np.array([i for i in np.arange(120., 325., 5.)]),
 
-                                        } 
+                                        }  
 
         self.dict_variables_kinematics_Muon = {
 
-                                            "_pt": np.array([i for i in np.arange(50., 1860., 10.)]),
+                                            "_pt": np.array([i for i in np.arange(50., 1810., 10.)]),
                                             "_eta": np.array([i for i in np.arange(-2.2, 2.4, 0.2)]),
                                             "_y": np.array([i for i in np.arange(-2.2, 2.4, 0.2)]),
                                             "_phi": np.array([i for i in np.arange(-3.2, 3.4, 0.2)]),
@@ -87,23 +96,23 @@ class nSubBasis_unfoldingHistoProd_WtopSel(processor.ProcessorABC):
                                             "_eta": np.array([i for i in np.arange(-2.2, 2.4, 0.2)]),
                                             "_y": np.array([i for i in np.arange(-2.2, 2.4, 0.2)]),
                                             "_phi": np.array([i for i in np.arange(-3.2, 3.4, 0.2)]),
-                                            "_mass": np.array([i for i in np.arange(0., 305., 5.)]),
+                                            "_mass": np.array([i for i in np.arange(0., 405., 5.)]),
 
                                         } 
 
         self.dict_variables_kinematics_AK4Had = {
 
-                                            "_pt": np.array([i for i in np.arange(30., 2040., 10.)]),
+                                            "_pt": np.array([i for i in np.arange(20., 2030., 10.)]),
                                             "_eta": np.array([i for i in np.arange(-2.2, 2.4, 0.2)]),
                                             "_y": np.array([i for i in np.arange(-2.2, 2.4, 0.2)]),
                                             "_phi": np.array([i for i in np.arange(-3.2, 3.4, 0.2)]),
-                                            "_mass": np.array([i for i in np.arange(0., 305., 5.)]),
+                                            "_mass": np.array([i for i in np.arange(0., 105., 5.)]),
 
                                         }
 
         self.dict_variables_kinematics_MET = {
 
-                                            "_pt": np.array([i for i in np.arange(30., 1240., 10.)]),
+                                            "_pt": np.array([i for i in np.arange(30., 1440., 10.)]),
                                             "_phi": np.array([i for i in np.arange(-3.2, 3.4, 0.2)]),
 
                                         } 
@@ -113,7 +122,7 @@ class nSubBasis_unfoldingHistoProd_WtopSel(processor.ProcessorABC):
                                         "nRecoBtags": np.array([i for i in np.arange(0., 6, 1.)]),
                                         "nRecoHadBtags": np.array([i for i in np.arange(0., 6, 1.)]),
                                         "nRecoLepBtags": np.array([i for i in np.arange(0., 6, 1.)]),
-                                        "selRecoHadHemDeltaR": np.array([i for i in np.arange(0., 2.05, 0.05)]),
+                                        "selRecoHadHemDeltaR": np.array([i for i in np.arange(0., 1.8, 0.05)]),
 
                                    }   
         
@@ -121,9 +130,10 @@ class nSubBasis_unfoldingHistoProd_WtopSel(processor.ProcessorABC):
                                         "nGenBtags": np.array([i for i in np.arange(0., 6., 1.)]),
                                         "nGenHadBtags": np.array([i for i in np.arange(0., 6., 1.)]),
                                         "nGenLepBtags": np.array([i for i in np.arange(0., 6., 1.)]),
-                                        "selGenHadHemDeltaR": np.array([i for i in np.arange(0., 2.05, 0.05)]),
+                                        "selGenHadHemDeltaR": np.array([i for i in np.arange(0., 1.8, 0.05)]),
 
-                                   }   
+                                   } 
+        
         self.dict_variables_toUnfold = {
                     
                     "_tau_0p5_1": np.array([(i/1000) for i in np.arange(0.*1000, 1.*1001)]),
@@ -211,32 +221,57 @@ class nSubBasis_unfoldingHistoProd_WtopSel(processor.ProcessorABC):
             
             ############ building event masks ############
             
-            topRecoMask = (events[f'selRecoJets{s}_pt']>self.top_ptmin) & (events[f'selRecoJets{s}_msoftdrop']>self.top_mSDmin) & (events[f'selRecoJets{s}_msoftdrop']<self.top_mSDmax) & (events[f'selRecoHadHemDeltaR{s}']<0.8) & (events[f'selRecoLeptW{s}_pt']>self.LeptW_ptmin ) & (events[f'selRecoMu{s}_pt']>self.Mu_ptmin ) & (events[f'selRecoMET{s}_pt']>self.MET_ptmin ) & (events[f'totalRecoWeight{s}']!=0.) #& (events[f'nRecoBtags_nom']>1) & (events[f'nRecoHadBtags_nom']==1) 
+            if self.mode=='massAndDeltaR': 
 
-            WRecoMask = (events[f'selRecoJets{s}_pt']>self.W_ptmin) & (events[f'selRecoJets{s}_msoftdrop']>self.W_mSDmin) & (events[f'selRecoJets{s}_msoftdrop']<self.W_mSDmax) & (events[f'selRecoHadHemDeltaR{s}']>0.8) & (events[f'selRecoHadHemDeltaR{s}']<1.6) & (events[f'selRecoLeptW{s}_pt']>self.LeptW_ptmin ) & (events[f'selRecoMu{s}_pt']>self.Mu_ptmin ) & (events[f'selRecoMET{s}_pt']>self.MET_ptmin ) & (events[f'totalRecoWeight{s}']!=0.) #& (events[f'nRecoBtags_nom']>1) & (events[f'nRecoHadBtags_nom']==1) 
+                topRecoMask = (events[f'selRecoJets{s}_pt']>self.top_ptmin) & (events[f'selRecoJets{s}_msoftdrop']>self.top_mSDmin) & (events[f'selRecoJets{s}_msoftdrop']<self.top_mSDmax) & (events[f'selRecoHadHemDeltaR{s}']<0.8) & (events[f'selRecoLeptW{s}_pt']>self.LeptW_ptmin ) & (events[f'selRecoMu{s}_pt']>self.Mu_ptmin ) & (events[f'selRecoMET{s}_pt']>self.MET_ptmin ) & (events[f'passRecoSel{s}']==1) & (events[f'totalRecoWeight{s}']!=0.) #& (events[f'nRecoBtags_nom']>1) & (events[f'nRecoHadBtags_nom']==1) 
+
+                WRecoMask = (events[f'selRecoJets{s}_pt']>self.W_ptmin) & (events[f'selRecoJets{s}_msoftdrop']>self.W_mSDmin) & (events[f'selRecoJets{s}_msoftdrop']<self.W_mSDmax) & (events[f'selRecoHadHemDeltaR{s}']>0.8) & (events[f'selRecoHadHemDeltaR{s}']<1.6) & (events[f'selRecoLeptW{s}_pt']>self.LeptW_ptmin ) & (events[f'selRecoMu{s}_pt']>self.Mu_ptmin ) & (events[f'selRecoMET{s}_pt']>self.MET_ptmin ) & (events[f'passRecoSel{s}']==1) & (events[f'totalRecoWeight{s}']!=0.) #& (events[f'nRecoBtags_nom']>1) & (events[f'nRecoHadBtags_nom']==1) 
             
+                if self.isMC:# or self.isSigMC:    
+                    
+                    topGenMask = (events[f'selGenJets_nom_pt']>self.top_ptmin) & (events[f'selGenJets_nom_msoftdrop']>self.top_mSDmin) & (events[f'selGenJets_nom_msoftdrop']<self.top_mSDmax) & (events[f'selGenHadHemDeltaR_nom']<0.8) & (events[f'selGenLeptW_nom_pt']>self.LeptW_ptmin ) & (events[f'selGenMu_nom_pt']>self.Mu_ptmin ) & (events[f'selGenMET_nom_pt']>self.MET_ptmin ) & (events[f'passGenSel{s}']==1) & (events[f'evtGenWeight_nom']!=0.) #& (events[f'nGenBtags_nom']>1) & (events[f'nGenHadBtags_nom']==1) 
+
+                    WGenMask = (events[f'selGenJets_nom_pt']>self.W_ptmin) & (events[f'selGenJets_nom_msoftdrop']>self.W_mSDmin) & (events[f'selGenJets_nom_msoftdrop']<self.W_mSDmax) & (events[f'selGenHadHemDeltaR_nom']>0.8)  & (events[f'selGenHadHemDeltaR_nom']<1.6) & (events[f'selGenLeptW_nom_pt']>self.LeptW_ptmin ) & (events[f'selGenMu_nom_pt']>self.Mu_ptmin ) & (events[f'selGenMET_nom_pt']>self.MET_ptmin ) & (events[f'passGenSel{s}']==1) & (events[f'evtGenWeight_nom']!=0.) #& (events[f'nGenBtags_nom']>1) & (events[f'nGenHadBtags_nom']==1) 
+
+            elif self.mode=='onlyDeltaR':
+
+                topRecoMask = (events[f'selRecoJets{s}_pt']>self.top_ptmin) & (events[f'selRecoHadHemDeltaR{s}']<0.8) & (events[f'selRecoLeptW{s}_pt']>self.LeptW_ptmin ) & (events[f'selRecoMu{s}_pt']>self.Mu_ptmin ) & (events[f'selRecoMET{s}_pt']>self.MET_ptmin ) & (events[f'passRecoSel{s}']==1) & (events[f'totalRecoWeight{s}']!=0.) & (events[f'nRecoBtags_nom']>1) & (events[f'nRecoHadBtags_nom']==1) 
+
+                WRecoMask = (events[f'selRecoJets{s}_pt']>self.W_ptmin) & (events[f'selRecoHadHemDeltaR{s}']>0.8) & (events[f'selRecoHadHemDeltaR{s}']<1.6) & (events[f'selRecoLeptW{s}_pt']>self.LeptW_ptmin ) & (events[f'selRecoMu{s}_pt']>self.Mu_ptmin ) & (events[f'selRecoMET{s}_pt']>self.MET_ptmin ) & (events[f'passRecoSel{s}']==1) & (events[f'totalRecoWeight{s}']!=0.) & (events[f'nRecoBtags_nom']>1) & (events[f'nRecoHadBtags_nom']==1) 
+            
+                if self.isMC:# or self.isSigMC:    
+                    
+                    topGenMask = (events[f'selGenJets_nom_pt']>self.top_ptmin) & (events[f'selGenHadHemDeltaR_nom']<0.8) & (events[f'selGenLeptW_nom_pt']>self.LeptW_ptmin ) & (events[f'selGenMu_nom_pt']>self.Mu_ptmin ) & (events[f'selGenMET_nom_pt']>self.MET_ptmin ) & (events[f'passGenSel{s}']==1) & (events[f'evtGenWeight_nom']!=0.) & (events[f'nGenBtags_nom']>1) & (events[f'nGenHadBtags_nom']==1) 
+
+                    WGenMask = (events[f'selGenJets_nom_pt']>self.W_ptmin) & (events[f'selGenHadHemDeltaR_nom']>0.8)  & (events[f'selGenHadHemDeltaR_nom']<1.6) & (events[f'selGenLeptW_nom_pt']>self.LeptW_ptmin ) & (events[f'selGenMu_nom_pt']>self.Mu_ptmin ) & (events[f'selGenMET_nom_pt']>self.MET_ptmin ) & (events[f'passGenSel{s}']==1) & (events[f'evtGenWeight_nom']!=0.) & (events[f'nGenBtags_nom']>1) & (events[f'nGenHadBtags_nom']==1) 
+
+            elif self.mode=='noDeltaR':
+
+                topRecoMask = (events[f'selRecoJets{s}_pt']>self.top_ptmin) & (events[f'selRecoJets{s}_msoftdrop']>self.top_mSDmin) & (events[f'selRecoJets{s}_msoftdrop']<self.top_mSDmax) & (events[f'selRecoLeptW{s}_pt']>self.LeptW_ptmin ) & (events[f'selRecoMu{s}_pt']>self.Mu_ptmin ) & (events[f'selRecoMET{s}_pt']>self.MET_ptmin ) & (events[f'passRecoSel{s}']==1) & (events[f'totalRecoWeight{s}']!=0.) & (events[f'nRecoBtags_nom']>1) & (events[f'nRecoHadBtags_nom']==1) 
+
+                WRecoMask = (events[f'selRecoJets{s}_pt']>self.W_ptmin) & (events[f'selRecoJets{s}_msoftdrop']>self.W_mSDmin) & (events[f'selRecoJets{s}_msoftdrop']<self.W_mSDmax) & (events[f'selRecoLeptW{s}_pt']>self.LeptW_ptmin ) & (events[f'selRecoMu{s}_pt']>self.Mu_ptmin ) & (events[f'selRecoMET{s}_pt']>self.MET_ptmin ) & (events[f'passRecoSel{s}']==1) & (events[f'totalRecoWeight{s}']!=0.) & (events[f'nRecoBtags_nom']>1) & (events[f'nRecoHadBtags_nom']==1) 
+            
+                if self.isMC:# or self.isSigMC:    
+                    
+                    topGenMask = (events[f'selGenJets_nom_pt']>self.top_ptmin) & (events[f'selGenJets_nom_msoftdrop']>self.top_mSDmin) & (events[f'selGenJets_nom_msoftdrop']<self.top_mSDmax) & (events[f'selGenLeptW_nom_pt']>self.LeptW_ptmin ) & (events[f'selGenMu_nom_pt']>self.Mu_ptmin ) & (events[f'selGenMET_nom_pt']>self.MET_ptmin ) & (events[f'passGenSel{s}']==1) & (events[f'evtGenWeight_nom']!=0.) & (events[f'nGenBtags_nom']>1) & (events[f'nGenHadBtags_nom']==1) 
+
+                    WGenMask = (events[f'selGenJets_nom_pt']>self.W_ptmin) & (events[f'selGenJets_nom_msoftdrop']>self.W_mSDmin) & (events[f'selGenJets_nom_msoftdrop']<self.W_mSDmax) & (events[f'selGenLeptW_nom_pt']>self.LeptW_ptmin ) & (events[f'selGenMu_nom_pt']>self.Mu_ptmin ) & (events[f'selGenMET_nom_pt']>self.MET_ptmin ) & (events[f'passGenSel{s}']==1) & (events[f'evtGenWeight_nom']!=0.) & (events[f'nGenBtags_nom']>1) & (events[f'nGenHadBtags_nom']==1) 
+
+            else: 
+                print(f"######################## _WARNING_ #########################")
+                print(f"provided histoproducer mode, #{self.mode}#, is undefined")
+                print(f"############################################################")
+
             if self.isMC:# or self.isSigMC:    
                 if sys.startswith(('_isr','_fsr','_pdf')):#,'_pdf''):
                     extraWeights = events[f'{sys.split("_")[1]}{s}']
                 
-                    self.genWeights = events['evtGenWeight_nom']*extraWeights
+                    self.genWeights = events['genWeight']*extraWeights
                     #genWeightsW = events['genWeight'][WRecoMask]*extraWeights[WRecoMask]
                 else:
-                    self.genWeights = events['evtGenWeight_nom']
+                    self.genWeights = events['genWeight']
                     #genWeightsW = events['genWeight'][WRecoMask]
-                    
-                    
-                #if '_WSel' in self.selList:
-                #    self.genWeights=genWeightsW
-
-                #elif '_topSel' in self.selList: 
-                #    self.genWeights=genWeightstop
-                
-                topGenMask = (events[f'selGenJets_nom_pt']>self.top_ptmin) & (events[f'selGenJets_nom_msoftdrop']>self.top_mSDmin) & (events[f'selGenJets_nom_msoftdrop']<self.top_mSDmax) & (events[f'selGenHadHemDeltaR_nom']<0.8) & (events[f'selGenLeptW_nom_pt']>self.LeptW_ptmin ) & (events[f'selGenMu_nom_pt']>self.Mu_ptmin ) & (events[f'selGenMET_nom_pt']>self.MET_ptmin ) & (events[f'evtGenWeight_nom']!=0.) #& (events[f'nGenBtags_nom']>1) & (events[f'nGenHadBtags_nom']==1) 
-
-                WGenMask = (events[f'selGenJets_nom_pt']>self.W_ptmin) & (events[f'selGenJets_nom_msoftdrop']>self.W_mSDmin) & (events[f'selGenJets_nom_msoftdrop']<self.W_mSDmax) & (events[f'selGenHadHemDeltaR_nom']>0.8)  & (events[f'selGenHadHemDeltaR_nom']<1.6) & (events[f'selGenLeptW_nom_pt']>self.LeptW_ptmin ) & (events[f'selGenMu_nom_pt']>self.Mu_ptmin ) & (events[f'selGenMET_nom_pt']>self.MET_ptmin ) & (events[f'evtGenWeight_nom']!=0.) #& (events[f'nGenBtags_nom']>1) & (events[f'nGenHadBtags_nom']==1) 
-
-            
+           
             
             
             if self.verbose:
@@ -785,14 +820,20 @@ class nSubBasis_unfoldingHistoProd_WtopSel(processor.ProcessorABC):
                 reco_list.append("pdfWeightNom"+sys)
 
                 reco_list.append("totalRecoWeight"+sys)
+                reco_list.append("passRecoSel"+sys)
                 if self.isMC: reco_list.append(f"selRecoJets{sys}_msoftdrop_corr_PUPPI")#+sys)
                     
                 reco_list.append("FlagRecoLeptHemBjet"+sys)
                 reco_list.append("selRecoHadHemDeltaR"+sys)
+                reco_list.append("selRecoHadHemDeltaPhi"+sys)
+                reco_list.append("selRecoHadHemDeltaRap"+sys)
 
                 gen_list.append("evtGenWeight"+sys)
+                gen_list.append("passGenSel"+sys)
                 gen_list.append("FlagGenLeptHemBjet"+sys)
                 gen_list.append("selGenHadHemDeltaR"+sys)
+                gen_list.append("selGenHadHemDeltaPhi"+sys)
+                gen_list.append("selGenHadHemDeltaRap"+sys)
                 
                 
                 for i in self.dict_variables_reco:
@@ -802,8 +843,10 @@ class nSubBasis_unfoldingHistoProd_WtopSel(processor.ProcessorABC):
                     
             elif (not self.isMC) and sys.endswith('nom'):
                 reco_list.append("totalRecoWeight"+sys)               
-                #reco_list.append("FlagRecoLeptHemBjet"+sys)
-                reco_list.append("selRecoHadHemDeltaR"+sys)    
+                reco_list.append("passRecoSel"+sys)               
+                reco_list.append("selRecoHadHemDeltaR"+sys)
+                reco_list.append("selRecoHadHemDeltaPhi"+sys)
+                reco_list.append("selRecoHadHemDeltaRap"+sys) 
                 for i in self.dict_variables_reco:
                     reco_list.append(i+sys)
                     

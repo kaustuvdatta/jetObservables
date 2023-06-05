@@ -188,7 +188,7 @@ if isMC:
         
 # our module
 if args.selection.startswith('dijet'):
-    from jetObservables.Skimmer.nSubProducer_dijetSel_fullRunII_Summer20UL import nSubProd
+    from jetObservables.Skimmer.nSubProducer_dijetSel_RunIISummer20UL_CustomTrees import nSubProd
     modulesToRun.append( nSubProd( sysSource=systSources, isMC=isMC, year=args.year, onlyUnc=args.onlyUnc, onlyTrees=args.onlyTrees, isSigMC=True if args.isSigMC else False ) )
 
 #### Make it run

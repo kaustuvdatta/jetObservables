@@ -109,7 +109,7 @@ if not '2016' in args.year: METFilters = "( (Flag_goodVertices==1) && (Flag_glob
 else: METFilters = "( (Flag_goodVertices==1) && (Flag_globalSuperTightHalo2016Filter==1) && (Flag_HBHENoiseFilter==1) && (Flag_HBHENoiseIsoFilter==1) && (Flag_EcalDeadCellTriggerPrimitiveFilter==1) && (Flag_BadPFMuonFilter==1)  )"
 if not isMC: METFilters = METFilters + "&& (Flag_eeBadScFilter==1)"
 
-Triggers = "((HLT_Mu50==1) || (HLT_TkMu50==1))" if '2016' in args.year else "((HLT_Mu50==1) || (HLT_TkMu100==1))" # (HLT_TkMu50 and HLT_Mu100 not present in 2017/18)"
+Triggers = "((HLT_Mu50==1) || (HLT_TkMu50==1))" if '2016' in args.year else "(HLT_Mu50==1)"# "((HLT_Mu50==1) || (HLT_TkMu100==1))" # (HLT_TkMu50 and HLT_Mu100 not present in 2017/18, HLT_TkMu100 not present in 2017B)"
 
 cuts = PV + " && " + METFilters + " && " + Triggers
 
@@ -169,7 +169,7 @@ LeptonSF = {
 
 #### Modules to run
 jesUncert = 'Merged' if any('_jes' in iunc for iunc in systSources) else 'Total'
-print(jesUncert, systSources)
+print(jesUncert, systSources,args.year,args.runEra)
 '''
 if jesUncert.startswith('Merged'):
     if args.year=='2017': 
