@@ -170,7 +170,7 @@ def plotTriggerEfficiency( inFileSample, sample, triggerDenom, denomScale, trigg
 #    st1.SetX2NDC(.90);
 #    st1.SetY1NDC(.20);
 #    st1.SetY2NDC(.50);
-##	#eff.Draw("same")
+##  #eff.Draw("same")
 #    can1.Modified()
 #    '''
 #
@@ -225,7 +225,9 @@ if __name__ == '__main__':
                     ]
 
     processingSamples = {}
-    if args.year.startswith('2017'): processingSamples[ 'JetHT2017' ] = [ TFile.Open('/eos/home-a/algomez/tmpFiles/jetObservables/triggerEfficiencies/Plots/v05/triggerEfficiencies_histograms_MiniAOD_JetHTRun2017ALL.root'), 0 ]
+    if args.year.startswith('2016HIPM'): processingSamples[ 'JetHT2016_HIPM' ] = [ TFile.Open('/eos/home-a/algomez/tmpFiles/jetObservables/triggerEfficiencies/Plots/v05/triggerEfficiencies_histograms_MiniAOD_JetHTRun2016_HIPMALL.root'), 0 ]
+    elif args.year.startswith('2016'): processingSamples[ 'JetHT2016' ] = [ TFile.Open('/eos/home-a/algomez/tmpFiles/jetObservables/triggerEfficiencies/Plots/v05/triggerEfficiencies_histograms_MiniAOD_JetHTRun2016ALL.root'), 0 ]
+    elif args.year.startswith('2017'): processingSamples[ 'JetHT2017' ] = [ TFile.Open('/eos/home-a/algomez/tmpFiles/jetObservables/triggerEfficiencies/Plots/v05/triggerEfficiencies_histograms_MiniAOD_JetHTRun2017ALL.root'), 0 ]
     else: processingSamples[ 'JetHT2018' ] = [ TFile.Open('/eos/home-a/algomez/tmpFiles/jetObservables/triggerEfficiencies/Plots/v05/triggerEfficiencies_histograms_MiniAOD_JetHTRun2018ALL.root'), 0 ]
 
     if len(processingSamples)==0: print 'No sample found. \n Have a nice day :)'

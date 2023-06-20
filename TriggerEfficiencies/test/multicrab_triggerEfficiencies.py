@@ -2,7 +2,7 @@
 """
 This is a small script that submits a config over many datasets
 """
-import os
+import os, sys
 from optparse import OptionParser
 sys.path.insert(0,'../../Skimmer/test/')
 from datasets import checkDict, dictSamples
@@ -51,10 +51,11 @@ def submitJobs( job, inputFiles, unitJobs ):
     print requestname
 
     if job.split('Run')[1].startswith('2017'): config.Data.lumiMask = '/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions17/13TeV/Legacy_2017/Cert_294927-306462_13TeV_UL2017_Collisions17_GoldenJSON.txt'
+    elif job.split('Run')[1].startswith('2016'): config.Data.lumiMask = '/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions16/13TeV/Legacy_2016/Cert_271036-284044_13TeV_Legacy2016_Collisions16_JSON.txt'
     elif job.split('Run')[1].startswith('2018'): config.Data.lumiMask = '/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions18/13TeV/Legacy_2018/Cert_314472-325175_13TeV_Legacy2018_Collisions18_JSON.txt'
     config.Data.inputDataset = inputFiles
-    config.Data.splitting = 'Automatic'
-    #config.Data.unitsPerJob = unitJobs
+    config.Data.splitting = 'LumiBased'#Automatic'
+    config.Data.unitsPerJob = 50#unitJobs
     #config.Data.outputPrimaryDataset = job
 
     # since the input will have no metadata information, output can not be put in DBS
@@ -95,13 +96,18 @@ if __name__ == '__main__':
             )
     parser.add_option(
             "-v", "--version",
-            dest="version", default="102X_v00",
+            dest="version", default="106X_v01",
             help=("Version of output"),
             )
     parser.add_option(
             "-p", "--pythonFile",
             dest="pythonFile", default="triggerEfficiencies.py",
             help=("python file to run"),
+            )
+    parser.add_option(
+            "-y", "--year",
+            dest="year", default="2017",
+            help=("Version of output"),
             )
 
 
