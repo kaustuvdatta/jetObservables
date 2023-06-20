@@ -277,7 +277,7 @@ class nSubProd(Module):
 
     #############################################################################
     def addP4Hists(self, s, t ):
-        self.addObject( ROOT.TH1F(s+'_pt'+t,  ';p_{T} (GeV)',   200, 0, 3000) )
+        self.addObject( ROOT.TH1F(s+'_pt'+t,  ';p_{T} (GeV)',   600, 0, 3600) )
         self.addObject( ROOT.TH1F(s+'_eta'+t, ';#eta', 100, -2.5, 2.5 ) )
         self.addObject( ROOT.TH1F(s+'_y'+t, ';y', 100, -2.5, 2.5 ) )
         self.addObject( ROOT.TH1F(s+'_phi'+t, ';#phi', 100, -3.5, 3.5) )
