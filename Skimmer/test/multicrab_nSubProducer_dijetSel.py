@@ -4,7 +4,7 @@ This is a small script that submits a config over many datasets
 """
 import os
 from optparse import OptionParser
-from datasets_dijetSel_RunIISummer20UL_allMC_nomWts import dictSamples, checkDict #datasets_dijetSel_RunIISummer20UL_allMC_nomWts
+from datasets_dijetSel_RunIISummer20UL import dictSamples, checkDict #datasets_dijetSel_RunIISummer20UL_allMC_nomWts
 
 def make_list(option, opt, value, parser):
     setattr(parser.values, option.dest, value.split(','))
@@ -61,9 +61,9 @@ def submitJobs( job, inputFiles, unitJobs ):
     config.section_("JobType")
     config.JobType.pluginName = 'Analysis'
     config.JobType.psetName = 'PSet.py'
-    config.JobType.maxMemoryMB = 6000 #if (options.onlyUnc and options.onlyUnc.startswith('_je')) else 2500
+    config.JobType.maxMemoryMB = 6000 if (options.onlyUnc and options.onlyUnc.startswith('_je')) else 4000
     #if (options.onlyUnc and options.onlyUnc.startswith('_je')): 
-    config.JobType.maxJobRuntimeMin = 1200 if (options.onlyUnc and options.onlyUnc.startswith('_je')) else 800
+    config.JobType.maxJobRuntimeMin = 1200 if (options.onlyUnc and options.onlyUnc.startswith('_je')) else 600
     config.JobType.numCores = 4
     config.JobType.allowUndistributedCMSSW = True
 
@@ -126,8 +126,14 @@ def submitJobs( job, inputFiles, unitJobs ):
 
     print 'requestname = ', requestname
     config.General.requestName = requestname
-    if isDataFlag: config.Data.outputDatasetTag = 'Run'+inputFiles.split('Run')[1].split('v2pt2')[0]+'_jetObsSkim_'+options.onlyUnc+options.version+('EXT'+job.split('EXT')[1] if 'EXT' in job else '')
+    if isDataFlag and not('algomez' in config.Data.inputDataset): 
+        config.Data.outputDatasetTag = 'Run'+inputFiles.split('Run')[1].split('v2pt2')[0]+'_jetObsSkim_'+options.onlyUnc+options.version+('EXT'+job.split('EXT')[1] if 'EXT' in job else '')
+
+    elif isDataFlag and ('algomez' in config.Data.inputDataset or options.year=='2017'):
+        config.Data.outputDatasetTag = 'Run'+inputFiles.split('Run')[1].split('AOD')[0]+'AOD_jetObservables_Skimmer_'+options.onlyUnc+options.version+('EXT'+job.split('EXT')[1] if 'EXT' in job else '')
+
     else: config.Data.outputDatasetTag = 'Run'+inputFiles.split('Run')[1].split('-106X')[0]+'_jetObsSkim_'+options.onlyUnc+options.version+('EXT'+job.split('EXT')[1] if 'EXT' in job else '')
+
     print 'Submitting ' + config.General.requestName + ', dataset = ' + job
     print 'Configuration :', options.year+options.runEra if 'JetHT' in job else ''
     print config
@@ -210,7 +216,7 @@ if __name__ == '__main__':
     for sam in dictSamples:
         if sam.startswith( options.datasets ) | options.datasets.startswith('all'):
             if checkDict( sam, dictSamples )['selection'] != options.selection: continue
-            if sam.startswith(('JetHT', 'SingleMuon')):
+            if sam.startswith(('JetHT')):
                 if options.runEra=="":
                     for iera in checkDict( sam, dictSamples )[options.year]['nanoAOD']:
                         #print(sam,iera)

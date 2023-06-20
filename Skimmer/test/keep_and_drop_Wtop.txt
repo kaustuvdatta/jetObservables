@@ -20,7 +20,7 @@ drop Flag_*
 #keep PV*
 #keep PuppiMET*
 
-#keep Jet_btag*
+keep Jet_btag*
 keep HLT_Mu50
 keep HLT_Mu100
 keep HLT_TkMu50
@@ -52,4 +52,4 @@ keep truerecoSel*
 keep good_*
 keep passGen*
 keep passReco*
-#keep L1PreFiringWeight*
+keep L1PreFiringWeight*

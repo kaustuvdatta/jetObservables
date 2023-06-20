@@ -56,3 +56,4 @@ keep passGen*
 keep passReco*
 keep GenCand*
 keep PFCands*
+keep pass*
