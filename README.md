@@ -8,14 +8,13 @@ This analysis uses extended NanoAOD format. More info about this format [here](h
 ### Basic setup 
 To set up the code:
 ```bash
-cmsrel  CMSSW_10_6_5
-cd  CMSSW_10_6_5/src
+cmsrel  CMSSW_10_6_14
+cd  CMSSW_10_6_14/src
 cmsenv
 git cms-addpkg GeneratorInterface/Core
-git clone https://github.com/cms-nanoAOD/nanoAOD-tools.git PhysicsTools/NanoAODTools
+git clone https://github.com/kaustuvdatta/nanoAOD-tools.git -b nSubMeasurements PhysicsTools/NanoAODTools
 git clone https://github.com/cms-jet/NanoAODJMARTools.git PhysicsTools/NanoAODJMARTools
-git clone https://github.com/alefisico/jetObservables.git -b 106X jetObservables/
-git clone ssh://git@gitlab.cern.ch:7999/asparker/QJetMass.git jetObservables/QJetMass    ### This is just as example
+git clone https://github.com/kaustuvdatta/jetObservables.git -b RunIISummer20UL jetObservables/
 ln -s $CMSSW_BASE/src/PhysicsTools/NanoAODTools/scripts/haddnano.py jetObservables/Skimmer/test/
 scram b -j 6
 ```
