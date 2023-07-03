@@ -15,7 +15,7 @@ do
 	        then
 	            CERT="/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions16/13TeV/Legacy_2016/Cert_271036-284044_13TeV_Legacy2016_Collisions16_JSON.txt"
 	            puLatest="/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions16/13TeV/PileUp/UltraLegacy/pileup_latest.txt"
-	            runStart=272674
+	            runStart=272760
 			    runStop=278761
 		
 		elif  [[ "$year" == "2016HIPM-ext1" ]];
@@ -34,56 +34,50 @@ do
 
 		elif  [[ "$year" == "2016" ]]; 
 	        then
-		    CERT="/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions16/13TeV/Legacy_2016/Cert_271036-284044_13TeV_Legacy2016_Collisions16_JSON.txt"
-		    puLatest="/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions16/13TeV/PileUp/UltraLegacy/pileup_latest.txt"
-		    runStart=278808
-		    runStop=284044
+			    CERT="/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions16/13TeV/Legacy_2016/Cert_271036-284044_13TeV_Legacy2016_Collisions16_JSON.txt"
+			    puLatest="/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions16/13TeV/PileUp/UltraLegacy/pileup_latest.txt"
+			    runStart=278808
+			    runStop=284044
 
 		elif  [[ "$year" == "2016-ext1" ]]; 
 	        then
-		    CERT="/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions16/13TeV/Legacy_2016/Cert_271036-284044_13TeV_Legacy2016_Collisions16_JSON.txt"
-		    puLatest="/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions16/13TeV/PileUp/UltraLegacy/pileup_latest.txt"
-		    runStart=278769
-		    runStop=278769
+			    CERT="/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions16/13TeV/Legacy_2016/Cert_271036-284044_13TeV_Legacy2016_Collisions16_JSON.txt"
+			    puLatest="/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions16/13TeV/PileUp/UltraLegacy/pileup_latest.txt"
+			    runStart=278769
+			    runStop=278769
 
 		elif  [[ "$year" == "2016-ext2" ]]; 
 	        then
-		    CERT="/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions16/13TeV/Legacy_2016/Cert_271036-284044_13TeV_Legacy2016_Collisions16_JSON.txt"
-		    puLatest="/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions16/13TeV/PileUp/UltraLegacy/pileup_latest.txt"
-		    runStart=278801
-		    runStop=278805	
+			    CERT="/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions16/13TeV/Legacy_2016/Cert_271036-284044_13TeV_Legacy2016_Collisions16_JSON.txt"
+			    puLatest="/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions16/13TeV/PileUp/UltraLegacy/pileup_latest.txt"
+			    runStart=278801
+			    runStop=278805	
 
-		elif [[ "$year" -eq "2017" ]] ; 
-		then 
-	        CERT="/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions17/13TeV/Legacy_2017/Cert_294927-306462_13TeV_UL2017_Collisions17_GoldenJSON.txt"
-		    puLatest="/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions17/13TeV/PileUp/UltraLegacy/pileup_latest.txt"
-		    runStart=297047
-		    runStop=284044
+		elif [[ "$year" == "2017" ]] ; 
+			then 
+		        CERT="/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions17/13TeV/Legacy_2017/Cert_294927-306462_13TeV_UL2017_Collisions17_GoldenJSON.txt"
+			    puLatest="/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions17/13TeV/PileUp/UltraLegacy/pileup_latest.txt"
+			    runStart=297047
+			    runStop=306460
 
-		elif [[ "$year" -eq "2018" ]]; 
-		then
-		    CERT="/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions18/13TeV/Legacy_2018/Cert_314472-325175_13TeV_Legacy2018_Collisions18_JSON.txt"
-		    puLatest="/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions18/13TeV/PileUp/UltraLegacy/pileup_latest.txt"
-			runStart=315257
-		    runStop=306460	        
+		elif [[ "$year" == "2018" ]]; 
+			then
+			    CERT="/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions18/13TeV/Legacy_2018/Cert_314472-325175_13TeV_Legacy2018_Collisions18_JSON.txt"
+			    puLatest="/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions18/13TeV/PileUp/UltraLegacy/pileup_latest.txt"
+				runStart=315257
+			    runStop=325175	        
 
 	    else
-		    echo Year not available;
-    fi
+	    	echo Year not available;
+			fi
 	
-	echo "$CERT"              
-	echo "$puLatest"
- 	echo "Run start: $runStart, run end: $runStop"
-	brilcalc lumi --byls --begin $runStart --end $runStop --normtag /cvmfs/cms-bril.cern.ch/cms-lumi-pog/Normtags/normtag_PHYSICS.json -i "$CERT" --hltpath HLT_${TRIG}_v* -o output_${TRIG}_${year}.csv   
-	pileupReCalc_HLTpaths.py -i output_${TRIG}_${year}.csv --inputLumiJSON "$puLatest" -o HLT_corrected_PU_JSON_${TRIG}_${year}.txt
-	pileupCalc.py -i "$CERT" -o myDataPUHistogram_${TRIG}_${year}.root --inputLumiJSON HLT_corrected_PU_JSON_${TRIG}_${year}.txt --calcMode true --minBiasXsec 69200 --maxPileupBin 100 --numPileupBins 100 
-
-	#pileupCalc.py -i "$CERT" -o myDataPUHistogram_${TRIG}_${year}_nom_Up.root --inputLumiJSON HLT_corrected_PU_JSON_${TRIG}_${year}.txt --calcMode true --minBiasXsec 72383 --maxPileupBin 100 --numPileupBins 100 
-	#pileupCalc.py -i "$CERT" -o myDataPUHistogram_${TRIG}_${year}_nom_Down.root --inputLumiJSON HLT_corrected_PU_JSON_${TRIG}_${year}.txt --calcMode true --minBiasXsec 66017 --maxPileupBin 100 --numPileupBins 100
-
-	#../RecoLuminosity-LumiDB/scripts/pileupCalc.py -i "$CERT" --inputLumiJSON HLT_corrected_PU_JSON_${TRIG}_${year}.txt --calcMode true --minBiasXsec 69200 --maxPileupBin 100 --numPileupBins 100 myDataPUHistogram_${TRIG}.root
-	#pileupCalc.py -i "$CERT" -o myDataPUHistogram_${TRIG}_${year}_3X_Down.root --inputLumiJSON HLT_corrected_PU_JSON_${TRIG}_${year}.txt --calcMode true --minBiasXsec 59650 --maxPileupBin 100 --numPileupBins 100
-    
+		echo "$CERT"              
+		echo "$puLatest"
+		echo "$TRIG"
+        echo "$year"
+	 	echo "Run start: $runStart, run end: $runStop"
+		brilcalc lumi --byls --begin $runStart --end $runStop --normtag /cvmfs/cms-bril.cern.ch/cms-lumi-pog/Normtags/normtag_PHYSICS.json -i "$CERT" --hltpath HLT_${TRIG}_v* -o output_${TRIG}_${year}.csv   
+		
     
     done
 done
