@@ -8,22 +8,27 @@ This analysis uses extended NanoAOD format. More info about this format [here](h
 ### Basic setup 
 To set up the code:
 ```bash
-cmsrel  CMSSW_10_6_14
-cd  CMSSW_10_6_14/src
+cmsrel  CMSSW_10_6_30
+cd  CMSSW_10_6_30/src
 cmsenv
 git cms-addpkg GeneratorInterface/Core
 git clone https://github.com/kaustuvdatta/nanoAOD-tools.git -b nSubMeasurements PhysicsTools/NanoAODTools
 git clone https://github.com/cms-jet/NanoAODJMARTools.git PhysicsTools/NanoAODJMARTools
 git clone https://github.com/kaustuvdatta/jetObservables.git -b RunIISummer20UL jetObservables/
+git clone https://github.com/cms-sw/RecoLuminosity-LumiDB/tree/master 
+cp jetObservables/TriggerEfficiencies/test/calc_prescale_lumi.sh RecoLuminosity-LumiDB/scripts/
+cd RecoLuminosity-LumiDB/scripts/ && chmod u+x calc_prescale_lumi.sh && cd -
 ln -s $CMSSW_BASE/src/PhysicsTools/NanoAODTools/scripts/haddnano.py jetObservables/Skimmer/test/
 scram b -j 6
 ```
 
 ### Further information
-
-This package contains two folders: 
-1. Skimmer: where the trees and histograms are created for the step 2. More information in the following [README](Skimmer/README.md)
-2. Unfolding: where takes the input from step 1 and uses combine to do the unfolding procedure. More information in the following [README](Unfolding/README.md)
+(----> V1 of rep worked on CMSSW_10_6_14)
+This package contains four folders: 
+1. TriggerEfficiencies: where one can skim MiniAOD data samples to create histograms necessary for calculating the 99% efficiency (in pT) point for prescaled triggers used in the dijet event selection. Notebooks to carry the necessary fits are included therein. [README] to be written out.
+2. Skimmer: where the trees and histograms are created for the step 2. More information in the following [README](Skimmer/README.md).
+3. SaturationROC: which notebooks showing how to pre-process parquet datasets and save in hdf5 format for training simple feedforward deep neural networks on M-body bases of N-subjettiness observables (at gen/reco level); this is to obtain ROC curves to understand for which value of 'M' discrimination power saturates between light flavour jets, as per the dijet selections, and boosted hadronic W/top decays. 
+4. Unfolding: where takes the input from step 1 and uses combine to do the unfolding procedure. More information in the following [README](Unfolding/README.md).
 =======
 # RIVET routine for jetObservables
 
