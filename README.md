@@ -16,10 +16,11 @@ git clone https://github.com/kaustuvdatta/nanoAOD-tools.git -b nSubMeasurements 
 git clone https://github.com/cms-jet/NanoAODJMARTools.git PhysicsTools/NanoAODJMARTools
 git clone https://github.com/kaustuvdatta/jetObservables.git -b RunIISummer20UL jetObservables/
 git clone https://github.com/cms-sw/RecoLuminosity-LumiDB/tree/master 
-cp jetObservables/TriggerEfficiencies/test/calc_prescale_lumi.sh RecoLuminosity-LumiDB/scripts/
-cd RecoLuminosity-LumiDB/scripts/ && chmod u+x calc_prescale_lumi.sh && cd -
+cp jetObservables/TriggerEfficiencies/scripts/*.sh RecoLuminosity-LumiDB/scripts/ 
+cd RecoLuminosity-LumiDB/scripts/ && chmod u+x {calc,PU}*.sh && cd -
 ln -s $CMSSW_BASE/src/PhysicsTools/NanoAODTools/scripts/haddnano.py jetObservables/Skimmer/test/
 scram b -j 6
+cmsenv
 ```
 
 ### Further information
@@ -29,7 +30,7 @@ This package contains four folders:
 2. Skimmer: where the trees and histograms are created for the step 2. More information in the following [README](Skimmer/README.md).
 3. SaturationROC: which notebooks showing how to pre-process parquet datasets and save in hdf5 format for training simple feedforward deep neural networks on M-body bases of N-subjettiness observables (at gen/reco level); this is to obtain ROC curves to understand for which value of 'M' discrimination power saturates between light flavour jets, as per the dijet selections, and boosted hadronic W/top decays. 
 4. Unfolding: where takes the input from step 1 and uses combine to do the unfolding procedure. More information in the following [README](Unfolding/README.md).
-
+5. Note: Most/all .py files in the python directories in the Unfolding and SaturationROC directories require python3 to be run; this will lead scram to throw errors, just move them out of the directories and replace after compiling CMSSSW
 ========================================================
 
 # RIVET routine for jetObservables
@@ -37,7 +38,7 @@ This package contains four folders:
 This branch is for the rivet routines only.
 
 ## How to install
-
+(to be updated?)
 We will use the `CMSSW` infrastructure and follow this [tutorial](https://indico.cern.ch/event/962610/contributions/4049790/attachments/2131081/3588988/rivet_tutorial_mseidel.pdf). Dont forget to fork the main [cms-gen/Rivet](https://gitlab.cern.ch/cms-gen/Rivet) repository. Then:
 ```
 cmsrel CMSSW_11_1_0

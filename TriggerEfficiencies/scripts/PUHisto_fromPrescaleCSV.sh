@@ -1,4 +1,6 @@
 #!/usr/bin/bash
+#script to calculate the lumi recorded per year for each trigger, where run numbers are as documented, and referenced, in the calc_prescale*.sh files, and to 
+#then calculate pileup distributions per trigger per year
 for year in "2016HIPM" "2016" "2017" "2018";
 do
     # "Mu50" "TkMu50" 
