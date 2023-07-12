@@ -283,7 +283,7 @@ inline void getWeights( Handle<LHEEventProduct> lheEvtInfo, int lha_pdf_id_, vec
 inline double btagSF( string csvFile, double jetPt, double jetEta, double flavour, string sysType, string measurementType, int OP ){
 
 	double jetSF = 1;
-        BTagCalibration calib("csv", csvFile );
+        BTagCalibration calib("csv", csvFile, true );
 	if ( OP == 0 ) {
 		BTagCalibrationReader reader(BTagEntry::OP_LOOSE, 	// operating point
 						"central",		// central sys type

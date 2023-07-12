@@ -74,13 +74,13 @@ dictSamples = {
                 'E': '/JetHT/kadatta-Run2017E-UL2017_MiniAODv2-v1_PFNanov2pt2-80b78937c3a3b7c462c5f2c6e6c26583/USER',
                 'F': '/JetHT/kadatta-Run2017F-UL2017_MiniAODv2-v1_PFNanov2pt2-80b78937c3a3b7c462c5f2c6e6c26583/USER',
                 },
-            #'nanoAOD' : {
-            #    'B': '/JetHT/algomez-Run2017B-UL2017_MiniAODv2-v1_PFNanoAOD-aeb179a6519d272d4336b9926381baad/USER',
-            #    'C': '/JetHT/algomez-Run2017C-UL2017_MiniAODv2-v1_PFNanoAOD-aeb179a6519d272d4336b9926381baad/USER',
-            #    'D': '/JetHT/algomez-Run2017D-UL2017_MiniAODv2-v1_PFNanoAOD-aeb179a6519d272d4336b9926381baad/USER',
-            #    'E': '/JetHT/algomez-Run2017E-UL2017_MiniAODv2-v1_PFNanoAOD-aeb179a6519d272d4336b9926381baad/USER',
-            #    'F': '/JetHT/algomez-Run2017F-UL2017_MiniAODv2-v1_PFNanoAOD-aeb179a6519d272d4336b9926381baad/USER',
-                },
+                #'nanoAOD' : {
+                #    'B': '/JetHT/algomez-Run2017B-UL2017_MiniAODv2-v1_PFNanoAOD-aeb179a6519d272d4336b9926381baad/USER',
+                #    'C': '/JetHT/algomez-Run2017C-UL2017_MiniAODv2-v1_PFNanoAOD-aeb179a6519d272d4336b9926381baad/USER',
+                #    'D': '/JetHT/algomez-Run2017D-UL2017_MiniAODv2-v1_PFNanoAOD-aeb179a6519d272d4336b9926381baad/USER',
+                #    'E': '/JetHT/algomez-Run2017E-UL2017_MiniAODv2-v1_PFNanoAOD-aeb179a6519d272d4336b9926381baad/USER',
+                #    'F': '/JetHT/algomez-Run2017F-UL2017_MiniAODv2-v1_PFNanoAOD-aeb179a6519d272d4336b9926381baad/USER',
+                #},
 
             'skimmerHisto' : 'jetObservables_histograms_JetHT2017ALL.root',
             'lumi' : 41473.12,
