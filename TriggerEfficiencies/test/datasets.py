@@ -93,7 +93,7 @@ dictSamples = {
                 'A' : '/JetHT/Run2018A-UL2018_MiniAODv2-v1/MINIAOD',
                 'B' : '/JetHT/Run2018B-UL2018_MiniAODv2-v1/MINIAOD',
                 'C' : '/JetHT/Run2018C-UL2018_MiniAODv2-v1/MINIAOD',
-                'D' : '/JetHT/Run2018D-UL2018_MiniAODv2-v1/MINIAOD',
+                'D' : '/JetHT/Run2018D-UL2018_MiniAODv2-v2/MINIAOD',
                 },
             'nanoAOD' : {
                 'A' : '/JetHT/kadatta-Run2018A-UL2018_MiniAODv2-v1_PFNanov2pt2-384370c5705060bbc71e621a12dca622/USER',

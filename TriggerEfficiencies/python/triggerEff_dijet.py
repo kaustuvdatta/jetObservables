@@ -13,6 +13,12 @@ class triggerEfficiencies(Module):
         self.year = year
         #this is historical
         self.triggers = {
+                'AK8PFJet60' : {
+                    '2017' : {
+                        'v1': [ 297046, 297505, 14504.85901 ],
+                        'v2': [ 297557, 299329, 82434.76397 ],
+                        },
+                    },
                 'AK8PFJet80' : {
                     '2017' : {
                         'v1': [ 297046, 297505, 14504.85901 ],
@@ -111,8 +117,9 @@ class triggerEfficiencies(Module):
         listOfTriggers = self.triggers.keys()
 
         #### Basic AK8 jet selection
-        #Shouldn't affect that this is different from measurement PS, since this is done with the leading jet -ale
-        ak8jets = [ x for x in AK8jets if abs(x.eta) < 2.5 ]
+        #Shouldn't affect that this is different from measurement PS, since this is done with the leading jet -ale; 
+        #tried by updating for jets with | y | < 1.7, not much difference observed; keeping prev. selection on jets<2.4 in eta to have greater stats in lower pT jet triggers (60,80)
+        ak8jets = [ x for x in AK8jets if abs(x.eta)<2.4 ] #.p4().Rapidity()) < 1.7 ]
         AK8HT = sum( [ x.pt for x in ak8jets ] )
         ak8jets.sort(key=lambda x:x.pt,reverse=True)
         ##################################################
