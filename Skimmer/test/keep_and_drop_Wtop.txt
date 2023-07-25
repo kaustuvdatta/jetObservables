@@ -20,11 +20,11 @@ drop Flag_*
 #keep PV*
 #keep PuppiMET*
 
+
+keep passHLT*
 keep Jet_btag*
-keep HLT_Mu50
-keep HLT_Mu100
-keep HLT_TkMu50
-keep HLT_TkMu100
+keep HLT_Mu*
+keep HLT_TkMu*
 keep btagWeight*
 keep Flag*
 keep nReco*
@@ -53,3 +53,9 @@ keep good_*
 keep passGen*
 keep passReco*
 keep L1PreFiringWeight*
+keep recoEvent*
+keep genEvent*
+keep genSelected*
+keep recoSelected*
+keep accepgenSelected*
+keep truerecoSelected*

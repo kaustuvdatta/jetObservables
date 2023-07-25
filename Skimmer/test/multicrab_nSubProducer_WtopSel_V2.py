@@ -208,7 +208,7 @@ if __name__ == '__main__':
             '--runEra',
             action="store",
             help="Run era for data",
-            default=""
+            default="B"
             )
     parser.add_option(
         '--onlyUnc',

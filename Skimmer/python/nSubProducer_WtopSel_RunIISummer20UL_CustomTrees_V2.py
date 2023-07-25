@@ -102,9 +102,12 @@ class nSubProd(Module):
             self.minBDisc = 0.2489   ### L: 0.0480, M: 0.2489, T: 0.6377; https://btv-wiki.docs.cern.ch/ScaleFactors/UL2016postVFP/
 
         ### Kinenatic Cuts Muons ###
-        self.minTightMuonPt = 55.
+        #lowered threshold for 2016 preVFP data inefficiency checks; checks ongoing with min mu pT 25 and using a variety of triggers 
+        #-> TBD: but, seems solved since TkMu50 idn't collect more than 16.7 /fb in 2016_preVFP
+        self.minTightMuonPt = 55. 
+
         self.maxMuonEta = 2.4
-        self.minMuonMETPt = 50.
+        #self.minMuonMETPt = 50.
 
         ### Kinenatic Cuts Electrons ###
         self.minLooseElectronPt = 40.
@@ -170,25 +173,44 @@ class nSubProd(Module):
         ### Defining nsubjetiness basis
         self.maxTau = 5
         self.nSub_labels = {
+                        "_tau_0p25_1": [0., 1., 1000  ],
+                        "_tau_0p25_2": [0., 1., 1000  ],
+                        "_tau_0p25_3": [0., 1., 1000  ],
+                        "_tau_0p25_4": [0., 1., 1000  ],
+                        "_tau_0p25_5": [0., 1., 1000  ],
+                        
                         "_tau_0p5_1": [0., 0.9, 900  ],
                         "_tau_0p5_2": [0., 0.9, 900  ],
                         "_tau_0p5_3": [0., 0.8, 800  ],
                         "_tau_0p5_4": [0., 0.8, 800  ],
                         "_tau_0p5_5": [0., 0.8, 800  ],
+
                         "_tau_1_1": [ 0., 0.9, 900  ],
                         "_tau_1_2": [ 0., 0.7, 700  ],
                         "_tau_1_3": [ 0., 0.5, 500  ],
                         "_tau_1_4": [ 0., 0.5, 500  ],
                         "_tau_1_5": [ 0., 0.5, 500  ],
+
+                        "_tau_1p5_1": [ 0., 0.9, 900  ],
+                        "_tau_1p5_2": [ 0., 0.7, 700  ],
+                        "_tau_1p5_3": [ 0., 0.5, 500  ],
+                        "_tau_1p5_4": [ 0., 0.5, 500  ],
+                        "_tau_1p5_5": [ 0., 0.5, 500  ],
+
                         "_tau_2_1": [ 0., 0.9, 900  ],
                         "_tau_2_2": [ 0., 0.5, 500  ],
                         "_tau_2_3": [ 0., 0.5, 500  ],
                         "_tau_2_4": [ 0., 0.5, 500  ],
                         "_tau_2_5": [ 0., 0.5, 500  ]
                 }
-        self.nSub0p5 = ROOT.NsubjettinessWrapper( 0.5, 0.8, 0, 0 ) #beta, cone size, measureDef 0=Normalize, axesDef 0=KT_axes, WTA_kT=3, OP_kT=6
+
+        self.tauPrefixes = ['_tau_0p25_','_tau_0p5_','_tau_1_','_tau_1p5_','_tau_2_']
+        self.nSub0p25 = ROOT.NsubjettinessWrapper( 0.25, 0.8, 0, 0 ) #beta, cone size, measureDef 0=Normalize, axesDef 0=KT_axes
+        self.nSub0p5 = ROOT.NsubjettinessWrapper( 0.5, 0.8, 0, 0 ) 
         self.nSub1 = ROOT.NsubjettinessWrapper( 1, 0.8, 0, 0 )
+        self.nSub1p5 = ROOT.NsubjettinessWrapper( 1.5, 0.8, 0, 0 ) 
         self.nSub2 = ROOT.NsubjettinessWrapper( 2, 0.8, 0, 0 )
+
         self.nSub1_OP_kT = ROOT.NsubjettinessWrapper( 1, 0.8, 0, 6 ) ##### needed for genjet tau21 or tau32, WTA_kT=3, OP_kT=6
         self.nSub1_WTA_kT = ROOT.NsubjettinessWrapper( 1, 0.8, 0, 3 )
 
@@ -212,8 +234,8 @@ class nSubProd(Module):
         # pu/btag/leptonWeights used only to change reco event weight (up/down) without application to gen weight, 
         # others applied to modify self.genweight [and thereby also the recoWeight(=self.genWeight*self.puWeights)] ##### this is now done in the histogramming #####
         # weights+up/down variations are saved for accepted events, to be applied in histogramming in off-crab postprocessing
-        self.sysWeightList = ( '_pu', '_btag', '_lepton', '_pdf', '_isr', '_fsr')
-        self.sysrecoWeightList = ( '_pu', '_btag', '_lepton')
+        self.sysWeightList = ( '_pu', '_btag', '_lepton', '_l1', '_pdf', '_isr', '_fsr')
+        self.sysrecoWeightList = ( '_pu', '_btag', '_lepton', '_l1')
         self.sysgenWeightList = ( '_pdf', '_isr', '_fsr' ) 
         
         '''
@@ -384,7 +406,13 @@ class nSubProd(Module):
             self.out.branch('selRecoHadHemDeltaR_nom', "F" ) # dR(lead AK8, lead b-tagged AK4 in had. hem.)
             self.out.branch('selRecoHadHemDeltaPhi_nom', "F" ) # dR(lead AK8, lead b-tagged AK4 in had. hem.)
             self.out.branch('selRecoHadHemDeltaRap_nom', "F" ) # dR(lead AK8, lead b-tagged AK4 in had. hem.)
+            #self.out.branch('passHLT_TkMu50_nom', "I" ) 
+            #self.out.branch('passHLT_TkMu100_nom', "I" ) 
+            self.out.branch('passHLT_Mu50_nom', "I" ) 
+            #self.out.branch('passHLT_Mu27_nom', "I")
+            #self.out.branch('passHLT_Mu20_nom', "I" ) 
             
+
             tmplistAK8.append('selRecoJets_nom')
             tmplistMuon.append('selRecoMu_nom')
             tmplistLeptWPt.append('selRecoLeptW_nom')
@@ -543,6 +571,7 @@ class nSubProd(Module):
             #self.out.branch(iJ+'_genMatched',  'O')#, lenVar='n'+iJ)
             
             for x in self.nSub_labels:
+                #print(x)
                 self.out.branch(iJ+x, 'F')#, lenVar='n'+iJ )
         
         print ("Stored AK4 jet branches:", tmplistAK4)
@@ -696,6 +725,9 @@ class nSubProd(Module):
                 self.out.fillBranch( 'FlagRecoLeptHemBjet_nom', 0)
                 self.out.fillBranch( 'totalRecoWeight_nom', 0.)
                 self.out.fillBranch( 'passRecoSel_nom', 0)
+                #self.out.fillBranch( 'passHLT_Mu20_nom', 0)
+                #self.out.fillBranch( 'passHLT_Mu27_nom', 0)
+                self.out.fillBranch( 'passHLT_Mu50_nom', 0)
 
                 return False
 
@@ -1062,6 +1094,10 @@ class nSubProd(Module):
                 self.out.fillBranch( 'totalRecoWeight'+sys, self.totalRecoWeight if passRecoSel[sys] else 0.)
                 
                 self.out.fillBranch( 'passRecoSel'+sys, 1 if passRecoSel[sys] else 0)
+                self.out.fillBranch( 'passHLT_Mu50'+sys, 1 if getattr(event, 'HLT_Mu50')==1 and passRecoSel[sys] else 0 ) 
+                #self.out.fillBranch( 'passHLT_Mu27'+sys, 1 if getattr(event, 'HLT_Mu27')==1 and passRecoSel[sys] else 0 ) 
+                #self.out.fillBranch( 'passHLT_Mu20'+sys, 1 if getattr(event, 'HLT_Mu20')==1 and passRecoSel[sys] else 0 ) 
+            
                 
 
             else:
@@ -1991,6 +2027,8 @@ class nSubProd(Module):
         CandsPUPPIweightedVec = ROOT.vector("TLorentzVector")()
 
         for p in pfCands :
+            #if p.p4().M()<0.: #to check on -ve mass electrons in constituents
+            #    p.p4().M()=0.
             tp = ROOT.TLorentzVector(p.p4().Px(), p.p4().Py(), p.p4().Pz(), p.p4().E())
             tp = tp * p.puppiWeight if not isGen else tp
             #except RuntimeError: tp = tp    ### for genjets
@@ -2003,9 +2041,16 @@ class nSubProd(Module):
         #print ("pushed back candidates")
 
         #### Computing n-subjetiness basis from PF PUPPI constituents
+        nsub0p25 = self.nSub0p25.getTau( self.maxTau, constituents )
+        
         nsub0p5 = self.nSub0p5.getTau( self.maxTau, constituents )
+        
         nsub1 = self.nSub1.getTau( self.maxTau, constituents )
+        
+        nsub1p5 = self.nSub1p5.getTau( self.maxTau, constituents )
+        
         nsub2 = self.nSub2.getTau( self.maxTau, constituents )
+        
         nsub1_OP_kT = self.nSub1_OP_kT.getTau( 3, constituents )
         nsub1_WTA_kT = self.nSub1_WTA_kT.getTau( 3, constituents )
 
@@ -2022,8 +2067,10 @@ class nSubProd(Module):
 
         #### filling histos and branches with nsub basis
         for tauN in range(self.maxTau):
+            ak8jet['0p25'+str(tauN+1)] = nsub0p25[tauN]
             ak8jet['0p5'+str(tauN+1)] = nsub0p5[tauN]
             ak8jet['1'+str(tauN+1)] = nsub1[tauN]
+            ak8jet['1p5'+str(tauN+1)] = nsub1p5[tauN]
             ak8jet['2'+str(tauN+1)] = nsub2[tauN]
 
         try: ak8jet['tau21_exkT'] = nsub1[1]/nsub1[0]
@@ -2122,9 +2169,10 @@ class nSubProd(Module):
                     self.out.fillBranch(jetLabel+"_tau32_exkT",  iJ['tau32_exkT']  )
             
                     for tauN in range(1, self.maxTau+1):
-                        self.out.fillBranch(jetLabel+"_tau_0p5_"+str(tauN), iJ['0p5'+str(tauN)]  )
-                        self.out.fillBranch(jetLabel+"_tau_1_"+str(tauN), iJ['1'+str(tauN)]  )
-                        self.out.fillBranch(jetLabel+"_tau_2_"+str(tauN), iJ['2'+str(tauN)]  )
+                        for pref in self.tauPrefixes:
+                            beta=pref.split('_')[2]
+                            #if 'reco' in jetLabel.lower(): print (event.event, jetLabel+pref+str(tauN), iJ[beta+str(tauN)] )
+                            self.out.fillBranch(jetLabel+pref+str(tauN), iJ[beta+str(tauN)]  )
                 c+=1
         
         else:
@@ -2160,9 +2208,8 @@ class nSubProd(Module):
                     self.out.fillBranch(jetLabel+"_tau32_exkT", dummyFill  )
 
                     for tauN in range(1, self.maxTau+1):
-                        self.out.fillBranch(jetLabel+"_tau_0p5_"+str(tauN),  dummyFill  )
-                        self.out.fillBranch(jetLabel+"_tau_1_"+str(tauN),  dummyFill  )
-                        self.out.fillBranch(jetLabel+"_tau_2_"+str(tauN),  dummyFill  )
+                        for pref in self.tauPrefixes:
+                            self.out.fillBranch(jetLabel+pref+str(tauN),  dummyFill  )
                 c+=1
 
 

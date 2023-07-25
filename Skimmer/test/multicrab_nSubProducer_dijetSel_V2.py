@@ -101,8 +101,8 @@ def submitJobs( job, inputFiles, unitJobs ):
             config.Data.lumiMask = '/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions18/13TeV/Legacy_2018/Cert_314472-325175_13TeV_Legacy2018_Collisions18_JSON.txt'
     config.Data.inputDataset = inputFiles
     
-    config.Data.splitting ='LumiBased' if isDataFlag else 'FileBased'#( (('JetHT' in job) or ('1000to1500' in job) or ('2000' in job) or ('500to700' in job)) and options.onlyUnc.startswith('_je') and not ('JetHT' in job)) else 'FileBased'#'Automatic'
-    config.Data.unitsPerJob = 50 if config.Data.splitting=='LumiBased' else unitJobs#unitJobs#'Automatic'
+    config.Data.splitting ='LumiBased' if isDataFlag else 'FileBased'
+    config.Data.unitsPerJob = 50 if config.Data.splitting=='LumiBased' else unitJobs
     if not(config.Data.splitting)=='LumiBased': config.Data.unitsPerJob = 5 if ('MLM' in job and not('H7' in job or 'herwig' in job.lower())) else unitJobs
     #config.Data.totalUnits = -1
     #config.Data.splitting = 'FileBased'

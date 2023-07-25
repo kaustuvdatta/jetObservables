@@ -1,4 +1,4 @@
-    # Changelog Oct '22: 
+# Changelog Oct '22: 
 # 1a) updated to correct PS/pdfWeight variation implementation, 
 # 1b) added in 2016 trigger turn ons calculated by Alejandro
 # 2) added better functionality for storing the nominal selection trees (to be updated for systematics, needs a bit more refactoring)
@@ -106,57 +106,55 @@ class nSubProd(Module):
 
         self.triggerTable = OrderedDict()
         self.triggerTable[ 'AK8PFJet80' ] = {    
-                    '2016_preVFP' : [ 200,   242 ],
-                    '2016' : [ 200,   245 ],
-                    '2017' : [ 145.03, 213.39],
-                    '2018' : [ 146.08, 214.87],
+                    '2016_preVFP': [117.16,   187.13],
+                    '2016': [114.45, 184.87],
+                    '2017': [145.03, 213.39],
+                    '2018': [146.08, 214.87],
                     }
         self.triggerTable[ 'AK8PFJet140' ] = {
-                    '2016_preVFP' : [ 242,   308 ],
-                    '2016' : [ 245,   310 ],
-                    '2017' : [ 213.39, 281.75],
-                    '2018' : [ 214.87, 283.67],
+                    '2016_preVFP': [187.13, 257.1],
+                    '2016': [184.87, 255.29],
+                    '2017': [213.39, 281.75],
+                    '2018': [214.87, 283.67],
                     }
         self.triggerTable[ 'AK8PFJet200' ] = {
-                    '2016_preVFP' : [ 308,   373 ],
-                    '2016' : [ 310,   375 ],
-                    '2017' : [ 281.75, 350.11],
-                    '2018' : [ 283.67, 352.47],
+                    '2016_preVFP': [257.1, 327.07],
+                    '2016': [255.29, 325.70],
+                    '2017': [281.75, 350.11],
+                    '2018': [283.67, 352.47],
                     }
         self.triggerTable[ 'AK8PFJet260' ] = {
-                    '2016_preVFP' : [ 373,   439 ],
-                    '2016' : [ 375,   440 ],
-                    '2017' : [ 350.11, 418.47],
-                    '2018' : [ 352.47, 421.26],
+                    '2016_preVFP': [327.07, 397.04],
+                    '2016': [325.70, 396.12],
+                    '2017': [350.11, 418.47],
+                    '2018': [352.47, 421.26],
                     }
         self.triggerTable[ 'AK8PFJet320' ] = {
-                    '2016_preVFP' : [ 439,   526 ],
-                    '2016' : [ 440,   525 ],
-                    '2017' : [ 418.47, 509.62],
-                    '2018' : [ 421.26, 512.99],
+                    '2016_preVFP': [397.04, 490.34],
+                    '2016': [396.12, 490.01],
+                    '2017': [418.47, 509.62],
+                    '2018': [421.26, 512.99],
                     }
         self.triggerTable[ 'AK8PFJet400' ] = {
-                    '2016_preVFP' : [ 526,   580 ],
-                    '2016' : [ 525,   580 ],
-                    '2017' : [ 509.62, 566.59],
-                    '2018' : [ 512.99, 570.32],
+                    '2016_preVFP': [490.34, 548.65],
+                    '2016': [490.01, 548.69],
+                    '2017': [509.62, 566.59],
+                    '2018': [512.99, 570.32],  
                     }
         self.triggerTable[ 'AK8PFJet450' ] = {
-                    '2016_preVFP' : [ 580,   635 ],
-                    '2016' : [ 580,   635 ],
-                    '2017' : [ 566.59, 623.55],
-                    '2018' : [ 570.32, 627.65],
+                    '2016_preVFP': [548.65, 606.96],
+                    '2016': [548.69, 607.38],
+                    '2017': [566.59, 623.55],
+                    '2018': [570.32, 627.65],
                     }
         self.triggerTable[ 'AK8PFJet500' ] = {
-                    '2016_preVFP' : [ 635,   65000. ],
-                    '2016' : [ 635,   6500. ],
-                    '2017' : [ 623.55, 680.52],
-                    '2018' : [ 627.65, 684.98],
+                    '2016_preVFP': [606.96, 6500.],
+                    '2016': [607.38, 6500.],
+                    '2017': [623.55, 680.52],
+                    '2018': [627.65, 684.98],
                     }
         if self.year.endswith(('17','18')):
             self.triggerTable[ 'AK8PFJet550' ] = {
-                        '2016_preVFP' : [ 635,   65000. ],
-                        '2016' : [ 635,   6500. ],
                         '2017' : [ 680.52, 6500.],
                         '2018' : [ 684.98, 6500.],
                         }
@@ -182,9 +180,12 @@ class nSubProd(Module):
                         "_tau_2_4": [ 0., 0.2, 400  ],
                         "_tau_2_5": [ 0., 0.2, 400  ]
                 }
-        self.nSub0p5 = ROOT.NsubjettinessWrapper( 0.5, 0.8, 0, 0 ) #beta, cone size, measureDef 0=Normalize, axesDef 0=KT_axes
+        #self.nSub0p25 = ROOT.NsubjettinessWrapper( 0.25, 0.8, 0, 0 ) #beta, cone size, measureDef 0=Normalize, axesDef 0=KT_axes
+        self.nSub0p5 = ROOT.NsubjettinessWrapper( 0.5, 0.8, 0, 0 ) 
         self.nSub1 = ROOT.NsubjettinessWrapper( 1, 0.8, 0, 0 )
+        #self.nSub1p5 = ROOT.NsubjettinessWrapper( 1.5, 0.8, 0, 0 ) 
         self.nSub2 = ROOT.NsubjettinessWrapper( 2, 0.8, 0, 0 )
+
         self.nSub1_OP_kT = ROOT.NsubjettinessWrapper( 1, 0.8, 0, 6 ) ##### needed for genjet tau21 or tau32, WTA_kT=3, OP_kT=6
         self.nSub1_WTA_kT = ROOT.NsubjettinessWrapper( 1, 0.8, 0, 3 )
 
@@ -1337,6 +1338,7 @@ class nSubProd(Module):
             for i in range(1,len(AK8jets)):
                 tmpJet = ROOT.TLorentzVector()
                 tmpJet.SetPtEtaPhiM( getattr( AK8jets[i], 'pt'+ptLabel ), AK8jets[i].eta, AK8jets[i].phi, getattr( AK8jets[i], 'mass'+ptLabel )  )
+                #cleaning cut
                 if self.DrRapPhi(tmpJet1,tmpJet)<1.6:# or abs(tmpJet1.DeltaPhi(tmpJet)<2.): #2*jet radius separation + deltaphi sep. between leading AK8 jet and any other fatjets in the event
                     deltaR_flag=False
                     break

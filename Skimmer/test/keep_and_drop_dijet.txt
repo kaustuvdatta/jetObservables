@@ -52,8 +52,8 @@ keep truerecoSel*
 keep good_*
 keep passHLT*
 keep l1prefiring*
-keep passGen*
-keep passReco*
 keep GenCand*
 keep PFCands*
 keep pass*
+keep accepgenSelected*
+keep truerecoSelected*
