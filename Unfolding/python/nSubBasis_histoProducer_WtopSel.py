@@ -188,28 +188,28 @@ class nSubBasis_unfoldingHistoProd_WtopSel(processor.ProcessorABC):
 
                             "_tau_0p25_1": np.array([(i/500) for i in np.arange(0.*500, 1.*501)]),
                             "_tau_0p25_2": np.array([(i/500) for i in np.arange(0.*500, 1.*501)]),
-                            "_tau_0p25_3": np.array([(i/1000) for i in np.arange(0.*1000, 0.8*1001)]),
-                            "_tau_0p25_4": np.array([(i/1000) for i in np.arange(0.*1000, 0.8*1001)]),
-                            "_tau_0p25_5": np.array([(i/1000) for i in np.arange(0.*1000, 0.8*1001)]),
+                            "_tau_0p25_3": np.array([(i/2000) for i in np.arange(0.*2000, 0.8*2001)]),
+                            "_tau_0p25_4": np.array([(i/2000) for i in np.arange(0.*2000, 0.8*2001)]),
+                            "_tau_0p25_5": np.array([(i/2000) for i in np.arange(0.*2000, 0.8*2001)]),
                             "_tau_0p5_1": np.array([(i/500) for i in np.arange(0.*500, 1.*501)]),
                             "_tau_0p5_2": np.array([(i/500) for i in np.arange(0.*500, 1.*501)]),
-                            "_tau_0p5_3": np.array([(i/1000) for i in np.arange(0.*1000, 0.7*1001)]),
-                            "_tau_0p5_4": np.array([(i/1000) for i in np.arange(0.*1000, 0.6*1001)]),
-                            "_tau_0p5_5": np.array([(i/1000) for i in np.arange(0.*1000, 0.6*1001)]),
+                            "_tau_0p5_3": np.array([(i/2000) for i in np.arange(0.*2000, 0.7*2001)]),
+                            "_tau_0p5_4": np.array([(i/2000) for i in np.arange(0.*2000, 0.6*2001)]),
+                            "_tau_0p5_5": np.array([(i/2000) for i in np.arange(0.*2000, 0.6*2001)]),
                             "_tau_1_1": np.array([(i/500) for i in np.arange(0.*500, 0.9*501)]),
-                            "_tau_1_2": np.array([(i/500) for i in np.arange(0.*500, 0.7*501)]),
-                            "_tau_1_3": np.array([(i/1000) for i in np.arange(0.*1000, 0.6*1001)]),
-                            "_tau_1_4": np.array([(i/2000) for i in np.arange(0.*1000, 0.5*2001)]),
-                            "_tau_1_5": np.array([(i/2000) for i in np.arange(0.*1000, 0.4*2001)]),
+                            "_tau_1_2": np.array([(i/1000) for i in np.arange(0.*1000, 0.7*1001)]),
+                            "_tau_1_3": np.array([(i/2000) for i in np.arange(0.*2000, 0.6*2001)]),
+                            "_tau_1_4": np.array([(i/5000) for i in np.arange(0.*5000, 0.5*5001)]),
+                            "_tau_1_5": np.array([(i/5000) for i in np.arange(0.*5000, 0.4*5001)]),
                             "_tau_1p5_1": np.array([(i/500) for i in np.arange(0.*500, 0.72*501)]),
                             "_tau_1p5_2": np.array([(i/1000) for i in np.arange(0.*1000, 0.6*1001)]),
-                            "_tau_1p5_3": np.array([(i/2000) for i in np.arange(0.*2000, 0.5*2001)]),
-                            "_tau_1p5_4": np.array([(i/2000) for i in np.arange(0.*2000, 0.4*2001)]),
+                            "_tau_1p5_3": np.array([(i/5000) for i in np.arange(0.*2000, 0.5*5001)]),
+                            "_tau_1p5_4": np.array([(i/5000) for i in np.arange(0.*5000, 0.4*5001)]),
                             "_tau_1p5_5": np.array([(i/5000) for i in np.arange(0.*5000, 0.3*5001)]),
                             "_tau_2_1": np.array([(i/500) for i in np.arange(0.*500, 0.5*501)]),
-                            "_tau_2_2": np.array([(i/1000) for i in np.arange(0.*1000, 0.3*1001)]),
-                            "_tau_2_3": np.array([(i/2000) for i in np.arange(0.*2000, 0.24*2001)]),
-                            "_tau_2_4": np.array([(i/2000) for i in np.arange(0.*2000, 0.2*2001)]),
+                            "_tau_2_2": np.array([(i/2000) for i in np.arange(0.*2000, 0.3*2001)]),
+                            "_tau_2_3": np.array([(i/5000) for i in np.arange(0.*5000, 0.24*5001)]),
+                            "_tau_2_4": np.array([(i/5000) for i in np.arange(0.*5000, 0.2*5001)]),
                             "_tau_2_5": np.array([(i/5000) for i in np.arange(0.*5000, 0.18*5001)]),
                             "_tau21": np.array([(i/1000) for i in np.arange(0.*1000, 1.2*1001)]),#for one-pass kT minimization as per CMS
                             "_tau32": np.array([(i/1000) for i in np.arange(0.*1000, 1.2*1001)]),#for one-pass kT minimization as per CMS
@@ -217,9 +217,9 @@ class nSubBasis_unfoldingHistoProd_WtopSel(processor.ProcessorABC):
                             "_tau32_WTA": np.array([(i/1000) for i in np.arange(0.*1000, 1.2*1001)]),#for WTA-kT for comparison
                             "_tau21_exkT": np.array([(i/1000) for i in np.arange(0.*1000, 1.4*1001)]),#for excl.-kT and E-scheme as per basis
                             "_tau32_exkT": np.array([(i/1000) for i in np.arange(0.*1000, 1.4*1001)]),#for excl.-kT and E-scheme as per basis
-                            #"_mass": np.array([(i/2) for i in np.arange(0.*2, 300*2.1)]),
-                            #"_msoftdrop": np.array([(i/2) for i in np.arange(0.*2, 300*2.1)]),
-                            #"_pt": np.array([(i/2) for i in np.arange(170.*2, 2500.*2.1)]),
+                            "_mass": np.array([(i/2) for i in np.arange(0.*2, 300*2.1)]),
+                            "_msoftdrop": np.array([(i/2) for i in np.arange(0.*2, 300*2.1)]),
+                            "_pt": np.array([(i/2) for i in np.arange(170.*2, 2500.*2.1)]),
                             }
             
         
@@ -252,9 +252,9 @@ class nSubBasis_unfoldingHistoProd_WtopSel(processor.ProcessorABC):
 
         self.W_ptmin = 200.
         self.W_mSDmin = 65.
-        self.W_mSDmax = 120.
+        self.W_mSDmax = 125.
         self.W_mINVmin = 65.
-        self.W_mINVmax = 120.
+        self.W_mINVmax = 125.
         
         self.LeptW_ptmin = 150.
         self.Mu_ptmin = 55.
@@ -582,14 +582,14 @@ class nSubBasis_unfoldingHistoProd_WtopSel(processor.ProcessorABC):
                             elif 'nGenLepBtags' in key and self.isMC:
                                 output[key].fill(events[f'nGenLepBtags{s}'][selGenMask], weight=totalRecoWeight[selGenMask] )
 
-                    listOfJetOutputHistosNames = [k for k,h in output.items() if ((('Jet' in k) and (sys in k)) or ('residual' in k and not(sys in k)))] #prevent needless iterations
+                    listOfJetOutputHistosNames = [k for k,h in output.items() if ((('Jet' in k) and (sys in k)) or ('residual' in k and not(sys in k)) or ('resol' in k and not(sys in k)))] #prevent needless iterations
                     if self.verbose: print (listOfJetOutputHistosNames[0:10],sys,s)
 
                     for k in listOfJetOutputHistosNames:
                         key=k
 
                         ############### Safety checks ##################
-                        if not(sys in key) and not('residual' in key): 
+                        if not(sys in key) and not('residual' in key) and not('resol' in key): 
                             if self.verbose: 
                                 print(key,sys,s)
                             continue
@@ -700,15 +700,17 @@ class nSubBasis_unfoldingHistoProd_WtopSel(processor.ProcessorABC):
                                                  threads=8)
 
 
-                            elif ('residual' in key.lower()) and sys.endswith('nom') and self.isSigMC:
+                            elif ('residual' in key.lower() or 'resol' in key.lower()) and sys.endswith('nom') and self.isSigMC:
                                 zeroMask=(events[f'accepGenJets{s}{varToFill}']!=0.)&(accepGenMask)
-                                residual = np.nan_to_num((events[f'trueRecoJets{s}{varToFill}'][zeroMask]-events[f'accepGenJets{s}{varToFill}'][zeroMask]), nan=-929.)
-                                output[key].fill(residual)#, weight=totalRecoWeight[zeroMask])
+                                
+                                response = events[f'trueRecoJets{s}{varToFill}'][zeroMask]/events[f'accepGenJets{s}{varToFill}'][zeroMask]
+                                response = np.nan_to_num(response,nan=-999.)
+                                residual = events[f'trueRecoJets{s}{varToFill}'][zeroMask]-events[f'accepGenJets{s}{varToFill}'][zeroMask]
+                                #residual = np.nan_to_num(residual, nan=-929.)
+                                
+                                if 'noWt_' in key: output[key].fill(response)#, weight=totalRecoWeight[zeroMask])
+                                elif 'residual' in key: output[key].fill(residual)
                             
-                            elif('resol' in key.lower()) and sys.endswith('nom') and self.isSigMC:
-                                zeroMask=(events[f'accepGenJets{s}{varToFill}']!=0.)&(accepGenMask)
-                                response = np.nan_to_num((events[f'trueRecoJets{s}{varToFill}'][zeroMask]/events[f'accepGenJets{s}{varToFill}'][zeroMask]),nan=-929.)
-                                output[key].fill(response)
 
                 print("Histos filled!",self.selList,sys)
                 l=[]
