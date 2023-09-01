@@ -67,16 +67,16 @@ class nSubBasis_unfoldingHistoProd_WtopSel(processor.ProcessorABC):
 
         self.kinematic_labels=['_pt','_eta', '_y', '_phi', '_mass', '_msoftdrop']
         self.reco_only_labels=['good_nPVs','nRecoBtags','nRecoHadBtags','nRecoLepBtags', 'selRecoHadHemDeltaR', 'selRecoHadHemDeltaRap', 'selRecoHadHemDeltaPhi']
-        self.gen_only_labels=['nGenBtags','nGenHadBtags','nGenLepBtags','selGenHadHemDeltaR','selGenHadHemDeltaRap','selGenHadHemDeltaPhi']
+        #self.gen_only_labels=['nGenBtags','nGenHadBtags','nGenLepBtags','selGenHadHemDeltaR','selGenHadHemDeltaRap','selGenHadHemDeltaPhi']
 
         self.dict_variables_kinematics_AK8 = {
 
-                                            "_pt": np.array([i for i in np.arange(170., 2580., 10.)]) if 'WSel' in selection else  np.array([i for i in np.arange(300., 2580., 10.)]),
+                                            "_pt": np.array([i for i in np.arange(170., 3010., 10.)]) if 'WSel' in selection else  np.array([i for i in np.arange(300., 3010., 10.)]),
                                             "_eta": np.array([i for i in np.arange(-2.2, 2.6, 0.2)]),
                                             "_y": np.array([i for i in np.arange(-2.2, 2.6, 0.2)]),
                                             "_phi": np.array([i for i in np.arange(-3.2, 3.6, 0.2)]),
                                             "_mass": np.array([i for i in np.arange(0., 205., 5.)]) if 'WSel' in selection else  np.array([i for i in np.arange(100., 405., 5.)]),
-                                            "_msoftdrop": np.array([i for i in np.arange(40., 165., 5.)]) if 'WSel' in selection else  np.array([i for i in np.arange(100., 325., 5.)]),
+                                            "_msoftdrop": np.array([i for i in np.arange(0., 165., 5.)]) if 'WSel' in selection else  np.array([i for i in np.arange(100., 325., 5.)]),
 
                                         }  
 
@@ -86,17 +86,17 @@ class nSubBasis_unfoldingHistoProd_WtopSel(processor.ProcessorABC):
                                             "_eta": np.array([i for i in np.arange(-2.2, 2.6, 0.2)]),
                                             "_y": np.array([i for i in np.arange(-2.2, 2.6, 0.2)]),
                                             "_phi": np.array([i for i in np.arange(-3.2, 3.6, 0.2)]),
-                                            "_mass": np.array([i for i in np.arange(0., 105., 5.)]),
+                                            "_mass": np.array([i for i in np.arange(0., 55., 5.)]),
 
                                         } 
 
         self.dict_variables_kinematics_LeptW = {
 
-                                            "_pt": np.array([i for i in np.arange(100., 2110., 10.)]),
+                                            "_pt": np.array([i for i in np.arange(100., 2510., 10.)]),
                                             "_eta": np.array([i for i in np.arange(-2.2, 2.6, 0.2)]),
                                             "_y": np.array([i for i in np.arange(-2.2, 2.6, 0.2)]),
                                             "_phi": np.array([i for i in np.arange(-3.2, 3.6, 0.2)]),
-                                            "_mass": np.array([i for i in np.arange(0., 805., 5.)]),
+                                            "_mass": np.array([i for i in np.arange(0., 410., 10.)]),
 
                                         } 
 
@@ -137,55 +137,94 @@ class nSubBasis_unfoldingHistoProd_WtopSel(processor.ProcessorABC):
                                         "selGenHadHemDeltaPhi": np.array([i for i in np.arange(-3.2, 3.4, 0.2)]),
 
                                    } 
-        
-        self.dict_variables_toUnfold = {
-                    
-                    "_tau_0p25_1": np.array([(i/1000) for i in np.arange(0.*1000, 1.*1001)]),
-                    "_tau_0p25_2": np.array([(i/1000) for i in np.arange(0.*1000, 1.*1001)]),
-                    "_tau_0p25_3": np.array([(i/1000) for i in np.arange(0.*1000, 1.*1001)]),
-                    "_tau_0p25_4": np.array([(i/1000) for i in np.arange(0.*1000, 1.*1001)]),
-                    "_tau_0p25_5": np.array([(i/1000) for i in np.arange(0.*1000, 1.*1001)]),
-                    
-                    "_tau_0p5_1": np.array([(i/1000) for i in np.arange(0.*1000, 1.*1001)]),
-                    "_tau_0p5_2": np.array([(i/1000) for i in np.arange(0.*1000, 0.9*1001)]),
-                    "_tau_0p5_3": np.array([(i/1000) for i in np.arange(0.*1000, 0.8*1001)]),
-                    "_tau_0p5_4": np.array([(i/1000) for i in np.arange(0.*1000, 0.7*1001)]),
-                    "_tau_0p5_5": np.array([(i/1000) for i in np.arange(0.*1000, 0.7*1001)]),
+        if self.isSigMC and not(self.wtUnc) and not(self.sysUnc): 
+            self.dict_variables_toUnfold = {
+
+                            "_tau_0p25_1": np.array([(i/500) for i in np.arange(0.1*500, 1.*501)]),
+                            "_tau_0p25_2": np.array([(i/1000) for i in np.arange(0.1*1000, 0.9*1001)]),
+                            "_tau_0p25_3": np.array([(i/10000) for i in np.arange(0.1*10000, 0.8*10001)]),
+                            "_tau_0p25_4": np.array([(i/10000) for i in np.arange(0.1*10000, 0.8*10001)]),
+                            "_tau_0p25_5": np.array([(i/10000) for i in np.arange(0.1*10000, 0.8*10001)]),
+
+                            "_tau_0p5_1": np.array([(i/500) for i in np.arange(0.*500, 0.9*501)]),
+                            "_tau_0p5_2": np.array([(i/1000) for i in np.arange(0.*1000, 0.8*1001)]),
+                            "_tau_0p5_3": np.array([(i/10000) for i in np.arange(0.*10000, 0.6*10001)]),
+                            "_tau_0p5_4": np.array([(i/10000) for i in np.arange(0.*10000, 0.6*10001)]),
+                            "_tau_0p5_5": np.array([(i/10000) for i in np.arange(0.*10000, 0.54*10001)]),
+
+                            "_tau_1_1": np.array([(i/500) for i in np.arange(0.*500, 0.7*501)]),
+                            "_tau_1_2": np.array([(i/1000) for i in np.arange(0.*1000, 0.54*1001)]),
+                            "_tau_1_3": np.array([(i/10000) for i in np.arange(0.*10000, 0.4*10001)]),
+                            "_tau_1_4": np.array([(i/10000) for i in np.arange(0.*10000, 0.3*10001)]),
+                            "_tau_1_5": np.array([(i/10000) for i in np.arange(0.*10000, 0.28*10001)]),
+
+                            "_tau_1p5_1": np.array([(i/500) for i in np.arange(0.*500, 0.7*501)]),
+                            "_tau_1p5_2": np.array([(i/5000) for i in np.arange(0.*5000, 0.54*5001)]),
+                            "_tau_1p5_3": np.array([(i/10000) for i in np.arange(0.*10000, 0.4*10001)]),
+                            "_tau_1p5_4": np.array([(i/10000) for i in np.arange(0.*10000, 0.3*10001)]),
+                            "_tau_1p5_5": np.array([(i/10000) for i in np.arange(0.*10000, 0.28*10001)]),
+
+                            "_tau_2_1": np.array([(i/1000) for i in np.arange(0.*1000, 0.5*1001)]),
+                            "_tau_2_2": np.array([(i/5000) for i in np.arange(0.*5000, 0.26*5001)]),
+                            "_tau_2_3": np.array([(i/10000) for i in np.arange(0.*10000, 0.18*10001)]),
+                            "_tau_2_4": np.array([(i/10000) for i in np.arange(0.*10000, 0.14*10001)]),
+                            "_tau_2_5": np.array([(i/10000) for i in np.arange(0.*10000, 0.12*10001)]),
+
+                            "_tau21": np.array([(i/1000) for i in np.arange(0.*1000, 1.2*1001)]),#for one-pass kT minimization as per CMS
+                            "_tau32": np.array([(i/1000) for i in np.arange(0.*1000, 1.2*1001)]),#for one-pass kT minimization as per CMS
+
+                            "_tau21_WTA": np.array([(i/1000) for i in np.arange(0.*1000, 1.2*1001)]),#for WTA-kT for comparison
+                            "_tau32_WTA": np.array([(i/1000) for i in np.arange(0.*1000, 1.2*1001)]),#for WTA-kT for comparison
+
+                            "_tau21_exkT": np.array([(i/2000) for i in np.arange(0.*2000, 1.4*2001)]),#for excl.-kT and E-scheme as per basis
+                            "_tau32_exkT": np.array([(i/2000) for i in np.arange(0.*2000, 1.4*2001)]),#for excl.-kT and E-scheme as per basis
+
+                            "_mass": np.array([(i/2) for i in np.arange(0.*2, 300*2.1)]),
+                            "_msoftdrop": np.array([(i/2) for i in np.arange(0.*2, 300*2.1)]),
+                            "_pt": np.array([(i/2) for i in np.arange(170.*2, 2500.*2.1)]),
+                            }
+        else:
+            self.dict_variables_toUnfold = {
+
+                            "_tau_0p25_1": np.array([(i/500) for i in np.arange(0.*500, 1.*501)]),
+                            "_tau_0p25_2": np.array([(i/500) for i in np.arange(0.*500, 1.*501)]),
+                            "_tau_0p25_3": np.array([(i/1000) for i in np.arange(0.*1000, 0.8*1001)]),
+                            "_tau_0p25_4": np.array([(i/1000) for i in np.arange(0.*1000, 0.8*1001)]),
+                            "_tau_0p25_5": np.array([(i/1000) for i in np.arange(0.*1000, 0.8*1001)]),
+                            "_tau_0p5_1": np.array([(i/500) for i in np.arange(0.*500, 1.*501)]),
+                            "_tau_0p5_2": np.array([(i/500) for i in np.arange(0.*500, 1.*501)]),
+                            "_tau_0p5_3": np.array([(i/1000) for i in np.arange(0.*1000, 0.7*1001)]),
+                            "_tau_0p5_4": np.array([(i/1000) for i in np.arange(0.*1000, 0.6*1001)]),
+                            "_tau_0p5_5": np.array([(i/1000) for i in np.arange(0.*1000, 0.6*1001)]),
+                            "_tau_1_1": np.array([(i/500) for i in np.arange(0.*500, 0.9*501)]),
+                            "_tau_1_2": np.array([(i/500) for i in np.arange(0.*500, 0.7*501)]),
+                            "_tau_1_3": np.array([(i/1000) for i in np.arange(0.*1000, 0.6*1001)]),
+                            "_tau_1_4": np.array([(i/2000) for i in np.arange(0.*1000, 0.5*2001)]),
+                            "_tau_1_5": np.array([(i/2000) for i in np.arange(0.*1000, 0.4*2001)]),
+                            "_tau_1p5_1": np.array([(i/500) for i in np.arange(0.*500, 0.72*501)]),
+                            "_tau_1p5_2": np.array([(i/1000) for i in np.arange(0.*1000, 0.6*1001)]),
+                            "_tau_1p5_3": np.array([(i/2000) for i in np.arange(0.*2000, 0.5*2001)]),
+                            "_tau_1p5_4": np.array([(i/2000) for i in np.arange(0.*2000, 0.4*2001)]),
+                            "_tau_1p5_5": np.array([(i/5000) for i in np.arange(0.*5000, 0.3*5001)]),
+                            "_tau_2_1": np.array([(i/500) for i in np.arange(0.*500, 0.5*501)]),
+                            "_tau_2_2": np.array([(i/1000) for i in np.arange(0.*1000, 0.3*1001)]),
+                            "_tau_2_3": np.array([(i/2000) for i in np.arange(0.*2000, 0.24*2001)]),
+                            "_tau_2_4": np.array([(i/2000) for i in np.arange(0.*2000, 0.2*2001)]),
+                            "_tau_2_5": np.array([(i/5000) for i in np.arange(0.*5000, 0.18*5001)]),
+                            "_tau21": np.array([(i/1000) for i in np.arange(0.*1000, 1.2*1001)]),#for one-pass kT minimization as per CMS
+                            "_tau32": np.array([(i/1000) for i in np.arange(0.*1000, 1.2*1001)]),#for one-pass kT minimization as per CMS
+                            "_tau21_WTA": np.array([(i/1000) for i in np.arange(0.*1000, 1.1*1001)]),#for WTA-kT for comparison
+                            "_tau32_WTA": np.array([(i/1000) for i in np.arange(0.*1000, 1.2*1001)]),#for WTA-kT for comparison
+                            "_tau21_exkT": np.array([(i/1000) for i in np.arange(0.*1000, 1.4*1001)]),#for excl.-kT and E-scheme as per basis
+                            "_tau32_exkT": np.array([(i/1000) for i in np.arange(0.*1000, 1.4*1001)]),#for excl.-kT and E-scheme as per basis
+                            #"_mass": np.array([(i/2) for i in np.arange(0.*2, 300*2.1)]),
+                            #"_msoftdrop": np.array([(i/2) for i in np.arange(0.*2, 300*2.1)]),
+                            #"_pt": np.array([(i/2) for i in np.arange(170.*2, 2500.*2.1)]),
+                            }
             
-                    "_tau_1_1": np.array([(i/1000) for i in np.arange(0.*1000, 0.9*1001)]),
-                    "_tau_1_2": np.array([(i/1000) for i in np.arange(0.*1000, 0.7*1001)]),
-                    "_tau_1_3": np.array([(i/1000) for i in np.arange(0.*1000, 0.6*1001)]),
-                    "_tau_1_4": np.array([(i/1000) for i in np.arange(0.*1000, 0.5*1001)]),
-                    "_tau_1_5": np.array([(i/1000) for i in np.arange(0.*1000, 0.5*1001)]),
-            
-                    "_tau_1p5_1": np.array([(i/1000) for i in np.arange(0.*1000, 0.9*1001)]),
-                    "_tau_1p5_2": np.array([(i/1000) for i in np.arange(0.*1000, 0.7*1001)]),
-                    "_tau_1p5_3": np.array([(i/1000) for i in np.arange(0.*1000, 0.6*1001)]),
-                    "_tau_1p5_4": np.array([(i/1000) for i in np.arange(0.*1000, 0.5*1001)]),
-                    "_tau_1p5_5": np.array([(i/1000) for i in np.arange(0.*1000, 0.5*1001)]),
-            
-                    "_tau_2_1": np.array([(i/1000) for i in np.arange(0.*1000, 0.5*1001)]),
-                    "_tau_2_2": np.array([(i/1000) for i in np.arange(0.*1000, 0.4*1001)]),
-                    "_tau_2_3": np.array([(i/1000) for i in np.arange(0.*1000, 0.3*1001)]),
-                    "_tau_2_4": np.array([(i/1000) for i in np.arange(0.*1000, 0.3*1001)]),
-                    "_tau_2_5": np.array([(i/1000) for i in np.arange(0.*1000, 0.3*1001)]),
-            
-                    "_tau21": np.array([(i/1000) for i in np.arange(0.*1000, 1.4*1001)]),#for one-pass kT minimization as per CMS
-                    "_tau32": np.array([(i/1000) for i in np.arange(0.*1000, 1.4*1001)]),#for one-pass kT minimization as per CMS
-            
-                    "_tau21_WTA": np.array([(i/1000) for i in np.arange(0.*1000, 1.2*1001)]),#for WTA-kT for comparison
-                    "_tau32_WTA": np.array([(i/1000) for i in np.arange(0.*1000, 1.2*1001)]),#for WTA-kT for comparison
-                    
-                    "_tau21_exkT": np.array([(i/1000) for i in np.arange(0.*1000, 1.6*1001)]),#for excl.-kT and E-scheme as per basis
-                    "_tau32_exkT": np.array([(i/1000) for i in np.arange(0.*1000, 1.6*1001)]),#for excl.-kT and E-scheme as per basis
-                    
-                    "_mass": np.array([(i/2.0) for i in np.arange(0.*2, 300*2.1)]),
-                    "_msoftdrop": np.array([(i/2.0) for i in np.arange(0.*2, 300*2.1)]),
-                    "_pt": np.array([(i/2.0) for i in np.arange(170.*2, 2500.*2.1)]),
-                        }
         
         ### Uncertainties
-        self.sysSources = ['_nom'] + [ isys+i for i in [ 'Up', 'Down' ] for isys in sysSources if not( isys.endswith('nom') or self.sysUnc) ]
+        self.sysSources = ['_nom'] + [ isys+i for i in [ 'Up', 'Down' ] for isys in sysSources if not( isys.endswith('nom'))]# or self.sysUnc) ]
         self.sysWeightList = ( '_pu', '_isr', '_fsr', '_pdf', '_l1prefiring', '_lepton', '_btag' ) #'_ps',
         self.wtSources=['_puWeight','_isrWeight','_fsrWeight','_pdfWeight', '_l1prefiringWeight','_leptonWeightAll','_btagWeight']#, '_leptonWeightISO', '_leptonWeightID', '_leptonWeightTrig', '_leptonWeightRecoEff'] if self.wtUnc else [] 
         if self.onlyUnc: self.sysSources = ['_nom'] + [ onlyUnc+i for i in [ 'Up', 'Down' ] ] #################### Not using for right now
@@ -213,9 +252,9 @@ class nSubBasis_unfoldingHistoProd_WtopSel(processor.ProcessorABC):
 
         self.W_ptmin = 200.
         self.W_mSDmin = 65.
-        self.W_mSDmax = 125.
+        self.W_mSDmax = 120.
         self.W_mINVmin = 65.
-        self.W_mINVmax = 125.
+        self.W_mINVmax = 120.
         
         self.LeptW_ptmin = 150.
         self.Mu_ptmin = 55.
@@ -248,9 +287,9 @@ class nSubBasis_unfoldingHistoProd_WtopSel(processor.ProcessorABC):
             
             if self.mode=='massAndDeltaR': 
 
-                topRecoMask = (events[f'selRecoJets{s}_pt']>self.top_ptmin) & (events[f'selRecoJets{s}_mass']>self.top_mINVmin) & (events[f'selRecoJets{s}_mass']<self.top_mINVmax) & (events[f'selRecoHadHemDeltaR{s}']<0.8) & (events[f'selRecoLeptW{s}_pt']>self.LeptW_ptmin ) & (events[f'selRecoMu{s}_pt']>self.Mu_ptmin ) & (events[f'selRecoMET{s}_pt']>self.MET_ptmin ) & (events[f'passRecoSel{s}']==1) & (events[f'totalRecoWeight{s}']!=0.) & (events[f'recoSelectedEventNumber{s}']>=1) #& (events[f'nRecoBtags_nom']>1) & (events[f'nRecoHadBtags_nom']==1) 
+                topRecoMask = (events[f'selRecoJets{s}_pt']>self.top_ptmin) & (events[f'selRecoJets{s}_mass']>self.top_mINVmin) & (events[f'selRecoJets{s}_mass']<self.top_mINVmax) & (events[f'selRecoHadHemDeltaR{s}']<0.8) & (events[f'selRecoLeptW_nom_pt']>self.LeptW_ptmin ) & (events[f'selRecoMu_nom_pt']>self.Mu_ptmin ) & (events[f'selRecoMET_nom_pt']>self.MET_ptmin ) & (events[f'passRecoSel{s}']==1) & (events[f'totalRecoWeight{s}']!=0.) & (events[f'recoSelectedEventNumber_nom']>=1) #& (events[f'nRecoBtags_nom']>1) & (events[f'nRecoHadBtags_nom']==1) 
 
-                WRecoMask = (events[f'selRecoJets{s}_pt']>self.W_ptmin) & (events[f'selRecoJets{s}_mass']>self.W_mINVmin) & (events[f'selRecoJets{s}_mass']<self.W_mINVmax) & (events[f'selRecoHadHemDeltaR{s}']>0.8) & (events[f'selRecoHadHemDeltaR{s}']<1.6) & (events[f'selRecoLeptW{s}_pt']>self.LeptW_ptmin ) & (events[f'selRecoMu{s}_pt']>self.Mu_ptmin ) & (events[f'selRecoMET{s}_pt']>self.MET_ptmin ) & (events[f'passRecoSel{s}']==1) & (events[f'totalRecoWeight{s}']!=0.) & (events[f'recoSelectedEventNumber{s}']>=1) #& (events[f'nRecoBtags_nom']>1) & (events[f'nRecoHadBtags_nom']==1) 
+                WRecoMask = (events[f'selRecoJets{s}_pt']>self.W_ptmin) & (events[f'selRecoJets{s}_mass']>self.W_mINVmin) & (events[f'selRecoJets{s}_mass']<self.W_mINVmax) & (events[f'selRecoHadHemDeltaR{s}']>0.8) & (events[f'selRecoHadHemDeltaR{s}']<1.6) & (events[f'selRecoLeptW_nom_pt']>self.LeptW_ptmin ) & (events[f'selRecoMu_nom_pt']>self.Mu_ptmin ) & (events[f'selRecoMET_nom_pt']>self.MET_ptmin ) & (events[f'passRecoSel{s}']==1) & (events[f'totalRecoWeight{s}']!=0.) & (events[f'recoSelectedEventNumber_nom']>=1) #& (events[f'nRecoBtags_nom']>1) & (events[f'nRecoHadBtags_nom']==1) 
                 
                 if not(self.isMC): 
                     topRecoMask = (topRecoMask) & (events[f'passHLT_Mu50{s}']==1)
@@ -357,14 +396,14 @@ class nSubBasis_unfoldingHistoProd_WtopSel(processor.ProcessorABC):
                         
                         sel = '_WSel' if '_WSel' in self.selList else '_topSel'
                         
-                        print(f"Saving the following .parquet file: {self.inputDir[0].split('jetObservables/')[0]+'jetObservables/Wtop_rootToParquet/'+self.inputDir[0].split('kadatta/jetObservables/')[1].split('/')[0]+'_UL'+self.year+f'_nomWts{sel}_{self.splitCount}.parquet'}")
+                        print(f"Saving the following .parquet file: {self.inputDir[0].split('jetObservables/')[0]+'jetObservables/Wtop_rootToParquet/'+self.inputDir[0].split('kadatta/jetObservables/')[1].split('/')[0]+'_UL'+self.year+f'_nomWts{sel}_OC_{self.splitCount}.parquet'}")
 
-                        ak.to_parquet(events[selRecoMask],self.inputDir[0].split('jetObservables/')[0]+'jetObservables/Wtop_rootToParquet/recoMasked/'+self.year+'/'+self.inputDir[0].split('kadatta/jetObservables/')[1].split('/')[0]+'_UL'+self.year+f'_nomWts{sel}_reco_{self.splitCount}.parquet')
-                        ak.to_parquet(events[selGenMask],self.inputDir[0].split('jetObservables/')[0]+'jetObservables/Wtop_rootToParquet/genMasked/'+self.year+'/'+self.inputDir[0].split('kadatta/jetObservables/')[1].split('/')[0]+'_UL'+self.year+f'_nomWts{sel}_gen_{self.splitCount}.parquet')
-                        ak.to_parquet(events[trueRecoMask],self.inputDir[0].split('jetObservables/')[0]+'jetObservables/Wtop_rootToParquet/recoMasked/'+self.year+'/'+self.inputDir[0].split('kadatta/jetObservables/')[1].split('/')[0]+'_UL'+self.year+f'_nomWts{sel}_truereco_{self.splitCount}.parquet')
-                        ak.to_parquet(events[accepGenMask],self.inputDir[0].split('jetObservables/')[0]+'jetObservables/Wtop_rootToParquet/genMasked/'+self.year+'/'+self.inputDir[0].split('kadatta/jetObservables/')[1].split('/')[0]+'_UL'+self.year+f'_nomWts{sel}_accepgen_{self.splitCount}.parquet')
-                        ak.to_parquet(events[fakeRecoMask],self.inputDir[0].split('jetObservables/')[0]+'jetObservables/Wtop_rootToParquet/recoMasked/'+self.year+'/'+self.inputDir[0].split('kadatta/jetObservables/')[1].split('/')[0]+'_UL'+self.year+f'_nomWts{sel}_fakereco_{self.splitCount}.parquet')
-                        ak.to_parquet(events[missGenMask],self.inputDir[0].split('jetObservables/')[0]+'jetObservables/Wtop_rootToParquet/genMasked/'+self.year+'/'+self.inputDir[0].split('kadatta/jetObservables/')[1].split('/')[0]+'_UL'+self.year+f'_nomWts{sel}_missgen_{self.splitCount}.parquet')
+                        ak.to_parquet(events[selRecoMask],self.inputDir[0].split('jetObservables/')[0]+'jetObservables/Wtop_rootToParquet/recoMasked/'+self.year+'/'+self.inputDir[0].split('kadatta/jetObservables/')[1].split('/')[0]+'_UL'+self.year+f'_nomWts{sel}_OC_reco_{self.splitCount}.parquet')
+                        ak.to_parquet(events[selGenMask],self.inputDir[0].split('jetObservables/')[0]+'jetObservables/Wtop_rootToParquet/genMasked/'+self.year+'/'+self.inputDir[0].split('kadatta/jetObservables/')[1].split('/')[0]+'_UL'+self.year+f'_nomWts{sel}_OC_gen_{self.splitCount}.parquet')
+                        #ak.to_parquet(events[trueRecoMask],self.inputDir[0].split('jetObservables/')[0]+'jetObservables/Wtop_rootToParquet/recoMasked/'+self.year+'/'+self.inputDir[0].split('kadatta/jetObservables/')[1].split('/')[0]+'_UL'+self.year+f'_nomWts{sel}_truereco_{self.splitCount}.parquet')
+                        #ak.to_parquet(events[accepGenMask],self.inputDir[0].split('jetObservables/')[0]+'jetObservables/Wtop_rootToParquet/genMasked/'+self.year+'/'+self.inputDir[0].split('kadatta/jetObservables/')[1].split('/')[0]+'_UL'+self.year+f'_nomWts{sel}_accepgen_{self.splitCount}.parquet')
+                        #ak.to_parquet(events[fakeRecoMask],self.inputDir[0].split('jetObservables/')[0]+'jetObservables/Wtop_rootToParquet/recoMasked/'+self.year+'/'+self.inputDir[0].split('kadatta/jetObservables/')[1].split('/')[0]+'_UL'+self.year+f'_nomWts{sel}_fakereco_{self.splitCount}.parquet')
+                        #ak.to_parquet(events[missGenMask],self.inputDir[0].split('jetObservables/')[0]+'jetObservables/Wtop_rootToParquet/genMasked/'+self.year+'/'+self.inputDir[0].split('kadatta/jetObservables/')[1].split('/')[0]+'_UL'+self.year+f'_nomWts{sel}_missgen_{self.splitCount}.parquet')
                         return 1
 
                     #elif self.sysUnc and self.onlyUnc: 
@@ -543,14 +582,14 @@ class nSubBasis_unfoldingHistoProd_WtopSel(processor.ProcessorABC):
                             elif 'nGenLepBtags' in key and self.isMC:
                                 output[key].fill(events[f'nGenLepBtags{s}'][selGenMask], weight=totalRecoWeight[selGenMask] )
 
-                    listOfJetOutputHistosNames = [k for k,h in output.items() if ((('Jet' in k) and (sys in k)) or ('resol' in k and not(sys in k)))] #prevent needless iterations
+                    listOfJetOutputHistosNames = [k for k,h in output.items() if ((('Jet' in k) and (sys in k)) or ('residual' in k and not(sys in k)))] #prevent needless iterations
                     if self.verbose: print (listOfJetOutputHistosNames[0:10],sys,s)
 
                     for k in listOfJetOutputHistosNames:
                         key=k
 
                         ############### Safety checks ##################
-                        if not(sys in key) and not('resol' in key): 
+                        if not(sys in key) and not('residual' in key): 
                             if self.verbose: 
                                 print(key,sys,s)
                             continue
@@ -661,21 +700,23 @@ class nSubBasis_unfoldingHistoProd_WtopSel(processor.ProcessorABC):
                                                  threads=8)
 
 
-                            elif ('resol' in key.lower()) and sys.endswith('nom') and self.isSigMC:
+                            elif ('residual' in key.lower()) and sys.endswith('nom') and self.isSigMC:
                                 zeroMask=(events[f'accepGenJets{s}{varToFill}']!=0.)&(accepGenMask)
+                                residual = np.nan_to_num((events[f'trueRecoJets{s}{varToFill}'][zeroMask]-events[f'accepGenJets{s}{varToFill}'][zeroMask]), nan=-929.)
+                                output[key].fill(residual)#, weight=totalRecoWeight[zeroMask])
+                            
+                            elif('resol' in key.lower()) and sys.endswith('nom') and self.isSigMC:
+                                zeroMask=(events[f'accepGenJets{s}{varToFill}']!=0.)&(accepGenMask)
+                                response = np.nan_to_num((events[f'trueRecoJets{s}{varToFill}'][zeroMask]/events[f'accepGenJets{s}{varToFill}'][zeroMask]),nan=-929.)
+                                output[key].fill(response)
 
-                                response = events[f'trueRecoJets{s}{varToFill}'][zeroMask]/events[f'accepGenJets{s}{varToFill}'][zeroMask]
-                                response = np.nan_to_num(response,nan=-999.)
-
-                                output[key].fill(response, weight=totalRecoWeight[zeroMask])
-                                if 'noWt_' in key: output[key].fill(response)
                 print("Histos filled!",self.selList,sys)
                 l=[]
                 for x,y in output.items(): #y.SetDirectory(0)
 
                     if self.sysUnc and self.onlyUnc and x.startswith(('accepgen','miss')) and '_nom' in x:
                         l.append(x)
-                    #elif self.isMC and not(self.isSigMC) and x.startswith(('accepgen','miss','true','fake','resol' )) and '_nom' in x:
+                    #elif self.isMC and not(self.isSigMC) and x.startswith(('accepgen','miss','true','fake','residual' )) and '_nom' in x:
                     #    l.append(x)
                 for k in l:
                     del(output[k])
@@ -713,9 +754,9 @@ class nSubBasis_unfoldingHistoProd_WtopSel(processor.ProcessorABC):
                             else: 
                                 dictOfHists[x[1:]+sysUnc+isel] = (hist.Hist.new.Variable(binning,name=x[1:]+sysUnc+isel, label=f'AK8 {itype} jet {x}', underflow=True,overflow=True).Weight())  
                     if itype.startswith('truereco') and self.isMC and sysUnc.endswith('nom'):# and self.isSigMC:
-                        dictOfHists['resol'+iJ+'_pt'+isel] = (hist.Hist.new.Regular(500, 0, 5, name='resol'+iJ+'_pt'+isel, label='AK8 reco/gen jet pt').Weight())
-                        dictOfHists['resol'+iJ+'_msoftdrop'+isel] = (hist.Hist.new.Regular(500, 0, 5, name='resol'+iJ+'_msoftdrop'+isel, label='AK8 reco m_{SD}/gen jet m_{SD}').Weight())
-                        dictOfHists['resol'+iJ+'_mass'+isel] = (hist.Hist.new.Regular(500, 0, 5, name='resol'+iJ+'_mass'+isel, label='AK8 reco inv. m/gen jet inv. m').Weight())
+                        dictOfHists['residual'+iJ+'_pt'+isel] = (hist.Hist.new.Regular(1000, -5, 5, name='residual'+iJ+'_pt'+isel, label='AK8 reco - gen jet pt').Weight())
+                        dictOfHists['residual'+iJ+'_msoftdrop'+isel] = (hist.Hist.new.Regular(1000, -5, 5, name='residual'+iJ+'_msoftdrop'+isel, label='AK8 reco m_{SD} - gen jet m_{SD}').Weight())
+                        dictOfHists['residual'+iJ+'_mass'+isel] = (hist.Hist.new.Regular(1000, -5, 5, name='residual'+iJ+'_mass'+isel, label='AK8 reco inv. m - gen jet inv. m').Weight())
                     
                     #print('building unfolding histos')     
                     for x, y in self.dict_variables_toUnfold.items():
@@ -741,8 +782,8 @@ class nSubBasis_unfoldingHistoProd_WtopSel(processor.ProcessorABC):
                                                                             .Weight()
                                                                            )
                             if sysUnc.endswith('_nom'):# and self.isSigMC:
-                                dictOfHists['resol'+iJ+x+isel] = (hist.Hist.new.Regular(500, 0, 5, name='resol'+iJ+x+isel, label='AK8 reco/gen jet ', underflow=True,overflow=True).Weight())
-                                dictOfHists['noWt_resol'+iJ+x+isel] = (hist.Hist.new.Regular(500, 0, 5, name='noWt_resol'+iJ+x+isel, label='AK8 reco/gen jet ', underflow=True,overflow=True).Weight())
+                                dictOfHists['residual'+iJ+x+isel] = (hist.Hist.new.Regular(6000, -1.5, 1.5, name='residual'+iJ+x+isel, label='(Ak8 reco - gen jet) ', underflow=True,overflow=True).Weight())
+                                dictOfHists['noWt_resol'+iJ+x+isel] = (hist.Hist.new.Regular(1000, 0, 5, name='noWt_resol'+iJ+x+isel, label='AK8 reco/gen jet ', underflow=True,overflow=True).Weight())
         
         
         #build from list of histos for control plots
@@ -833,11 +874,11 @@ class nSubBasis_unfoldingHistoProd_WtopSel(processor.ProcessorABC):
                 
                 if not ('softdrop' in i) and not('tau' in i):
                     if sys.endswith('nom') or (self.isSigMC and self.sysUnc):
-                        if i in self.dict_variables_kinematics_Muon:
+                        if i in self.dict_variables_kinematics_Muon and sys.endswith('nom'):
                             reco_list.append('selRecoMu'+sys+i)
-                        if i in self.dict_variables_kinematics_MET:
+                        if i in self.dict_variables_kinematics_MET and sys.endswith('nom'):
                             reco_list.append('selRecoMET'+sys+i)
-                        if i in self.dict_variables_kinematics_LeptW:
+                        if i in self.dict_variables_kinematics_LeptW and sys.endswith('nom'):
                             reco_list.append('selRecoLeptW'+sys+i)
                         if i in self.dict_variables_kinematics_AK4Had:
                             reco_list.append('selRecoAK4bjetHadHem'+sys+i)
@@ -851,11 +892,11 @@ class nSubBasis_unfoldingHistoProd_WtopSel(processor.ProcessorABC):
                         gen_list.append('selGenJets'+sys+i)
                         if not 'softdrop' in i and not('tau' in i):
                             if sys.endswith('nom') or (self.isSigMC and self.sysUnc):
-                                if i in self.dict_variables_kinematics_Muon:
+                                if i in self.dict_variables_kinematics_Muon and sys.endswith('nom'):
                                     gen_list.append('selGenMu'+sys+i)
-                                if i in self.dict_variables_kinematics_MET:
+                                if i in self.dict_variables_kinematics_MET and sys.endswith('nom'):
                                     gen_list.append('selGenMET'+sys+i)
-                                if i in self.dict_variables_kinematics_LeptW:
+                                if i in self.dict_variables_kinematics_LeptW and sys.endswith('nom'):
                                     gen_list.append('selGenLeptW'+sys+i)
                                 if i in self.dict_variables_kinematics_AK4Had:
                                     gen_list.append('selGenAK4bjetHadHem'+sys+i)
@@ -863,20 +904,23 @@ class nSubBasis_unfoldingHistoProd_WtopSel(processor.ProcessorABC):
             if self.isMC and (sys.endswith('nom') or (self.isSigMC and self.sysUnc)):
                 reco_list.append("puWeightNom"+sys)
                 reco_list.append("btagWeightNom"+sys)
-                ###
-                if not(self.onlyParquet): 
-                    for ud in ['Up','Down']:
-                        reco_list.append("leptonWeightISO"+ud+sys)
-                        reco_list.append("leptonWeightID"+ud+sys)
-                        reco_list.append("leptonWeightTrig"+ud+sys)
-                        reco_list.append("leptonWeightRecoEff"+ud+sys)
-                ###
+                
                 reco_list.append("leptonWeightNom"+sys)
                 reco_list.append("l1prefiringWeightNom"+sys)
                 reco_list.append("pdfWeightNom"+sys)
 
                 reco_list.append("totalRecoWeight"+sys)
                 reco_list.append("passRecoSel"+sys)
+                
+                ###
+                #if not(self.onlyParquet) and self.isSigMC and not(self.sysUnc): 
+                #    for ud in ['Up','Down']:
+                #        reco_list.append("leptonWeightISO"+ud+sys)
+                #        reco_list.append("leptonWeightID"+ud+sys)
+                #        reco_list.append("leptonWeightTrig"+ud+sys)
+                #        reco_list.append("leptonWeightRecoEff"+ud+sys)
+                ###
+                
                 if self.isMC: 
                     reco_list.append(f"selRecoJets{sys}_msoftdrop_corr_PUPPI")#+sys)
                     
@@ -887,7 +931,7 @@ class nSubBasis_unfoldingHistoProd_WtopSel(processor.ProcessorABC):
 
                 gen_list.append("evtGenWeight"+sys)
                 gen_list.append("passGenSel"+sys)
-                gen_list.append("FlagGenLeptHemBjet"+sys)
+                gen_list.append("FlagGenLeptHemBjet"+'_nom')
                 gen_list.append("selGenHadHemDeltaR"+sys)
                 gen_list.append("selGenHadHemDeltaPhi"+sys)
                 gen_list.append("selGenHadHemDeltaRap"+sys)
@@ -896,7 +940,7 @@ class nSubBasis_unfoldingHistoProd_WtopSel(processor.ProcessorABC):
                 for i in self.dict_variables_reco:
                     reco_list.append(i+sys)
                 for i in self.dict_variables_gen:
-                    gen_list.append(i+sys)
+                    gen_list.append(i+(sys if not('nGen' in i) else '_nom') )
                     
             elif (not self.isMC) and sys.endswith('nom'):
                 reco_list.append("totalRecoWeight"+sys)               
