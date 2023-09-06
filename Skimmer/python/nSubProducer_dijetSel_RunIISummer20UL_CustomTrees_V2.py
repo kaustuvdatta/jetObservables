@@ -105,6 +105,8 @@ class nSubProd(Module):
        
 
         self.triggerTable = OrderedDict()
+        '''
+        from previous fits
         self.triggerTable[ 'AK8PFJet80' ] = {    
                     '2016_preVFP': [117.16,   187.13],
                     '2016': [114.45, 184.87],
@@ -158,32 +160,102 @@ class nSubProd(Module):
                         '2017' : [ 680.52, 6500.],
                         '2018' : [ 684.98, 6500.],
                         }
+        '''
+
+        self.triggerTable[ 'AK8PFJet80' ] = {    
+                    '2016_preVFP': [130.8, 203.52],
+                    '2016': [128.81, 201.90],
+                    '2017': [158.3, 229.03],
+                    '2018': [165.83, 237.12],
+                    }
+        self.triggerTable[ 'AK8PFJet140' ] = {
+                    '2016_preVFP': [203.52, 276.25],
+                    '2016': [201.90, 274.99],
+                    '2017': [229.03, 299.75],
+                    '2018': [237.12, 308.41],
+                    }
+        self.triggerTable[ 'AK8PFJet200' ] = {
+                    '2016_preVFP': [276.25, 348.98],
+                    '2016': [274.99, 348.07],
+                    '2017': [299.75, 370.48],
+                    '2018': [308.41, 379.7],
+                    }
+        self.triggerTable[ 'AK8PFJet260' ] = {
+                    '2016_preVFP': [348.98, 421.7],
+                    '2016': [348.07, 421.16],
+                    '2017': [370.48, 441.21],
+                    '2018': [379.7, 450.99],
+                    }
+        self.triggerTable[ 'AK8PFJet320' ] = {
+                    '2016_preVFP': [421.7, 518.67],
+                    '2016': [421.16, 518.61],
+                    '2017': [441.21, 535.51],
+                    '2018': [450.99, 546.05],
+                    }
+        self.triggerTable[ 'AK8PFJet400' ] = {
+                    '2016_preVFP': [518.67, 579.28],
+                    '2016': [518.61, 579.52],
+                    '2017': [535.51, 594.45],
+                    '2018': [546.05, 605.46],  
+                    }
+        self.triggerTable[ 'AK8PFJet450' ] = {
+                    '2016_preVFP': [579.28, 639.88],
+                    '2016': [579.52, 640.42],
+                    '2017': [594.45, 653.39],
+                    '2018': [605.46, 664.86],
+                    }
+        self.triggerTable[ 'AK8PFJet500' ] = {
+                    '2016_preVFP': [639.88, 6500.],
+                    '2016': [640.42, 6500.],
+                    '2017': [653.39, 712.33],
+                    '2018': [664.86, 724.27],
+                    }
+        if self.year.endswith(('17','18')):
+            self.triggerTable[ 'AK8PFJet550' ] = {
+                        '2017' : [ 712.33, 6500.],
+                        '2018' : [ 724.27, 6500.],
+                        }
 
         
         ### Defining nsubjetiness basis
         self.maxTau = 5
-        #list of numbers in third column not used anymore, remove later
         self.nSub_labels = {
-                        "_tau_0p5_1": [ 0., 1., 1100  ],
-                        "_tau_0p5_2": [ 0., 0.9, 900  ],
-                        "_tau_0p5_3": [ 0., 0.8, 800  ],
-                        "_tau_0p5_4": [ 0., 0.7, 700  ],
-                        "_tau_0p5_5": [ 0., 0.7, 700  ],
-                        "_tau_1_1": [ 0., 1., 1100  ],
+                        "_tau_0p25_1": [0., 1., 1000  ],
+                        "_tau_0p25_2": [0., 1., 1000  ],
+                        "_tau_0p25_3": [0., 1., 1000  ],
+                        "_tau_0p25_4": [0., 1., 1000  ],
+                        "_tau_0p25_5": [0., 1., 1000  ],
+                        
+                        "_tau_0p5_1": [0., 0.9, 900  ],
+                        "_tau_0p5_2": [0., 0.9, 900  ],
+                        "_tau_0p5_3": [0., 0.8, 800  ],
+                        "_tau_0p5_4": [0., 0.8, 800  ],
+                        "_tau_0p5_5": [0., 0.8, 800  ],
+
+                        "_tau_1_1": [ 0., 0.9, 900  ],
                         "_tau_1_2": [ 0., 0.7, 700  ],
                         "_tau_1_3": [ 0., 0.5, 500  ],
                         "_tau_1_4": [ 0., 0.5, 500  ],
                         "_tau_1_5": [ 0., 0.5, 500  ],
-                        "_tau_2_1": [ 0., 0.5, 500  ],
-                        "_tau_2_2": [ 0., 0.3, 600  ],
-                        "_tau_2_3": [ 0., 0.2, 400  ],
-                        "_tau_2_4": [ 0., 0.2, 400  ],
-                        "_tau_2_5": [ 0., 0.2, 400  ]
+
+                        "_tau_1p5_1": [ 0., 0.9, 900  ],
+                        "_tau_1p5_2": [ 0., 0.7, 700  ],
+                        "_tau_1p5_3": [ 0., 0.5, 500  ],
+                        "_tau_1p5_4": [ 0., 0.5, 500  ],
+                        "_tau_1p5_5": [ 0., 0.5, 500  ],
+
+                        "_tau_2_1": [ 0., 0.9, 900  ],
+                        "_tau_2_2": [ 0., 0.5, 500  ],
+                        "_tau_2_3": [ 0., 0.5, 500  ],
+                        "_tau_2_4": [ 0., 0.5, 500  ],
+                        "_tau_2_5": [ 0., 0.5, 500  ]
                 }
-        #self.nSub0p25 = ROOT.NsubjettinessWrapper( 0.25, 0.8, 0, 0 ) #beta, cone size, measureDef 0=Normalize, axesDef 0=KT_axes
+
+        self.tauPrefixes = ['_tau_0p25_','_tau_0p5_','_tau_1_','_tau_1p5_','_tau_2_']
+        self.nSub0p25 = ROOT.NsubjettinessWrapper( 0.25, 0.8, 0, 0 ) #beta, cone size, measureDef 0=Normalize, axesDef 0=KT_axes
         self.nSub0p5 = ROOT.NsubjettinessWrapper( 0.5, 0.8, 0, 0 ) 
         self.nSub1 = ROOT.NsubjettinessWrapper( 1, 0.8, 0, 0 )
-        #self.nSub1p5 = ROOT.NsubjettinessWrapper( 1.5, 0.8, 0, 0 ) 
+        self.nSub1p5 = ROOT.NsubjettinessWrapper( 1.5, 0.8, 0, 0 ) 
         self.nSub2 = ROOT.NsubjettinessWrapper( 2, 0.8, 0, 0 )
 
         self.nSub1_OP_kT = ROOT.NsubjettinessWrapper( 1, 0.8, 0, 6 ) ##### needed for genjet tau21 or tau32, WTA_kT=3, OP_kT=6
@@ -1388,9 +1460,16 @@ class nSubProd(Module):
         #print ("pushed back candidates")
 
         #### Computing n-subjetiness basis from PF PUPPI constituents
+        nsub0p25 = self.nSub0p25.getTau( self.maxTau, constituents )
+        
         nsub0p5 = self.nSub0p5.getTau( self.maxTau, constituents )
+        
         nsub1 = self.nSub1.getTau( self.maxTau, constituents )
+        
+        nsub1p5 = self.nSub1p5.getTau( self.maxTau, constituents )
+        
         nsub2 = self.nSub2.getTau( self.maxTau, constituents )
+        
         nsub1_OP_kT = self.nSub1_OP_kT.getTau( 3, constituents )
         nsub1_WTA_kT = self.nSub1_WTA_kT.getTau( 3, constituents )
 
@@ -1407,19 +1486,23 @@ class nSubProd(Module):
 
         #### filling histos and branches with nsub basis
         for tauN in range(self.maxTau):
+            ak8jet['0p25'+str(tauN+1)] = nsub0p25[tauN]
             ak8jet['0p5'+str(tauN+1)] = nsub0p5[tauN]
             ak8jet['1'+str(tauN+1)] = nsub1[tauN]
+            ak8jet['1p5'+str(tauN+1)] = nsub1p5[tauN]
             ak8jet['2'+str(tauN+1)] = nsub2[tauN]
 
         try: ak8jet['tau21_exkT'] = nsub1[1]/nsub1[0]
         except ZeroDivisionError: ak8jet['tau21_exkT'] = -1
         try: ak8jet['tau32_exkT'] = nsub1[2]/nsub1[1]
         except ZeroDivisionError: ak8jet['tau32_exkT'] = -1
-        #if isGen: #to add in softdrop mass as a variable to the selected (accep)gen jet branches
-        #    sd_AK8jets = self.sd.result( constituents)
-        #    if len(sd_AK8jets)>0: #stupidly, in some rare cases, this will not be true (with ptmin>=170) leading to errors, hence the else (and also switching to ptmin=0.)
-        #        ak8jet['msoftdrop'] = sd_AK8jets[0].m()
-        #    else: ak8jet['msoftdrop'] = -1. 
+
+
+        if isGen: #to add in softdrop mass as a variable to the selected (accep)gen jet branches 
+            sd_AK8jets = self.sd.result( constituents)
+            if len(sd_AK8jets)>0: #stupidly, in some rare cases, this will not be true (with ptmin>=170) leading to errors, hence the else (and also switching to ptmin=0.)
+                ak8jet['msoftdrop'] = sd_AK8jets[0].m()
+            else: ak8jet['msoftdrop'] = -1. 
         '''
         #### Computing Softdrop jets
         if self.runSDVariables:
@@ -1539,9 +1622,10 @@ class nSubProd(Module):
                     self.out.fillBranch(jetLabel+"_tau32_exkT", iJ['tau32_exkT']  )
             
                     for tauN in range(1, self.maxTau+1):
-                        self.out.fillBranch(jetLabel+"_tau_0p5_"+str(tauN), iJ['0p5'+str(tauN)]  )
-                        self.out.fillBranch(jetLabel+"_tau_1_"+str(tauN), iJ['1'+str(tauN)]  )
-                        self.out.fillBranch(jetLabel+"_tau_2_"+str(tauN), iJ['2'+str(tauN)]  )
+                        for pref in self.tauPrefixes:
+                            beta=pref.split('_')[2]
+                            #if 'reco' in jetLabel.lower(): print (event.event, jetLabel+pref+str(tauN), iJ[beta+str(tauN)] )
+                            self.out.fillBranch(jetLabel+pref+str(tauN), iJ[beta+str(tauN)]  )
                 c+=1
         
         else:
@@ -1576,9 +1660,8 @@ class nSubProd(Module):
                     self.out.fillBranch(jetLabel+"_tau32_exkT", dummyFill  )
 
                     for tauN in range(1, self.maxTau+1):
-                        self.out.fillBranch(jetLabel+"_tau_0p5_"+str(tauN),  dummyFill  )
-                        self.out.fillBranch(jetLabel+"_tau_1_"+str(tauN),  dummyFill  )
-                        self.out.fillBranch(jetLabel+"_tau_2_"+str(tauN),  dummyFill  )
+                        for pref in self.tauPrefixes:
+                            self.out.fillBranch(jetLabel+pref+str(tauN),  dummyFill  )
                 c+=1
     #############################################################################
     def etaToRapidity( self, ijet ):
