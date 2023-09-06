@@ -190,7 +190,7 @@ def drawDataMCReco( ivar, selection, year, lumi, process,
     recoHisto.SetLineColor(ROOT.kRed)
     recoHisto.SetMarkerColor(ROOT.kRed)
     recoHisto.SetMarkerStyle(25)
-    legend.AddEntry( recoHisto, 'MG5-MLM+Pythia8', 'lp' )
+    legend.AddEntry( recoHisto, 'MG5+Pythia8', 'lp' )
 
     print(labelX)
 
@@ -199,7 +199,7 @@ def drawDataMCReco( ivar, selection, year, lumi, process,
         print( '#frac{dN}{d#'+labelX.split('#')[1]+'}')
     else:
         bw = np.round(recoHisto.GetXaxis().GetBinLowEdge(2)-recoHisto.GetXaxis().GetBinLowEdge(1),3)
-        dataHisto.GetYaxis().SetTitle( f' [Events/{bw} '+ ( 'GeV]' if 'pt' in ivar or 'mass' in ivar or 'softdrop' in ivar else ']') ) 
+        dataHisto.GetYaxis().SetTitle( f' Events/{bw} '+ ( '[GeV]' if 'pt' in ivar or 'mass' in ivar or 'softdrop' in ivar else '') ) 
         
     
     dataHisto.GetYaxis().SetTitleOffset(1.15)
@@ -211,7 +211,7 @@ def drawDataMCReco( ivar, selection, year, lumi, process,
     dataHisto.GetXaxis().SetTickLength(0.)
     
     dataHisto.SetMaximum( 1.8*max([ recoHisto.GetMaximum(), dataHisto.GetMaximum()] ) if not('pt') in ivar else 40.*max([ recoHisto.GetMaximum(), dataHisto.GetMaximum()] )  )
-    dataHisto.SetMinimum(0. if not log else 1.)
+    dataHisto.SetMinimum(0. if not log else 0.01)
     #pad1.GetYaxis().SetRangeUser(0,1.5*max([ genJetHisto.GetMaximum(), dataHisto.GetMaximum()] ) )
     
     dataHisto.SetTitle('')
@@ -235,7 +235,7 @@ def drawDataMCReco( ivar, selection, year, lumi, process,
     alt1recoHisto.SetLineColor(ROOT.kViolet)
     alt1recoHisto.SetMarkerColor(ROOT.kViolet)
     alt1recoHisto.SetMarkerStyle(25)
-    legend.AddEntry( alt1recoHisto, 'MG5+Pythia8', 'lp' )
+    legend.AddEntry( alt1recoHisto, 'MG5-MLM+Pythia8', 'lp' )
     alt1recoHisto.Draw("histe1 same")
     
     
@@ -369,9 +369,9 @@ def drawDataMCReco( ivar, selection, year, lumi, process,
     ratioLegend.SetFillColorAlpha(10,0.6)
     ratioLegend.SetBorderSize(0)
     #ratioLegend.SetTextSize(0.1)
-    ratioLegend.AddEntry( ratio_nominal, 'MG5-MLM+P8', 'lp' )
+    ratioLegend.AddEntry( ratio_nominal, 'MG5+P8', 'lp' )
     ratioLegend.AddEntry( ratio_alt0MC, 'MG5-MLM+H7', 'lp' )
-    ratioLegend.AddEntry( ratio_alt1MC, 'MG5+P8', 'lp' )
+    ratioLegend.AddEntry( ratio_alt1MC, 'MG5-MLM+P8', 'lp' )
     ratioLegend.AddEntry( ratio_alt2MC, 'P8+P8', 'lp' )
     #ratioLegend.AddEntry( ratiosystUncHisto, 'Syst.', 'f' )
     pad2.Update()
