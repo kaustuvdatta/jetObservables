@@ -1,3 +1,4 @@
+from collections import OrderedDict
 import ROOT
 import math
 import numpy as np
@@ -13,139 +14,26 @@ ROOT.gErrorIgnoreLevel = ROOT.kWarning
 ####gReset()
 ROOT.TH1.SetDefaultSumw2()
 ROOT.TH2.SetDefaultSumw2()
-import os
-import glob
-import sys
-
-sys.path.insert(0,'../test/')
-from DrawHistogram_dijetSel import *
-
-from datasets_dijetSel_RunIISummer20UL_nomWts import dictSamples, checkDict
+import os, glob, sys
 
 from root_numpy import array2hist,hist2array
-#from unfoldingHelpers import *
-##########################################################################
-
-
-#Auto TLegend positioning a la https://root-forum.cern.ch/t/automatic-tlegend-positioning/23844
-import itertools
-from itertools import chain
-# Some convenience function to easily iterate over the parts of the collections
-
-
-# Needed if importing this script from another script in case TMultiGraphs are used
-#ROOT.SetMemoryPolicy(ROOT.kMemoryStrict)
-
-
-# Start a bit right of the Yaxis and above the Xaxis to not overlap with the ticks
-start, stop = 0.13, 0.89
-x_width, y_width = 0.3, 0.2
-PLACES = [(start, stop - y_width, start + x_width, stop),  # top left opt
-          (start, start, start + x_width, start + y_width),  # bottom left opt
-          (stop - x_width, stop - y_width, stop, stop),  # top right opt
-          (stop - x_width, start, stop, start + y_width),  # bottom right opt
-          (stop - x_width, 0.5 - y_width / 2, stop, 0.5 + y_width / 2),  # right
-          (start, 0.5 - y_width / 2, start + x_width, 0.5 + y_width / 2)]  # left
-
-
-def transform_to_user(canvas, x1, y1, x2, y2):
-    """
-    Transforms from Pad coordinates to User coordinates.
-
-    This can probably be replaced by using the built-in conversion commands.
-    """
-    xstart = canvas.GetX1()
-    xlength = canvas.GetX2() - xstart
-    xlow = xlength * x1 + xstart
-    xhigh = xlength * x2 + xstart
-    if canvas.GetLogx():
-        xlow = 10**xlow
-        xhigh = 10**xhigh
-
-    ystart = canvas.GetY1()
-    ylength = canvas.GetY2() - ystart
-    ylow = ylength * y1 + ystart
-    yhigh = ylength * y2 + ystart
-    if canvas.GetLogy():
-        ylow = 10**ylow
-        yhigh = 10**yhigh
-
-    return xlow, ylow, xhigh, yhigh
-
-
-def overlap_h(hist, x1, y1, x2, y2):
-    xlow = hist.FindFixBin(x1)
-    xhigh = hist.FindFixBin(x2)
-    for i in range(xlow, xhigh + 1):
-        val = hist.GetBinContent(i)
-        # Values
-        if y1 <= val <= y2:
-            return True
-        # Errors
-        if val + hist.GetBinErrorUp(i) > y1 and val - hist.GetBinErrorLow(i) < y2:
-            # print "Overlap with histo", hist.GetName(), "at bin", i
-            return True
-    return False
-
-
-def overlap_rect(rect1, rect2):
-    """Do the two rectangles overlap?"""
-    if rect1[0] > rect2[2] or rect1[2] < rect2[0]:
-        return False
-    if rect1[1] > rect2[3] or rect1[3] < rect2[1]:
-        return False
-    return True
-
-def overlap_g(graph, x1, y1, x2, y2):
-    x_values = list(graph.GetX())
-    y_values = list(graph.GetY())
-    x_err = list(graph.GetEX()) or [0] * len(x_values)
-    y_err = list(graph.GetEY()) or [0] * len(y_values)
-
-    for x, ex, y, ey in zip(x_values, x_err, y_values, y_err):
-        # Could maybe be less conservative
-        if overlap_rect((x1, y1, x2, y2), (x - ex, y - ey, x + ex, y + ey)):
-            # print "Overlap with graph", graph.GetName(), "at point", (x, y)
-            return True
-    return False
-
-def place_legend(canvas, x1=None, y1=None, x2=None, y2=None, header="", option="LP"):
-    # If position is specified, use that
-    if all(x is not None for x in (x1, x2, y1, y2)):
-        return canvas.BuildLegend(x1, y1, x2, y2, header, option)
-
-    # Make sure all objects are correctly registered
-    canvas.Update()
-
-    # Build a list of objects to check for overlaps
-    objects = []
-    for x in canvas.GetListOfPrimitives():
-        if isinstance(x, ROOT.TH1) or isinstance(x, ROOT.TGraph):
-            objects.append(x)
-        elif isinstance(x, ROOT.THStack) or isinstance(x, ROOT.TMultiGraph):
-            objects.extend(x)
-
-    for place in PLACES:
-        place_user = canvas.PadtoU(*place)
-        # Make sure there are no overlaps
-        if any(obj.Overlap(*place_user) for obj in objects):
-            continue
-        return canvas.BuildLegend(place[0], place[1], place[2], place[3], header, option)
-    # As a fallback, use the default values, taken from TCanvas::BuildLegend
-    return canvas.BuildLegend(0.5, 0.67, 0.88, 0.88, header, option)
-
-# Monkey patch ROOT objects to make it all work
-ROOT.THStack.__iter__ = lambda self: iter(self.GetHists())
-ROOT.TMultiGraph.__iter__ = lambda self: iter(self.GetListOfGraphs())
-ROOT.TH1.Overlap = overlap_h
-ROOT.TGraph.Overlap = overlap_g
-ROOT.TPad.PadtoU = transform_to_user
-ROOT.TPad.PlaceLegend = place_legend
+#from unfoldingPlottersAndHelpers import makeJacobian
 
 
 ########################################################################
+###################### Histo modification helpers ######################
+########################################################################
+def makeJacobian(aTH1, aJac):
+    N = aTH1.Integral(0,aTH1.GetNbinsX())
+    for i in range(0,aTH1.GetNbinsX()):
+        for j in range(0,aTH1.GetNbinsX()):
+            if i==j: 
+                aJac[i][j]=(N-aTH1.GetBinContent(i))/N/N 
+                
+            else: 
+                aJac[i][j]=(-1.*aTH1.GetBinContent(i))/N/N 
 
-
+                
 def correlation_from_covariance(covariance,hist): #pythonic, need to rootify
     covariance = hist2array(covariance)
     v = np.sqrt(np.diag(covariance))
@@ -153,29 +41,6 @@ def correlation_from_covariance(covariance,hist): #pythonic, need to rootify
     correlation = covariance / outer_v
     correlation[covariance == 0] = 0
     return array2hist(correlation,hist)
-
-
-def DoUnfolding(Response,Reco):
-    tunfolder = ROOT.TUnfoldDensity(Response,
-                                    ROOT.TUnfold.kHistMapOutputHoriz,
-                                    ROOT.TUnfold.kRegModeCurvature, 
-                                    ROOT.TUnfold.kEConstraintNone, 
-                                    ROOT.TUnfoldDensity.kDensityModeBinWidth)
-    tunfolder.SetInput(Reco)
-    tunfolder.DoUnfold(0.)
-    return tunfolder.GetOutput("MC_unfolded")
-
-def CrossClosure(response1,reco1,response2,reco2):
-    unf11=DoUnfolding(response1,reco1)
-    unf12=DoUnfolding(response2,reco1)
-    unf21=DoUnfolding(response1,reco2)
-    unf22=DoUnfolding(response2,reco2)
-    return unf11,unf12,unf21,unf22
-
-def SelfClosure(response1,reco2,response2,reco1):
-    unf21=DoUnfolding(response1,reco2)
-    unf12=DoUnfolding(response2,reco1)
-    return unf21,unf12
 
 
 def getRebinnedRescaled_TH1(hist_name, file_name, xrange, scale, isMC=True):
@@ -210,6 +75,44 @@ def getRebinned_TH1(hist, xrange, scale, isMC=True):
     return newHist
 
 
+def rebin_RM_withUF(h_resp,genBin,recoBin):
+    #### fancy way to create variable binning TH2D
+    tmpHisto = ROOT.TH2F( h_resp.GetName()+"_Rebin", h_resp.GetName()+"_Rebin", len(genBin)-1, array( 'd', genBin), len(recoBin)-1, array( 'd', recoBin) )
+    tmpHisto.Sumw2()                        
+
+    for biny in range( 0, h_resp.GetNbinsY()+2 ):
+        by = h_resp.GetYaxis().GetBinCenter( biny )
+        for binx in range( 0, h_resp.GetNbinsX()+2 ):
+            bx = h_resp.GetXaxis().GetBinCenter(binx)
+            if not(binx==0 or biny==0 or binx==h_resp.GetNbinsX()+1 or biny==h_resp.GetNbinsY()+1):
+
+                for iX in range( len(genBin)-1 ):
+                    for iY in range( len(recoBin)-1 ):
+                        if (bx<genBin[iX+1] and bx>genBin[iX]) and (by<recoBin[iY+1] and by>recoBin[iY]):
+                            jbin = h_resp.GetBin(binx,biny)
+                            
+                            tmpHisto.SetBinContent( tmpHisto.GetBin(iX+1,iY+1), tmpHisto.GetBinContent(iX+1,iY+1)+h_resp.GetBinContent( jbin )) #tmpArrayContent[binx-1][biny-1] )
+                            tmpHisto.SetBinError( tmpHisto.GetBin(iX+1,iY+1), np.sqrt((tmpHisto.GetBinError(iX+1,iY+1))**2.+(h_resp.GetBinError( jbin ))**2.))#tmpArrayError[binx-1][biny-1] ) )
+            else:
+                if not(binx==0 or biny==0):# or binx==h_resp.GetNbinsX()+1 or biny==h_resp.GetNbinsY()+1): 
+                    continue
+
+                jbin = h_resp.GetBin(binx,biny)
+
+                if h_resp.IsBinUnderflow(jbin):
+
+                    j=0 
+                    for i in range(tmpHisto.GetNbinsX()+2):
+                        if (bx>tmpHisto.GetXaxis().GetBinLowEdge(i) and bx<tmpHisto.GetXaxis().GetBinLowEdge(i+1)):
+                            tmpHisto.SetBinContent(i,j, tmpHisto.GetBinContent(i,j)+h_resp.GetBinContent(jbin))
+                            tmpHisto.SetBinError(i,j, np.sqrt((tmpHisto.GetBinError(i,j))**2.+(h_resp.GetBinError(jbin))**2.))
+    #tmpHisto.Sumw2()
+    tmpHisto.SetDirectory(0)
+    #h_resp = copy.deepcopy(tmpHisto.Clone())
+
+    return tmpHisto
+
+
 #Helper functions used from Robin's old repo: https://github.com/raggleton/QGAnalysisPlotting
 
 def renorm(arr2d, axis):
@@ -235,28 +138,6 @@ def concat_row(arr2d, row_ind):
         arr2d_new[row_ind+1:, :] = arr2d[row_ind+2:, :]
     return arr2d_new
 
-
-def rebinTH2VarBinWidth(ath2, newGenBin, newRecoBin, withUFL=True, withOFL=False):#deprecated
-    
-    u = 0 if withUFL else 1
-    o = 1 if withOFL else 0
-    print (ath2.GetName(),ath2.GetXaxis().GetNbins(), ath2)
-    h = ROOT.TH2F( ath2.GetName()+"_Rebin", ath2.GetName()+"_Rebin", len(newGenBin)-1, array( 'd', newGenBin), len(newRecoBin)-1, array( 'd', newRecoBin) )
-    h.Sumw2()
-    xaxis = ath2.GetXaxis(); 
-    yaxis = ath2.GetYaxis(); 
-    
-    print ("about to rebin")
-    
-    for j in range(u, yaxis.GetNbins()+o):
-        for i in range(u, xaxis.GetNbins()+o): 
-            h.Fill(xaxis.GetBinCenter(i), yaxis.GetBinCenter(j),ath2.GetBinContent(i,j))
-    h.SetDirectory(0)
-    can = ROOT.TCanvas('c' , 'c', 720,720)
-    h.Draw('colz')
-    can.Print()
-    can.Save('test_can.png')
-    return h
 
 def rebin_2d_hist(h2d, new_binning_x, new_binning_y):
     """Rebin a 2D histogram according to specific bin edges for x & y axes
@@ -397,23 +278,16 @@ def tmatrixdsparse_to_ndarray(matrix):
             # TODO: care about orientation?
             ndarr[iy, ix] = data_A[indexA]
     return ndarr
-
-def makeJacobian(aTH1, aJac):
-    N = aTH1.Integral(0,aTH1.GetNbinsX())
-    for i in range(0,aTH1.GetNbinsX()):
-        for j in range(0,aTH1.GetNbinsX()):
-            if i==j: aJac[i][j]=1.*(N-aTH1.GetBinContent(i))/N**2 
-            else: aJac[i][j]=(-1.*aTH1.GetBinContent(i))/N**2 
                 
 def GetNormalizedTMatrixandTH2( ath2, matrixname , aunfoldedth1 ):
     # should use matrixname  to give uique names to histograms created in loop
 
-    J = ROOT.TMatrixF( aunfoldedth1.GetNbinsX(), aunfoldedth1.GetNbinsX() )
+    J = ROOT.TMatrixD( aunfoldedth1.GetNbinsX(), aunfoldedth1.GetNbinsX())
     makeJacobian(aunfoldedth1 , J)
 
     cov_m,_ = th2_to_ndarray(ath2.Clone())
     covnormth2,_ = th2_to_ndarray(ath2.Clone())
-    J = ROOT.TH2F(J.Clone())
+    J = ROOT.TH2D(J.Clone())
     J, _ = th2_to_ndarray(J.Clone())
 
     covnorm = J@cov_m@J.T
@@ -448,12 +322,6 @@ def ConvertTH2toTMatrix( someth2 ):
             acov_m[xbin][ybin] = someth2.GetBinContent(  xbin, ybin)
     print (" finished filling TMatrixD from TH2 "  )
     return acov_m
-def makeJacobian(aTH1, aJac):
-    N = aTH1.Integral(0,aTH1.GetNbinsX())
-    for i in range(0,aTH1.GetNbinsX()):
-        for j in range(0,aTH1.GetNbinsX()):
-            if i==j: aJac[i][j]=1.*(N-aTH1.GetBinContent(i))/N**2 
-            else: aJac[i][j]=(-1.*aTH1.GetBinContent(i))/N**2 
                 
 def ConvertTH1toTMatrix(  someth2 ):
     acov_m1 = ROOT.TVectorD( someth2.GetNbinsX()+1 )
@@ -494,6 +362,9 @@ def NormYourHisto(hist = None ) :
     
     return histn
 
+
+#Taken from Robin: https://github.com/raggleton/QGAnalysisPlotting/blob/26bb66e690a4a052b9b1acc328059a372fd25c6b/my_unfolder.py#L2358
+
 def normalise_hist(h):
     if h.Integral() > 0:
         h.Scale(1./h.Integral())
@@ -503,7 +374,6 @@ def hist_divide_bin_width(h):
     h_new = h.Clone(h.GetName()+"DivideBinWidth")
     h_new.Scale(1., 'width')
     # if any bin has 0 entries before, it will now have nan, so we need to manually fix that
-    # arghhhhhhhhhhhhhhhhhh
     for i in range(1, h_new.GetNbinsX()+1):
         if np.isnan(h_new.GetBinContent(i)):
             h_new.SetBinContent(i, 0)
@@ -521,6 +391,7 @@ def get_syst_shifted_hist(syst_shift, unfolded=None):
     """Get histogram with systematic shift applied to bin contents
     Can specify starting hist, otherwise assumes unfolded w/no error
     """
+    # TODO: syst_label -> ExpSystematic obj
     hist_shift = syst_shift.Clone(syst_shift.GetTitle()+'_shiftedbyNom')
     hist_shift.Add(unfolded)  # TODO what about errors?
     return hist_shift
@@ -529,20 +400,22 @@ def get_syst_error_hist(syst_shift, unfolded=None):
     """Get histogram with systematic shift as error bars
     Can specify starting hist, otherwise assumes unfolded w/no error
     """
-    syst_label = syst_shift.GetTitle()+#self.get_exp_syst(syst_label)
-    histOut = convert_error_shift_to_error_bars(unfolded.Clone(), syst_shift)
-    
-    return histOut
+    this_syst = self.get_exp_syst(syst_label)
+    if this_syst.syst_error_bar is None:
+        ref = unfolded or self.get_unfolded_with_no_errors()
+        new_hist = self.convert_error_shift_to_error_bars(ref, self.get_syst_shift(syst_label))
+        this_syst.syst_error_bar = new_hist
+    return this_syst.syst_error_bar
 
 
 def convert_error_bars_to_error_shift(h):
-    """Create histogram with bin contents equal to error bar on h,
-    and 0 error bars"""
-    h_new = h.Clone(get_unique_str())
-    for i in range(1, h.GetNbinsX()+1):
-        h_new.SetBinContent(i, h.GetBinError(i))
-        h_new.SetBinError(i, 0)
-    return h_new
+        """Create histogram with bin contents equal to error bar on h,
+        and 0 error bars"""
+        h_new = h.Clone(get_unique_str())
+        for i in range(1, h.GetNbinsX()+1):
+            h_new.SetBinContent(i, h.GetBinError(i))
+            h_new.SetBinError(i, 0)
+        return h_new
 
 
 def convert_error_shift_to_error_bars(h_nominal, h_shift):
@@ -562,7 +435,7 @@ def convert_syst_shift_to_error_ratio_hist(h_syst, h_nominal):
             h_new.SetBinContent(ix, 1)
         if h_syst.GetBinContent(ix) < 0:
             h_new.SetBinContent(ix, 1)
-            print("Warning: _convert_syst_shift_to_error_ratio_hist bin", ix, "of h_syst < 0", h_syst.GetName(),h_syst.GetBinContent(ix))
+            print("Warning: _convert_syst_shift_to_error_ratio_hist bin", ix, "of h_syst, %s, < 0"%h_syst.GetName(),h_syst.GetBinContent(ix))
         h_new.SetBinError(ix, 0)
     return h_new
         
@@ -580,7 +453,8 @@ def convert_error_bars_to_error_ratio_hist(h, direction=1):
                 h_new.SetBinContent(ix, 1)
         h_new.SetBinError(ix, 0)
     return h_new
-#Taken from Robin: https://github.com/raggleton/QGAnalysisPlotting/blob/26bb66e690a4a052b9b1acc328059a372fd25c6b/my_unfolder.py#L2358
+
+
 def get_th1_bin_centers(h):
     # TODO maintain same shape(1, n) as in th1_to_array?
     centers = np.array([h.GetBinLowEdge(i) + 0.5*h.GetBinWidth(i) for i in range(1, h.GetNbinsX()+1)])
@@ -788,44 +662,8 @@ def update_hist_bin_error(h_orig, h_to_be_updated):
     for i in range(0, h_orig.GetNbinsX()+2):
         h_to_be_updated.SetBinError(i, h_orig.GetBinError(i))
 
-def get_folded_unfolded(folded, unfolded, cov_tot, probaM):
-    # don't use getfoldedoutput, because it doesn't have the updated errors from the total error matrix
-    # so we'll have to do it ourselves
-    # 1. Make unfolded hist into TVector/TMatrix
 
-    # 2. Make response 2d hist into matrix
-
-    # 3. Multiply the two, convert to TH1
-
-    # Get the TUnfold one for reference, although its errors will be wrong
-    
-    probaM, _ = th2_to_ndarray(probaM)
-    
-    folded_unfolded_tunfold = folded
-
-    oflow = False
-
-    # Get unfolded results as array
-    unfolded_vector, _ = th1_to_ndarray(unfolded, oflow)
-
-    # Multiply
-    # Note that we need to transpose from row vec to column vec
-    folded_vec = probaM.dot(unfolded_vector.T)
-
-    # Convert vector to TH1
-    folded_unfolded = ndarray_to_th1(folded_vec.T, has_oflow_x=oflow, offset=0.)
-
-    # Error propagation: if y = Ax, with covariance matrices Vyy and Vxx,
-    # respectively, then Vyy = (A*Vxx)*A^T
-    unfolded_covariance_matrix, _ = th2_to_ndarray(cov_tot , oflow_x=oflow, oflow_y=oflow)
-    result = probaM.dot(unfolded_covariance_matrix)
-    folded_covariance = result.dot(probaM.T)
-    folded_errors = make_hist_from_diagonal_errors(folded_covariance)
-    update_hist_bin_error(h_orig=folded_errors, h_to_be_updated=folded_unfolded)
-
-    return folded_unfolded
-
-########## courtesy of Robin's code, not used currently
+################# courtesy of Robin's code, not used currently #################
 def get_unsmooth_bins(arr2d, axis='gen'):
     """Find bins that are not smooth, ie they are spikey"""
     # Get 1D hist, by summing over bins of other axis in 2D hist

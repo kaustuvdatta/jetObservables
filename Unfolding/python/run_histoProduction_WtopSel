@@ -1,0 +1,28 @@
+import time
+import json
+from coffea.nanoevents import NanoEventsFactory, BaseSchema
+from coffea.util import load
+from collections import OrderedDict
+import numpy as np
+import awkward as ak
+import uproot
+import os
+from copy import deepcopy
+from pprint import pprint 
+import gc
+import hist
+from hist import Hist
+
+from datasets_WtopSel_RunIISummer20UL_SampleDictPrep import dictSamples, checkDict
+from nSubBasis_histoProducer_WtopSel import nSubBasis_unfoldingHistoProd_WtopSel as proc
+
+####################################################################################################################################
+################## Import dictionary of samples with details per sample of number of events, file locations on T3 ##################
+####################### this dictionary includes details of samples containing nominal or nominal+genWeights #######################
+####################################################################################################################################
+with open('Unfolding_WtopDict_FinalNominal.json') as dicto:                                                                        #
+    t3_samples=json.load(dicto)                                                                                                    #
+pprint (t3_samples)                                                                                                                #
+####################################################################################################################################
+####################################################################################################################################
+

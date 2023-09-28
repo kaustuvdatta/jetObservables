@@ -72,48 +72,48 @@ class nSubBasis_unfoldingHistoProd_WtopSel(processor.ProcessorABC):
         self.dict_variables_kinematics_AK8 = {
 
                                             "_pt": np.array([i for i in np.arange(170., 3010., 10.)]) if 'WSel' in selection else  np.array([i for i in np.arange(300., 3010., 10.)]),
-                                            "_eta": np.array([i for i in np.arange(-2.2, 2.6, 0.2)]),
-                                            "_y": np.array([i for i in np.arange(-2.2, 2.6, 0.2)]),
-                                            "_phi": np.array([i for i in np.arange(-3.2, 3.6, 0.2)]),
-                                            "_mass": np.array([i for i in np.arange(0., 205., 5.)]) if 'WSel' in selection else  np.array([i for i in np.arange(100., 405., 5.)]),
-                                            "_msoftdrop": np.array([i for i in np.arange(0., 165., 5.)]) if 'WSel' in selection else  np.array([i for i in np.arange(100., 325., 5.)]),
+                                            "_eta": np.array([i for i in np.arange(-2.4, 2.6, 0.2)]),
+                                            "_y": np.array([i for i in np.arange(-2.4, 2.6, 0.2)]),
+                                            "_phi": np.array([i for i in np.arange(-3.4, 3.6, 0.2)]),
+                                            "_mass": np.array([i for i in np.arange(0., 145., 5.)]) if 'WSel' in selection else  np.array([i for i in np.arange(100., 305., 5.)]),
+                                            "_msoftdrop": np.array([i for i in np.arange(0., 145., 5.)]) if 'WSel' in selection else  np.array([i for i in np.arange(100., 305., 5.)]),
 
                                         }  
 
         self.dict_variables_kinematics_Muon = {
 
                                             "_pt": np.array([i for i in np.arange(40., 1810., 10.)]),
-                                            "_eta": np.array([i for i in np.arange(-2.2, 2.6, 0.2)]),
-                                            "_y": np.array([i for i in np.arange(-2.2, 2.6, 0.2)]),
-                                            "_phi": np.array([i for i in np.arange(-3.2, 3.6, 0.2)]),
-                                            "_mass": np.array([i for i in np.arange(0., 55., 5.)]),
+                                            "_eta": np.array([i for i in np.arange(-2.4, 2.6, 0.2)]),
+                                            "_y": np.array([i for i in np.arange(-2.4, 2.6, 0.2)]),
+                                            "_phi": np.array([i for i in np.arange(-3.4, 3.6, 0.2)]),
+                                            "_mass": np.array([i for i in np.arange(0., 5., 0.05)]),
 
                                         } 
 
         self.dict_variables_kinematics_LeptW = {
 
                                             "_pt": np.array([i for i in np.arange(100., 2510., 10.)]),
-                                            "_eta": np.array([i for i in np.arange(-2.2, 2.6, 0.2)]),
-                                            "_y": np.array([i for i in np.arange(-2.2, 2.6, 0.2)]),
-                                            "_phi": np.array([i for i in np.arange(-3.2, 3.6, 0.2)]),
-                                            "_mass": np.array([i for i in np.arange(0., 410., 10.)]),
+                                            "_eta": np.array([i for i in np.arange(-2.4, 2.6, 0.2)]),
+                                            "_y": np.array([i for i in np.arange(-2.4, 2.6, 0.2)]),
+                                            "_phi": np.array([i for i in np.arange(-3.4, 3.6, 0.2)]),
+                                            "_mass": np.array([i for i in np.arange(0., 305., 5.)]),
 
                                         } 
 
         self.dict_variables_kinematics_AK4Had = {
 
                                             "_pt": np.array([i for i in np.arange(20., 2030., 10.)]),
-                                            "_eta": np.array([i for i in np.arange(-2.2, 2.6, 0.2)]),
-                                            "_y": np.array([i for i in np.arange(-2.2, 2.6, 0.2)]),
-                                            "_phi": np.array([i for i in np.arange(-3.2, 3.6, 0.2)]),
+                                            "_eta": np.array([i for i in np.arange(-2.4, 2.6, 0.2)]),
+                                            "_y": np.array([i for i in np.arange(-2.4, 2.6, 0.2)]),
+                                            "_phi": np.array([i for i in np.arange(-3.4, 3.6, 0.2)]),
                                             "_mass": np.array([i for i in np.arange(0., 205., 5.)]),
 
                                         }
 
         self.dict_variables_kinematics_MET = {
 
-                                            "_pt": np.array([i for i in np.arange(30., 1440., 10.)]),
-                                            "_phi": np.array([i for i in np.arange(-3.2, 3.6, 0.2)]),
+                                            "_pt": np.array([i for i in np.arange(30., 1500., 10.)]),
+                                            "_phi": np.array([i for i in np.arange(-3.4, 3.6, 0.2)]),
 
                                         } 
 
@@ -122,9 +122,9 @@ class nSubBasis_unfoldingHistoProd_WtopSel(processor.ProcessorABC):
                                         "nRecoBtags": np.array([i for i in np.arange(0., 6, 1.)]),
                                         "nRecoHadBtags": np.array([i for i in np.arange(0., 6, 1.)]),
                                         "nRecoLepBtags": np.array([i for i in np.arange(0., 6, 1.)]),
-                                        "selRecoHadHemDeltaR": np.array([i for i in np.arange(0., 1.8, 0.05)]),
-                                        "selRecoHadHemDeltaRap": np.array([i for i in np.arange(-2.2, 2.4, 0.2)]),
-                                        "selRecoHadHemDeltaPhi": np.array([i for i in np.arange(-3.2, 3.4, 0.2)]),
+                                        "selRecoHadHemDeltaR": np.array([i for i in np.arange(0., 1.85, 0.05)]),
+                                        "selRecoHadHemDeltaRap": np.array([i for i in np.arange(-2.4, 2.6, 0.2)]),
+                                        "selRecoHadHemDeltaPhi": np.array([i for i in np.arange(-3.4, 3.6, 0.2)]),
 
                                    }   
         
@@ -132,43 +132,44 @@ class nSubBasis_unfoldingHistoProd_WtopSel(processor.ProcessorABC):
                                         "nGenBtags": np.array([i for i in np.arange(0., 6., 1.)]),
                                         "nGenHadBtags": np.array([i for i in np.arange(0., 6., 1.)]),
                                         "nGenLepBtags": np.array([i for i in np.arange(0., 6., 1.)]),
-                                        "selGenHadHemDeltaR": np.array([i for i in np.arange(0., 1.8, 0.05)]),
-                                        "selGenHadHemDeltaRap": np.array([i for i in np.arange(-2.2, 2.4, 0.2)]),
-                                        "selGenHadHemDeltaPhi": np.array([i for i in np.arange(-3.2, 3.4, 0.2)]),
+                                        "selGenHadHemDeltaR": np.array([i for i in np.arange(0., 1.85, 0.05)]),
+                                        "selGenHadHemDeltaRap": np.array([i for i in np.arange(-2.4, 2.6, 0.2)]),
+                                        "selGenHadHemDeltaPhi": np.array([i for i in np.arange(-3.4, 3.6, 0.2)]),
 
                                    } 
-        if self.isSigMC and not(self.wtUnc) and not(self.sysUnc): 
+        '''
+        if self.isSigMC and not(self.wtUnc) and not(self.sysUnc) and not('var' in self.sampleName): 
             self.dict_variables_toUnfold = {
 
                             "_tau_0p25_1": np.array([(i/500) for i in np.arange(0.1*500, 1.*501)]),
                             "_tau_0p25_2": np.array([(i/1000) for i in np.arange(0.1*1000, 0.9*1001)]),
-                            "_tau_0p25_3": np.array([(i/10000) for i in np.arange(0.1*10000, 0.8*10001)]),
-                            "_tau_0p25_4": np.array([(i/10000) for i in np.arange(0.1*10000, 0.8*10001)]),
-                            "_tau_0p25_5": np.array([(i/10000) for i in np.arange(0.1*10000, 0.8*10001)]),
+                            "_tau_0p25_3": np.array([(i/2000) for i in np.arange(0.1*2000, 0.8*2001)]),
+                            "_tau_0p25_4": np.array([(i/5000) for i in np.arange(0.1*5000, 0.8*5001)]),
+                            "_tau_0p25_5": np.array([(i/5000) for i in np.arange(0.1*5000, 0.8*5001)]),
 
                             "_tau_0p5_1": np.array([(i/500) for i in np.arange(0.*500, 0.9*501)]),
                             "_tau_0p5_2": np.array([(i/1000) for i in np.arange(0.*1000, 0.8*1001)]),
-                            "_tau_0p5_3": np.array([(i/10000) for i in np.arange(0.*10000, 0.6*10001)]),
-                            "_tau_0p5_4": np.array([(i/10000) for i in np.arange(0.*10000, 0.6*10001)]),
-                            "_tau_0p5_5": np.array([(i/10000) for i in np.arange(0.*10000, 0.54*10001)]),
+                            "_tau_0p5_3": np.array([(i/5000) for i in np.arange(0.*5000, 0.6*5001)]),
+                            "_tau_0p5_4": np.array([(i/5000) for i in np.arange(0.*5000, 0.6*5001)]),
+                            "_tau_0p5_5": np.array([(i/5000) for i in np.arange(0.*5000, 0.54*5001)]),
 
                             "_tau_1_1": np.array([(i/500) for i in np.arange(0.*500, 0.7*501)]),
                             "_tau_1_2": np.array([(i/1000) for i in np.arange(0.*1000, 0.54*1001)]),
-                            "_tau_1_3": np.array([(i/10000) for i in np.arange(0.*10000, 0.4*10001)]),
-                            "_tau_1_4": np.array([(i/10000) for i in np.arange(0.*10000, 0.3*10001)]),
-                            "_tau_1_5": np.array([(i/10000) for i in np.arange(0.*10000, 0.28*10001)]),
+                            "_tau_1_3": np.array([(i/5000) for i in np.arange(0.*5000, 0.4*5001)]),
+                            "_tau_1_4": np.array([(i/5000) for i in np.arange(0.*5000, 0.3*5001)]),
+                            "_tau_1_5": np.array([(i/5000) for i in np.arange(0.*5000, 0.28*5001)]),
 
                             "_tau_1p5_1": np.array([(i/500) for i in np.arange(0.*500, 0.7*501)]),
-                            "_tau_1p5_2": np.array([(i/5000) for i in np.arange(0.*5000, 0.54*5001)]),
-                            "_tau_1p5_3": np.array([(i/10000) for i in np.arange(0.*10000, 0.4*10001)]),
-                            "_tau_1p5_4": np.array([(i/10000) for i in np.arange(0.*10000, 0.3*10001)]),
-                            "_tau_1p5_5": np.array([(i/10000) for i in np.arange(0.*10000, 0.28*10001)]),
+                            "_tau_1p5_2": np.array([(i/2000) for i in np.arange(0.*2000, 0.54*2001)]),
+                            "_tau_1p5_3": np.array([(i/5000) for i in np.arange(0.*5000, 0.4*5001)]),
+                            "_tau_1p5_4": np.array([(i/5000) for i in np.arange(0.*5000, 0.3*5001)]),
+                            "_tau_1p5_5": np.array([(i/5000) for i in np.arange(0.*5000, 0.28*5001)]),
 
                             "_tau_2_1": np.array([(i/1000) for i in np.arange(0.*1000, 0.5*1001)]),
-                            "_tau_2_2": np.array([(i/5000) for i in np.arange(0.*5000, 0.26*5001)]),
-                            "_tau_2_3": np.array([(i/10000) for i in np.arange(0.*10000, 0.18*10001)]),
-                            "_tau_2_4": np.array([(i/10000) for i in np.arange(0.*10000, 0.14*10001)]),
-                            "_tau_2_5": np.array([(i/10000) for i in np.arange(0.*10000, 0.12*10001)]),
+                            "_tau_2_2": np.array([(i/2000) for i in np.arange(0.*2000, 0.26*2001)]),
+                            "_tau_2_3": np.array([(i/5000) for i in np.arange(0.*5000, 0.18*5001)]),
+                            "_tau_2_4": np.array([(i/5000) for i in np.arange(0.*5000, 0.14*5001)]),
+                            "_tau_2_5": np.array([(i/5000) for i in np.arange(0.*5000, 0.12*5001)]),
 
                             "_tau21": np.array([(i/1000) for i in np.arange(0.*1000, 1.2*1001)]),#for one-pass kT minimization as per CMS
                             "_tau32": np.array([(i/1000) for i in np.arange(0.*1000, 1.2*1001)]),#for one-pass kT minimization as per CMS
@@ -183,45 +184,98 @@ class nSubBasis_unfoldingHistoProd_WtopSel(processor.ProcessorABC):
                             "_msoftdrop": np.array([(i/2) for i in np.arange(0.*2, 300*2.1)]),
                             "_pt": np.array([(i/2) for i in np.arange(170.*2, 2500.*2.1)]),
                             }
-        else:
+        '''
+        #else:
+            
+
+        if 'WSel' in selection:
             self.dict_variables_toUnfold = {
 
-                            "_tau_0p25_1": np.array([(i/500) for i in np.arange(0.*500, 1.*501)]),
-                            "_tau_0p25_2": np.array([(i/500) for i in np.arange(0.*500, 1.*501)]),
-                            "_tau_0p25_3": np.array([(i/2000) for i in np.arange(0.*2000, 0.8*2001)]),
-                            "_tau_0p25_4": np.array([(i/2000) for i in np.arange(0.*2000, 0.8*2001)]),
-                            "_tau_0p25_5": np.array([(i/2000) for i in np.arange(0.*2000, 0.8*2001)]),
-                            "_tau_0p5_1": np.array([(i/500) for i in np.arange(0.*500, 1.*501)]),
-                            "_tau_0p5_2": np.array([(i/500) for i in np.arange(0.*500, 1.*501)]),
-                            "_tau_0p5_3": np.array([(i/2000) for i in np.arange(0.*2000, 0.7*2001)]),
-                            "_tau_0p5_4": np.array([(i/2000) for i in np.arange(0.*2000, 0.6*2001)]),
-                            "_tau_0p5_5": np.array([(i/2000) for i in np.arange(0.*2000, 0.6*2001)]),
-                            "_tau_1_1": np.array([(i/500) for i in np.arange(0.*500, 0.9*501)]),
-                            "_tau_1_2": np.array([(i/1000) for i in np.arange(0.*1000, 0.7*1001)]),
-                            "_tau_1_3": np.array([(i/2000) for i in np.arange(0.*2000, 0.6*2001)]),
-                            "_tau_1_4": np.array([(i/5000) for i in np.arange(0.*5000, 0.5*5001)]),
-                            "_tau_1_5": np.array([(i/5000) for i in np.arange(0.*5000, 0.4*5001)]),
-                            "_tau_1p5_1": np.array([(i/500) for i in np.arange(0.*500, 0.72*501)]),
-                            "_tau_1p5_2": np.array([(i/1000) for i in np.arange(0.*1000, 0.6*1001)]),
-                            "_tau_1p5_3": np.array([(i/5000) for i in np.arange(0.*2000, 0.5*5001)]),
-                            "_tau_1p5_4": np.array([(i/5000) for i in np.arange(0.*5000, 0.4*5001)]),
-                            "_tau_1p5_5": np.array([(i/5000) for i in np.arange(0.*5000, 0.3*5001)]),
-                            "_tau_2_1": np.array([(i/500) for i in np.arange(0.*500, 0.5*501)]),
-                            "_tau_2_2": np.array([(i/2000) for i in np.arange(0.*2000, 0.3*2001)]),
-                            "_tau_2_3": np.array([(i/5000) for i in np.arange(0.*5000, 0.24*5001)]),
-                            "_tau_2_4": np.array([(i/5000) for i in np.arange(0.*5000, 0.2*5001)]),
-                            "_tau_2_5": np.array([(i/5000) for i in np.arange(0.*5000, 0.18*5001)]),
-                            "_tau21": np.array([(i/1000) for i in np.arange(0.*1000, 1.2*1001)]),#for one-pass kT minimization as per CMS
-                            "_tau32": np.array([(i/1000) for i in np.arange(0.*1000, 1.2*1001)]),#for one-pass kT minimization as per CMS
-                            "_tau21_WTA": np.array([(i/1000) for i in np.arange(0.*1000, 1.1*1001)]),#for WTA-kT for comparison
-                            "_tau32_WTA": np.array([(i/1000) for i in np.arange(0.*1000, 1.2*1001)]),#for WTA-kT for comparison
-                            "_tau21_exkT": np.array([(i/1000) for i in np.arange(0.*1000, 1.4*1001)]),#for excl.-kT and E-scheme as per basis
-                            "_tau32_exkT": np.array([(i/1000) for i in np.arange(0.*1000, 1.4*1001)]),#for excl.-kT and E-scheme as per basis
-                            "_mass": np.array([(i/2) for i in np.arange(0.*2, 300*2.1)]),
-                            "_msoftdrop": np.array([(i/2) for i in np.arange(0.*2, 300*2.1)]),
-                            "_pt": np.array([(i/2) for i in np.arange(170.*2, 2500.*2.1)]),
+                            "_tau_0p25_1": np.array([(i/200) for i in np.arange(0.1*200, 1.05*200)]),
+                            "_tau_0p25_2": np.array([(i/200) for i in np.arange(0.1*200, 0.915*200)]),
+                            "_tau_0p25_3": np.array([(i/200) for i in np.arange(0.1*200, 0.865*200)]),
+                            "_tau_0p25_4": np.array([(i/200) for i in np.arange(0.1*200, 0.815*200)]),
+                            "_tau_0p25_5": np.array([(i/200) for i in np.arange(0.1*200, 0.815*200)]),
+
+                            "_tau_0p5_1": np.array([(i/200) for i in np.arange(0.1*200, 0.915*200)]),
+                            "_tau_0p5_2": np.array([(i/200) for i in np.arange(0.*200, 0.815*200)]),
+                            "_tau_0p5_3": np.array([(i/200) for i in np.arange(0.*200, 0.715*200)]),
+                            "_tau_0p5_4": np.array([(i/200) for i in np.arange(0.*200, 0.615*200)]),
+                            "_tau_0p5_5": np.array([(i/200) for i in np.arange(0.*200, 0.515*200)]),
+
+                            "_tau_1_1": np.array([(i/200) for i in np.arange(0.*200, 0.715*200)]),
+                            "_tau_1_2": np.array([(i/200) for i in np.arange(0.*200, 0.515*200)]),
+                            "_tau_1_3": np.array([(i/200) for i in np.arange(0.*200, 0.425*200)]),
+                            "_tau_1_4": np.array([(i/200) for i in np.arange(0.*200, 0.325*200)]),
+                            "_tau_1_5": np.array([(i/200) for i in np.arange(0.*200, 0.305*200)]),
+
+                            "_tau_1p5_1": np.array([(i/200) for i in np.arange(0.*200, 0.615*200)]),
+                            "_tau_1p5_2": np.array([(i/200) for i in np.arange(0.*200, 0.415*200)]),
+                            "_tau_1p5_3": np.array([(i/500) for i in np.arange(0.*500, 0.302*500)]),
+                            "_tau_1p5_4": np.array([(i/500) for i in np.arange(0.*500, 0.252*500)]),
+                            "_tau_1p5_5": np.array([(i/500) for i in np.arange(0.*500, 0.152*500)]),
+
+                            "_tau_2_1": np.array([(i/200) for i in np.arange(0.*200, 0.515*200)]),
+                            "_tau_2_2": np.array([(i/500) for i in np.arange(0.*500, 0.262*500)]),
+                            "_tau_2_3": np.array([(i/1000) for i in np.arange(0.*1000, 0.161*1000)]),
+                            "_tau_2_4": np.array([(i/1000) for i in np.arange(0.*1000, 0.121*1000)]),
+                            "_tau_2_5": np.array([(i/1000) for i in np.arange(0.*1000, 0.101*1000)]),
+
+                            "_tau21": np.array([(i/100) for i in np.arange(0.*100, 1.21*100)]),#for one-pass kT minimization as per CMS
+                            "_tau32": np.array([(i/100) for i in np.arange(0.*100, 1.21*100)]),#for one-pass kT minimization as per CMS
+                            "_tau21_WTA": np.array([(i/100) for i in np.arange(0.*100, 1.21*100)]),#for WTA-kT for comparison
+                            "_tau32_WTA": np.array([(i/100) for i in np.arange(0.*100, 1.21*100)]),#for WTA-kT for comparison
+                            "_tau21_exkT": np.array([(i/100) for i in np.arange(0.*100, 1.41*100)]),#for excl.-kT and E-scheme as per basis
+                            "_tau32_exkT": np.array([(i/100) for i in np.arange(0.*100, 1.41*100)]),#for excl.-kT and E-scheme as per basis
+                            "_mass": np.array([(i*2) for i in np.arange(25., 81.)]),
+                            "_msoftdrop": np.array([(i*2) for i in np.arange(0., 81.)]),
+                            "_pt": np.array([(i*10) for i in np.arange(17., 251.)]),
                             }
-            
+
+        elif 'topSel' in selection:
+            self.dict_variables_toUnfold = {
+
+                            "_tau_0p25_1": np.array([(i/500) for i in np.arange(0.3*500, 0.922*500)]),
+                            "_tau_0p25_2": np.array([(i/200) for i in np.arange(0.15*200, 0.875*200)]),
+                            "_tau_0p25_3": np.array([(i/200) for i in np.arange(0.15*200, 0.805*200)]),
+                            "_tau_0p25_4": np.array([(i/200) for i in np.arange(0.15*200, 0.725*200)]),
+                            "_tau_0p25_5": np.array([(i/200) for i in np.arange(0.15*200, 0.715*200)]),
+
+                            "_tau_0p5_1": np.array([(i/500) for i in np.arange(0.1*500, 0.882*500)]),
+                            "_tau_0p5_2": np.array([(i/200) for i in np.arange(0.*200, 0.705*200)]),
+                            "_tau_0p5_3": np.array([(i/200) for i in np.arange(0.*200, 0.605*200)]),
+                            "_tau_0p5_4": np.array([(i/200) for i in np.arange(0.*200, 0.505*200)]),
+                            "_tau_0p5_5": np.array([(i/200) for i in np.arange(0.*200, 0.455*200)]),
+
+                            "_tau_1_1": np.array([(i/200) for i in np.arange(0.*200, 0.715*200)]),
+                            "_tau_1_2": np.array([(i/200) for i in np.arange(0.*200, 0.515*200)]),
+                            "_tau_1_3": np.array([(i/500) for i in np.arange(0.*500, 0.322*500)]),
+                            "_tau_1_4": np.array([(i/500) for i in np.arange(0.*500, 0.262*500)]),
+                            "_tau_1_5": np.array([(i/500) for i in np.arange(0.*500, 0.222*500)]),
+
+                            "_tau_1p5_1": np.array([(i/200) for i in np.arange(0.*200, 0.525*200)]),
+                            "_tau_1p5_2": np.array([(i/500) for i in np.arange(0.*500, 0.352*500)]),
+                            "_tau_1p5_3": np.array([(i/500) for i in np.arange(0.*500, 0.252*500)]),
+                            "_tau_1p5_4": np.array([(i/500) for i in np.arange(0.*500, 0.152*500)]),
+                            "_tau_1p5_5": np.array([(i/500) for i in np.arange(0.*500, 0.102*500)]),
+
+                            "_tau_2_1": np.array([(i/500) for i in np.arange(0.*500, 0.452*500)]),
+                            "_tau_2_2": np.array([(i/500) for i in np.arange(0.*500, 0.252*500)]),
+                            "_tau_2_3": np.array([(i/1000) for i in np.arange(0.*1000, 0.121*1000)]),
+                            "_tau_2_4": np.array([(i/1000) for i in np.arange(0.*1000, 0.101*1000)]),
+                            "_tau_2_5": np.array([(i/1000) for i in np.arange(0.*1000, 0.081*1000)]),
+
+                            "_tau21": np.array([(i/100) for i in np.arange(0.*100, 1.21*100)]),#for one-pass kT minimization as per CMS
+                            "_tau32": np.array([(i/100) for i in np.arange(0.*100, 1.21*100)]),#for one-pass kT minimization as per CMS
+                            "_tau21_WTA": np.array([(i/100) for i in np.arange(0.*100, 1.01*100)]),#for WTA-kT for comparison
+                            "_tau32_WTA": np.array([(i/100) for i in np.arange(0.*100, 1.1*100)]),#for WTA-kT for comparison
+                            "_tau21_exkT": np.array([(i/100) for i in np.arange(0.*100, 1.21*100)]),#for excl.-kT and E-scheme as per basis
+                            "_tau32_exkT": np.array([(i/100) for i in np.arange(0.*100, 1.41*100)]),#for excl.-kT and E-scheme as per basis
+                            "_mass": np.array([(i*2) for i in np.arange(60., 151.)]),
+                            "_msoftdrop": np.array([(i*2) for i in np.arange(0., 151.)]),
+                            "_pt": np.array([(i*10) for i in np.arange(35., 251.)]),
+                            }
+
         
         ### Uncertainties
         self.sysSources = ['_nom'] + [ isys+i for i in [ 'Up', 'Down' ] for isys in sysSources if not( isys.endswith('nom'))]# or self.sysUnc) ]
@@ -597,10 +651,27 @@ class nSubBasis_unfoldingHistoProd_WtopSel(processor.ProcessorABC):
                         if not('_tau' in key):
                             whichKinVar = [var for var in self.dict_variables_kinematics_AK8.keys() if var[1:] in key]#[0]
                             varToFill = whichKinVar[0]
-
-                        elif ('_tau' in key or '__' in key):# and 'nom' in key):
-                            temp='WTA' if 'WTA' in key else 'tau' #hack, :(, to fix tau21_nonOPkT being histogrammed incorrectly
-                            temp='exkT' if 'exkT' in key else 'tau'
+                        
+                        elif (('_tau' in key and ('21' in key or '32' in key)) or '__' in key):# and 'nom' in key):
+                            if 'WTA' in key: temp='WTA' 
+                            elif 'exkT' in key: temp='exkT'
+                            else: temp='tau' 
+                            
+                            whichnSub = [var for var in self.dict_variables_toUnfold.keys() if (var in key and temp in var)]
+                                
+                            if temp!='tau':
+                                keep = whichnSub[0]
+                            else:
+                                for w in whichnSub:
+                                    if not('exkT' in w) and not('WTA'in w):
+                                        keep = w
+                            if self.sampleName.startswith('TTToSemi') and self.year=='2016_preVFP' and self.verbose:
+                                print(whichnSub,key,keep,temp)
+                            varToFill = keep
+                        
+                        elif (('_tau' in key and not('21' in key or '32' in key)) or '__' in key):# and 'nom' in key):
+                            temp='tau'
+                            #temp='exkT' if 'exkT' in key else 'tau'
                             whichnSub = [var for var in self.dict_variables_toUnfold.keys() if (var in key and temp in var)]
                             varToFill = whichnSub[0]
 
@@ -755,10 +826,10 @@ class nSubBasis_unfoldingHistoProd_WtopSel(processor.ProcessorABC):
                                 dictOfHists[itype+iJ+x+sysUnc+isel] = (hist.Hist.new.Variable(binning,name=itype+iJ+x+sysUnc+isel, label=f'AK8 {itype} jet {x}', underflow=True,overflow=True).Weight())        
                             else: 
                                 dictOfHists[x[1:]+sysUnc+isel] = (hist.Hist.new.Variable(binning,name=x[1:]+sysUnc+isel, label=f'AK8 {itype} jet {x}', underflow=True,overflow=True).Weight())  
-                    if itype.startswith('truereco') and self.isMC and sysUnc.endswith('nom'):# and self.isSigMC:
-                        dictOfHists['residual'+iJ+'_pt'+isel] = (hist.Hist.new.Regular(1000, -5, 5, name='residual'+iJ+'_pt'+isel, label='AK8 reco - gen jet pt').Weight())
-                        dictOfHists['residual'+iJ+'_msoftdrop'+isel] = (hist.Hist.new.Regular(1000, -5, 5, name='residual'+iJ+'_msoftdrop'+isel, label='AK8 reco m_{SD} - gen jet m_{SD}').Weight())
-                        dictOfHists['residual'+iJ+'_mass'+isel] = (hist.Hist.new.Regular(1000, -5, 5, name='residual'+iJ+'_mass'+isel, label='AK8 reco inv. m - gen jet inv. m').Weight())
+                    if itype.startswith('truereco')  and self.isSigMC and sysUnc.endswith('nom'):
+                        dictOfHists['residual'+iJ+'_pt'+isel] = (hist.Hist.new.Regular(2000, -10, 10, name='residual'+iJ+'_pt'+isel, label='AK8 reco - gen jet pt').Weight())
+                        dictOfHists['residual'+iJ+'_msoftdrop'+isel] = (hist.Hist.new.Regular(2000, -10, 10, name='residual'+iJ+'_msoftdrop'+isel, label='AK8 reco m_{SD} - gen jet m_{SD}').Weight())
+                        dictOfHists['residual'+iJ+'_mass'+isel] = (hist.Hist.new.Regular(2000, -10, 10, name='residual'+iJ+'_mass'+isel, label='AK8 reco inv. m - gen jet inv. m').Weight())
                     
                     #print('building unfolding histos')     
                     for x, y in self.dict_variables_toUnfold.items():
@@ -783,9 +854,9 @@ class nSubBasis_unfoldingHistoProd_WtopSel(processor.ProcessorABC):
                                                                             .Variable(binning,name='reco',label='AK8 reco jet'+x, underflow=True,overflow=True)
                                                                             .Weight()
                                                                            )
-                            if sysUnc.endswith('_nom'):# and self.isSigMC:
+                            if sysUnc.endswith('_nom') and self.isSigMC:
                                 dictOfHists['residual'+iJ+x+isel] = (hist.Hist.new.Regular(6000, -1.5, 1.5, name='residual'+iJ+x+isel, label='(Ak8 reco - gen jet) ', underflow=True,overflow=True).Weight())
-                                dictOfHists['noWt_resol'+iJ+x+isel] = (hist.Hist.new.Regular(1000, 0, 5, name='noWt_resol'+iJ+x+isel, label='AK8 reco/gen jet ', underflow=True,overflow=True).Weight())
+                                dictOfHists['noWt_resol'+iJ+x+isel] = (hist.Hist.new.Regular(1000, 0, 8, name='noWt_resol'+iJ+x+isel, label='AK8 reco/gen jet ', underflow=True,overflow=True).Weight())
         
         
         #build from list of histos for control plots

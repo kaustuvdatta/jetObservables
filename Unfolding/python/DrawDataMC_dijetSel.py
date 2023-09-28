@@ -30,7 +30,7 @@ import glob
 import sys
 import math
 sys.path.insert(0,'../../')
-from datasets_WtopSel_RunIISummer20UL_SampleDictPrep import dictSamples, checkDict
+from datasets_dijetSel_RunIISummer20UL_SampleDictPrep import dictSamples, checkDict
 sys.path.insert(0,'../python/')
 import CMS_lumi as CMS_lumi
 import tdrstyle as tdrstyle
@@ -43,10 +43,11 @@ textBox.SetTextAlign(12)
 
 
 
-def runPlots_WtopSel(
+def runPlots_DijetSel(
                         dataFile, sigFiles, bkgFiles, variables, sel, sysUncert, process, ext, lumi=1., sysSignalLabels=[],
-                        year='2017',runMLU=False, sysSigFiles=[], varSigFiles=[], outputFolder='../Results',
-                        version='_May23', main='TTToSemiLeptonic', alt0='TTJets', verbose=False
+                        year='2017',runMLU=False, sysSigFiles=[], varSigFiles=[], jetType='Central', outputFolder='../Results',
+                        version='_Feb23', main='MLM_HTbin', alt0='H7MLM_HTbin', alt1='HTbin', alt2='Ptbin',
+                        verbose=False
                       ):
     
     
@@ -235,7 +236,7 @@ def runPlots_WtopSel(
             bkgHistos = { }
 
         else:
-            print('|-------> Running single year '+year)
+            print('|-------> Running single year '+year,lumi)
             ### Getting input histos
             mainSigFiles = { k:v for (k,v) in sigFiles.items() if k.startswith(signalLabelBegin)  }
             signalHistos = loadHistograms( mainSigFiles, ivar, sel, sysUnc=[], respOnly=False, lumi=lumi, noResp=True, year=year, process=process, variables=variables,outputFolder=outputFolder,noRebin=False, jetType=jetType)
@@ -398,12 +399,12 @@ def loadHistograms(samples, var, sel, sysUnc=[],
                 tmpList = tmpList + [ 'gen'+var+syst+sel for syst in SYSUNC if 'nom' in syst] 
                 if not(noResp):tmpList = tmpList + [ 'accepgen'+var+syst+sel for syst in SYSUNC ]
                 if not(noResp):tmpList = tmpList + [ 'truereco'+var+syst+sel for syst in SYSUNC ]
-                tmpList = tmpList + [ 'reco'+var+syst+sel for syst in SYSUNC ]
+                #tmpList = tmpList + [ 'reco'+var+syst+sel for syst in SYSUNC ]
                 if not(noResp): tmpList = tmpList + [ 'respWithMiss'+var+syst+sel for syst in SYSUNC]
 
             elif isMC and addGenInfo and flip: 
                 tmpList = tmpList + [ 'gen'+var+'_nom'+sel]
-                tmpList = tmpList + ['reco'+var+syst+sel for syst in tmpSYSUNC]
+                #tmpList = tmpList + ['reco'+var+syst+sel for syst in tmpSYSUNC]
                 if not(noResp): tmpList = tmpList + ['respWithMiss'+var+syst+sel for syst in tmpSYSUNC]
                 #tmpList = tmpList + ['respWithMiss'+var+syst+sel for syst in tmpSYSUNC]
 
@@ -415,13 +416,12 @@ def loadHistograms(samples, var, sel, sysUnc=[],
         elif 'nPV' in var: 
             tmpList = [var+'_nom'+sel]
             print(var,[syst for syst in tmpSYSUNC],sel,isam,tmpList,samples[isam][0])
-            
-        #print (f'Processing {var,isam+":",tmpList if "nPV" in var else None}')#,filename={samples[isam][0]}')
+           
+        print (f'Processing {var,isam+":",tmpList},filename={samples[isam][0]}')
         for ih in tmpList:
             #print(ih,samples[isam][0])
             #print (f'Processing {isam} {ih},{isam+"_"+ih}')
-            #print (samples[isam][0])
-            
+            print (samples[isam][0],ih)            
             if isMC:
                 iFile = ROOT.TFile.Open(samples[isam][0],'r')
                 allHistos[isam+'_'+ih] = iFile.Get( ih ).Clone() #'jetObservables/'+
