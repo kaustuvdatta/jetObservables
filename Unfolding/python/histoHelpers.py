@@ -491,6 +491,7 @@ def ndarray_to_th1(nd_array, has_oflow_x=False, offset=0.5, bins=None):
     Use has_oflow_x to include the under/overflow bins
     """
     nbinsx = nd_array.shape[1]
+    print(len(bins),nbinsx)
     nbins_hist = nbinsx
     if has_oflow_x:
         nbins_hist -= 2
@@ -516,29 +517,31 @@ def ndarray_to_th1(nd_array, has_oflow_x=False, offset=0.5, bins=None):
         #FIXME how to do errors
     return h
 
-def th1_to_ndarray(hist_A, oflow_x=False):
+def th1_to_ndarray(hist_A, oflow_x=False, uflow_x=False):
     """Convert TH1 to numpy ndarray"""
     ncol = hist_A.GetNbinsX()
     if oflow_x:
-        ncol += 2
+        ncol += 1
+    if uflow_x: 
+        ncol += 1
 
     # makes column vectors
     contents = np.zeros(shape=(1, ncol), dtype=np.float64)
     errors = np.zeros(shape=(1, ncol), dtype=np.float64)
 
     # Get ROOT indices to loop over
-    x_start = 0 if oflow_x else 1
-    x_end = hist_A.GetNbinsX()
-    if oflow_x:
-        x_end += 1
+    x_start = 0 if uflow_x else 1
+    x_end = hist_A.GetNbinsX() +(1 if oflow_x else 0)
+    #if oflow_x:
+    #    x_end += 1
 
     # x_ind for numpy as always starts at 0
     # ix for ROOT
     for x_ind, ix in enumerate(range(x_start, x_end+1)):
+        #print("Convert TH1 to numpy ndarray", x_ind,ix)
         contents[0][x_ind] = hist_A.GetBinContent(ix)
         errors[0][x_ind] = hist_A.GetBinError(ix)
 
-    # check sparsity
     return contents, errors
 
 def th2_to_tmatrixd(hist, include_uflow=False, include_oflow=False):
@@ -564,31 +567,36 @@ def th2_to_tmatrixd(hist, include_uflow=False, include_oflow=False):
             m[i,j] = hist.GetBinContent(j-jlow+1,i-ilow+1)
     return m
 
-def th2_to_ndarray(hist_A, oflow_x=False, oflow_y=False):
-    """Convert TH2 to numpy ndarray
-    Don't use verison in common_utils - wrong axes?
-    """
+def th2_to_ndarray(hist_A, oflow_x=False, oflow_y=False, uflow_x=False, uflow_y=False):
+    """Convert TH2 to numpy ndarray"""
+    
     ncol = hist_A.GetNbinsX()
     if oflow_x:
-        ncol += 2
+        ncol += 1
+    if uflow_x: 
+        ncol += 1
+    
     nrow = hist_A.GetNbinsY()
     if oflow_y:
-        nrow += 2
+        nrow += 1
+    if uflow_y: 
+        nrow += 1
+        
 
     contents = np.zeros(shape=(nrow, ncol), dtype=np.float64)
     errors = np.zeros(shape=(nrow, ncol), dtype=np.float64)
     # access via contents[irow][icol]
 
     # Get ROOT indices to loop over
-    y_start = 0 if oflow_y else 1
-    y_end = hist_A.GetNbinsY()
-    if oflow_y:
-        y_end += 1
+    y_start = 0 if uflow_y else 1
+    y_end = hist_A.GetNbinsY() +(1 if oflow_y else 0)
+    #if oflow_y:
+    #    y_end += 1
 
-    x_start = 0 if oflow_x else 1
-    x_end = hist_A.GetNbinsX()
-    if oflow_x:
-        x_end += 1
+    x_start = 0 if uflow_x else 1
+    x_end = hist_A.GetNbinsX() +(1 if oflow_x else 0)
+    #if oflow_x:
+    #    x_end += 1
 
     # y_ind, x_ind for numpy as always starts at 0
     # iy, ix for ROOT
@@ -619,7 +627,7 @@ def ndarray_to_th2(data, offset=0, binsx=None, binsy=None):
             h.SetBinError(ix+1, iy+1, 0)
     return h
 
-def make_hist_from_diagonal_errors(h2d, do_sqrt=True, set_errors=True, offset=0.):
+def make_hist_from_diagonal_errors(h2d, bins=None, do_sqrt=True, set_errors=True, offset=0.):
     """Make 1D hist, with errors or contents set to diagonal elements from h2d
     Can be TH2 or numpy.ndarray, cos we have to use both
     Yes that is majorly wack
@@ -628,7 +636,7 @@ def make_hist_from_diagonal_errors(h2d, do_sqrt=True, set_errors=True, offset=0.
     """
     if isinstance(h2d, ROOT.TH2):
         nbins = h2d.GetNbinsX()
-        hnew = ROOT.TH1D("h_diag" + get_unique_str(), "", nbins, offset, nbins+offset)
+        hnew = ROOT.TH1D("h_diag" + get_unique_str(), "", len(bins)-1, bins)#nbins, offset, nbins+offset)
         for i in range(1, nbins+1):
             err = h2d.GetBinContent(i, i)
             if do_sqrt and err > 0:
@@ -642,7 +650,7 @@ def make_hist_from_diagonal_errors(h2d, do_sqrt=True, set_errors=True, offset=0.
         return hnew
     elif isinstance(h2d, np.ndarray):
         nbins = h2d.shape[0]
-        hnew = ROOT.TH1D("h_diag" + get_unique_str(), "", nbins, offset, nbins+offset)
+        hnew = ROOT.TH1D("h_diag" + get_unique_str(), "", len(bins)-1, bins)#nbins, offset, nbins+offset)
         for i in range(1, nbins+1):
             err = h2d[i-1, i-1]
             if do_sqrt and err > 0:

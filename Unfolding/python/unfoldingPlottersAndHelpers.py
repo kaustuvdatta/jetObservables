@@ -54,7 +54,7 @@ def DoUnfolding(Response,Reco):
     tunfolder.DoUnfold(0.)
     return tunfolder.GetOutput("MC_unfolded")
 
-def get_folded_unfolded(folded, unfolded, cov_tot, probaM):
+def get_folded_unfolded(folded, unfolded, cov_tot, probaM, oflow=True):
     # don't use getfoldedoutput, because it doesn't have the updated errors from the total error matrix
     # so we'll have to do it ourselves
     # 1. Make unfolded hist into TVector/TMatrix
@@ -65,31 +65,50 @@ def get_folded_unfolded(folded, unfolded, cov_tot, probaM):
 
     # Get the TUnfold one for reference, although its errors will be wrong
     
-    probaM, _ = th2_to_ndarray(probaM)
+    print(folded.GetNbinsX(),unfolded.GetNbinsX())
     
-    folded_unfolded_tunfold = folded
-
-    oflow = False
+    
+    #probability matrix is simply the normalised RM, 
+    #so need to consider that there is an UF bin on the y-axis for miss(gen)-corrections
+    probaM, _ = th2_to_ndarray(probaM, oflow_x=False, oflow_y=False, uflow_x=False, uflow_y=False)
+    #print(probaM.shape, "with UF on y axis")
+    
+    folded_unfolded_tunfold = folded.Clone()
 
     # Get unfolded results as array
-    unfolded_vector, _ = th1_to_ndarray(unfolded, oflow)
-
+    unfolded_vector, _ = th1_to_ndarray(unfolded, oflow_x=False)
+    #print(unfolded_vector.shape)
+    
     # Multiply
     # Note that we need to transpose from row vec to column vec
     folded_vec = probaM.dot(unfolded_vector.T)
+    #print(folded_vec.shape)
+    
+    
+    bins = array('d',[folded.GetBinLowEdge(i) for i in range(1,folded.GetNbinsX()+2)])
 
+    
     # Convert vector to TH1
-    folded_unfolded = ndarray_to_th1(folded_vec.T, has_oflow_x=oflow, offset=0.)
+    folded_unfolded = ndarray_to_th1(folded_vec.T, has_oflow_x=False, offset=0., bins=bins)
 
     # Error propagation: if y = Ax, with covariance matrices Vyy and Vxx,
     # respectively, then Vyy = (A*Vxx)*A^T
-    unfolded_covariance_matrix, _ = th2_to_ndarray(cov_tot , oflow_x=oflow, oflow_y=oflow)
+    unfolded_covariance_matrix, _ = th2_to_ndarray(cov_tot , oflow_x=False, oflow_y=False, uflow_x=False, uflow_y=False )
     result = probaM.dot(unfolded_covariance_matrix)
+    #print(result.shape)
+    
     folded_covariance = result.dot(probaM.T)
-    folded_errors = make_hist_from_diagonal_errors(folded_covariance)
+    #print(folded_covariance.shape)
+    
+    
+    folded_errors = make_hist_from_diagonal_errors(folded_covariance,bins=bins)
+    
+    #print(folded_errors.GetBinLowEdge(4))
+    #print(folded_unfolded.GetBinLowEdge(4))
+    
     update_hist_bin_error(h_orig=folded_errors, h_to_be_updated=folded_unfolded)
 
-    return folded_unfolded
+    return folded_unfolded.Clone(folded.GetName()+'errorFixed')
 
 def CrossClosure(response1,reco1,response2,reco2):
     unf11=DoUnfolding(response1,reco1)
@@ -211,6 +230,60 @@ def bottomLineTest( ivar, dataHisto, mainHistoLabel, datarecoHisto, recoHisto, g
 #############################################################################
 ###################### Helpers for plotting unfoldings ######################
 #############################################################################
+
+def plotSimpleComparison( inFile1, sample, inFile2, sample2, name, rebinX=1, xmin='', xmax='', labX=0.92, labY=0.50, axisX='', axisY='', log=False, ext='png', Norm=False, version='', outputDir='Plots/' ):
+    """"Take two root files, make simple comparison plot"""
+
+    outputFileName = name+'_'+sample+sample2+'_simpleComparisonPlot'+version+'.'+ext
+    print('Processing.......', outputFileName)
+
+    if isinstance( inFile1, ROOT.TTree ):
+        histo = inFile1.Get( 'jetObservables/'+name )
+        if rebinX!=1: histo.Rebin( rebinX )
+        histo2 = inFile2.Get( 'jetObservables/'+name )
+        if rebinX!=1: histo2.Rebin( rebinX )
+    else:  ##inFile1 is a histogram
+        histo = inFile1
+        histo2 = inFile2
+
+    binWidth = histo.GetBinWidth(1)
+
+    legend=ROOT.TLegend(0.60,0.75,0.90,0.90)
+    legend.SetFillStyle(0)
+    legend.SetTextSize(0.03)
+
+    #histo.SetFillColor(48)
+    histo.SetFillStyle(1001)
+
+    #tdrStyle.SetPadRightMargin(0.05)
+    canvas[name] = ROOT.TCanvas('c1'+name, 'c1'+name,  10, 10, 750, 500 )
+    if log:
+        canvas[name].SetLogy()
+        outName = outputFileName.replace('_simplePlot','_Log_simplePlot')
+    else: outName = outputFileName
+
+    legend.AddEntry( histo, sample, 'f' )
+    legend.AddEntry( histo2, sample2, 'f' )
+    if xmax and xmin: histo.GetXaxis().SetRangeUser( xmin, xmax )
+    histo.GetYaxis().SetTitleOffset(0.90)
+    histo.SetLineColorAlpha(ROOT.kRed,0.7)
+    histo.SetMarkerColor(ROOT.kRed)
+    histo.SetLineWidth(2)
+    histo2.SetLineColor(ROOT.kBlue)
+    if Norm:
+        histo.DrawNormalized('hist')
+        histo2.DrawNormalized('hist same')
+    else:
+        histo.Draw('histe')
+        histo2.Draw('histe same')
+    if not axisY: histo.GetYaxis().SetTitle( 'Events / '+str(binWidth) )
+    if axisX: histo.GetXaxis().SetTitle( axisX )
+
+    legend.Draw()
+
+    canvas[name].SaveAs( outputDir+outName )
+    if ext.startswith('pdf'):
+        canvas[name].SaveAs( outputDir+outName.replace('pdf', 'png') )
 
 def plotSysComparison( nomHisto, dictUncHistos, outputName, labelX='', log=False, version='', ext='png', year='2017', outputDir='Plots/' ):
 
@@ -1775,10 +1848,10 @@ def drawUncertainties_normalizedshifts(ivar, unfoldHistoTotUnc, unfoldHistowoUnc
         
         #text = (k.split('_shiftHist')[0].replace('Up','').replace('Down','').replace('Weight', '')).split(ivar+'_')[1]
         #print (text, dummy)
-        if 'cr' in k.lower() or 'erd' in k.lower(): 
-            print(k)
+        #if 'cr' in k.lower() or 'erd' in k.lower(): 
+            #print(k)
         if ('cr1' in k.lower() or 'cr2' in k.lower() or 'erd' in k.lower()) and '_shifthist' in k.lower():
-            print (k, dummy)
+            #print (k, dummy)
             cr_histos[k] = uncerUnfoldHisto[k].Clone()
             cr_histos[k].Sumw2()
             cr_histos[k] = normalise_hist(cr_histos[k].Clone())
@@ -1802,11 +1875,11 @@ def drawUncertainties_normalizedshifts(ivar, unfoldHistoTotUnc, unfoldHistowoUnc
                 print (k, "printing due to index error in: text = (k.split('_shiftHist')[0].replace('Up','').replace('Down','').replace('Weight', '')).split(ivar+'_')[1] ")
             if 'modeltotal'in k.lower(): 
                 modelkey=k
-                print (text, dummy, modelkey)
+                #print (text, dummy, modelkey)
 
             if ('cr1' in text.lower() or 'cr2' in text.lower() or 'erd' in text.lower()) and '_shifthist' in k.lower() and not('dijet' in selection):
                 
-                print ("Color reconnection uncs.",text, dummy, k)
+                #print ("Color reconnection uncs.",text, dummy, k)
                 
                 if upmax_ibin<cr_histos[k].GetBinContent(ibin):
                     upmax_ibin=cr_histos[k].GetBinContent(ibin)
@@ -1814,24 +1887,12 @@ def drawUncertainties_normalizedshifts(ivar, unfoldHistoTotUnc, unfoldHistowoUnc
                     downmax_ibin=cr_histos[k].GetBinContent(ibin)
                
                 
-                #otherUncs[k] = uncerUnfoldHisto[k].Clone()
-                #otherUncs[k].Sumw2()
-                #otherUncs[k] = normalise_hist(otherUncs[k].Clone())
-                #otherUncs[k].Scale(1,'width')
-                #otherUncs[k].Divide(unfoldHistowoUnc.Clone())# = convert_syst_shift_to_error_ratio_hist(otherUncs[k].Clone(), unfoldHistoTotUnc.Clone())
-                
-                #elif 'mass'in text.lower(): legend.AddEntry( otherUncs[k], 'Choice of m_{top}', 'l' )
-                #if 'cr1' in text.lower(): legend.AddEntry( otherUncs[k], 'CR1', 'l' )
-                #elif 'cr2' in text.lower(): legend.AddEntry( otherUncs[k], 'CR2', 'l' )
-                #elif 'erdon' in text.lower(): legend.AddEntry( otherUncs[k], 'erdOn', 'l' )
-                #dummy = dummy+1
-                
             if not('dijet' in selection):
                 #print (upmax_ibin,downmax_ibin)
                 cr_maxup.SetBinContent(ibin,upmax_ibin)
                 cr_maxdown.SetBinContent(ibin,downmax_ibin)
                     
-    print ("OtherUncs", otherUncs)
+    #print ("OtherUncs", otherUncs)
     
     modelUnc = uncerUnfoldHisto[modelkey].Clone()
     modelUnc.Sumw2()
@@ -1892,7 +1953,7 @@ def drawUncertainties_normalizedshifts(ivar, unfoldHistoTotUnc, unfoldHistowoUnc
         cr_maxdown.SetMarkerStyle(downstyles[down_counter])
         cr_maxup.SetMarkerSize(2)
         cr_maxdown.SetMarkerSize(2)
-        print ("Drawing CR unc",up_counter,down_counter)
+        #print ("Drawing CR unc",up_counter,down_counter)
 
         cr_maxup.SetMarkerSize(2)
         cr_maxdown.SetMarkerSize(2)
@@ -1930,19 +1991,19 @@ def drawUncertainties_normalizedshifts(ivar, unfoldHistoTotUnc, unfoldHistowoUnc
     bkgSubErrHist.SetMarkerSize(0)
     bkgSubErrHist.Draw('L same ')
     h2.Draw("L same")
-    
+    modelUnc.Draw('L same')
+
     #h3 = convert_error_bars_to_error_ratio_hist(modelUnc.Clone(),-1)
     #modelUnc = convert_error_bars_to_error_ratio_hist(modelUnc.Clone(),1)
-    print(modelUnc, "model uncertainty histo object")
-    modelUnc.Draw('L same')
+    #print(modelUnc, "model uncertainty histo object")
     #h3.Draw('L same')
     
     
     for k in otherUncs:
         if ('cr' in k.lower() or 'erd' in k.lower()): continue
-        print(k)
+        #print(k)
         text = (k.split('_shiftHist')[0].replace('Up','').replace('Down','').replace('Weight', '')).split(ivar+'_')[1]
-        print ("OtherUncs loop", text, k)
+        #print ("OtherUncs loop", text, k)
         #h0 = 0
         h0 = convert_error_bars_to_error_ratio_hist(otherUncs[k].Clone(),-1)
         otherUncs[k] = convert_error_bars_to_error_ratio_hist(otherUncs[k].Clone(),1)
@@ -1970,7 +2031,7 @@ def drawUncertainties_normalizedshifts(ivar, unfoldHistoTotUnc, unfoldHistowoUnc
             if 'JES' in text:
                 if downmax_ibin>normeduncerUnfoldHistoshiftsDown[k].GetBinContent(ibin):
                     downmax_ibin=normeduncerUnfoldHistoshiftsDown[k].GetBinContent(ibin)
-        print ("JES",upmax_ibin,downmax_ibin)
+        #print ("JES",upmax_ibin,downmax_ibin)
         jesHistoUpMax.SetBinContent(ibin,upmax_ibin)
         jesHistoDownMax.SetBinContent(ibin,downmax_ibin)
         

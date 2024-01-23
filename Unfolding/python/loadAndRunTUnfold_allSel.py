@@ -7,18 +7,17 @@ import array
 from array import array
 import bisect
 #from legend import *
-#ROOT.PyConfig.IgnoreCommandLineOptions = True
-#ROOT.gROOT.SetBatch(1)
+ROOT.PyConfig.IgnoreCommandLineOptions = True
+ROOT.gROOT.SetBatch(1)
 ROOT.gStyle.SetOptStat(0)
 ROOT.gStyle.SetOptFit(1111)
-#ROOT.gErrorIgnoreLevel = ROOT.kWarning
+ROOT.gErrorIgnoreLevel = ROOT.kWarning
 ####gReset()
 ROOT.TH1.SetDefaultSumw2()
 ROOT.TH2.SetDefaultSumw2()
 
 ROOT.TH1.StatOverflows(ROOT.kTRUE)
 ROOT.TH2.StatOverflows(ROOT.kTRUE)
-
 
 from root_numpy import array2hist, hist2array
 #import histoHelpers
@@ -29,14 +28,15 @@ import os
 import glob
 import sys
 import math
-#import yoda
+import yoda
 #sys.path.insert(0,'../test/')
 #from DrawHistogram_dijetSel import *
-sys.path.insert(0,'../../')
-from datasets_WtopSel_RunIISummer20UL_SampleDictPrep_newXS import dictSamples, checkDict
+
 sys.path.insert(0,'../python/')
 import CMS_lumi as CMS_lumi
 import tdrstyle as tdrstyle
+sys.path.insert(0,'../../')
+from datasets_WtopSel_RunIISummer20UL_SampleDictPrep_newXS import dictSamples, checkDict
 
 #ROOT.gROOT.ForceStyle()
 #tdrstyle.setTDRStyle()
@@ -59,7 +59,7 @@ textBox.SetTextAlign(12)
 def runTUnfold(
                 dataFile, sigFiles, bkgFiles, variables, sel, sysUncert, process, ext, lumi=1., sysSignalLabels=[], 
                 year='2017',runMLU=False, sysSigFiles={}, varSigFiles={}, outputFolder='../Results',
-                version='_Sept23',verbose=False, return_tunfolder_object = False
+                version='_Sept23',verbose=False, return_tunfolder_object = False, mainMC='HTbin', altMC='Ptbin'
               ):
     """ 
     Response matrix for unfoldings have miss corrections applied already a la UF bin on y-axis;
@@ -77,6 +77,9 @@ def runTUnfold(
     colors = [ 2, 4,  9, 8, 28, 30, 42, 13, 12, 40, 46, 3, 24, 26, 41, 45, 48, 49, 37, 38, 33, 17]
     
     if not('dijet' in selection):
+        import sys
+        sys.path.insert(0,'../../')
+        from datasets_WtopSel_RunIISummer20UL_SampleDictPrep_newXS import dictSamples, checkDict
         
         signalLabel = 'TTToSemiLeptonic'
         sigPlotLabel = 'Powheg+Pythia8'
@@ -110,7 +113,38 @@ def runTUnfold(
                      'WW', 'ZZ', 'WZ', 
                      'QCD_Pt-1000_MuEnrichedPt5'
                     ]
-    
+    else:
+        import sys
+        sys.path.insert(0,'../../')
+        from datasets_dijetSel_RunIISummer20UL_SampleDictPrep import dictSamples, checkDict
+        
+        if mainMC.startswith('MLM_HTbin'):
+            signalLabelBegin = 'MLMQCD_HT'
+            signalLabel = 'MLMQCD_HT2000toInf'
+
+        elif mainMC.startswith('HTbin'):
+            signalLabelBegin = 'QCD_HT'
+            signalLabel = 'QCD_HT2000toInf'
+
+        elif mainMC.startswith('H7MLM_HTbin'):
+            signalLabelBegin = 'H7MLMQCD_HT'
+            signalLabel = 'H7MLMQCD_HT2000toInf'
+
+        if altMC.startswith('MLM_HTbin'):
+            altSignalLabelBegin = 'MLMQCD_HT'
+            altSignalLabel = 'MLMQCD_HT2000toInf'
+
+        elif altMC.startswith('HTbin'):
+            altSignalLabelBegin = 'QCD_HT'
+            altSignalLabel = 'QCD_HT2000toInf'
+
+        elif altMC.startswith('H7MLM_HTbin'):
+            altSignalLabelBegin = 'H7MLMQCD_HT'
+            altSignalLabel = 'H7MLMQCD_HT2000toInf'
+            #altSignalLabel = 'QCD_Pt-15to7000'
+        sysSignalLabelBegin = 'sysQCD' 
+
+        
     print ("Labels:", signalLabelBegin,altSignalLabelBegin)
 
     
@@ -280,17 +314,12 @@ def runTUnfold(
                 if verbose: print("Processing bkgs from amongst the following uncertainty sources:", bkgLabels)
                 
                 for ibkg in bkgLabels:
-                    bkgHistos[ j+'_reco'+ivar+'_nom'+sel ] = dataFile[ivar+'_2016_preVFP'].Get(ibkg+'_reco'+ivar+'_nom'+sel)
-                    bkgHistos[ j+'_reco'+ivar+'_nom'+sel ].Add( dataFile[ivar+'_2016'].Get(ibkg+'_reco'+ivar+'_nom'+sel) )
-                    bkgHistos[ j+'_reco'+ivar+'_nom'+sel ].Add( dataFile[ivar+'_2017'].Get(ibkg+'_reco'+ivar+'_nom'+sel) )
-                    bkgHistos[ j+'_reco'+ivar+'_nom'+sel ].Add( dataFile[ivar+'_2018'].Get(ibkg+'_reco'+ivar+'_nom'+sel) )
+                    bkgHistos[ ibkg+'_reco'+ivar+'_nom'+sel ] = dataFile[ivar+'_2016_preVFP'].Get(ibkg+'_reco'+ivar+'_nom'+sel)
+                    bkgHistos[ ibkg+'_reco'+ivar+'_nom'+sel ].Add( dataFile[ivar+'_2016'].Get(ibkg+'_reco'+ivar+'_nom'+sel) )
+                    bkgHistos[ ibkg+'_reco'+ivar+'_nom'+sel ].Add( dataFile[ivar+'_2017'].Get(ibkg+'_reco'+ivar+'_nom'+sel) )
+                    bkgHistos[ ibkg+'_reco'+ivar+'_nom'+sel ].Add( dataFile[ivar+'_2018'].Get(ibkg+'_reco'+ivar+'_nom'+sel) )
 
-                    #varSignalHistos[ j+'_respWithMiss'+ivar+'_nom'+sel ] = dataFile[ivar+'_2016_preVFP'].Get(j+'_respWithMiss'+ivar+'_nom'+sel)
-                    #varSignalHistos[ j+'_respWithMiss'+ivar+'_nom'+sel ].Add( dataFile[ivar+'_2016'].Get(j+'_respWithMiss'+ivar+'_nom'+sel) )
-                    #varSignalHistos[ j+'_respWithMiss'+ivar+'_nom'+sel ].Add( dataFile[ivar+'_2017'].Get(j+'_respWithMiss'+ivar+'_nom'+sel) )
-                    #varSignalHistos[ j+'_respWithMiss'+ivar+'_nom'+sel ].Add( dataFile[ivar+'_2018'].Get(j+'_respWithMiss'+ivar+'_nom'+sel) )
-                
-                
+                    
                 varSignalHistos={}
                 s=[]
 
@@ -311,22 +340,6 @@ def runTUnfold(
                         varSignalHistos[ j+'_respWithMiss'+ivar+'_nom'+sel ].Add( dataFile[ivar+'_2016'].Get(j+'_respWithMiss'+ivar+'_nom'+sel) )
                         varSignalHistos[ j+'_respWithMiss'+ivar+'_nom'+sel ].Add( dataFile[ivar+'_2017'].Get(j+'_respWithMiss'+ivar+'_nom'+sel) )
                         varSignalHistos[ j+'_respWithMiss'+ivar+'_nom'+sel ].Add( dataFile[ivar+'_2018'].Get(j+'_respWithMiss'+ivar+'_nom'+sel) )
-            
-            
-            
-            ########### IS THIS CODE BLOCK EVEN NECESSARY????? ############
-            #if process.startswith('MC'):
-            #    allHistos = {
-            #            'dataHisto' : dataFile[ivar+'_2016_preVFP'].Get( signalLabel+'_truereco'+ivar+'_nom'+sel ),
-            #            'dataHistoGenBin' : dataFile[ivar+'_2016_preVFP'].Get( signalLabel+'_truereco'+ivar+'_nom'+sel+'_genBin' )
-            #            }
-            #    allHistos[ 'dataHisto' ].Add( dataFile[ivar+'_2016'].Get( signalLabel+'_truereco'+ivar+'_nom'+sel ) )
-            #    allHistos[ 'dataHistoGenBin' ].Add( dataFile[ivar+'_2016'].Get( signalLabel+'_truereco'+ivar+'_nom'+sel+'_genBin' ))
-            #    allHistos[ 'dataHisto' ].Add( dataFile[ivar+'_2017'].Get( signalLabel+'_truereco'+ivar+'_nom'+sel ) )
-            #    allHistos[ 'dataHistoGenBin' ].Add( dataFile[ivar+'_2017'].Get( signalLabel+'_truereco'+ivar+'_nom'+sel+'_genBin' ) )
-            #    allHistos[ 'dataHisto' ].Add( dataFile[ivar+'_2018'].Get( signalLabel+'_truereco'+ivar+'_nom'+sel ) )
-            #    allHistos[ 'dataHistoGenBin' ].Add( dataFile[ivar+'_2018'].Get( signalLabel+'_truereco'+ivar+'_nom'+sel+'_genBin' ) )
-            ###############################################################
             
             
             
@@ -376,23 +389,7 @@ def runTUnfold(
 
             if verbose: print ("All signal histos:", signalHistos)
 
-            ####### Fix fake and true reco ###nothing to fix here anymore :) 
-            
-            #signalHistos[signalLabel+'_fakereco'+ivar+'_nom'+sel] = signalHistos[signalLabel+'_reco'+ivar+'_nom'+sel].Clone()
-            #signalHistos[signalLabel+'_fakereco'+ivar+'_nom'+sel].Add( signalHistos[signalLabel+'_truereco'+ivar+'_nom'+sel], -1 )
-
-            
-            #signalHistos[signalLabel+'_missgen'+ivar+'_nom'+sel] = signalHistos[signalLabel+'_gen'+ivar+'_nom'+sel].Clone()
-            #signalHistos[signalLabel+'_missgen'+ivar+'_nom'+sel].Add( signalHistos[signalLabel+'_accepgen'+ivar+'_nom'+sel], -1 )
-            
-            #if not process.startswith('MCSelfClosure'):
-                
-            #    altSignalHistos[altSignalLabel+'_fakereco'+ivar+'_nom'+sel] = altSignalHistos[altSignalLabel+'_reco'+ivar+'_nom'+sel].Clone()
-            #    altSignalHistos[altSignalLabel+'_fakereco'+ivar+'_nom'+sel].Add( altSignalHistos[altSignalLabel+'_truereco'+ivar+'_nom'+sel], -1 )
-
-                
-            #    altSignalHistos[altSignalLabel+'_missgen'+ivar+'_nom'+sel] = altSignalHistos[altSignalLabel+'_gen'+ivar+'_nom'+sel].Clone()
-            #    altSignalHistos[altSignalLabel+'_missgen'+ivar+'_nom'+sel].Add( altSignalHistos[altSignalLabel+'_accepgen'+ivar+'_nom'+sel], -1 )    
+              
                 
             if process.startswith("MC"):
                 dataHistostrue = { 'data_reco'+k.split(('_truereco'))[1] : v for (k,v) in signalHistos.items() if ('_truereco' in k and not ('genBin' in k ))}
@@ -1513,9 +1510,9 @@ def runTUnfold(
         if return_tunfolder_object:
             return tunfolder, allHistos, signalHistos, uncerUnfoldHisto, ratioHistos, uncerUnfoldSystCov
         
-        #print ('|------> Saving histograms in yodafile: ', outputRootName.replace('.root', '.yoda'))
-        #histToYoda = [  yoda.root_to_yoda( allHistos [ 'unfoldHisto'+ivar ] ) ]
-        #yoda.writeYODA( histToYoda, outputRootName.replace('.root', '.yoda') )
+        print ('|------> Saving histograms in yodafile: ', outputRootName.replace('.root', '.yoda'))
+        histToYoda = [  yoda.root.to_yoda( allHistos [ 'unfoldHisto'+ivar ] ) ]
+        yoda.writeYODA( histToYoda, outputRootName.replace('.root', '.yoda') )
 
 ##############################################################################################
 
@@ -1531,7 +1528,19 @@ def loadHistograms(samples, var, sel, sysUnc=[],
                    isMC=True, addGenInfo=True, respOnly=False, lumi=1., noResp=False,
                    variables={}, year='2017', process='data', noRebin=False, outputFolder=None ):
     """docstring for loadHistograms"""
+    
+    import sys
 
+    if not('dijet' in sel):
+        sys.path.insert(0,'../../')
+        from datasets_WtopSel_RunIISummer20UL_SampleDictPrep_newXS import dictSamples, checkDict
+
+    else:
+        sys.path.insert(0,'../../')
+        from datasets_dijetSel_RunIISummer20UL_SampleDictPrep import dictSamples, checkDict
+
+    
+    
     if sysUnc==[]: SYSUNC = [ '_nom' ] 
     else: SYSUNC = [ s+u for u in ['Up', 'Down'] for s in sysUnc if not s.startswith(('_model', '_hdamp', '_Tune', '_CR', '_erdON', '_mtop')) ]
     flip = False

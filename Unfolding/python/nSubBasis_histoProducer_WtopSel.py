@@ -10,16 +10,24 @@ import awkward as ak
 import uproot
 import hist
 from hist import Hist
+import correctionlib
 
 from collections import defaultdict
 import numba
 import gc
 
+"""
+  #V3  vs V2 changes: 
+  (a) added in on-the-fly btag SF and SF variation calculations (correlated and uncorrelated (b/w years) up&down for now)
+  
+  
+"""
+
 class nSubBasis_unfoldingHistoProd_WtopSel(processor.ProcessorABC):
 
     #####################################################################################################################################
-    #####################################################################################################################################  
-    # Relevant info wrt. what mode to run the W/top sample processing on, pargmatic choice: noDeltaR, purest=massAndDeltaR (a la AL,SM) #
+    #####################################################################################################################################     #                                                                                                                                   # 
+    #Relevant info wrt. what mode to run the W/top sample processing on, pragmatic choice: noDeltaR, 'purest'=massAndDeltaR (a la AL,SM)#
     # _________________________________________________________________________________________________________________________________ #
     #|      selection mode      |                                      details                                                         |#
     #|---------------------------------------------------------------------------------------------------------------------------------|#
@@ -33,11 +41,12 @@ class nSubBasis_unfoldingHistoProd_WtopSel(processor.ProcessorABC):
     
     def __init__(self, sampleName, selection='_topSel', withLeptHemBtag=False, sysSources=[],year='2017', era='', 
                  isMC=True, isSigMC=True, onlyUnc='', wtUnc=False, verbose=False, saveParquet=False, onlyParquet=False,
-                 splitCount='0', sampleDict=dictSamples, test=False, sysUnc=False, selectionmode='massAndDeltaR'): 
+                 splitCount='0', sampleDict=dictSamples, test=False, sysUnc=False, selectionmode='massAndDeltaR',
+                 btvJSON=None, effMap_b=None, effMap_c=None, effMap_udsg=None, btagWP="M"):
     
         self.test=test
         self.year = year
-        self.isMC = isMC
+        self.isMC = isMC or isSigMC
         self.isSigMC = isSigMC
         self.era = era
         self.withLeptHemBtag = withLeptHemBtag
@@ -52,6 +61,60 @@ class nSubBasis_unfoldingHistoProd_WtopSel(processor.ProcessorABC):
         self.onlyParquet=onlyParquet
         self.mode=selectionmode
         
+        self.btvJSON = btvJSON
+        self.effMap_b = effMap_b
+        self.effMap_c = effMap_c
+        self.effMap_udsg = effMap_udsg
+        self.btagWP = btagWP
+        
+        self.WPBDisc_dict = OrderedDict()
+        self.WPBDisc_dict['2016_preVFP'] = {
+                                            "L": 0.0508, 
+                                            "M": 0.2598, 
+                                            "T": 0.6502,
+                                           }
+        self.WPBDisc_dict['2016'] = {
+                                     "L": 0.0480, 
+                                     "M": 0.2489, 
+                                     "T": 0.6377,
+                                    }
+        self.WPBDisc_dict['2017'] = {
+                                     "L": 0.0532, 
+                                     "M": 0.3040, 
+                                     "T": 0.7476,
+                                    }
+        self.WPBDisc_dict['2018'] = {
+                                     "L": 0.0490, 
+                                     "M": 0.2783, 
+                                     "T": 0.7100,
+                                    }
+        self.WPBDisc = self.WPBDisc_dict[self.year][btagWP] 
+        
+        if self.isMC and not(self.onlyParquet):
+            if self.btvJSON:
+                self.btvjson = correctionlib.CorrectionSet.from_file(self.btvJSON)
+            else:
+                raise ValueError("btvJSON is not provided!")
+
+            if self.effMap_b:
+                effFile_b = uproot.open(self.effMap_b)
+                self.effHist_b = effFile_b[f'efficiency_b_b_{self.year}{selection}']
+            else:
+                raise ValueError("effMap_b is not provided!")
+
+            if self.effMap_c:
+                effFile_c = uproot.open(self.effMap_c)
+                self.effHist_c = effFile_c[f'efficiency_b_c_{self.year}{selection}']
+            else:
+                raise ValueError("effMap_c is not provided!")
+
+            if self.effMap_udsg:
+                effFile_udsg = uproot.open(self.effMap_udsg)
+                self.effHist_udsg = effFile_udsg[f'efficiency_b_udsg_{self.year}{selection}']
+            else:
+                raise ValueError("effMap_udsg is not provided!")
+
+            
         if (not self.isMC) and self.era=='': print (f'Data-loading error: You need to specify what era if you want to work with while handling data' )
         
         
@@ -75,7 +138,7 @@ class nSubBasis_unfoldingHistoProd_WtopSel(processor.ProcessorABC):
                                             "_eta": np.array([i for i in np.arange(-2.4, 2.6, 0.2)]),
                                             "_y": np.array([i for i in np.arange(-2.4, 2.6, 0.2)]),
                                             "_phi": np.array([i for i in np.arange(-3.4, 3.6, 0.2)]),
-                                            "_mass": np.array([i for i in np.arange(0., 145., 5.)]) if 'WSel' in selection else  np.array([i for i in np.arange(100., 305., 5.)]),
+                                            "_mass": np.array([i for i in np.arange(0., 165., 5.)]) if 'WSel' in selection else  np.array([i for i in np.arange(80., 325., 5.)]),
                                             "_msoftdrop": np.array([i for i in np.arange(0., 145., 5.)]) if 'WSel' in selection else  np.array([i for i in np.arange(100., 305., 5.)]),
 
                                         }  
@@ -96,7 +159,7 @@ class nSubBasis_unfoldingHistoProd_WtopSel(processor.ProcessorABC):
                                             "_eta": np.array([i for i in np.arange(-2.4, 2.6, 0.2)]),
                                             "_y": np.array([i for i in np.arange(-2.4, 2.6, 0.2)]),
                                             "_phi": np.array([i for i in np.arange(-3.4, 3.6, 0.2)]),
-                                            "_mass": np.array([i for i in np.arange(0., 305., 5.)]),
+                                            "_mass": np.array([i for i in np.arange(0., 505., 5.)]),
 
                                         } 
 
@@ -193,27 +256,27 @@ class nSubBasis_unfoldingHistoProd_WtopSel(processor.ProcessorABC):
 
                             "_tau_0p25_1": np.array([(i/200) for i in np.arange(0.1*200, 1.05*200)]),
                             "_tau_0p25_2": np.array([(i/200) for i in np.arange(0.1*200, 0.915*200)]),
-                            "_tau_0p25_3": np.array([(i/200) for i in np.arange(0.1*200, 0.865*200)]),
-                            "_tau_0p25_4": np.array([(i/200) for i in np.arange(0.1*200, 0.815*200)]),
-                            "_tau_0p25_5": np.array([(i/200) for i in np.arange(0.1*200, 0.815*200)]),
+                            "_tau_0p25_3": np.array([(i/200) for i in np.arange(0.1*500, 0.862*500)]),
+                            "_tau_0p25_4": np.array([(i/500) for i in np.arange(0.1*500, 0.812*500)]),
+                            "_tau_0p25_5": np.array([(i/500) for i in np.arange(0.1*500, 0.802*500)]),
 
                             "_tau_0p5_1": np.array([(i/200) for i in np.arange(0.1*200, 0.915*200)]),
-                            "_tau_0p5_2": np.array([(i/200) for i in np.arange(0.*200, 0.815*200)]),
-                            "_tau_0p5_3": np.array([(i/200) for i in np.arange(0.*200, 0.715*200)]),
-                            "_tau_0p5_4": np.array([(i/200) for i in np.arange(0.*200, 0.615*200)]),
-                            "_tau_0p5_5": np.array([(i/200) for i in np.arange(0.*200, 0.515*200)]),
+                            "_tau_0p5_2": np.array([(i/200) for i in np.arange(0.*200, 0.805*200)]),
+                            "_tau_0p5_3": np.array([(i/1000) for i in np.arange(0.*1000, 0.701*1000)]),
+                            "_tau_0p5_4": np.array([(i/1000) for i in np.arange(0.*1000, 0.601*1000)]),
+                            "_tau_0p5_5": np.array([(i/1000) for i in np.arange(0.*1000, 0.511*1000)]),
 
                             "_tau_1_1": np.array([(i/200) for i in np.arange(0.*200, 0.715*200)]),
                             "_tau_1_2": np.array([(i/200) for i in np.arange(0.*200, 0.515*200)]),
-                            "_tau_1_3": np.array([(i/200) for i in np.arange(0.*200, 0.425*200)]),
-                            "_tau_1_4": np.array([(i/200) for i in np.arange(0.*200, 0.325*200)]),
-                            "_tau_1_5": np.array([(i/200) for i in np.arange(0.*200, 0.305*200)]),
+                            "_tau_1_3": np.array([(i/500) for i in np.arange(0.*500, 0.422*500)]),
+                            "_tau_1_4": np.array([(i/1000) for i in np.arange(0.*1000, 0.321*1000)]),
+                            "_tau_1_5": np.array([(i/1000) for i in np.arange(0.*1000, 0.301*1000)]),
 
                             "_tau_1p5_1": np.array([(i/200) for i in np.arange(0.*200, 0.615*200)]),
-                            "_tau_1p5_2": np.array([(i/200) for i in np.arange(0.*200, 0.415*200)]),
-                            "_tau_1p5_3": np.array([(i/500) for i in np.arange(0.*500, 0.302*500)]),
-                            "_tau_1p5_4": np.array([(i/500) for i in np.arange(0.*500, 0.252*500)]),
-                            "_tau_1p5_5": np.array([(i/500) for i in np.arange(0.*500, 0.152*500)]),
+                            "_tau_1p5_2": np.array([(i/500) for i in np.arange(0.*500, 0.412*500)]),
+                            "_tau_1p5_3": np.array([(i/1000) for i in np.arange(0.*1000, 0.301*1000)]),
+                            "_tau_1p5_4": np.array([(i/1000) for i in np.arange(0.*1000, 0.251*1000)]),
+                            "_tau_1p5_5": np.array([(i/1000) for i in np.arange(0.*1000, 0.151*1000)]),
 
                             "_tau_2_1": np.array([(i/200) for i in np.arange(0.*200, 0.515*200)]),
                             "_tau_2_2": np.array([(i/500) for i in np.arange(0.*500, 0.262*500)]),
@@ -222,14 +285,14 @@ class nSubBasis_unfoldingHistoProd_WtopSel(processor.ProcessorABC):
                             "_tau_2_5": np.array([(i/1000) for i in np.arange(0.*1000, 0.101*1000)]),
 
                             "_tau21": np.array([(i/100) for i in np.arange(0.*100, 1.21*100)]),#for one-pass kT minimization as per CMS
-                            "_tau32": np.array([(i/100) for i in np.arange(0.*100, 1.21*100)]),#for one-pass kT minimization as per CMS
-                            "_tau21_WTA": np.array([(i/100) for i in np.arange(0.*100, 1.21*100)]),#for WTA-kT for comparison
-                            "_tau32_WTA": np.array([(i/100) for i in np.arange(0.*100, 1.21*100)]),#for WTA-kT for comparison
-                            "_tau21_exkT": np.array([(i/100) for i in np.arange(0.*100, 1.41*100)]),#for excl.-kT and E-scheme as per basis
-                            "_tau32_exkT": np.array([(i/100) for i in np.arange(0.*100, 1.41*100)]),#for excl.-kT and E-scheme as per basis
-                            "_mass": np.array([(i*2) for i in np.arange(25., 81.)]),
-                            "_msoftdrop": np.array([(i*2) for i in np.arange(0., 81.)]),
-                            "_pt": np.array([(i*10) for i in np.arange(17., 251.)]),
+                            "_tau32": np.array([(i/200) for i in np.arange(0.*200, 1.21*200)]),#for one-pass kT minimization as per CMS
+                            "_tau21_WTA": np.array([(i/100) for i in np.arange(0.*100, 1.11*100)]),#for WTA-kT for comparison
+                            "_tau32_WTA": np.array([(i/100) for i in np.arange(0.*100, 1.11*100)]),#for WTA-kT for comparison
+                            "_tau21_exkT": np.array([(i/200) for i in np.arange(0.*200, 1.41*200)]),#for excl.-kT and E-scheme as per basis
+                            "_tau32_exkT": np.array([(i/200) for i in np.arange(0.*200, 1.41*200)]),#for excl.-kT and E-scheme as per basis
+                            #"_mass": np.array([(i*2) for i in np.arange(25., 81.)]),
+                            #"_msoftdrop": np.array([(i*2) for i in np.arange(0., 81.)]),
+                            #"_pt": np.array([(i*10) for i in np.arange(17., 251.)]),
                             }
 
         elif 'topSel' in selection:
@@ -237,27 +300,27 @@ class nSubBasis_unfoldingHistoProd_WtopSel(processor.ProcessorABC):
 
                             "_tau_0p25_1": np.array([(i/500) for i in np.arange(0.3*500, 0.922*500)]),
                             "_tau_0p25_2": np.array([(i/200) for i in np.arange(0.15*200, 0.875*200)]),
-                            "_tau_0p25_3": np.array([(i/200) for i in np.arange(0.15*200, 0.805*200)]),
-                            "_tau_0p25_4": np.array([(i/200) for i in np.arange(0.15*200, 0.725*200)]),
-                            "_tau_0p25_5": np.array([(i/200) for i in np.arange(0.15*200, 0.715*200)]),
+                            "_tau_0p25_3": np.array([(i/500) for i in np.arange(0.15*500, 0.802*500)]),
+                            "_tau_0p25_4": np.array([(i/500) for i in np.arange(0.15*500, 0.722*500)]),
+                            "_tau_0p25_5": np.array([(i/500) for i in np.arange(0.15*500, 0.712*500)]),
 
                             "_tau_0p5_1": np.array([(i/500) for i in np.arange(0.1*500, 0.882*500)]),
                             "_tau_0p5_2": np.array([(i/200) for i in np.arange(0.*200, 0.705*200)]),
-                            "_tau_0p5_3": np.array([(i/200) for i in np.arange(0.*200, 0.605*200)]),
-                            "_tau_0p5_4": np.array([(i/200) for i in np.arange(0.*200, 0.505*200)]),
-                            "_tau_0p5_5": np.array([(i/200) for i in np.arange(0.*200, 0.455*200)]),
+                            "_tau_0p5_3": np.array([(i/500) for i in np.arange(0.*500, 0.602*500)]),
+                            "_tau_0p5_4": np.array([(i/1000) for i in np.arange(0.*1000, 0.501*1000)]),
+                            "_tau_0p5_5": np.array([(i/1000) for i in np.arange(0.*1000, 0.451*1000)]),
 
                             "_tau_1_1": np.array([(i/200) for i in np.arange(0.*200, 0.715*200)]),
                             "_tau_1_2": np.array([(i/200) for i in np.arange(0.*200, 0.515*200)]),
-                            "_tau_1_3": np.array([(i/500) for i in np.arange(0.*500, 0.322*500)]),
-                            "_tau_1_4": np.array([(i/500) for i in np.arange(0.*500, 0.262*500)]),
-                            "_tau_1_5": np.array([(i/500) for i in np.arange(0.*500, 0.222*500)]),
+                            "_tau_1_3": np.array([(i/1000) for i in np.arange(0.*1000, 0.321*1000)]),
+                            "_tau_1_4": np.array([(i/1000) for i in np.arange(0.*1000, 0.261*1000)]),
+                            "_tau_1_5": np.array([(i/1000) for i in np.arange(0.*1000, 0.221*1000)]),
 
                             "_tau_1p5_1": np.array([(i/200) for i in np.arange(0.*200, 0.525*200)]),
                             "_tau_1p5_2": np.array([(i/500) for i in np.arange(0.*500, 0.352*500)]),
-                            "_tau_1p5_3": np.array([(i/500) for i in np.arange(0.*500, 0.252*500)]),
-                            "_tau_1p5_4": np.array([(i/500) for i in np.arange(0.*500, 0.152*500)]),
-                            "_tau_1p5_5": np.array([(i/500) for i in np.arange(0.*500, 0.102*500)]),
+                            "_tau_1p5_3": np.array([(i/1000) for i in np.arange(0.*1000, 0.251*1000)]),
+                            "_tau_1p5_4": np.array([(i/1000) for i in np.arange(0.*1000, 0.151*1000)]),
+                            "_tau_1p5_5": np.array([(i/1000) for i in np.arange(0.*1000, 0.101*1000)]),
 
                             "_tau_2_1": np.array([(i/500) for i in np.arange(0.*500, 0.452*500)]),
                             "_tau_2_2": np.array([(i/500) for i in np.arange(0.*500, 0.252*500)]),
@@ -266,38 +329,46 @@ class nSubBasis_unfoldingHistoProd_WtopSel(processor.ProcessorABC):
                             "_tau_2_5": np.array([(i/1000) for i in np.arange(0.*1000, 0.081*1000)]),
 
                             "_tau21": np.array([(i/100) for i in np.arange(0.*100, 1.21*100)]),#for one-pass kT minimization as per CMS
-                            "_tau32": np.array([(i/100) for i in np.arange(0.*100, 1.21*100)]),#for one-pass kT minimization as per CMS
+                            "_tau32": np.array([(i/200) for i in np.arange(0.*200, 1.21*200)]),#for one-pass kT minimization as per CMS
                             "_tau21_WTA": np.array([(i/100) for i in np.arange(0.*100, 1.01*100)]),#for WTA-kT for comparison
-                            "_tau32_WTA": np.array([(i/100) for i in np.arange(0.*100, 1.1*100)]),#for WTA-kT for comparison
-                            "_tau21_exkT": np.array([(i/100) for i in np.arange(0.*100, 1.21*100)]),#for excl.-kT and E-scheme as per basis
-                            "_tau32_exkT": np.array([(i/100) for i in np.arange(0.*100, 1.41*100)]),#for excl.-kT and E-scheme as per basis
-                            "_mass": np.array([(i*2) for i in np.arange(60., 151.)]),
-                            "_msoftdrop": np.array([(i*2) for i in np.arange(0., 151.)]),
-                            "_pt": np.array([(i*10) for i in np.arange(35., 251.)]),
+                            "_tau32_WTA": np.array([(i/100) for i in np.arange(0.*100, 1.11*100)]),#for WTA-kT for comparison
+                            "_tau21_exkT": np.array([(i/200) for i in np.arange(0.*200, 1.21*200)]),#for excl.-kT and E-scheme as per basis
+                            "_tau32_exkT": np.array([(i/200) for i in np.arange(0.*200, 1.41*200)]),#for excl.-kT and E-scheme as per basis
+                            #"_mass": np.array([(i*2) for i in np.arange(60., 151.)]),
+                            #"_msoftdrop": np.array([(i*2) for i in np.arange(0., 151.)]),
+                            #"_pt": np.array([(i*10) for i in np.arange(35., 251.)]),
                             }
 
         
         ### Uncertainties
+        self.btaggingSystLabels = ["central", "up", "down"]
+        
         self.sysSources = ['_nom'] + [ isys+i for i in [ 'Up', 'Down' ] for isys in sysSources if not( isys.endswith('nom'))]# or self.sysUnc) ]
         self.sysWeightList = ( '_pu', '_isr', '_fsr', '_pdf', '_l1prefiring', '_lepton', '_btag' ) #'_ps',
-        self.wtSources=['_puWeight','_isrWeight','_fsrWeight','_pdfWeight', '_l1prefiringWeight','_leptonWeightAll','_btagWeight']#, '_leptonWeightISO', '_leptonWeightID', '_leptonWeightTrig', '_leptonWeightRecoEff'] if self.wtUnc else [] 
+        self.wtSources=['_puWeight','_isrWeight','_fsrWeight','_pdfWeight', '_l1prefiringWeight','_btagWeightCorrelated', '_btagWeightUncorrelated', '_leptonWeightISO', '_leptonWeightID', '_leptonWeightTrig', '_leptonWeightRecoEff'] if self.wtUnc else [] #, '_leptonWeightAll'
         if self.onlyUnc: self.sysSources = ['_nom'] + [ onlyUnc+i for i in [ 'Up', 'Down' ] ] #################### Not using for right now
+        
+        if self.wtUnc: #for the jes/jer cases sys self.sysSources is udpated  above
+            self.sysSources = ['_nom'] + [ iwt+i for i in [ 'Up', 'Down' ] for iwt in self.wtSources if not iwt.endswith(('nom','pdfWeightAll')) ]
+            
+            if 'pdfWeightAll' in self.wtSources: self.sysSources = self.sysSources+['pdfWeightAll'] 
         
         #puWeights used only to change reco event weight (up/down) without application to gen weight, others applied to modify the genweight [and thereby also the recoWeight(=self.genWeight*self.puWeights)]
         
+        #stupid hacks because this producer was initially planed to be run over multiple (W&top) selections, but is now only use one selection at a time... will change later if I have time
         self.selList = [ selection ] 
-        
-                
+        self.sel = selection 
+                    
         
         self._branchesToRead = self.getBranchesToRead(
                                                      dirname=self.inputDir, year=self.year,
                                                      kinematic_labels=self.kinematic_labels,
                                                      reco_only_labels=self.reco_only_labels,
                                                      nSub_labels=self.dict_variables_toUnfold,
-                                                    )# isMC=True, isSigMC=False, wtUnc=False, sysUnc=False,
-        #self._accumulator = self.buildDictOfHistograms()#processor.dict_accumulator()
+                                                    )+['Jet_pt', 'Jet_eta', 'Jet_jetId', 'Jet_hadronFlavour', 'Jet_btagDeepFlavB']
+        #load up Jet_* branches to calculate btaggingweights (sort of) 'on-the-fly'
         
-
+        
         self.top_ptmin = 400.
         self.top_mSDmin = 140.
         self.top_mSDmax = 250.
@@ -314,15 +385,43 @@ class nSubBasis_unfoldingHistoProd_WtopSel(processor.ProcessorABC):
         self.Mu_ptmin = 55.
         self.MET_ptmin = 50.
         self.AK4_ptmin = 30.
+        self.AK4_etamax = 2.4 #(abs)
+        self.AK4_jetID = 2 #(cut on >=2; https://twiki.cern.ch/twiki/bin/view/CMS/JetID#nanoAOD%20Flags)
         self.genWeights = []
     
 
     def process(self, events):
         '''fill Hist histograms to accumulate event stats, convert to root or whatever else after returned by processor'''
-
+        
+        
         if not(self.onlyParquet): output = self.buildDictOfHistograms()
+        
+        # Get branches to be read 
         branches = self._branchesToRead
+        
+        # Currently the branches to be read are being defined somewhat circularly, the branches that are to be read are extracted from the class-level variable and only those columns are read in from the nanoskims, but keeping this functionality in for easy generalisability if needed; ie, if one wants to make this class self sufficient and add  in what I do in my histo production noteeboks as a postprocessor in this class. 
         events = events[branches]
+
+        
+        ############################### btagging weights, nom+variations ###############################
+        
+        if self.isMC and not(self.onlyParquet): 
+            tstart=time.time()
+            
+            events_new_fields = self.compute_new_SF_fields(events)#, btvJSON, effHist_b, effHist_c, effHist_udsg)
+        
+            #if self.verbose: 
+
+            print(f"Adding in new branches {events_new_fields.keys()} to access event weights from b-tagging")
+
+            for key, values in events_new_fields.items():
+                events[key] = values
+            #if self.verbose: 
+            elapsed = time.time() - tstart
+
+            print (f'Finished adding in new b-tagging reweighting branches. Time taken:{elapsed}') 
+        
+        
         
         if not(self.onlyParquet): 
             print (f'Now, processing histograms; systematic sources being considered:{self.sysSources} for nevents={len(events)} (before masking)')
@@ -341,9 +440,9 @@ class nSubBasis_unfoldingHistoProd_WtopSel(processor.ProcessorABC):
             
             if self.mode=='massAndDeltaR': 
 
-                topRecoMask = (events[f'selRecoJets{s}_pt']>self.top_ptmin) & (events[f'selRecoJets{s}_mass']>self.top_mINVmin) & (events[f'selRecoJets{s}_mass']<self.top_mINVmax) & (events[f'selRecoHadHemDeltaR{s}']<0.8) & (events[f'selRecoLeptW_nom_pt']>self.LeptW_ptmin ) & (events[f'selRecoMu_nom_pt']>self.Mu_ptmin ) & (events[f'selRecoMET_nom_pt']>self.MET_ptmin ) & (events[f'passRecoSel{s}']==1) & (events[f'totalRecoWeight{s}']!=0.) & (events[f'recoSelectedEventNumber_nom']>=1) #& (events[f'nRecoBtags_nom']>1) & (events[f'nRecoHadBtags_nom']==1) 
+                topRecoMask = (events[f'selRecoJets{s}_pt']>self.top_ptmin) & (events[f'selRecoJets{s}_msoftdrop']>self.top_mINVmin) & (events[f'selRecoJets{s}_msoftdrop']<self.top_mINVmax) & (events[f'selRecoHadHemDeltaR{s}']<0.8) & (events[f'selRecoLeptW_nom_pt']>self.LeptW_ptmin ) & (events[f'selRecoMu_nom_pt']>self.Mu_ptmin ) & (events[f'selRecoMET_nom_pt']>self.MET_ptmin ) & (events[f'passRecoSel{s}']==1) & (events[f'totalRecoWeight{s}']!=0.) & (events[f'recoSelectedEventNumber_nom']>=1) #& (events[f'nRecoBtags_nom']>1) & (events[f'nRecoHadBtags_nom']==1) 
 
-                WRecoMask = (events[f'selRecoJets{s}_pt']>self.W_ptmin) & (events[f'selRecoJets{s}_mass']>self.W_mINVmin) & (events[f'selRecoJets{s}_mass']<self.W_mINVmax) & (events[f'selRecoHadHemDeltaR{s}']>0.8) & (events[f'selRecoHadHemDeltaR{s}']<1.6) & (events[f'selRecoLeptW_nom_pt']>self.LeptW_ptmin ) & (events[f'selRecoMu_nom_pt']>self.Mu_ptmin ) & (events[f'selRecoMET_nom_pt']>self.MET_ptmin ) & (events[f'passRecoSel{s}']==1) & (events[f'totalRecoWeight{s}']!=0.) & (events[f'recoSelectedEventNumber_nom']>=1) #& (events[f'nRecoBtags_nom']>1) & (events[f'nRecoHadBtags_nom']==1) 
+                WRecoMask = (events[f'selRecoJets{s}_pt']>self.W_ptmin) & (events[f'selRecoJets{s}_msoftdrop']>self.W_mINVmin) & (events[f'selRecoJets{s}_msoftdrop']<self.W_mINVmax) & (events[f'selRecoHadHemDeltaR{s}']>0.8) & (events[f'selRecoHadHemDeltaR{s}']<1.6) & (events[f'selRecoLeptW_nom_pt']>self.LeptW_ptmin ) & (events[f'selRecoMu_nom_pt']>self.Mu_ptmin ) & (events[f'selRecoMET_nom_pt']>self.MET_ptmin ) & (events[f'passRecoSel{s}']==1) & (events[f'totalRecoWeight{s}']!=0.) & (events[f'recoSelectedEventNumber_nom']>=1) #& (events[f'nRecoBtags_nom']>1) & (events[f'nRecoHadBtags_nom']==1) 
                 
                 if not(self.isMC): 
                     topRecoMask = (topRecoMask) & (events[f'passHLT_Mu50{s}']==1)
@@ -351,9 +450,9 @@ class nSubBasis_unfoldingHistoProd_WtopSel(processor.ProcessorABC):
             
                 if self.isMC:# or self.isSigMC:    
                     
-                    topGenMask = (events[f'selGenJets_nom_pt']>self.top_ptmin) & (events[f'selGenJets_nom_mass']>self.top_mINVmin) & (events[f'selGenJets_nom_mass']<self.top_mINVmax) & (events[f'selGenHadHemDeltaR_nom']<0.8) & (events[f'selGenLeptW_nom_pt']>self.LeptW_ptmin ) & (events[f'selGenMu_nom_pt']>self.Mu_ptmin ) & (events[f'selGenMET_nom_pt']>self.MET_ptmin ) & (events[f'passGenSel{s}']==1) & (events[f'evtGenWeight_nom']!=0.) #& (events[f'nGenBtags_nom']>1) & (events[f'nGenHadBtags_nom']==1) 
+                    topGenMask = (events[f'selGenJets_nom_pt']>self.top_ptmin) & (events[f'selGenJets_nom_msoftdrop']>self.top_mINVmin) & (events[f'selGenJets_nom_msoftdrop']<self.top_mINVmax) & (events[f'selGenHadHemDeltaR_nom']<0.8) & (events[f'selGenLeptW_nom_pt']>self.LeptW_ptmin ) & (events[f'selGenMu_nom_pt']>self.Mu_ptmin ) & (events[f'selGenMET_nom_pt']>self.MET_ptmin ) & (events[f'passGenSel{s}']==1) & (events[f'evtGenWeight_nom']!=0.) #& (events[f'nGenBtags_nom']>1) & (events[f'nGenHadBtags_nom']==1) 
 
-                    WGenMask = (events[f'selGenJets_nom_pt']>self.W_ptmin) & (events[f'selGenJets_nom_mass']>self.W_mINVmin) & (events[f'selGenJets_nom_mass']<self.W_mINVmax) & (events[f'selGenHadHemDeltaR_nom']>0.8)  & (events[f'selGenHadHemDeltaR_nom']<1.6) & (events[f'selGenLeptW_nom_pt']>self.LeptW_ptmin ) & (events[f'selGenMu_nom_pt']>self.Mu_ptmin ) & (events[f'selGenMET_nom_pt']>self.MET_ptmin ) & (events[f'passGenSel{s}']==1) & (events[f'evtGenWeight_nom']!=0.) #& (events[f'nGenBtags_nom']>1) & (events[f'nGenHadBtags_nom']==1) 
+                    WGenMask = (events[f'selGenJets_nom_pt']>self.W_ptmin) & (events[f'selGenJets_nom_msoftdrop']>self.W_mINVmin) & (events[f'selGenJets_nom_msoftdrop']<self.W_mINVmax) & (events[f'selGenHadHemDeltaR_nom']>0.8)  & (events[f'selGenHadHemDeltaR_nom']<1.6) & (events[f'selGenLeptW_nom_pt']>self.LeptW_ptmin ) & (events[f'selGenMu_nom_pt']>self.Mu_ptmin ) & (events[f'selGenMET_nom_pt']>self.MET_ptmin ) & (events[f'passGenSel{s}']==1) & (events[f'evtGenWeight_nom']!=0.) #& (events[f'nGenBtags_nom']>1) & (events[f'nGenHadBtags_nom']==1) 
 
             elif self.mode=='onlyDeltaR':
 
@@ -369,15 +468,15 @@ class nSubBasis_unfoldingHistoProd_WtopSel(processor.ProcessorABC):
 
             elif self.mode=='noDeltaR':
 
-                topRecoMask = (events[f'selRecoJets{s}_pt']>self.top_ptmin) & (events[f'selRecoJets{s}_mass']>self.top_mINVmin) & (events[f'selRecoJets{s}_mass']<self.top_mINVmax) & (events[f'selRecoLeptW{s}_pt']>self.LeptW_ptmin ) & (events[f'selRecoMu{s}_pt']>self.Mu_ptmin ) & (events[f'selRecoMET{s}_pt']>self.MET_ptmin ) & (events[f'passRecoSel{s}']==1) & (events[f'totalRecoWeight{s}']!=0.) & (events[f'nRecoBtags_nom']>1) & (events[f'nRecoHadBtags_nom']==1) 
+                topRecoMask = (events[f'selRecoJets{s}_pt']>self.top_ptmin) & (events[f'selRecoJets{s}_msoftdrop']>self.top_mINVmin) & (events[f'selRecoJets{s}_msoftdrop']<self.top_mINVmax) & (events[f'selRecoLeptW{s}_pt']>self.LeptW_ptmin ) & (events[f'selRecoMu{s}_pt']>self.Mu_ptmin ) & (events[f'selRecoMET{s}_pt']>self.MET_ptmin ) & (events[f'passRecoSel{s}']==1) & (events[f'totalRecoWeight{s}']!=0.) & (events[f'nRecoBtags_nom']>1) & (events[f'nRecoHadBtags_nom']==1) 
 
-                WRecoMask = (events[f'selRecoJets{s}_pt']>self.W_ptmin) & (events[f'selRecoJets{s}_mass']>self.W_mINVmin) & (events[f'selRecoJets{s}_mass']<self.W_mINVmax) & (events[f'selRecoLeptW{s}_pt']>self.LeptW_ptmin ) & (events[f'selRecoMu{s}_pt']>self.Mu_ptmin ) & (events[f'selRecoMET{s}_pt']>self.MET_ptmin ) & (events[f'passRecoSel{s}']==1) & (events[f'totalRecoWeight{s}']!=0.) & (events[f'nRecoBtags_nom']>1) & (events[f'nRecoHadBtags_nom']==1) 
+                WRecoMask = (events[f'selRecoJets{s}_pt']>self.W_ptmin) & (events[f'selRecoJets{s}_msoftdrop']>self.W_mINVmin) & (events[f'selRecoJets{s}_msoftdrop']<self.W_mINVmax) & (events[f'selRecoLeptW{s}_pt']>self.LeptW_ptmin ) & (events[f'selRecoMu{s}_pt']>self.Mu_ptmin ) & (events[f'selRecoMET{s}_pt']>self.MET_ptmin ) & (events[f'passRecoSel{s}']==1) & (events[f'totalRecoWeight{s}']!=0.) & (events[f'nRecoBtags_nom']>1) & (events[f'nRecoHadBtags_nom']==1) 
             
                 if self.isMC:# or self.isSigMC:    
                     
-                    topGenMask = (events[f'selGenJets_nom_pt']>self.top_ptmin) & (events[f'selGenJets_nom_mass']>self.top_mINVmin) & (events[f'selGenJets_nom_mass']<self.top_mINVmax) & (events[f'selGenLeptW_nom_pt']>self.LeptW_ptmin ) & (events[f'selGenMu_nom_pt']>self.Mu_ptmin ) & (events[f'selGenMET_nom_pt']>self.MET_ptmin ) & (events[f'passGenSel{s}']==1) & (events[f'evtGenWeight_nom']!=0.) & (events[f'nGenBtags_nom']>1) & (events[f'nGenHadBtags_nom']==1) 
+                    topGenMask = (events[f'selGenJets_nom_pt']>self.top_ptmin) & (events[f'selGenJets_nom_msoftdrop']>self.top_mINVmin) & (events[f'selGenJets_nom_msoftdrop']<self.top_mINVmax) & (events[f'selGenLeptW_nom_pt']>self.LeptW_ptmin ) & (events[f'selGenMu_nom_pt']>self.Mu_ptmin ) & (events[f'selGenMET_nom_pt']>self.MET_ptmin ) & (events[f'passGenSel{s}']==1) & (events[f'evtGenWeight_nom']!=0.) & (events[f'nGenBtags_nom']>1) & (events[f'nGenHadBtags_nom']==1) 
 
-                    WGenMask = (events[f'selGenJets_nom_pt']>self.W_ptmin) & (events[f'selGenJets_nom_mass']>self.W_mINVmin) & (events[f'selGenJets_nom_mass']<self.W_mINVmax) & (events[f'selGenLeptW_nom_pt']>self.LeptW_ptmin ) & (events[f'selGenMu_nom_pt']>self.Mu_ptmin ) & (events[f'selGenMET_nom_pt']>self.MET_ptmin ) & (events[f'passGenSel{s}']==1) & (events[f'evtGenWeight_nom']!=0.) & (events[f'nGenBtags_nom']>1) & (events[f'nGenHadBtags_nom']==1) 
+                    WGenMask = (events[f'selGenJets_nom_pt']>self.W_ptmin) & (events[f'selGenJets_nom_msoftdrop']>self.W_mINVmin) & (events[f'selGenJets_nom_msoftdrop']<self.W_mINVmax) & (events[f'selGenLeptW_nom_pt']>self.LeptW_ptmin ) & (events[f'selGenMu_nom_pt']>self.Mu_ptmin ) & (events[f'selGenMET_nom_pt']>self.MET_ptmin ) & (events[f'passGenSel{s}']==1) & (events[f'evtGenWeight_nom']!=0.) & (events[f'nGenBtags_nom']>1) & (events[f'nGenHadBtags_nom']==1) 
 
             else: 
                 print(f"######################## _WARNING_ ##############################")
@@ -536,11 +635,11 @@ class nSubBasis_unfoldingHistoProd_WtopSel(processor.ProcessorABC):
                 print (f'something fishy in what type of sample you want me to load, recheck input config', s,sys,self.isMC,self.isSigMC) 
             
             if self.verbose and self.isMC and not(self.onlyParquet):
-                print (selRecoMask[0:20],selRecoMask[-20:-1])
-                print (trueRecoMask[0:20],trueRecoMask[-20:-1])
-                print (selGenMask[0:20],selGenMask[-20:-1])
-                print (accepGenMask[0:20],accepGenMask[-20:-1])
-                
+                #    print (selRecoMask[0:20],selRecoMask[-20:-1])
+                #    print (trueRecoMask[0:20],trueRecoMask[-20:-1])
+                #    print (selGenMask[0:20],selGenMask[-20:-1])
+                #    print (accepGenMask[0:20],accepGenMask[-20:-1])
+                #    
                 print(output.keys())
                 print("Going to fill histos")
             
@@ -551,8 +650,8 @@ class nSubBasis_unfoldingHistoProd_WtopSel(processor.ProcessorABC):
 
                     if sys.endswith('nom'):
                         listOfMiscOutputHistosNames = [k for k,h in output.items() if ((not ('Jet' in k) and ('nom' in k)) and ('Mu' in k or 'LeptW' in k or 'MET' in k or 'AK4bjetHadHem' in k or 'nPV' in k or 'DeltaR' or 'DeltaPhi' in k or 'Btag' in k))]
-
-                        totalRecoWeight = events[f'puWeightNom{s}']*events[f'l1prefiringWeightNom{s}']*events[f'btagWeightNom{s}']*events[f'leptonWeightNom{s}']*self.genWeights if self.isMC else events[f'totalRecoWeight_nom']#events[f'evtGenWeight_nom']*
+                        #btagWeightNom{s}
+                        totalRecoWeight = events[f'puWeightNom{s}']*events[f'l1prefiringWeightNom{s}']*events[f'new{self.sel}_btagWeightNom{s}']*events[f'leptonWeightNom{s}']*self.genWeights if self.isMC else events[f'totalRecoWeight_nom']#events[f'evtGenWeight_nom']*
                         totalGenWeight = events[f'evtGenWeight_nom'] if self.isMC else None
 
                         if self.verbose: print(listOfMiscOutputHistosNames)
@@ -681,7 +780,7 @@ class nSubBasis_unfoldingHistoProd_WtopSel(processor.ProcessorABC):
                         # Decide what weights to use
                         if not (sys.startswith(self.sysWeightList)):
                             s=sys
-                            totalRecoWeight = self.genWeights*events[f'puWeightNom{s}']*events[f'l1prefiringWeightNom{s}']*events[f'btagWeightNom{s}']*events[f'leptonWeightNom{s}'] if self.isMC else events[f'totalRecoWeight_nom']
+                            totalRecoWeight = self.genWeights*events[f'puWeightNom{s}']*events[f'l1prefiringWeightNom{s}']*events[f'new{self.sel}_btagWeightNom{s}']*events[f'leptonWeightNom{s}'] if self.isMC else events[f'totalRecoWeight_nom']
                             totalGenWeight = events[f'evtGenWeight_nom'] if self.isMC else None
                         else:
                             if self.isSigMC:
@@ -689,23 +788,23 @@ class nSubBasis_unfoldingHistoProd_WtopSel(processor.ProcessorABC):
                                 #print(f'{sys.split("_")[1]}{s}')
                                 if 'pu' in sys:
                                     totalGenWeight = events[f'evtGenWeight{s}'] 
-                                    totalRecoWeight = self.genWeights*events[f'{sys.split("_")[1]}{s}']*events[f'l1prefiringWeightNom{s}']*events[f'btagWeightNom{s}']*events[f'leptonWeightNom{s}']
+                                    totalRecoWeight = self.genWeights*events[f'{sys.split("_")[1]}{s}']*events[f'l1prefiringWeightNom{s}']*events[f'new{self.sel}_btagWeightNom{s}']*events[f'leptonWeightNom{s}']
 
                                 elif 'l1' in sys:
                                     totalGenWeight = events[f'evtGenWeight{s}'] 
-                                    totalRecoWeight = self.genWeights*events[f'{sys.split("_")[1]}{s}']*events[f'puWeightNom{s}']*events[f'btagWeightNom{s}']*events[f'leptonWeightNom{s}']
+                                    totalRecoWeight = self.genWeights*events[f'{sys.split("_")[1]}{s}']*events[f'puWeightNom{s}']*events[f'new{self.sel}_btagWeightNom{s}']*events[f'leptonWeightNom{s}']
 
-                                elif 'btag' in sys:
+                                elif '_btag' in sys:
                                     totalGenWeight = events[f'evtGenWeight{s}'] 
-                                    totalRecoWeight = self.genWeights*events[f'{sys.split("_")[1]}{s}']*events[f'puWeightNom{s}']*events[f'l1prefiringWeightNom{s}']*events[f'leptonWeightNom{s}']
+                                    totalRecoWeight = self.genWeights*events[f'new{self.sel}_{sys.split("_")[1]}{s}']*events[f'puWeightNom{s}']*events[f'l1prefiringWeightNom{s}']*events[f'leptonWeightNom{s}']
 
                                 elif 'lepton' in sys:
                                     totalGenWeight = events[f'evtGenWeight{s}'] 
-                                    totalRecoWeight = self.genWeights*events[f'{sys.split("_")[1]}{s}']*events[f'puWeightNom{s}']*events[f'l1prefiringWeightNom{s}']*events[f'btagWeightNom{s}']
+                                    totalRecoWeight = self.genWeights*events[f'{sys.split("_")[1]}{s}']*events[f'puWeightNom{s}']*events[f'l1prefiringWeightNom{s}']*events[f'new{self.sel}_btagWeightNom{s}']
 
                                 elif sys.startswith(('_isr','_fsr','_pdf')):#,'_pdf''):
                                     totalGenWeight = events[f'evtGenWeight{s}']*events[f'{sys.split("_")[1]}{s}']
-                                    totalRecoWeight = self.genWeights*events[f'puWeightNom{s}']*events[f'l1prefiringWeightNom{s}']*events[f'btagWeightNom{s}']*events[f'leptonWeightNom{s}']
+                                    totalRecoWeight = self.genWeights*events[f'puWeightNom{s}']*events[f'l1prefiringWeightNom{s}']*events[f'new{self.sel}_btagWeightNom{s}']*events[f'leptonWeightNom{s}']
 
                         if (key.lower().startswith('reco')):
                             if self.verbose: 
@@ -929,16 +1028,11 @@ class nSubBasis_unfoldingHistoProd_WtopSel(processor.ProcessorABC):
         if not self.isSigMC: #assurances against running into issues accidentally when processing non-signal MC
             self.wtSources=[]
             self.wtUnc=False
-
-        
-        if self.wtUnc: 
-            self.sysSources = ['_nom'] + [ iwt+i for i in [ 'Up', 'Down' ] for iwt in self.wtSources if not iwt.endswith(('nom','pdfWeightAll')) ]
-            
-            if 'pdfWeightAll' in self.wtSources: self.sysSources = self.sysSources+['pdfWeightAll'] 
-        #else: self.sysSources = ['_nom']
-            
+                    
         print (self.sysSources)
+
         for sys in self.sysSources:
+            if 'btag' in sys: continue #this is since the btagWeight branches are now generated on the fly vs. being read in
             #if not wtUnc and not sysUnc:
             for i in kinematic_labels+list(nSub_labels.keys()): 
                 
@@ -986,12 +1080,12 @@ class nSubBasis_unfoldingHistoProd_WtopSel(processor.ProcessorABC):
                 reco_list.append("passRecoSel"+sys)
                 
                 ###
-                #if not(self.onlyParquet) and self.isSigMC and not(self.sysUnc): 
-                #    for ud in ['Up','Down']:
-                #        reco_list.append("leptonWeightISO"+ud+sys)
-                #        reco_list.append("leptonWeightID"+ud+sys)
-                #        reco_list.append("leptonWeightTrig"+ud+sys)
-                #        reco_list.append("leptonWeightRecoEff"+ud+sys)
+                if not(self.onlyParquet) and (self.isSigMC and self.wtUnc) and not(self.sysUnc): 
+                    for ud in ['Up','Down']:
+                        reco_list.append("leptonWeightISO"+ud+sys)
+                        reco_list.append("leptonWeightID"+ud+sys)
+                        reco_list.append("leptonWeightTrig"+ud+sys)
+                        reco_list.append("leptonWeightRecoEff"+ud+sys)
                 ###
                 
                 if self.isMC: 
@@ -1038,9 +1132,194 @@ class nSubBasis_unfoldingHistoProd_WtopSel(processor.ProcessorABC):
 
         
         if self.verbose: 
-            print(branchesToRead)
+            #print(branchesToRead)
             print(reco_reweights_list)
             print(gen_reweights_list)
 
         return branchesToRead
     
+    def compute_new_SF_fields(self, events):#, btvjson, effHist_b, effHist_c, effHist_udsg):
+        
+        # the setting of the keys for the systematic suffix map can be raised to the global/class level but keeping things hard-coded here since my needs are fixed and I use custom nomenclature for self-created branches in ntuples, and it meshes better with how I do my histo productions
+        
+        #for non-signal MC, signal MC sys variations on jes/jer, or signal MC when run without exp/theory weight unc. variations
+        if (self.isMC and not(self.isSigMC)) or (self.isSigMC and not(self.wtUnc)): 
+            
+            systematic_suffix_map = {
+                                     'central': 'Nom',
+                                    }
+        
+        elif (self.isSigMC and self.wtUnc):
+            
+            systematic_suffix_map = {
+                                     'central': 'Nom',
+                                     'up_correlated': 'CorrelatedUp',
+                                     'down_correlated': 'CorrelatedDown',
+                                     'up_uncorrelated': 'UncorrelatedUp',
+                                     'down_uncorrelated': 'UncorrelatedDown'
+                                    }
+        
+        
+        new_fields = OrderedDict()
+        
+        
+        for s in systematic_suffix_map.keys(): 
+            if not self.sysUnc: 
+                new_fields[f'new{self.sel}_btagWeight{systematic_suffix_map[s]}_nom'] = []
+            else:
+                if s!='central': continue
+                    
+                for sys in self.sysSources:
+                    new_fields[f'new{self.sel}_btagWeight{systematic_suffix_map[s]}{sys}'] = []
+            
+        #new_fields = {
+        #                'new{self.sel}_btagWeightNom_nom': [],
+        #                'new{self.sel}_btagWeightUp_nom': [],
+        #                'new{self.sel}_btagWeightDown_nom': []
+        #             }
+
+        if not(self.sysUnc): sysList = ['_nom']
+        else: sysList=self.sysSources
+
+        print(f"Computing btagging weights ({systematic_suffix_map.keys()}) for following sys sources: {sysList}")
+        
+        
+        for i in range(0, len(events)):
+                
+            for sys in sysList:     
+                
+                if events[f'passRecoSel{sys}'][i]!=1: 
+                    for systematic in systematic_suffix_map.keys():
+                        new_fields[f'new{self.sel}_btagWeight{systematic_suffix_map[systematic]}{sys}'].append(1.)
+                else:
+
+                    jet_pt = events['Jet_pt'][i]
+                    jet_eta = events['Jet_eta'][i]
+                    jet_ID = events['Jet_jetId'][i]
+                    jet_flav = events['Jet_hadronFlavour'][i]
+                    jet_discr = events['Jet_btagDeepFlavB'][i]
+
+                    # Define the masks
+                    ID_mask = jet_ID>=self.AK4_jetID
+                    discr_mask = (jet_discr >= self.WPBDisc)
+                    ptMask = (jet_pt > self.AK4_ptmin)
+                    etaMask =((jet_eta<=self.AK4_etamax) & (jet_eta>=-1.*self.AK4_etamax))# (np.abs(jet_eta) <= self.AK4_etamax)
+                    jet_eta = np.abs(jet_eta)
+                    
+                    # Apply the masks
+                    pt, eta, flav = mask(ptMask, etaMask, discr_mask, ID_mask, jet_pt, jet_eta, jet_flav)
+
+                    # Identify b, c, and light jets
+                    b_jets = np.where(flav == 5)
+                    c_jets = np.where(flav == 4)
+                    light_jets = np.where(flav == 0)
+
+                    # Get efficiencies
+                    b_efficiencies = np.array([get_efficiency(self.effHist_b, p, e) for p, e in zip(pt[b_jets], eta[b_jets])])
+                    c_efficiencies = np.array([get_efficiency(self.effHist_c, p, e) for p, e in zip(pt[c_jets], eta[c_jets])])
+                    light_efficiencies = np.array([get_efficiency(self.effHist_udsg, p, e) for p, e in zip(pt[light_jets], eta[light_jets])])
+
+                    # Compute SFs for each systematic
+                    for systematic in systematic_suffix_map.keys():#self.btaggingSystLabels:
+                        _, _, _, SFs = compute_btagSFAndWeight(self.btvjson, systematic, self.btagWP, 
+                                                               flav, eta, pt, 
+                                                               b_jets, c_jets, light_jets,
+                                                               b_efficiencies, c_efficiencies, light_efficiencies)
+
+                        new_fields[f'new{self.sel}_btagWeight{systematic_suffix_map[systematic]}{sys}'].append(np.prod(SFs))
+    
+
+        # Convert lists to arrays
+        for key in new_fields:
+            new_fields[key] = np.array(new_fields[key])
+
+        return new_fields
+        
+        
+#####################################################
+###################### Helpers ######################
+#####################################################
+def compute_btagSFAndWeight(btvjson, systematic, WP,
+                            flav, eta, pt, 
+                            b_jets, c_jets, light_jets,
+                            b_efficiencies, c_efficiencies, light_efficiencies
+                           ):
+    bJet_SFs = btvjson["deepJet_comb"].evaluate(systematic, WP, 
+                                               np.array(flav[b_jets]), 
+                                               np.array(eta[b_jets]), 
+                                               np.array(pt[b_jets]))
+    cJet_SFs = btvjson["deepJet_comb"].evaluate(systematic, WP, 
+                                               np.array(flav[c_jets]), 
+                                               np.array(eta[c_jets]), 
+                                               np.array(pt[c_jets]))
+    lightJet_SFs = btvjson["deepJet_incl"].evaluate(systematic, WP, 
+                                                    np.array(flav[light_jets]), 
+                                                    np.array(eta[light_jets]), 
+                                                    np.array(pt[light_jets]))
+
+    bJet_SFs *= b_efficiencies 
+    cJet_SFs *= c_efficiencies
+    lightJet_SFs *= light_efficiencies
+    weight = np.concatenate((bJet_SFs, cJet_SFs, lightJet_SFs))
+
+    return bJet_SFs, cJet_SFs, lightJet_SFs, weight
+
+def mask(ptMask, etaMask, discrMask, idMask, pt, eta, flav):
+    
+    #print(ptMask, etaMask, discrMask, pt, eta, flav)
+    
+    try:
+        masking = ptMask & etaMask & discrMask & idMask
+        return pt[masking],eta[masking],flav[masking]
+    except TypeError:
+        if type(pt)==float and (type(eta)==float or type(eta)==np.float64) and type(flav)==int:
+            #masking = ptMask & etaMask & discrMask & idMask
+            #print(pt, eta, flav)
+            ptMask, etaMask, discrMask, idMask, pt, eta, flav = np.array([ptMask]), np.array([etaMask]), np.array([discrMask]), np.array([idMask]), np.array([pt]), np.array([eta]), np.array([flav])
+            
+            masking = ptMask & etaMask & discrMask & idMask
+
+            return pt[masking],eta[masking],flav[masking]
+        else:
+            
+            print("Unhandled error occured for these inputs", ptMask, etaMask, discrMask, idMask, pt,eta,flav)
+            print(type(ptMask), type(etaMask), type(discrMask), type(idMask), type(pt),type(eta),type(flav))
+            return [],[],[]
+    
+    #masking = ptMask & etaMask & discrMask & idMask
+    
+    #if len(pt)>=1 and len(eta)>=1 and len(flav)>=1:
+    #    masking = ptMask & etaMask & discrMask & idMask
+    #else: 
+    #    if type(pt)==float and type(eta)==float and type(flav)==float:
+    #        #masking = ptMask & etaMask & discrMask & idMask
+    #        pt, eta, flav = list(pt),list(eta),list(flav)
+    #try:
+    
+    #return pt[masking],eta[masking],flav[masking]
+    
+    #except TypeError:
+    #    try: 
+    #        print("Shapes:", pt.shape, eta.shape, flav.shape)
+    #    except AttributeError:
+    #        print("Values:", pt, eta, flav)
+    #    return [pt], [eta], [flav]
+def get_efficiency(hist, pt, eta):
+    # Extract the bin edges for eta and pt
+    eta_edges = hist.axis('x').edges()
+    pt_edges = hist.axis('y').edges()
+
+    # Find the bin index for eta and pt
+    binx = np.digitize(eta, eta_edges) - 1
+    biny = np.digitize(pt, pt_edges) - 1
+
+    # Handle overflow bins <=need to check this again maybe?
+    binx = np.clip(binx, 0, len(eta_edges) - 2)
+    biny = np.clip(biny, 0, len(pt_edges) - 2)
+
+    # Extract relevant the bin contents
+    bin_contents_eff = hist.values()
+
+    # Return the said bin content
+    return bin_contents_eff[binx, biny]
+

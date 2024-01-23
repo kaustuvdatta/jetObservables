@@ -1,32 +1,44 @@
 # this is a comment
 drop *
-#keep FatJet*
-#keep Electron*
-#keep Flag*
-drop Flag_*
-#keep GenDressed*
-#keep GenJetAK8*
-#keep GenPartAK8*
-#keep GenMET*
-#keep GenPart*
+keep FatJet*
+keep Electron*
 #keep HLT_PFHT*
 #keep HLT_*AK8*
-#keep Jet*
 #keep PFCandsAK8*
 #keep LHE*eight*
-#keep Muon*
-#keep MET*
+keep Muon*
+keep MET*
 #keep PSWeight*
-#keep PV*
+keep PV*
 #keep PuppiMET*
+
+keep GenJet*
+keep GenDressedLepton*
+keep GenPart*
+keep GenMET*
+keep GenCands*
+
+
+keep Jet_pt
+keep Jet_eta
+keep Jet_phi
+keep Jet_mass
+keep Jet_jetId
+keep Jet_hadronFlavour
+keep Jet_partonFlavour
+keep Jet_btagDeepFlavB
+keep Jet_btagSF*
+keep Jet_raw*
 
 
 keep passHLT*
-keep Jet_btag*
-keep HLT_Mu*
-keep HLT_TkMu*
+keep HLT_Mu50*
+#keep HLT_TkMu*
 keep btagWeight*
-keep Flag*
+keep FlagReco*
+keep FlagGen*
+keep FlagDeltaR*
+
 keep nReco*
 keep nGen*
 keep leptonWeight*	
