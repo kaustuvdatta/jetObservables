@@ -1,7 +1,4 @@
 #!/usr/bin/env python
-### For xsec calculation: grep miniAOD datasets.py | awk '{ print $4 }' | sed "s/'//g" | sed  's/"//g' | sed 's/\,//g' > calculateXSectionAndFilterEfficiency/datasets.txt
-
-#cross checked XS vs AN2022_118_v11 (https://cms.cern.ch/iCMS/analysisadmin/cadilines?line=TOP-22-014&tp=an&id=2632&ancode=TOP-22-014)
 import ROOT
 
 dictSamples = {
@@ -225,7 +222,7 @@ dictSamples = {
             'nGenWeights' : 0.,
             },
         '2018' :  {
-            'miniAOD' : [ '/TTToHadronic_TuneCP5_13TeV-powheg-pythia8/RunIISummer20UL18MiniAODv2-106X_upgrade2018_realistic_v16_L1v1-v1/MINIAODSIM' ], #pfnano has 1 extra file not counted in DAS filelist (stupid crab publishing issues c.a. 08/2022), ensure number of events run on ends up matching nevents in skimmed pfnano for a full successful run over the entire dataset
+            'miniAOD' : [ '/TTToHadronic_TuneCP5_13TeV-powheg-pythia8/RunIISummer20UL18MiniAODv2-106X_upgrade2018_realistic_v16_L1v1-v1/MINIAODSIM' ], 
             'nanoAOD' : [ '/TTToHadronic_TuneCP5_13TeV-powheg-pythia8/kadatta-RunIISummer20UL18PFNanoAOD-106X_upgrade2018_realistic_v16_L1v1-v1-654ac7a30df3f7a4474385d73390277c/USER' ],
             'skimmer' : [ '/TTToHadronic_TuneCP5_13TeV-powheg-pythia8/kadatta-RunIISummer20UL18PFNanoAOD-106X_upgrade2018_realistic_v16_L1v1-v1-654ac7a30df3f7a4474385d73390277c/USER' ],
             'skimmerHisto' : 'TTToHadronic_powheg_pythia8_UL2018.root',
@@ -1210,44 +1207,3 @@ dictSamples = {
 def checkDict( string, dictio ):
     return next(dictio[k] for k in list(dictio.keys()) if k.startswith(string))
 
-"""    
-    
-    'ST_s-channel_4f_hadronicDecays_TuneCP5_13TeV-amcatnlo-pythia8' : {
-        '2016_preVFP' :  {
-            'miniAOD' : [ '/ST_s-channel_4f_hadronicDecays_TuneCP5_13TeV-amcatnlo-pythia8/RunIISummer20UL16MiniAODAPVv2-106X_mcRun2_asymptotic_preVFP_v11-v2/MINIAODSIM' ],
-            'nanoAOD' : [ '/ST_s-channel_4f_hadronicDecays_TuneCP5_13TeV-amcatnlo-pythia8/spigazzi-RunIISummer20UL16PFNanov2pt2APVv2-106X_mcRun2_asymptotic_preVFP_v11-v2-5b62f87422b4b3633317ac4b6822e17c/USER' ],
-            'skimmer' : [ '/ST_s-channel_4f_hadronicDecays_TuneCP5_13TeV-amcatnlo-pythia8/spigazzi-RunIISummer20UL16PFNanov2pt2APVv2-106X_mcRun2_asymptotic_preVFP_v11-v2-5b62f87422b4b3633317ac4b6822e17c/USER' ],
-            'skimmerHisto' : 'ST_s-channel_4f_hadronicDecays_amcatnlo_pythia8_UL2016_preVFP.root',
-            'nevents' : 1.,
-            'nGenWeights' : 70439807.475972,
-            },
-        '2016' :  {
-            'miniAOD' : [ '/ST_s-channel_4f_hadronicDecays_TuneCP5_13TeV-amcatnlo-pythia8/RunIISummer20UL16MiniAODv2-106X_mcRun2_asymptotic_v17-v2/MINIAODSIM' ],
-            'nanoAOD' : [ '/ST_s-channel_4f_hadronicDecays_TuneCP5_13TeV-amcatnlo-pythia8/spigazzi-RunIISummer20UL16PFNanov2pt2-106X_mcRun2_asymptotic_v17-v2-36773dbd6a9d41d00afbee31f82bc069/USER' ],
-            'skimmer' : [ '/ST_s-channel_4f_hadronicDecays_TuneCP5_13TeV-amcatnlo-pythia8/spigazzi-RunIISummer20UL16PFNanov2pt2-106X_mcRun2_asymptotic_v17-v2-36773dbd6a9d41d00afbee31f82bc069/USER' ],
-            'skimmerHisto' : 'ST_s-channel_4f_hadronicDecays_amcatnlo_pythia8_UL2016.root',
-            'nevents' : 1.,
-            'nGenWeights' : 64014403.924644,
-            },
-        '2017' :  {
-            'miniAOD' : [ '/ST_s-channel_4f_hadronicDecays_TuneCP5_13TeV-amcatnlo-pythia8/RunIISummer20UL17MiniAODv2-106X_mc2017_realistic_v9-v2/MINIAODSIM' ],
-            'nanoAOD' : [ '/ST_s-channel_4f_hadronicDecays_TuneCP5_13TeV-amcatnlo-pythia8/kadatta-RunIISummer20UL17PFNanoAOD-106X_mc2017_realistic_v9-v2-3a26c9a4394b9b50b8bf5dda6bb9a62c/USER' ],
-            'skimmer' : [ '/ST_s-channel_4f_hadronicDecays_TuneCP5_13TeV-amcatnlo-pythia8/kadatta-RunIISummer20UL17PFNanoAOD-106X_mc2017_realistic_v9-v2-3a26c9a4394b9b50b8bf5dda6bb9a62c/USER' ],
-            'skimmerHisto' : 'ST_s-channel_4f_hadronicDecays_amcatnlo_pythia8_UL2017.root',
-            'nevents' : 1.,
-            'nGenWeights' : 70439807.475972,
-            },
-        '2018' :  {
-            'miniAOD' : [ '/ST_s-channel_4f_hadronicDecays_TuneCP5_13TeV-amcatnlo-pythia8/RunIISummer20UL18MiniAODv2-106X_upgrade2018_realistic_v16_L1v1-v2/MINIAODSIM' ],
-            'nanoAOD' : [ '/ST_s-channel_4f_hadronicDecays_TuneCP5_13TeV-amcatnlo-pythia8/kadatta-RunIISummer20UL18PFNanov2pt3-106X_upgrade2018_realistic_v16_L1v1-v2-654ac7a30df3f7a4474385d73390277c/USER' ],
-            'skimmer' : [ '/ST_s-channel_4f_hadronicDecays_TuneCP5_13TeV-amcatnlo-pythia8/kadatta-RunIISummer20UL18PFNanov2pt3-106X_upgrade2018_realistic_v16_L1v1-v2-654ac7a30df3f7a4474385d73390277c/USER' ],
-            'skimmerHisto' : 'ST_s-channel_4f_hadronicDecays_amcatnlo_pythia8_UL2018.root',
-            'nevents' : 1.,
-            'nGenWeights' : 64014403.924644,
-            },
-        'selection' : 'Wtop',
-        'XS' :  7.104e+00,
-        'label' : 'Single top' ,
-        'color': ROOT.kGreen+2,
-    }, 
-"""
