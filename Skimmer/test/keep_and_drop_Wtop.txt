@@ -56,6 +56,11 @@ keep puWeight*
 keep l1prefiring*
 keep true*
 keep accep*
+
+keep nsel*
+keep naccep*
+keep ntrue*
+
 keep genSel*
 keep genEvent*
 keep accepgenSel*

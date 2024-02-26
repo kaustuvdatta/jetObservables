@@ -97,11 +97,17 @@ else:
     isMC = True
     print "sample is MC"
 
-### General selections:
+### General trigger and MET filter based selections:
 PV = "(PV_npvsGood>0)"
-if not '2016' in args.year: METFilters = "( (Flag_goodVertices==1) && (Flag_globalSuperTightHalo2016Filter==1) && (Flag_HBHENoiseFilter==1) && (Flag_HBHENoiseIsoFilter==1) && (Flag_EcalDeadCellTriggerPrimitiveFilter==1) && (Flag_BadPFMuonFilter==1) && (Flag_BadPFMuonDzFilter==1) )"
-else: METFilters = "( (Flag_goodVertices==1) && (Flag_globalSuperTightHalo2016Filter==1) && (Flag_HBHENoiseFilter==1) && (Flag_HBHENoiseIsoFilter==1) && (Flag_EcalDeadCellTriggerPrimitiveFilter==1) && (Flag_BadPFMuonFilter==1)  )"
-if not isMC: METFilters = METFilters + "&& (Flag_eeBadScFilter==1)"
+#if not '2016' in args.year: METFilters = "( (Flag_goodVertices==1) && (Flag_globalSuperTightHalo2016Filter==1) && (Flag_HBHENoiseFilter==1) && (Flag_HBHENoiseIsoFilter==1) && (Flag_EcalDeadCellTriggerPrimitiveFilter==1) && (Flag_BadPFMuonFilter==1) && (Flag_BadPFMuonDzFilter==1) )"
+#else: METFilters = "( (Flag_goodVertices==1) && (Flag_globalSuperTightHalo2016Filter==1) && (Flag_HBHENoiseFilter==1) && (Flag_HBHENoiseIsoFilter==1) && (Flag_EcalDeadCellTriggerPrimitiveFilter==1) && (Flag_BadPFMuonFilter==1)  )"
+#if not isMC: METFilters = METFilters + "&& (Flag_eeBadScFilter==1)"
+if not '2016' in args.year:
+    METFilters = "( (Flag_goodVertices==1) && (Flag_globalSuperTightHalo2016Filter==1) && (Flag_HBHENoiseFilter==1) && (Flag_HBHENoiseIsoFilter==1) && (Flag_EcalDeadCellTriggerPrimitiveFilter==1) && (Flag_BadPFMuonFilter==1) && (Flag_BadPFMuonDzFilter==1) && (Flag_eeBadScFilter==1) && (Flag_ecalBadCalibFilter==1))"#&& (Flag_hfNoisyHitsFilter==1)
+else: 
+    METFilters = "( (Flag_goodVertices==1) && (Flag_globalSuperTightHalo2016Filter==1) && (Flag_HBHENoiseFilter==1) && (Flag_HBHENoiseIsoFilter==1) && (Flag_EcalDeadCellTriggerPrimitiveFilter==1) && (Flag_BadPFMuonFilter==1) && (Flag_BadPFMuonDzFilter==1) && (Flag_eeBadScFilter==1) )"#&& (Flag_hfNoisyHitsFilter==1)
+
+
 
 #commenting out triggers to create datasets with only offline selections, also choosing a much lower mu_pt in skimmer (from 55 to 25 GeV) 
 # SOLVED -> issue was arising from lack of availability of HLT_TkMu50 in some preVFP runs equalling ~3 /fb
@@ -225,8 +231,8 @@ p1=PostProcessor(
     prefetch     = args.local,
     longTermCache= args.local,
     fwkJobReport = True,
-    haddFileName = "jetObservables_"+args.selection+args.year+args.onlyUnc+("sigMC" if args.isSigMC else "")+("_effMap" if args.effMap else "")+"_nanoskim_V3_noID.root" if args.local else 'jetObservables_nanoskim.root',
-    histFileName = "jetObservables_"+args.selection+args.year+args.onlyUnc+("sigMC" if args.isSigMC else "")+("_effMap" if args.effMap else "")+"_histograms_V3_noID.root" if args.local else 'jetObservables_histograms.root',
+    haddFileName = "jetObservables_"+args.selection+args.year+args.onlyUnc+("sigMC" if args.isSigMC else "")+("_effMap" if args.effMap else "")+"_nanoskim.root" if args.local else 'jetObservables_nanoskim.root',
+    histFileName = "jetObservables_"+args.selection+args.year+args.onlyUnc+("sigMC" if args.isSigMC else "")+("_effMap" if args.effMap else "")+"_histograms.root" if args.local else 'jetObservables_histograms.root',
     histDirName  = 'jetObservables',
 )
 
