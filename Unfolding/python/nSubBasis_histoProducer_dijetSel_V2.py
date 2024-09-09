@@ -3,13 +3,12 @@ import uproot
 from uproot import *
 import coffea
 '''
+import os,time,re,gc,copy
 from os.path import exists
 
 from coffea import processor
 import coffea.processor
 from coffea.processor import defaultdict_accumulator,dict_accumulator#,IterativeExecutor,FuturesExecutor
-import time
-import re
 from datasets_dijetSel_RunIISummer20UL_SampleDictPrep import dictSamples, checkDict
 from collections import OrderedDict
 import numpy as np
@@ -17,17 +16,20 @@ import awkward as ak
 import uproot
 import hist
 from hist import Hist
-import gc 
 from collections import defaultdict
-import numba
+from itertools import islice
+from coffea.processor import accumulate
+from uproot import ThreadPoolExecutor
+from rich.progress import track
 
 
 
-class nSubBasis_unfoldingHistoProd_Dijets(processor.ProcessorABC):
+class nSubBasis_unfoldingHistoProd_Dijets():#processor.ProcessorABC
     
     def __init__(self, sampleName, sysSource=[],year='2017', era='', 
                  isMC=True, isSigMC=True, onlyUnc='', wtUnc=False, verbose=False, saveParquet=False, onlyParquet=False,
-                 sampleDict=dictSamples,test=False, sysUnc=False, splitCount='0', jetType='Central'):
+                 sampleDict=dictSamples,test=False, sysUnc=False, splitCount='0', jetType='Central', trigTest=False, 
+                 trigUpDownVal=10, withLepVeto=False):
         self.test=test
         self.jetType=jetType
         self.year = year
@@ -44,7 +46,10 @@ class nSubBasis_unfoldingHistoProd_Dijets(processor.ProcessorABC):
         self.onlyParquet=onlyParquet        
         self.dictSamples = sampleDict
         self.sampleName = sampleName
-        
+        self.trigTest = trigTest
+        self.trigUpDownVal = trigUpDownVal if self.trigTest else 0.
+        self.withLepVeto = withLepVeto
+            
         if (not self.isMC) and self.era=='': print (f'Data-loading error: You need to specify what era if you want to work with data' )
         
         
@@ -60,96 +65,185 @@ class nSubBasis_unfoldingHistoProd_Dijets(processor.ProcessorABC):
 
 
         self.triggerTable = OrderedDict()
-        self.triggerTable[ 'AK8PFJet80' ] = {
-                                                '2016_preVFP': [117.16,   187.13],
-                                                '2016': [114.45, 184.87],
-                                                '2017': [145.03, 213.39],
-                                                '2018': [146.08, 214.87],
-                                                }
+        '''
+        #new turn on (V2) values from better modelling of the plateau
+        self.triggerTable[ 'AK8PFJet80' ] = {    
+                    '2016_preVFP': [130.8, 203.52],
+                    '2016': [128.81, 201.90],
+                    '2017': [158.3, 229.03],
+                    '2018': [165.83, 237.12],
+                    }
         self.triggerTable[ 'AK8PFJet140' ] = {
-                                                '2016_preVFP': [187.13, 257.1],
-                                                '2016': [184.87, 255.29],
-                                                '2017': [213.39, 281.75],
-                                                '2018': [214.87, 283.67],
-                                                }
+                    '2016_preVFP': [203.52, 276.25],
+                    '2016': [201.90, 274.99],
+                    '2017': [229.03, 299.75],
+                    '2018': [237.12, 308.41],
+                    }
         self.triggerTable[ 'AK8PFJet200' ] = {
-                                                '2016_preVFP': [257.1, 327.07],
-                                                '2016': [255.29, 325.70],
-                                                '2017': [281.75, 350.11],
-                                                '2018': [283.67, 352.47],
-                                                }
+                    '2016_preVFP': [276.25, 348.98],
+                    '2016': [274.99, 348.07],
+                    '2017': [299.75, 370.48],
+                    '2018': [308.41, 379.7],
+                    }
         self.triggerTable[ 'AK8PFJet260' ] = {
-                                                '2016_preVFP': [327.07, 397.04],
-                                                '2016': [325.70, 396.12],
-                                                '2017': [350.11, 418.47],
-                                                '2018': [352.47, 421.26],
-                                                }
+                    '2016_preVFP': [348.98, 421.7],
+                    '2016': [348.07, 421.16],
+                    '2017': [370.48, 441.21],
+                    '2018': [379.7, 450.99],
+                    }
         self.triggerTable[ 'AK8PFJet320' ] = {
-                                                '2016_preVFP': [397.04, 490.34],
-                                                '2016': [396.12, 490.01],
-                                                '2017': [418.47, 509.62],
-                                                '2018': [421.26, 512.99],
-                                                }
+                    '2016_preVFP': [421.7, 518.67],
+                    '2016': [421.16, 518.61],
+                    '2017': [441.21, 535.51],
+                    '2018': [450.99, 546.05],
+                    }
         self.triggerTable[ 'AK8PFJet400' ] = {
-                                                '2016_preVFP': [490.34, 548.65],
-                                                '2016': [490.01, 548.69],
-                                                '2017': [509.62, 566.59],
-                                                '2018': [512.99, 570.32],     
-                                                }
+                    '2016_preVFP': [518.67, 579.28],
+                    '2016': [518.61, 579.52],
+                    '2017': [535.51, 594.45],
+                    '2018': [546.05, 605.46],  
+                    }
         self.triggerTable[ 'AK8PFJet450' ] = {
-                                                '2016_preVFP': [548.65, 606.96],
-                                                '2016': [548.69, 607.38],
-                                                '2017': [566.59, 623.55],
-                                                '2018': [570.32, 627.65],
-                                                }
+                    '2016_preVFP': [579.28, 6500.],#639.88],
+                    '2016': [579.52, 6500.],#640.42],
+                    '2017': [594.45, 653.39],
+                    '2018': [605.46, 664.86],
+                    }
         self.triggerTable[ 'AK8PFJet500' ] = {
-                                                '2016_preVFP': [606.96, 6500.],
-                                                '2016': [607.38, 6500.],
-                                                '2017': [623.55, 680.52],
-                                                '2018': [627.65, 684.98],
-                                                }
+                    #'2016_preVFP': [639.88, 6500.],
+                    #'2016': [640.42, 6500.],
+                    '2017': [653.39, 6500.],#712.33],
+                    '2018': [664.86, 6500.],#724.27],
+                    }
+        #if '2017' in self.year or '2018' in self.year:
+        #    self.triggerTable[ 'AK8PFJet550' ] = {
+        #                '2017' : [ 712.33, 6500.],
+        #                '2018' : [ 724.27, 6500.],
+        #                }
+        '''   
+        
+        #new turn on (V3) values from better modelling of the plateau
+        self.triggerTable['AK8PFJet80'] = {
+                                            '2016': [117.649,191.368],
+                                            '2016_preVFP': [121.938,192.909],
+                                            '2017': [146.47,220.122],
+                                            '2018': [141.586,224.871],
+                                           }
+        self.triggerTable['AK8PFJet140'] = {
+                                            '2016': [191.368,263.426],
+                                            '2016_preVFP': [192.909,266.569],
+                                            '2017': [220.122,294.317],
+                                            '2018': [224.871,299.834],
+                                           }
+        self.triggerTable['AK8PFJet200'] = {
+                                            '2016': [263.426,335.765],
+                                            '2016_preVFP': [266.569,338.288],
+                                            '2017': [294.317,363.808],
+                                            '2018': [299.834,372.496],
+                                           }
+        self.triggerTable['AK8PFJet260'] = {
+                                            '2016': [335.765,409.866],
+                                            '2016_preVFP': [338.288,411.402],
+                                            '2017': [363.808,435.629],
+                                            '2018': [372.496,443.459],
+                                           }
+        self.triggerTable['AK8PFJet320'] = {
+                                            '2016': [409.866,509.961],
+                                            '2016_preVFP': [411.402,510.262],
+                                            '2017': [435.629,530.812],
+                                            '2018': [443.459,540.081],
+                                           }
+        self.triggerTable['AK8PFJet400'] = {
+                                            '2016': [509.961,560.765],
+                                            '2016_preVFP': [510.262,568.293],
+                                            '2017': [530.812,580.872],
+                                            '2018': [540.081,585.585],
+                                           }
+        self.triggerTable['AK8PFJet450'] = {
+                                            '2016': [560.765, 6500.],#634.024],
+                                            '2016_preVFP': [568.293, 6500.],#631.693],
+                                            '2017': [580.872,640.092],
+                                            '2018': [585.585,645.01],
+                                           }
         if '2017' in self.year or '2018' in self.year:
-            self.triggerTable[ 'AK8PFJet550' ] = {
-                                                    '2017': [680.52, 6500.],
-                                                    '2018': [684.98, 6500.],
-                                                 }
+        
+            self.triggerTable['AK8PFJet500'] = {
+                                                #'2016': [634.024,6500.0],
+                                                #'2016_preVFP': [631.693,6500.0],
+                                                '2017': [640.092,6500.0],#,700.13],
+                                                '2018': [645.01,6500.0],#,701.393],
+                                               }
+        #if '2017' in self.year or '2018' in self.year:
+        #    self.triggerTable['AK8PFJet550'] = {
+        #                                        '2017': [700.13,6500.0],
+        #                                        '2018': [701.393,6500.0],
+        #                                       }
+        if self.trigTest:
+            for it in list(self.triggerTable.keys()):
+                if self.year in self.triggerTable[it].keys():
+                    self.triggerTable[it][self.year][0] += trigUpDownVal
+                    if not(self.triggerTable[it][self.year][1]==6500.):
+                        self.triggerTable[it][self.year][1] += trigUpDownVal
+            
+            
+        
         
         self.dict_variables_toUnfold = {
                     
-                                "_tau_0p5_1": np.array([(i/200) for i in np.arange(0.*200, 1.*201)]),
-                                "_tau_0p5_2": np.array([(i/200) for i in np.arange(0.*200, 0.9*201)]),
-                                "_tau_0p5_3": np.array([(i/200) for i in np.arange(0.*200, 0.8*201)]),
-                                "_tau_0p5_4": np.array([(i/200) for i in np.arange(0.*200, 0.7*201)]),
-                                "_tau_0p5_5": np.array([(i/200) for i in np.arange(0.*200, 0.7*201)]),
-                                "_tau_1_1": np.array([(i/200) for i in np.arange(0.*200, 0.9*201)]),
-                                "_tau_1_2": np.array([(i/200) for i in np.arange(0.*200, 0.6*201)]),
-                                "_tau_1_3": np.array([(i/200) for i in np.arange(0.*200, 0.4*201)]),
-                                "_tau_1_4": np.array([(i/200) for i in np.arange(0.*200, 0.3*201)]),
-                                "_tau_1_5": np.array([(i/200) for i in np.arange(0.*200, 0.3*201)]),
-                                "_tau_2_1": np.array([(i/200) for i in np.arange(0.*200, 0.5*201)]),
-                                "_tau_2_2": np.array([(i/200) for i in np.arange(0.*200, 0.3*201)]),
-                                "_tau_2_3": np.array([(i/200) for i in np.arange(0.*200, 0.2*201)]),
-                                "_tau_2_4": np.array([(i/200) for i in np.arange(0.*200, 0.2*201)]),
-                                "_tau_2_5": np.array([(i/200) for i in np.arange(0.*200, 0.2*201)]),
-                                "_tau21": np.array([(i/200) for i in np.arange(0.*200, 1.6*201)]),#for one-pass kT minimization as per CMS
-                                "_tau32": np.array([(i/200) for i in np.arange(0.*200, 1.6*201)]),#for one-pass kT minimization as per CMS
-                                "_tau21_WTA": np.array([(i/200) for i in np.arange(0.*200, 1.4*201)]),#for WTA-kT for comparison
-                                "_tau32_WTA": np.array([(i/200) for i in np.arange(0.*200, 1.4*201)]),#for WTA-kT for comparison
-                                "_tau21_exkT": np.array([(i/200) for i in np.arange(0.*200, 2.*201)]),#for excl.-kT and E-scheme as per basis
-                                "_tau32_exkT": np.array([(i/200) for i in np.arange(0.*200, 2.*201)]),#for excl.-kT and E-scheme as per basis
+                                "_tau_0p25_1": np.array([(i/200) for i in np.arange(0.*200, 1.005*200)]),
+                                "_tau_0p25_2": np.array([(i/200) for i in np.arange(0.*200, 0.905*200)]),
+                                "_tau_0p25_3": np.array([(i/500) for i in np.arange(0.*500, 0.852*500)]),
+                                "_tau_0p25_4": np.array([(i/500) for i in np.arange(0.*500, 0.852*500)]),
+                                "_tau_0p25_5": np.array([(i/500) for i in np.arange(0.*500, 0.802*500)]),
+            
+                                "_tau_0p5_1": np.array([(i/200) for i in np.arange(0.*200, 1.005*200)]),
+                                "_tau_0p5_2": np.array([(i/200) for i in np.arange(0.*200, 0.855*200)]),
+                                "_tau_0p5_3": np.array([(i/500) for i in np.arange(0.*500, 0.752*500)]),
+                                "_tau_0p5_4": np.array([(i/500) for i in np.arange(0.*500, 0.702*500)]),
+                                "_tau_0p5_5": np.array([(i/500) for i in np.arange(0.*500, 0.652*500)]),
+            
+                                "_tau_1_1": np.array([(i/200) for i in np.arange(0.*200, 0.855*200)]),
+                                "_tau_1_2": np.array([(i/200) for i in np.arange(0.*200, 0.505*200)]),
+                                "_tau_1_3": np.array([(i/500) for i in np.arange(0.*500, 0.352*500)]),
+                                "_tau_1_4": np.array([(i/500) for i in np.arange(0.*500, 0.302*500)]),
+                                "_tau_1_5": np.array([(i/500) for i in np.arange(0.*500, 0.252*500)]),
+                                
+                                "_tau_1p5_1": np.array([(i/200) for i in np.arange(0.*200, 0.605*200)]),
+                                "_tau_1p5_2": np.array([(i/200) for i in np.arange(0.*200, 0.325*200)]),
+                                "_tau_1p5_3": np.array([(i/500) for i in np.arange(0.*500, 0.252*500)]),
+                                "_tau_1p5_4": np.array([(i/500) for i in np.arange(0.*500, 0.202*500)]),
+                                "_tau_1p5_5": np.array([(i/500) for i in np.arange(0.*500, 0.182*500)]),
+                                
+                                
+                                "_tau_2_1": np.array([(i/200) for i in np.arange(0.*200, 0.505*200)]),
+                                "_tau_2_2": np.array([(i/200) for i in np.arange(0.*200, 0.225*200)]),
+                                "_tau_2_3": np.array([(i/500) for i in np.arange(0.*500, 0.152*500)]),
+                                "_tau_2_4": np.array([(i/500) for i in np.arange(0.*500, 0.102*500)]),
+                                "_tau_2_5": np.array([(i/500) for i in np.arange(0.*500, 0.072*500)]),
+                                
+                                "_tau21": np.array([(i/500) for i in np.arange(0.*500, 1.202*500)]),#for one-pass kT minimization as per CMS
+                                "_tau32": np.array([(i/500) for i in np.arange(0.*500, 1.202*500)]),#for one-pass kT minimization as per CMS
+                                
+                                "_tau21_WTA": np.array([(i/500) for i in np.arange(0.*500, 1.102*501)]),#for WTA-kT for comparison
+                                "_tau32_WTA": np.array([(i/500) for i in np.arange(0.*500, 1.102*501)]),#for WTA-kT for comparison
+                                
+                                "_tau21_exkT": np.array([(i/500) for i in np.arange(0.*500, 1.602*500)]),#for excl.-kT and E-scheme as per basis
+                                "_tau32_exkT": np.array([(i/500) for i in np.arange(0.*500, 1.602*500)]),#for excl.-kT and E-scheme as per basis
 
                                }
         self.kinematic_labels = ['_pt','_eta', '_y', '_phi', '_mass', '_msoftdrop']
         self.reco_only_labels = ['_good_nPVs']
+        #self.extra_labels = ['deltaPhi', ]
 
         self.dict_variables_kinematics = {
-                                            "_pt": np.array([i for i in np.arange(70., 3570., 5.)]),
-                                            "_eta": np.array([i for i in np.arange(-2.2, 2.3, 0.1)]),
-                                            "_y": np.array([i for i in np.arange(-2.2, 2.3, 0.1)]),
-                                            "_phi": np.array([i for i in np.arange(-3.2, 3.3, 0.1)]),
-                                            "_mass": np.array([i for i in np.arange(0., 465., 5.)]),
-                                            "_msoftdrop": np.array([i for i in np.arange(0., 465., 5.)]),
+                                            "_pt": np.array([i for i in np.arange(70., 3570., 10.)]),
+                                            "_eta": np.array([i for i in np.arange(-2.4, 2.6, 0.2)]),
+                                            "_y": np.array([i for i in np.arange(-2.4, 2.6, 0.2)]),
+                                            "_phi": np.array([i for i in np.arange(-3.4, 3.6, 0.2)]),
+                                            "_mass": np.array([i for i in np.arange(0., 455., 5.)]),
+                                            "_msoftdrop": np.array([i for i in np.arange(0., 455., 5.)]),
                                             "_good_nPVs": np.array([i for i in np.arange(0., 101., 1.)]),
+                                            
                                          }
         
         ### Uncertainties
@@ -194,12 +288,18 @@ class nSubBasis_unfoldingHistoProd_Dijets(processor.ProcessorABC):
             if self.isMC and self.isSigMC:# or self.isaltSigMC:
                 
                 s='_nom' if (sys.startswith(self.sysWeightList)) else sys
+                #print(s)
                 
 
-                selRecoMask = (events[f'totalRecoWeight{s}']!=0) & (events[f'passRecoSel{s}']==1)
+                #if not self.isMC: selRecoMask = (events[f'totalRecoWeight{s}']!=0) & (events[f'passRecoSel{s}']!=0) & (events[f'recoSelectedEventNumber{s}']>=1) #all reco events that are flagged as non-negative should be accepted, >=1 to deal with the potential edge case that first event considered by skimmer isn't accepted in a given (set of) file(s) and stored as 0.
+                #else:
+                selRecoMask = (events[f'totalRecoWeight{s}']!=0) & (events[f'passRecoSel{s}']==1) 
                 selGenMask = (events[f'evtGenWeight_nom']!=0)  & (events[f'passGenSel_nom']==1)
                                                                     
-
+                if self.withLepVeto:
+                    selRecoMask = (selRecoMask) & (events[f'nRecoLeptons_nom']==0)
+                    selGenMask = (selGenMask) & (events[f'nGenLeptons_nom']==0)
+                    
                 trueRecoMask = (selRecoMask) & (selGenMask) & ((events[f'trueRecoJets{s}_pt']>0.) & (events[f'trueRecoJetsF{s}_pt']>0.))
                 
                 fakeRecoMask = (selRecoMask) & ((events[f'trueRecoJets{s}_pt']<0.) | (events[f'trueRecoJetsF{s}_pt']<0.) ) #& (~selGenMask)
@@ -229,22 +329,16 @@ class nSubBasis_unfoldingHistoProd_Dijets(processor.ProcessorABC):
                     
 
                     if (sys.endswith('nom')): 
-                        print(f"Saving .parquet files with file-stem: {self.inputDir[0].split('jetObservables/')[0]+'jetObservables/Dijets_rootToParquet/'+self.inputDir[0].split('kadatta/jetObservables/')[1].split('/')[0]+'_UL'+self.year+f'_nomWts_{self.jetType}Jet_reco/gen/truereco/..._{self.splitCount}'}")
+                        print(f"Saving .parquet files with file-stem: {self.inputDir[0].split('jetObservables/')[0]+'jetObservables/Dijets_rootToParquet/'+self.inputDir[0].split('kadatta/jetObservables/')[1].split('/')[0]+'_UL'+self.year+f'_nomWts_dijetSel_{self.jetType}Jet_OC_reco/gen/truereco/..._{self.splitCount}'}")
                         
-                        ak.to_parquet(events[selRecoMask],self.inputDir[0].split('jetObservables/')[0]+'jetObservables/Dijets_rootToParquet/recoMasked/'+self.year+'/'+self.inputDir[0].split('kadatta/jetObservables/')[1].split('/')[0]+'_UL'+self.year+f'_nomWts_{self.jetType}Jet_reco_{self.splitCount}.parquet')
-                        ak.to_parquet(events[selGenMask],self.inputDir[0].split('jetObservables/')[0]+'jetObservables/Dijets_rootToParquet/genMasked/'+self.year+'/'+self.inputDir[0].split('kadatta/jetObservables/')[1].split('/')[0]+'_UL'+self.year+f'_nomWts_{self.jetType}Jet_gen_{self.splitCount}.parquet')
-                        ak.to_parquet(events[trueRecoMask],self.inputDir[0].split('jetObservables/')[0]+'jetObservables/Dijets_rootToParquet/recoMasked/'+self.year+'/'+self.inputDir[0].split('kadatta/jetObservables/')[1].split('/')[0]+'_UL'+self.year+f'_nomWts_{self.jetType}Jet_truereco_{self.splitCount}.parquet')
-                        ak.to_parquet(events[accepGenMask],self.inputDir[0].split('jetObservables/')[0]+'jetObservables/Dijets_rootToParquet/genMasked/'+self.year+'/'+self.inputDir[0].split('kadatta/jetObservables/')[1].split('/')[0]+'_UL'+self.year+f'_nomWts_{self.jetType}Jet_accepgen_{self.splitCount}.parquet')
-                        ak.to_parquet(events[fakeRecoMask],self.inputDir[0].split('jetObservables/')[0]+'jetObservables/Dijets_rootToParquet/recoMasked/'+self.year+'/'+self.inputDir[0].split('kadatta/jetObservables/')[1].split('/')[0]+'_UL'+self.year+f'_nomWts_{self.jetType}Jet_fakereco_{self.splitCount}.parquet')
-                        ak.to_parquet(events[missGenMask],self.inputDir[0].split('jetObservables/')[0]+'jetObservables/Dijets_rootToParquet/genMasked/'+self.year+'/'+self.inputDir[0].split('kadatta/jetObservables/')[1].split('/')[0]+'_UL'+self.year+f'_nomWts_{self.jetType}Jet_missgen_{self.splitCount}.parquet')
+                        ak.to_parquet(events[selRecoMask],self.inputDir[0].split('jetObservables/')[0]+'jetObservables/Dijets_rootToParquet/recoMasked/'+self.year+'/'+self.inputDir[0].split('kadatta/jetObservables/')[1].split('/')[0]+'_UL'+self.year+f'_nomWts_dijetSel_{self.jetType}Jet_OC_reco_{self.splitCount}.parquet')
+                        ak.to_parquet(events[selGenMask],self.inputDir[0].split('jetObservables/')[0]+'jetObservables/Dijets_rootToParquet/genMasked/'+self.year+'/'+self.inputDir[0].split('kadatta/jetObservables/')[1].split('/')[0]+'_UL'+self.year+f'_nomWts_dijetSel_{self.jetType}Jet_OC_gen_{self.splitCount}.parquet')
+                        #ak.to_parquet(events[trueRecoMask],self.inputDir[0].split('jetObservables/')[0]+'jetObservables/Dijets_rootToParquet/recoMasked/'+self.year+'/'+self.inputDir[0].split('kadatta/jetObservables/')[1].split('/')[0]+'_UL'+self.year+f'_nomWts_{self.jetType}Jet_truereco_{self.splitCount}.parquet')
+                        #ak.to_parquet(events[accepGenMask],self.inputDir[0].split('jetObservables/')[0]+'jetObservables/Dijets_rootToParquet/genMasked/'+self.year+'/'+self.inputDir[0].split('kadatta/jetObservables/')[1].split('/')[0]+'_UL'+self.year+f'_nomWts_{self.jetType}Jet_accepgen_{self.splitCount}.parquet')
+                        #ak.to_parquet(events[fakeRecoMask],self.inputDir[0].split('jetObservables/')[0]+'jetObservables/Dijets_rootToParquet/recoMasked/'+self.year+'/'+self.inputDir[0].split('kadatta/jetObservables/')[1].split('/')[0]+'_UL'+self.year+f'_nomWts_{self.jetType}Jet_fakereco_{self.splitCount}.parquet')
+                        #ak.to_parquet(events[missGenMask],self.inputDir[0].split('jetObservables/')[0]+'jetObservables/Dijets_rootToParquet/genMasked/'+self.year+'/'+self.inputDir[0].split('kadatta/jetObservables/')[1].split('/')[0]+'_UL'+self.year+f'_nomWts_{self.jetType}Jet_missgen_{self.splitCount}.parquet')
                         
                         return 1 # dummy 
-                    #elif self.sysUnc and self.onlyUnc: 
-                    #    print(f"Saving the following .parquet file: {self.inputDir[0].split('jetObservables/')[0]+'jetObservables/Dijets_rootToParquet/'+self.inputDir[0].split('kadatta/jetObservables/')[1].split('/')[0]+'_UL'+self.year+f'_{s}Unc_{self.jetType}Jet_{self.splitCount}.parquet'}")
-                        
-                    #    ak.to_parquet(events, self.inputDir[0].split('jetObservables/')[0]+'jetObservables/Dijets_rootToParquet/'+self.inputDir[0].split('kadatta/jetObservables/')[1].split('/')[0]+'_UL'+self.year+f'_{s}Unc_{self.jetType}Jet_{self.splitCount}.parquet')
-                    #    return 1 
-                    
                     
                 
             elif self.isMC and (not self.isSigMC) and sys.endswith('nom'): #not so relevant for dijets but for background MC's in W/top
@@ -253,27 +347,40 @@ class nSubBasis_unfoldingHistoProd_Dijets(processor.ProcessorABC):
                 selRecoMask = (events[f'totalRecoWeight{sys}']!=0.) & (events[f'passRecoSel{sys}']==1) 
                 selGenMask = (events[f'evtGenWeight{sys}']!=0.) & (events[f'passGenSel{sys}']==1)
                 
+                if self.withLepVeto:
+                    selRecoMask = (selRecoMask) & (events[f'nRecoLeptons_nom']==0)
+                    selGenMask = (selGenMask) & (events[f'nGenLeptons_nom']==0)
                 if self.saveParquet: 
                     #events['selRecoMask']=selRecoMask
                     #events['selGenMask']=selGenMask
 
-                    print(f"Saving .parquet files with file-stem: {self.inputDir[0].split('jetObservables/')[0]+'jetObservables/Dijets_rootToParquet/'+self.inputDir[0].split('kadatta/jetObservables/')[1].split('/')[0]+'_UL'+self.year+f'_nomWts_{self.jetType}Jet_reco/gen_{self.splitCount}'}")
-
-                    ak.to_parquet(events[selRecoMask],self.inputDir[0].split('jetObservables/')[0]+'jetObservables/Dijets_rootToParquet/recoMasked/'+self.year+'/'+self.inputDir[0].split('kadatta/jetObservables/')[1].split('/')[0]+'_UL'+self.year+f'_nomWts_{self.jetType}Jet_reco_{self.splitCount}.parquet')
-                    ak.to_parquet(events[selGenMask],self.inputDir[0].split('jetObservables/')[0]+'jetObservables/Dijets_rootToParquet/genMasked/'+self.year+'/'+self.inputDir[0].split('kadatta/jetObservables/')[1].split('/')[0]+'_UL'+self.year+f'_nomWts_{self.jetType}Jet_gen_{self.splitCount}.parquet')
+                    if (sys.endswith('nom')): 
+                        print(f"Saving .parquet files with file-stem: {self.inputDir[0].split('jetObservables/')[0]+'jetObservables/Dijets_rootToParquet/'+self.inputDir[0].split('kadatta/jetObservables/')[1].split('/')[0]+'_UL'+self.year+f'_nomWts_dijetSel_{self.jetType}Jet_OC_reco/gen/truereco/..._{self.splitCount}'}")
+                        
+                        ak.to_parquet(events[selRecoMask],self.inputDir[0].split('jetObservables/')[0]+'jetObservables/Dijets_rootToParquet/recoMasked/'+self.year+'/'+self.inputDir[0].split('kadatta/jetObservables/')[1].split('/')[0]+'_UL'+self.year+f'_nomWts_dijetSel_{self.jetType}Jet_OC_reco_{self.splitCount}.parquet')
+                        ak.to_parquet(events[selGenMask],self.inputDir[0].split('jetObservables/')[0]+'jetObservables/Dijets_rootToParquet/genMasked/'+self.year+'/'+self.inputDir[0].split('kadatta/jetObservables/')[1].split('/')[0]+'_UL'+self.year+f'_nomWts_dijetSel_{self.jetType}Jet_OC_gen_{self.splitCount}.parquet')
                     
                     return 1 
                     
             elif not(self.isMC) and sys.endswith('nom'): 
                 selRecoMasks = OrderedDict()
-                #masking now trigger dependent to create different histos for data events passing a given prescale trigger exclusively or an unprescaled trigger
-                print("Building trigger masks")
+                
+                
+                print("Building trigger masks using the following triggers:")
+                
+                print(self.triggerTable.keys())
+                
                 for itrigger, itrValues in self.triggerTable.items():    
+                
                     triggerList=list(self.triggerTable.keys())
                     thistrigInd=triggerList.index(itrigger)
                     othertrigsInds=[i for i in range(0,len(triggerList)) if i!=thistrigInd]
                     
-                    selRecoMasks[itrigger]=(events[f'totalRecoWeight{sys}']!=0.) & (events[f'passHLT_{itrigger}']==1 ) & ((events[f'selRecoJets{sys}_pt']>itrValues[self.year][0]) | (events[f'selRecoJetsF{sys}_pt']>itrValues[self.year][0])) & ((events[f'selRecoJets{sys}_pt']  < itrValues[self.year][1]) & (events[f'selRecoJetsF{sys}_pt']  < itrValues[self.year][1]))
+                    selRecoMasks[itrigger]=(events[f'totalRecoWeight{sys}']!=0.) & (events[f'passRecoSel{sys}']!=0) & (events[f'recoSelectedEventNumber{sys}']>=1) & (events[f'passHLT_{itrigger}']==1 ) & ((events[f'selRecoJets{sys}_pt']>itrValues[self.year][0]) | (events[f'selRecoJetsF{sys}_pt']>itrValues[self.year][0])) & ((events[f'selRecoJets{sys}_pt']  < itrValues[self.year][1]) & (events[f'selRecoJetsF{sys}_pt']  < itrValues[self.year][1]))
+                    
+                    if self.withLepVeto:
+                        selRecoMasks[itrigger] = (selRecoMasks[itrigger]) & (events[f'nRecoLeptons{sys}']==0)
+                        
                     
 
                     if self.saveParquet: 
@@ -295,13 +402,13 @@ class nSubBasis_unfoldingHistoProd_Dijets(processor.ProcessorABC):
             for isel in self.selList:
                 
                 
-                listOfOutputHistosNames = [k for k,h in output.items() if ((sys in k) or ('resol' in k and not(sys in k)))] #prevent needless iterations
+                listOfOutputHistosNames = [k for k,h in output.items() if ((sys in k) or ('residual' in k and not(sys in k)) or ('resol' in k and not(sys in k)))] #prevent needless iterations
                 
                 for k in listOfOutputHistosNames:
                     key=k
                     
                     ############### Safety checks ##################
-                    if not(sys in key) and not('resol' in key): 
+                    if not(sys in key) and not('residual' in key) and not('resol' in key): 
                         #if self.verbose: print(sys, key)
                         continue
 
@@ -420,14 +527,15 @@ class nSubBasis_unfoldingHistoProd_Dijets(processor.ProcessorABC):
                                              threads=8)
                             
 
-                        elif ('resol' in key.lower()) and sys.endswith('nom'):
+                        elif ('residual' in key.lower() or 'resol' in key.lower()) and sys.endswith('nom') and self.isSigMC:
                             zeroMask=(events[f'accepGenJets{self.jetFlag}{s}{varToFill}']!=0.)&(accepGenMask)
 
                             response = events[f'trueRecoJets{self.jetFlag}{s}{varToFill}'][zeroMask]/events[f'accepGenJets{self.jetFlag}{s}{varToFill}'][zeroMask]
                             response = np.nan_to_num(response,nan=-999.)
+                            residual = events[f'trueRecoJets{self.jetFlag}{s}{varToFill}'][zeroMask]-events[f'accepGenJets{self.jetFlag}{s}{varToFill}'][zeroMask]
                             
-                            output[key].fill(response, weight=totalRecoWeight[zeroMask])
-                            if 'noWt_' in key: output[key].fill(response)
+                            if 'noWt_' in key: output[key].fill(response)#, weight=totalRecoWeight[zeroMask])
+                            elif 'residual' in key: output[key].fill(residual)
         l=[]
         
         for x,y in output.items(): #y.SetDirectory(0)
@@ -481,10 +589,10 @@ class nSubBasis_unfoldingHistoProd_Dijets(processor.ProcessorABC):
                                 if sysUnc.endswith('nom') or sysUnc.startswith(tuple(self.recoWtSources)): 
                                     dictOfHists[x[1:]+sysUnc+isel] = (hist.Hist.new.Variable(binning,name=x[1:]+sysUnc+isel, label=f'AK8 {itype} jet {x}', underflow=True,overflow=True).Weight())  
                                 
-                    if itype.startswith('truereco') and self.isMC and sysUnc.endswith('nom'):
-                            dictOfHists['resol'+iJ+'_pt'+isel] = (hist.Hist.new.Regular(500, 0, 5, name='resol'+iJ+'_pt'+isel, label='AK8 reco/gen jet pt', underflow=True,overflow=True).Weight())
-                            dictOfHists['resol'+iJ+'_msoftdrop'+isel] = (hist.Hist.new.Regular(500, 0, 5, name='resol'+iJ+'_msoftdrop'+isel, label='AK8 reco m_{SD}/gen jet m_{SD}', underflow=True,overflow=True).Weight())
-                            dictOfHists['resol'+iJ+'_mass'+isel] = (hist.Hist.new.Regular(500, 0, 5, name='resol'+iJ+'_mass'+isel, label='AK8 reco inv. m/gen jet inv. m', underflow=True,overflow=True).Weight())
+                    if itype.startswith('truereco') and self.isSigMC and sysUnc.endswith('nom'):
+                        dictOfHists['residual'+iJ+'_pt'+isel] = (hist.Hist.new.Regular(2000, -10, 10, name='residual'+iJ+'_pt'+isel, label='AK8 reco pt - gen jet pt', underflow=True,overflow=True).Weight())
+                        dictOfHists['residual'+iJ+'_msoftdrop'+isel] = (hist.Hist.new.Regular(2000, -10, 10, name='residual'+iJ+'_msoftdrop'+isel, label='AK8 reco m_{SD} - gen jet m_{SD}', underflow=True,overflow=True).Weight())
+                        dictOfHists['residual'+iJ+'_mass'+isel] = (hist.Hist.new.Regular(2000, -10, 10, name='residual'+iJ+'_mass'+isel, label='AK8 reco inv. m - gen jet inv. m', underflow=True,overflow=True).Weight())
                     #if self.verbose and sysUnc.endswith('nom'): print('building unfolding histos from',self.dict_variables_toUnfold.keys())     
                     for x, y in self.dict_variables_toUnfold.items():
                         binning = y
@@ -508,9 +616,9 @@ class nSubBasis_unfoldingHistoProd_Dijets(processor.ProcessorABC):
                                                                             .Variable(binning,name='reco',label='AK8 reco jet'+x, underflow=True,overflow=True)
                                                                             .Weight()
                                                                            )
-                            if sysUnc.endswith('_nom'):
-                                dictOfHists['resol'+iJ+x+isel] = (hist.Hist.new.Regular(500, 0, 5, name='resol'+iJ+x+isel, label='AK8 reco/gen jet ', underflow=True,overflow=True).Weight())
-                                dictOfHists['noWt_resol'+iJ+x+isel] = (hist.Hist.new.Regular(500, 0, 5, name='noWt_resol'+iJ+x+isel, label='AK8 reco/gen jet ', underflow=True,overflow=True).Weight())
+                            if sysUnc.endswith('_nom') and self.isSigMC:
+                                dictOfHists['residual'+iJ+x+isel] = (hist.Hist.new.Regular(6000, -1.5, 1.5, name='residual'+iJ+x+isel, label='AK8 reco #tau - gen jet #tau', underflow=True,overflow=True).Weight())
+                                dictOfHists['noWt_resol'+iJ+x+isel] = (hist.Hist.new.Regular(1000, 0, 8, name='noWt_resol'+iJ+x+isel, label='AK8 reco/gen jet ', underflow=True,overflow=True).Weight())
         
         if self.verbose: print("Final dict of histograms keys:",dictOfHists.keys())      
         return dictOfHists
@@ -595,15 +703,14 @@ class nSubBasis_unfoldingHistoProd_Dijets(processor.ProcessorABC):
                 reco_list.append("totalRecoWeight"+sys)
                 if not ("evtGenWeight_nom" in gen_list): gen_list.append("evtGenWeight_nom")#+sys)
                 if not('passGenSel'+sys in gen_list) and 'nom' in sys: gen_list.append('passGenSel'+sys)              
-                reco_list.append("good_nPVs"+sys)
                 if not('passRecoSel'+sys in reco_list): reco_list.append('passRecoSel'+sys)
-                
+                if sys.endswith('nom'): reco_list.append("good_nPVs"+sys)
             elif (not self.isMC) and sys.endswith('nom'):
                 reco_list.append("totalRecoWeight"+sys)
                 reco_list.append("good_nPVs"+sys)
                 if not('passRecoSel'+sys in reco_list): reco_list.append('passRecoSel'+sys)
                 for itrigger in self.triggerTable.keys():    
-                    if not(self.year.endswith('VFP') and self.era=='B'): triggerBit_list.append(f'HLT_{itrigger}')
+                    if not(self.year.endswith('VFP') and self.era=='B'): triggerBit_list.append(f'HLT_{itrigger}') #to remove
                     triggerBit_list.append(f'passHLT_{itrigger}')
                 
                 if '2018' in self.year or '2017' in self.year: 
@@ -614,14 +721,258 @@ class nSubBasis_unfoldingHistoProd_Dijets(processor.ProcessorABC):
                 if 'pu' in sys or 'l1' in sys: reco_reweights_list.append(sys.split('_')[1]+'_nom')
                 else: gen_reweights_list.append(sys.split('_')[1]+'_nom')
 
-        if self.isSigMC: branchesToRead=gen_list+reco_list+gen_reweights_list+reco_reweights_list
-        elif self.isMC and (not self.isSigMC): branchesToRead=gen_list+reco_list
-        elif (not self.isMC): branchesToRead=reco_list+triggerBit_list
+        if self.isSigMC: branchesToRead=gen_list+reco_list+gen_reweights_list+reco_reweights_list+['nRecoLeptons_nom','nGenLeptons_nom']#+['recoSelectedEventNumber_nom']
+        elif self.isMC and (not self.isSigMC): branchesToRead=gen_list+reco_list+['nRecoLeptons_nom','nGenLeptons_nom']#+['recoSelectedEventNumber_nom']
+        elif (not self.isMC): branchesToRead=reco_list+triggerBit_list+['recoSelectedEventNumber_nom','nRecoLeptons_nom']
         if self.verbose: 
             print("Prepared branches to read",branchesToRead)        
         return branchesToRead
     
 
+
+def histoMaker( myProcessor, 
+                sampleIdentifier='qcd_ht', y='2017', sampleDict_PFNano=OrderedDict(),
+                sampleDict_local=OrderedDict(), 
+                writeChunks=True, writeAccumulatedORhadd=1, 
+                verbose=False, saveParquet=False,
+                isSigMC=True, isMC=True, 
+                wtUnc=True, sysUnc=False, onlyUnc='', 
+                outputdir='processorTests/', sysSource=[],
+                era='', ext='_nomWts', 
+                splitchunks=10, 
+                nWorkers=40, stepSize="2048 MB",
+                jetType='Central',
+                forceProduction=False):
+    
+    nchunk=copy.deepcopy(splitchunks)
+    cz=0
+
+    if not os.path.exists(f'{outputdir}'): os.makedirs(f'{outputdir}')
+    
+    for sample in sampleDict_local.keys():
+        year_list=['2016_preVFP', '2016', '2017', '2018'] if y=='all' else [y]
+        #if verbose: print (sample,sampleIdentifier,splitchunks)
+        
+        for year in year_list:#['2017','2018','2016','2016_preVFP']:
+            gc.collect()
+            pathExistsFlag=False
+            if not( sample.lower().startswith(sampleIdentifier.lower())):# or ('170to300' in sample.lower() or jetType=='Central'):
+                #print(sample,year)
+                continue
+                
+            tstart0=time.time()
+
+            print(f'Histogramming for {sample} in year: {year}')
+            #if verbose: print(f'using nanoskims from {sampleDict_local[sample][year]["t3_dirs"]}{chr(10)}','\n')
+            
+            
+
+            inpdir=sampleDict_local[sample][year]['t3_dirs']
+            dirfnames=inpdir[0].split('/0000/')[0]+'/000*/jetObservables_nanoskim_*.root'
+
+            SC='0'
+            if verbose: 
+                print (sysSource)
+
+            my_processor=myProcessor(sampleName=sample, sampleDict=sampleDict_PFNano,
+                                     isMC=isMC, isSigMC=isSigMC, year=year, saveParquet=saveParquet, sysSource=sysSource,
+                                     wtUnc=wtUnc, sysUnc=sysUnc, onlyUnc='' if 'jes' in onlyUnc else onlyUnc, era=era,
+                                     verbose=False, splitCount=SC, jetType=jetType )
+            #if cz==0:
+            #    #if verbose: print("Branches being read \n", my_processor._branchesToRead)
+            #    cz=cz+1
+            if splitchunks>0:
+                fl=[]
+                n_tosplit = []
+                fc=0
+                for x in range(len(inpdir)):
+                    flist=os.listdir(inpdir[x])
+                    flist = sorted([i for i in flist if 'nanoskim' in i], key=lambda s: int(re.search(r'\d+', s).group()))
+                    
+                    for i in flist:
+                        if 'nanoskim' in i:
+
+                            fl.append(inpdir[x]+i)
+                            if fc%splitchunks==0 and c!=0:
+                                n_tosplit.append(splitchunks)
+                            fc=fc+1
+                
+                if sum(n_tosplit)!=len(fl):
+                    if len(fl)%splitchunks!=0: n_tosplit.append(len(fl)%splitchunks)
+                    else: n_tosplit.append(splitchunks)
+
+                if verbose: 
+                    print(f"Splitting input filelist into the following sublists of file chunks:{n_tosplit}, requiring {len(n_tosplit)} iterations")
+                ifl=iter(fl)
+                ifls=[list(islice(ifl,x)) for x in n_tosplit]
+                #if verbose: print(ifls)
+                hists=None
+            else:
+                ifls=[dirfnames]
+
+            c=0
+            #if verbose: 
+            #    print(f"Loading events into arrays")# from the following file chunks:{n_tosplit}")    
+            
+            
+            for i in ifls:#()track(ifls):#
+                if c%100==0: print (c, i, sample, year, jetType)
+                if 'jes' in onlyUnc and c%5==0: print (c, i, sample, year)
+                if splitchunks>0:
+                    ns = [int(x.split('jetObservables_nanoskim_')[1].split('.root')[0]) for x in i]
+                    s = str(ns).split('[')[1].split(']')[0]
+                    stringfnames=i[0].split('jetObservables_nanoskim_')[0]+"jetObservables_nanoskim_{"+f'{s}'+"}.root"
+                else: stringfnames=i
+                    
+                stringfnames=stringfnames.replace(' ','')
+                
+                #if verbose:
+                #    tstart1 = time.time()
+                
+                if not sysUnc: 
+                    if 'pt' in sample.lower(): 
+                        string=f'{sample.split("_Tune")[0].split("_")[0]+sample.split("_Tune")[0].split("_")[1]+sample.split("_Tune")[0].split("_")[2]}_UL{year}{ext}'
+                    else:
+                        string=f'{sample.split("_Tune")[0].split("_")[0]+sample.split("_Tune")[0].split("_")[1]}_UL{year}{ext}'
+
+                    fnstem = f'{outputdir}/jetObservables_histograms_{string}'    
+                    fn = f'{fnstem}_ForwardJet_{c}.root' if 'Forward' in jetType else f'{fnstem}_CentralJet_{c}.root'
+                else: 
+                    
+                    fnstem = f'{outputdir}/{sampleDict_local[sample][year]["skimmerHisto"].split(".root")[0]}{ext}'
+                    if 'jes' in onlyUnc: 
+                        fnstem=f'{outputdir}/combinedJES/{fnstem.split(outputdir+"/")[1]}' 
+                        if not os.path.exists(f'{outputdir}/combinedJES/'): os.makedirs(f'{outputdir}/combinedJES/')
+
+                    
+                    fn = f'{fnstem}_ForwardJet_{c}.root' if 'Forward' in jetType else f'{fnstem}_CentralJet_{c}.root'
+                    
+                if splitchunks==0 or len(n_tosplit)==1: 
+                    fn=f'{fnstem}_ForwardJet.root' if 'Forward' in jetType else f'{fnstem}_CentralJet.root'
+                if verbose: print (fn,fnstem)
+                    
+                if c==0 or (splitchunks>0 and writeAccumulatedORhadd==0):
+                    fn=f'{fnstem}_ForwardJet.root' if 'Forward' in jetType else f'{fnstem}_CentralJet.root'
+                    
+                if os.path.exists(fn) and not(forceProduction):
+                    print("WARNING: file already  exists; recheck this sample")
+                    #if not(forceProduction):
+                    print("WARNING: skipping this sample")
+                    pathExistsFlag=True
+                    break
+                    
+                else:
+                
+                    events = uproot.concatenate(stringfnames+':Events', my_processor._branchesToRead, 
+                                                step_size=stepSize, library='ak', num_workers=nWorkers,
+
+                                               )
+                    if not(isMC):
+                        events_df = ak.to_pandas(copy.deepcopy(events))
+                        print(len(events_df))
+                        del(events)
+                        events_df_nodup = events_df.drop_duplicates()#subset='recoSelectedEventNumber_nom',keep='first'----> not using this since it seems in this iteration the reco event number branch wasn't properly updated in skimmer logic
+                        print(f"Dropped {len(events_df)-len(events_df_nodup)} duplicated events; left with {len(events_df_nodup)} events in this sample")
+
+                        f = events_df_nodup.to_parquet(f'tempQCDData_{year}_{sample,era}.parquet')
+                        events = ak.from_parquet(f'tempQCDData_{year}_{sample,era}.parquet')
+
+                    #if verbose:
+                    #    elapsed1 = time.time()-tstart1
+                    #    print(f"Time taken to load {len(events)} events from {n_tosplit[c]} files in {sample} = {elapsed1}")
+
+                    if verbose: 
+                        print(f'nEvents in this file chunk: {len(events)} for {sample}, {year}')
+
+                    #if verbose: 
+                    #    tstart2=time.time()
+
+                    #if verbose: print("#####Processing events#####")
+
+                    processed_events=my_processor.process(events)
+
+                    if verbose:
+                        elapsed2 = time.time()-tstart2
+                        print(f"Time taken to build histos from {len(events)} events, for {fnstem,jetType} = {elapsed2}")
+
+                    my_processor.splitCount=chr(int(SC)+1)
+
+                    if c==0: 
+                        hists=processed_events
+                        if verbose: 
+                            if jetType=='Central':
+                                print(f"Current integral of pT nominal hist: {hists['recoJet_pt_nom_dijetSel'].sum(flow=True)}")
+                            elif jetType=="Forward":
+                                print(f"Current integral of pT nominal hist: {hists['recoJetF_pt_nom_dijetSel'].sum(flow=True)}")
+                    elif c>0 and writeAccumulatedORhadd==0: 
+                        hists=accumulate([hists,processed_events])
+                        if verbose: 
+                            if jetType=='Central':
+                                print(f"Current integral of pT nominal hist: {hists['recoJet_pt_nom_dijetSel'].sum(flow=True)}")
+                            elif jetType=="Forward":
+                                print(f"Current integral of pT nominal hist: {hists['recoJetF_pt_nom_dijetSel'].sum(flow=True)}")
+
+
+
+                    if writeChunks or writeAccumulatedORhadd==1:# or len(n_tosplit)==1:
+                        if verbose: 
+                            if jetType=='Central':
+                                print(f"Current integral of pT nominal hist: {hists['recoJet_pt_nom_dijetSel'].sum(flow=True)}")
+                            elif jetType=="Forward":
+                                print(f"Current integral of pT nominal hist: {hists['recoJetF_pt_nom_dijetSel'].sum(flow=True)}")
+
+                        #print (processed_events)
+                        print ("Events proccesed, now writing output file(s)",fn)
+
+                        with uproot.recreate(fn) as fout:#outputTest_{sample.split("_Tune")[0]}_{year}.root'
+                            for key in processed_events.keys():
+                                fout[key]=processed_events[key]
+                            print (f'Done with creating output file:{fn}')
+                            fout.close()
+                    elif writeAccumulatedORhadd==0:# or len(n_tosplit)==1:
+                        if verbose: 
+                            if jetType=='Central':
+                                print(f"Current integral of gen pT nominal hist: {hists['genJet_pt_nom_dijetSel'].sum(flow=True)}")
+                            elif jetType=="Forward":
+                                print(f"Current integral of pT nominal hist: {hists['genJetF_pt_nom_dijetSel'].sum(flow=True)}")
+
+                        #print (processed_events)
+                        #print ("Events proccesed, now writing output file(s)",fn)   
+                    c=c+1
+                    del(processed_events)
+                    del(events)
+                    gc.collect()
+            if not(pathExistsFlag):
+                if c==0 or (splitchunks>0):# and writeAccumulatedORhadd==0):
+
+                    if verbose: 
+                        if jetType=='Central':
+                            print(f"Final integral of reco pT nominal hist: {hists['recoJet_pt_nom_dijetSel'].sum(flow=True)}")
+                            print(f"Final integral of gen pT nominal hist: {hists['genJet_pt_nom_dijetSel'].sum(flow=True)}")
+
+                        elif jetType=="Forward":
+                            print(f"Final integral of reco pT nominal hist: {hists['recoJetF_pt_nom_dijetSel'].sum(flow=True)}")
+                            print(f"Final integral of gen pT nominal hist: {hists['genJetF_pt_nom_dijetSel'].sum(flow=True)}")
+
+                    if not os.path.exists(f'{outputdir}/combinedJES/'): os.makedirs(f'{outputdir}/combinedJES/')
+
+                    print (f'Output file stem for accumulated histos: {fnstem}')
+                    with uproot.recreate(f'{fnstem}_ForwardJet.root' if 'Forward' in jetType else f'{fnstem}_CentralJet.root') as fout_hadd:
+                        for key in hists.keys():
+                            fout_hadd[key]=hists[key]
+                        print (f'Done with creating accumulated output file:{fnstem}_ForwardJet.root' if 'Forward' in jetType else f'{fnstem}_CentralJet.root')
+                        fout_hadd.close()
+
+
+                elapsed0 = time.time() - tstart0
+
+                print (f'Time for {sample} {year}:{elapsed0}')        
+
+                del(my_processor)
+                del(hists)
+            gc.collect()
+           
+    return 1
 
 
 

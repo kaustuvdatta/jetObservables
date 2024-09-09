@@ -6,15 +6,23 @@ import numpy as np
 import array
 from array import array
 import bisect
+import scipy
+from scipy import stats
+
+
 #from legend import *
-#ROOT.PyConfig.IgnoreCommandLineOptions = True
-#ROOT.gROOT.SetBatch(1)
+ROOT.PyConfig.IgnoreCommandLineOptions = True
+ROOT.gROOT.SetBatch(1)
 ROOT.gStyle.SetOptStat(0)
 ROOT.gStyle.SetOptFit(1111)
 ROOT.gErrorIgnoreLevel = ROOT.kWarning
 ####gReset()
 ROOT.TH1.SetDefaultSumw2()
 ROOT.TH2.SetDefaultSumw2()
+
+ROOT.TH1.StatOverflows(ROOT.kTRUE)
+ROOT.TH2.StatOverflows(ROOT.kTRUE)
+
 from root_numpy import array2hist, hist2array
 #import histoHelpers
 from histoHelpers import *#th2_to_ndarray
@@ -22,13 +30,11 @@ import os
 import glob
 import sys
 import math
-#sys.path.insert(0,'../test/')
-#from Drawhistogram_dijetSel import *
-#from datasets_dijetSel_RunIISummer20UL_nomWts import dictSamples, checkDict
+
 sys.path.insert(0,'../python/')
 import CMS_lumi as CMS_lumi
 import tdrstyle as tdrstyle
-#ROOT.gROOT.ForceStyle()
+ROOT.gROOT.ForceStyle()
 #tdrstyle.setTDRStyle()
 
 #import pdb
@@ -121,111 +127,159 @@ def SelfClosure(response1,reco2,response2,reco1):
     unf21=DoUnfolding(response1,reco2)
     unf12=DoUnfolding(response2,reco1)
     return unf21,unf12
-    
-def bottomLineTest( ivar, dataHisto, mainHistoLabel, datarecoHisto, recoHisto, genHisto, datacovMatrix, hadcovMatrix, varInfo, outputLabel, outputDir, runMLU=False, ext='pdf',selection='_dijetSel',version='vNew' ):
-    """based on https://gitlab.cern.ch/DasAnalysisSystem/InclusiveJet/-/blob/master/UnfoldingSampleND/bin/unfold.cc#L74"""
 
-    outputDir=outputDir+'/'+ivar+'/'+process+'/'
-    if not os.path.exists(outputDir): os.makedirs(outputDir)
+'''
+def bottomLineTest( ivar, dataHisto, dataHistoLabel, MCHisto, covMatrix, varInfo, outputLabel, outputDir, rebin=1,
+                    ext='png', version='V2023', selection='_dijet', process='data'):
+    """based on https://gitlab.cern.ch/DasAnalysisSystem/InclusiveJet/-/blob/master/UnfoldingSampleND/bin/unfold.cc#L74"""
     
-    
+    print("Data nbins","MC nbins","cov nbinsX","cov nbinsY")
+        
+    if not(rebin==1):
+        MCHisto.Rebin( rebin )  ### because data and covMatrix have less number of bins
+        dataHisto.Rebin( rebin )
+        covMatrix.Rebin2D( rebin, rebin )
+    #print(dataHisto.GetNbinsX(),MCHisto.GetNbinsX(),covMatrix.GetNbinsX(),covMatrix.GetNbinsY())
+     
     ##### computing chi2 and inverted matrix
     vector = []
     ndf = 0
-    for ibin in range(1, datacovMatrix.GetNbinsX()+1):
-        if (datacovMatrix.GetBinContent(ibin, ibin) > 0.):
+    
+    for ibin in range(1, covMatrix.GetNbinsX()+1):
+        if (covMatrix.GetBinContent(ibin, ibin) > 0):# and dataHisto.GetBinContent( ibin ) >0 and MCHisto.GetBinContent( ibin ) > 0 :
             ndf = ndf + 1
-            vector.append( datarecoHisto.GetBinContent( ibin ) - recoHisto.GetBinContent( ibin ) )
-            
-    print (ndf,datacovMatrix.GetNbinsX(),datacovMatrix.GetNbinsY())
-    #assert ndf==covMatrix.GetNbinsX()
-    matrix = np.eye( ndf, ndf )
+            vector.append( dataHisto.GetBinContent( ibin ) - MCHisto.GetBinContent( ibin ) )
+            #for jbin in range(1, covMatrix.GetNbinsY()+1):
+            #    matrix[ibin-1][jbin-1] = covMatrix.GetBinContent( ibin, jbin )
+        else: continue
     
-    for ibin in range(1, datacovMatrix.GetNbinsX()+1):
-        if (datacovMatrix.GetBinContent(ibin, ibin) > 0.):
-            for jbin in range(1, datacovMatrix.GetNbinsY()+1):
-                matrix[ibin-1][jbin-1] = datacovMatrix.GetBinContent( ibin, jbin )
+    matrix = np.eye( ndf, ndf) #covMatrix.GetNbinsX(), covMatrix.GetNbinsX() )
     
-    vector = np.array( vector )
-    invMatrix = np.linalg.inv( matrix )
-    chi2 = np.dot( vector, np.dot( invMatrix, vector ) )
-    print('Detector level: chi2, ndf, chi2/ndf = ', chi2, ndf, chi2/ndf)
-    
-    
-    vector = []
-    ndf = 0
-    for ibin in range(1, hadcovMatrix.GetNbinsX()+1):
-        if (hadcovMatrix.GetBinContent(ibin, ibin) > 0.):
-            ndf = ndf + 1
-            vector.append( dataHisto.GetBinContent( ibin ) - genHisto.GetBinContent( ibin ) )
-            
-    print (ndf,hadcovMatrix.GetNbinsX(),hadcovMatrix.GetNbinsY())
-    
-    matrix = np.eye( ndf, ndf)
-    
-    for ibin in range(1, hadcovMatrix.GetNbinsX()+1):
-        if (hadcovMatrix.GetBinContent(ibin, ibin) > 0.):
-            for jbin in range(1, hadcovMatrix.GetNbinsY()+1):
-                matrix[ibin-1][jbin-1] = hadcovMatrix.GetBinContent( ibin, jbin )
+    for ibin in range(1, ndf+1):
+        if (covMatrix.GetBinContent(ibin, ibin) > 0):# and dataHisto.GetBinContent( ibin ) >0 and MCHisto.GetBinContent( ibin ) > 0 :
+            #ndf = ndf + 1
+            #vector.append( dataHisto.GetBinContent( ibin ) - MCHisto.GetBinContent( ibin ) )
+            for jbin in range(1, ndf+1):#covMatrix.GetNbinsY()+1):
+                matrix[ibin-1][jbin-1] = covMatrix.GetBinContent( ibin, jbin )
+                
+        else:
+            #ndf = ndf + 1
+            continue
+            #vector.append( 0.)#dataHisto.GetBinContent( ibin ) - recoHisto.GetBinContent( ibin ) )
+            #print(f"WARNING: empty bin in cov or data or MC histo; bin contents of these in bin {ibin} listed as follows: {covMatrix.GetBinContent( ibin ), dataHisto.GetBinContent( ibin ), MCHisto.GetBinContent( ibin )}")
+            #for jbin in range(1, covMatrix.GetNbinsY()+1):
+            #    matrix[ibin-1][jbin-1] = machineEps()#covMatrix.GetBinContent( ibin, jbin ) #hack for now, forces crash  if condition not met since matrix will be singular and non-invertible
 
     #assert ndf==covMatrix.GetNbinsX()
     vector = np.array( vector )
     invMatrix = np.linalg.inv( matrix )
     chi2 = np.dot( vector, np.dot( invMatrix, vector ) )
-    print('Hadron level: chi2, ndf, chi2/ndf = ', chi2, ndf, chi2/ndf)
+    print(f'chi2 for {dataHistoLabel}, ndf, chi2/ndf = ', chi2, ndf, chi2/ndf)
+    
+    return chi2, ndf
+'''
+
+def bottomLineTest( ivar, dataHisto, dataHistoLabel, MCHisto, covMatrix, varInfo, outputLabel, outputDir, rebin=1,
+                    ext='png', version='V2023', selection='_dijet', process='data', no_null_bins=True):#, ignore_UF=True):
+    """based on https://github.com/raggleton/QGAnalysisPlotting/blob/26bb66e690a4a052b9b1acc328059a372fd25c6b/my_unfolder.py#L2501"""
+    
+    print("Data nbins","MC nbins","cov nbinsX","cov nbinsY")
+        
+    if not(rebin==1):
+        MCHisto.Rebin( rebin )  ### because data and covMatrix have less number of bins
+        dataHisto.Rebin( rebin )
+        covMatrix.Rebin2D( rebin, rebin )
+    #print(dataHisto.GetNbinsX(),MCHisto.GetNbinsX(),covMatrix.GetNbinsX(),covMatrix.GetNbinsY())
+    
+    if isinstance(covMatrix,ROOT.TH2): 
+        cov_arr,_ = th2_to_ndarray(covMatrix.Clone())
+    if isinstance(dataHisto,ROOT.TH1): 
+        data_arr,_ = th1_to_ndarray(dataHisto.Clone())
+    if isinstance(MCHisto,ROOT.TH1): 
+        mc_arr,_ = th1_to_ndarray(MCHisto.Clone())
     
     
-
-
-    #### plotting inverted matrix
-    invertedMatrix = hadcovMatrix.Clone()
-    invertedMatrix.Reset()
-    for ibin in range(1, hadcovMatrix.GetNbinsX()):
-        for jbin in range(1, hadcovMatrix.GetNbinsY()):
-            invertedMatrix.SetBinContent( ibin, jbin, invMatrix[ibin-1][jbin-1]  )
-    draw2D( ivar, invertedMatrix, varInfo, outputLabel=outputLabel+'_invertedMatrix', outputDir=outputDir.split(ivar)[0],selection=selection,version=version )
-
-    ##### plotting ratios together
-    outputName = outputDir+ivar+'_'+selection+'_'+outputLabel+'_bottomLineTest_'+version+'.'+ext
-
-    canRatio = ROOT.TCanvas('canRatio'+ivar, 'canRatio'+ivar,  10, 10, 750, 500 )
-
-    genRatio = ROOT.TGraphAsymmErrors()
-    genRatio.Divide( dataHisto, genHisto, 'pois' )
-    recoRatio = ROOT.TGraphAsymmErrors()
-    recoRatio.Divide( datarecoHisto, recoHisto, 'pois' )
-
-    legend=ROOT.TLegend(0.15,0.70,0.40,0.90)
-    legend.SetFillStyle(0)
-    legend.SetTextSize(0.03)
-    legend.AddEntry( genRatio, 'Hadron level (w/ stat + unf. unc.)', 'pl' )
-    legend.AddEntry( recoRatio, 'Detector level (stat unc.)', 'pl' )
-    legend.SetBorderSize(0)
+    if no_null_bins:
+        
+        null_bins = get_null_bins(cov_arr)
+        print(f'null bins {dataHistoLabel} space:', null_bins)
+        
+        cov_arr = remove_null_bins(cov_arr, null_bins)
+        mc_arr = remove_null_bins(mc_arr, null_bins)
+        data_arr = remove_null_bins(data_arr, null_bins)    
     
-    genRatio.SetLineWidth(2)
-    genRatio.GetXaxis().SetTitle(varInfo['label'])
-    genRatio.GetXaxis().SetLimits( varInfo['bins'][0], varInfo['bins'][-1] )
-    genRatio.GetYaxis().SetTitle('Data / Simulation')
-    genRatio.GetYaxis().SetTitleOffset( 0.8 )
-    genRatio.SetMarkerStyle(8)
-    genRatio.GetYaxis().SetRangeUser(-5.,10.)
-    genRatio.Draw('AP0')
-    recoRatio.SetLineColor(ROOT.kRed)
-    recoRatio.SetLineWidth(2)
-    recoRatio.SetMarkerStyle(4)
-    recoRatio.Draw('P0 same')
+    try:
+        delta = data_arr - mc_arr
+    except ValueError:
+        print(data_arr,mc_arr)
+        print("chi2 cannot be calculated since something is wrong with the data mc event th2->ndarrays, please check what's going on")
+        return 1,1,1
+    ##### computing chi2 and inverted matrix
+    try: 
+        v_inv = np.linalg.inv(cov_arr)
+    except np.linalg.LinAlgError:
+        print("Using pseudo-inverse instead")
+        v_inv = np.linalg.pinv(cov_arr, rcond=1E-30)
+        
+    inter = v_inv.dot(delta.T)
+    chi2 = delta.dot(inter)[0][0]
+    ndof = delta.shape[1]#len((data_arr[0][first_signal_bin-1:] != 0) | (mc_arr[0][first_signal_bin-1:] != 0))  # only consider n bins where at least one has data - if both 0, don't count it
+    print(scipy.stats.chi2.cdf(chi2, int(ndof)))
+    p = 1.-scipy.stats.chi2.cdf(chi2, int(ndof))
+        
+    print(f'chi2 for {dataHistoLabel}, ndf, p, chi2/ndf = ', chi2, ndof, p, chi2/ndof)
+    
+    return chi2, ndof,p
 
-    lineOne = ROOT.TGraph(2, array('d', [0, 1]), array('d', [1, 1]))
-    lineOne.Draw('same')
+def calc_chi2_stats(one_hist, other_hist, cov_matrix):
+    one_vec = one_hist #, one_err = th1_to_ndarray(one_hist, False)
+    # print(one_err)
+    other_vec = other_hist#, _ = th1_to_ndarray(other_hist, False)
+    delta = one_vec - other_vec
+    if isinstance(cov_matrix, ROOT.TH2):
+        v, _ = th2_to_ndarray(cov_matrix)
+    else:
+        v = cov_matrix
+    # print("delta:", delta)
+    # v = np.diag(np.diag(v))  # turn off correlations
+    # print("v:", v)
+    try:
+        v_inv = np.linalg.inv(v)
+    except np.linalg.LinAlgError:
+        print("Trying pseudo-inverse instead")
+        v_inv = np.linalg.pinv(v, rcond=1E-30)
+    inter = v_inv.dot(delta.T)
+    # print("parts:", delta * inter.T)
+    chi2 = delta.dot(inter)[0][0]
+    ndof = delta.shape[1]
+    p = 1-scipy.stats.chi2.cdf(chi2, int(ndof))
+    return chi2, ndof, p
 
-    legend.Draw()
-    CMS_lumi.extraText = " Preliminary"
-    CMS_lumi.lumi_13TeV = "13 TeV, "+ ( '2016+2017+2018' if year.startswith('all') else year )
-    CMS_lumi.relPosX = 0.11
-    CMS_lumi.CMS_lumi(canRatio, 4, 0)
-    canRatio.SaveAs(outputName)
 
-    return [genRatio, recoRatio]
+def fold_generator_level(hist_truth, probability_matrix, bins_reco, oflow=False):
+    
+    # Convert ROOT TH1 to vector
+    gen_vec, gen_vec_err = th1_to_ndarray(hist_truth, oflow_x=oflow)
+    
+    #convert TH2 to ndarray for PM
+    probaM, _ = th2_to_ndarray(probability_matrix, oflow)
+
+    # Multiply vector with PM (transpose from row vec to column vec as necessary)
+    folded_vec = probaM.dot(gen_vec.T)
+
+    # Convert vector to TH1
+    folded_mc_truth = ndarray_to_th1(folded_vec.T, has_oflow_x=oflow, offset=0., bins=bins_reco)
+
+    # Error propagation: if y = Ax, with covariance matrices Vyy and Vxx,
+    # respectively, then Vyy = (A*Vxx)*A^T
+    vxx, _ = th2_to_ndarray(make_diag_cov_hist_from_errors(hist_truth, inverse=False), oflow)
+    result = probaM.dot(vxx)
+    
+    folded_covariance = result.dot(probaM.T)
+    print(folded_covariance.shape)
+    folded_errors = make_hist_from_diagonal_errors(folded_covariance,bins=bins_reco)
+    update_hist_bin_error(h_orig=folded_errors, h_to_be_updated=folded_mc_truth)
+    return folded_mc_truth
 
 #############################################################################
 ###################### Helpers for plotting unfoldings ######################
@@ -311,22 +365,22 @@ def plotSysComparison( nomHisto, dictUncHistos, outputName, labelX='', log=False
     multiGraph.Add( gnom )
 
     dictgraph = {}
-    dummy=0
+    col_counter=0
     
     #print (dictUncHistos)
     for ih in dictUncHistos:
-        #print(ih, dummy, len(colors))
+        #print(ih, col_counter, len(colors))
         dictgraph[ih] = ROOT.TGraphAsymmErrors()
         dictgraph[ih].Divide( dictUncHistos[ih], nomHisto, 'pois' )
-        if not dummy==len(colors)-1:
-            dictgraph[ih].SetLineColor( colors[dummy] )
+        if not col_counter==len(colors)-1:
+            dictgraph[ih].SetLineColor( colors[col_counter] )
             dictgraph[ih].SetLineStyle( 2 )
             if 'jes' in ih: dictgraph[ih].SetLineStyle( 1 )
             dictgraph[ih].SetMarkerStyle(1)
             dictgraph[ih].SetLineWidth( 1 )
         else:
-            dummy = dummy-len(colors)+2
-            dictgraph[ih].SetLineColor( colors[dummy] )
+            col_counter = col_counter-len(colors)+2
+            dictgraph[ih].SetLineColor( colors[col_counter] )
             dictgraph[ih].SetLineStyle( 3 )
             if 'jes' in ih: dictgraph[ih].SetLineStyle( 1 )
             dictgraph[ih].SetMarkerStyle(1)
@@ -334,7 +388,7 @@ def plotSysComparison( nomHisto, dictUncHistos, outputName, labelX='', log=False
         if 'jes' in ih and ('2017' in ih or '2018' in ih): legend.AddEntry( dictgraph[ih], ih.split('_')[1] , 'l' )
         else: legend.AddEntry( dictgraph[ih], ih.split('_')[1] , 'l' )
         multiGraph.Add( dictgraph[ih] )
-        dummy=dummy+1
+        col_counter=col_counter+1
 
     ROOT.gStyle.SetPadRightMargin(0.05)
     ROOT.gStyle.SetPadLeftMargin(0.15)
@@ -423,28 +477,33 @@ def drawDataMCReco( ivar, selection, year, lumi, process,
     recoHisto.SetLineColor(ROOT.kRed)
     recoHisto.SetMarkerColor(ROOT.kRed)
     recoHisto.SetMarkerStyle(25)
+    recoHisto.SetMarkerSize(1.5)
     legend.AddEntry( recoHisto, 'MG5+Pythia8', 'lp' )
 
     print(labelX)
 
-    if 'tau' in ivar:
-        dataHisto.GetYaxis().SetTitle( '#frac{dN}{d#'+labelX.split('#')[1]+'}' )##frac{1}{dN} , +'    [A.U.]'
+    if 'tau' in ivar or '#' in labelX:
+        dataHisto.GetYaxis().SetTitle( 'Events')#'#frac{dN}{d#'+labelX.split('#')[1]+'}' )##frac{1}{dN} , +'    [A.U.]'
         #print( '#frac{dN}{d#'+labelX.split('#')[1]+'}')
     else:
         bw = np.round(recoHisto.GetXaxis().GetBinLowEdge(2)-recoHisto.GetXaxis().GetBinLowEdge(1),3)
         label=None
         if 'pt' in ivar:
-            label = 'p_T'
+            label = 'p_{T}'
         elif 'mass'in ivar:
             label = 'm'
         elif 'softdrop' in ivar:
-            label = 'm_SD'
+            label = 'm_{SD}'
+        elif 'y' in ivar:
+            label = 'y'
+        elif 'npv' in ivar.lower():
+            label= 'N_{PV}'
         else:
             pass
-        if label:
-            dataHisto.GetYaxis().SetTitle( '#frac{dN}{d'+label+f'}} [Events/{bw} GeV]')# if 'pt' in ivar or 'mass' in ivar or 'softdrop' in ivar else '') ) 
-        else:
-            dataHisto.GetYaxis().SetTitle( f' Events/{bw} '+ ( '[GeV]' if 'pt' in ivar or 'mass' in ivar or 'softdrop' in ivar else '') ) 
+        #if label:
+        #    dataHisto.GetYaxis().SetTitle( '#frac{dN}{d'+label+f'}} [Events/{bw} GeV]')# if 'pt' in ivar or 'mass' in ivar or 'softdrop' in ivar else '') ) 
+        #else:
+        dataHisto.GetYaxis().SetTitle( f' Events/{bw} '+ ( '[GeV]' if 'pt' in ivar or 'mass' in ivar or 'softdrop' in ivar else '') ) 
     
     dataHisto.GetYaxis().SetTitleOffset(1.15)
     dataHisto.GetYaxis().CenterTitle()
@@ -464,6 +523,16 @@ def drawDataMCReco( ivar, selection, year, lumi, process,
     #ROOT.TGaxis.SetExponentOffset(-5,0,'y')
         
     dataHisto.Draw( "E1")
+
+    
+    #alt1recoHisto.Scale(1, 'width')  ### divide by bin width
+    #alt1recoHisto.SetLineWidth(2)
+    #alt1recoHisto.SetLineColor(ROOT.kCyan+3)
+    #alt1recoHisto.SetMarkerColor(ROOT.kCyan+3)
+    #alt1recoHisto.SetMarkerStyle(25)
+    #alt1recoHisto.SetMarkerSize(1.5)
+    #legend.AddEntry( alt1recoHisto, 'MG5-MLM+Pythia8', 'lp' )
+    #alt1recoHisto.Draw("histe1 same")
     recoHisto.Draw( "histe1 same")
 
     alt0recoHisto.Scale(1, 'width')  ### divide by bin width
@@ -471,16 +540,9 @@ def drawDataMCReco( ivar, selection, year, lumi, process,
     alt0recoHisto.SetLineColor(ROOT.kBlue)
     alt0recoHisto.SetMarkerColor(ROOT.kBlue)
     alt0recoHisto.SetMarkerStyle(25)
+    alt0recoHisto.SetMarkerSize(1.5)
     legend.AddEntry( alt0recoHisto, 'MG5-MLM+Herwig7', 'lp' )
     alt0recoHisto.Draw("histe1 same")
-    
-    alt1recoHisto.Scale(1, 'width')  ### divide by bin width
-    alt1recoHisto.SetLineWidth(2)
-    alt1recoHisto.SetLineColor(ROOT.kCyan+3)
-    alt1recoHisto.SetMarkerColor(ROOT.kCyan+3)
-    alt1recoHisto.SetMarkerStyle(25)
-    legend.AddEntry( alt1recoHisto, 'MG5-MLM+Pythia8', 'lp' )
-    alt1recoHisto.Draw("histe1 same")
     
     
     alt2recoHisto.Scale(1, 'width')  ### divide by bin width
@@ -488,6 +550,7 @@ def drawDataMCReco( ivar, selection, year, lumi, process,
     alt2recoHisto.SetLineColor(ROOT.kGray+4)
     alt2recoHisto.SetMarkerColor(ROOT.kGray+4)
     alt2recoHisto.SetMarkerStyle(25)
+    alt2recoHisto.SetMarkerSize(1.5)
     legend.AddEntry( alt2recoHisto, 'Pythia8', 'lp' )
     alt2recoHisto.Draw("histe1 same")
     if log: ROOT.gPad.SetLogy()
@@ -512,8 +575,8 @@ def drawDataMCReco( ivar, selection, year, lumi, process,
     
     if selection.startswith("_dijet") and 'Central' in jetType : seltext = 'p_{T}>200 GeV' 
     elif selection.startswith("_dijet") and 'Forward' in jetType : seltext = 'p_{T}>200 GeV' 
-    elif selection.startswith("_W"): seltext = 'p_{T}>200 GeV, 65<m_{jet}<125 GeV' 
-    elif selection.startswith("_top"): seltext = 'p_{T}>400 GeV, 140<m_{jet}<250 GeV'
+    elif selection.startswith("_W"): seltext = 'p_{T}>200 GeV, 65<m_{SD}<125 GeV' 
+    elif selection.startswith("_top"): seltext = 'p_{T}>400 GeV, 140<m_{SD}<300 GeV'
     selText.DrawLatex( ( 0.65 if tlegendAlignment.startswith('right') else 0.2 ), 0.83, seltext )
 
     
@@ -562,7 +625,7 @@ def drawDataMCReco( ivar, selection, year, lumi, process,
     ratio_nominal.Divide( dataHisto,recoHisto, 'pois' )
     ratio_nominal.SetLineColor(ROOT.kRed)
     ratio_nominal.SetMarkerColor(ROOT.kRed)
-    
+    ratio_nominal.SetMarkerSize(1.5)
     ratio_nominal.GetXaxis().SetNdivisions(505)
     #ratio_nominal.GetYaxis().SetNdivisions(505)
     ratio_nominal.SetMarkerStyle(25)
@@ -573,23 +636,23 @@ def drawDataMCReco( ivar, selection, year, lumi, process,
     ratio_alt0MC.SetLineColor(ROOT.kBlue)
     ratio_alt0MC.SetMarkerColor(ROOT.kBlue)
     ratio_alt0MC.SetMarkerStyle(25)
-    
+    ratio_alt0MC.SetMarkerSize(1.5)
     ratio_alt0MC.Draw('PE1 same')
     
-    ratio_alt1MC = ROOT.TGraphAsymmErrors()
-    ratio_alt1MC.Divide(  dataHisto,alt1recoHisto, 'pois' )
-    ratio_alt1MC.SetLineColor(ROOT.kCyan+3)
-    ratio_alt1MC.SetMarkerColor(ROOT.kCyan+3)
-    ratio_alt1MC.SetMarkerStyle(25)
-    
-    ratio_alt1MC.Draw('PE1 same')
+    #ratio_alt1MC = ROOT.TGraphAsymmErrors()
+    #ratio_alt1MC.Divide(  dataHisto,alt1recoHisto, 'pois' )
+    #ratio_alt1MC.SetLineColor(ROOT.kCyan+3)
+    #ratio_alt1MC.SetMarkerColor(ROOT.kCyan+3)
+    #ratio_alt1MC.SetMarkerStyle(25)
+    #ratio_alt1MC.SetMarkerSize(1.5)
+    #ratio_alt1MC.Draw('PE1 same')
     
     ratio_alt2MC = ROOT.TGraphAsymmErrors()
     ratio_alt2MC.Divide(  dataHisto, alt2recoHisto, 'pois' )
     ratio_alt2MC.SetLineColor(ROOT.kGray+4)
     ratio_alt2MC.SetMarkerColor(ROOT.kGray+4)
     ratio_alt2MC.SetMarkerStyle(25)
-    
+    ratio_alt2MC.SetMarkerSize(1.5)
     ratio_alt2MC.Draw('PE1 same')
     
     ratioLegend=ROOT.TLegend(0.20,0.85,0.8,0.95)
@@ -600,7 +663,7 @@ def drawDataMCReco( ivar, selection, year, lumi, process,
     #ratioLegend.SetTextSize(0.1)
     ratioLegend.AddEntry( ratio_nominal, 'MG5+P8', 'lp' )
     ratioLegend.AddEntry( ratio_alt0MC, 'MG5-MLM+H7', 'lp' )
-    ratioLegend.AddEntry( ratio_alt1MC, 'MG5-MLM+P8', 'lp' )
+    #ratioLegend.AddEntry( ratio_alt1MC, 'MG5-MLM+P8', 'lp' )
     ratioLegend.AddEntry( ratio_alt2MC, 'P8+P8', 'lp' )
     #ratioLegend.AddEntry( ratiosystUncHisto, 'Syst.', 'f' )
     pad2.Update()
@@ -613,8 +676,10 @@ def drawDataMCReco( ivar, selection, year, lumi, process,
     ROOT.gStyle.SetPadLeftMargin(0.12)
                     
 
-def drawUnfold( ivar, selection, process, year, lumi, dataJetHisto, genJetHisto, unfoldHisto, unfoldHistoStatUnc, unfoldHistowoUnc, altMCHisto,
-               foldHisto, recoJetHisto, cov_tot, cov_datastat_tot, labelX, maxX, tlegendAlignment, outputName ):
+def drawUnfold(ivar, selection, process, year, lumi, dataJetHisto, genJetHisto, unfoldHisto, unfoldHistoStatUnc, unfoldHistowoUnc,
+               altMCHisto, foldHisto, recoJetHisto, cov_tot, cov_datastat_tot, labelX, maxX, tlegendAlignment, outputName,
+               altMC1Histo = None, altMC2Histo = None, altMC1Histo_label = None, altMC2Histo_label = None, extraMC=False,
+              ):
     """docstring for drawUnfold"""
     print ("Drawing unfolding")
     ROOT.gStyle.SetPadRightMargin(0.05)
@@ -622,10 +687,21 @@ def drawUnfold( ivar, selection, process, year, lumi, dataJetHisto, genJetHisto,
     #ROOT.gROOT.ForceStyle()
     #tdrstyle.setTDRStyle()
     
+    dataJetHisto.SetTitle("")
+    genJetHisto.SetTitle("")
+    unfoldHisto.SetTitle("")
+    unfoldHistoStatUnc.SetTitle("")
+    unfoldHistowoUnc.SetTitle("")
+    altMCHisto.SetTitle("")
+    foldHisto.SetTitle("")
+    recoJetHisto.SetTitle("")
+            
+    
     can = ROOT.TCanvas('can'+ivar, 'can'+ivar,  10, 10, 1500, 1500 )
     pad1 = ROOT.TPad("pad1"+ivar, "Main",0,0.3,1.00,1.00,-1)
     pad1.Draw()
-
+    
+    can.cd()
     pad1.cd()
     pad1.SetTopMargin(0.08)
     pad1.SetBottomMargin(0.02)
@@ -651,10 +727,11 @@ def drawUnfold( ivar, selection, process, year, lumi, dataJetHisto, genJetHisto,
     unfoldHisto = normalise_hist(unfoldHisto.Clone())    
     dataJetHisto = normalise_hist(dataJetHisto.Clone())
     genJetHisto = normalise_hist(genJetHisto.Clone())
-    unfoldHistowoUnc = normalise_hist_divide_bin_width(unfoldHistowoUnc.Clone())
+    unfoldHistowoUnc = normalise_hist(unfoldHistowoUnc.Clone())#_divide_bin_width
     altMCHisto = normalise_hist(altMCHisto.Clone())
     foldHisto = normalise_hist(foldHisto.Clone())
     recoJetHisto = normalise_hist(recoJetHisto.Clone())
+    
     
     unfoldHistoDataStatErr.Sumw2()
     unfoldHisto.Sumw2()
@@ -664,6 +741,14 @@ def drawUnfold( ivar, selection, process, year, lumi, dataJetHisto, genJetHisto,
     altMCHisto.Sumw2()
     foldHisto.Sumw2()
     recoJetHisto.Sumw2()
+    if extraMC and 'dijet' in selection:
+        
+        altMC1Histo = normalise_hist(altMC1Histo.Clone())
+        altMC1Histo.Sumw2()
+        altMC1Histo.SetTitle("")
+        altMC2Histo = normalise_hist(altMC2Histo.Clone())
+        altMC2Histo.Sumw2()
+        altMC2Histo.SetTitle("")
     
     '''
     for ibin in range(1, unfoldHisto.GetNbinsX()+1):
@@ -679,7 +764,8 @@ def drawUnfold( ivar, selection, process, year, lumi, dataJetHisto, genJetHisto,
         unfoldHisto.SetBinError(ibin,tot_err)
         unfoldHistoDataStatErr.SetBinError(ibin,tot_datastaterr)
     '''
-        
+    
+    unfoldHistowoUnc.Scale(1,'width')
     unfoldHistoDataStatErr.Scale(1,'width')
     unfoldHisto.Scale(1, 'width')  
     
@@ -702,7 +788,7 @@ def drawUnfold( ivar, selection, process, year, lumi, dataJetHisto, genJetHisto,
 
    
     if 'tau' in labelX: 
-        unfoldHisto.GetYaxis().SetTitle( '#frac{d#sigma}{d#'+labelX.split('#')[1]+'}' )
+        unfoldHisto.GetYaxis().SetTitle( '#frac{1}{#sigma} #frac{d#sigma}{d#'+labelX.split('#')[1]+'}' )
     else:
         label=None
         if 'pt' in labelX:
@@ -713,7 +799,7 @@ def drawUnfold( ivar, selection, process, year, lumi, dataJetHisto, genJetHisto,
             label = 'm_SD'
         else:
             pass
-        if label: unfoldHisto.GetYaxis().SetTitle( '#frac{d#sigma}{d'+label+'}' )
+        if label: unfoldHisto.GetYaxis().SetTitle( '#frac{1}{#sigma} #frac{d#sigma}{d'+label+'}' )
     #unfoldHisto.GetYaxis().SetTitleOffset(0.95)
     unfoldHisto.GetYaxis().SetTitleSize(0.05)
     unfoldHisto.SetMaximum( 1.6*max([ genJetHisto.GetMaximum(), unfoldHisto.GetMaximum()] )  )
@@ -721,7 +807,6 @@ def drawUnfold( ivar, selection, process, year, lumi, dataJetHisto, genJetHisto,
     #pad1.GetYaxis().SetRangeUser(0,1.5*max([ genJetHisto.GetMaximum(), unfoldHisto.GetMaximum()] ) )
 
     unfoldHisto.Draw( "E1")
-    genJetHisto.Draw( "histE1 same")
 
     altMCHisto.Scale(1, 'width')  ### divide by bin width
     altMCHisto.SetLineWidth(2)
@@ -729,13 +814,29 @@ def drawUnfold( ivar, selection, process, year, lumi, dataJetHisto, genJetHisto,
     altMCHisto.SetMarkerColor(ROOT.kBlue)
     altMCHisto.SetMarkerStyle(25)
     legend.AddEntry( altMCHisto, 'MG5-MLM+Herwig7' if selection.startswith('_dijet') else 'aMC@NLO+Pythia8', 'lp' )
+    
+    
+    if extraMC:
+        
+        #altMC1Histo.Scale(1, 'width')  ### divide by bin width
+        #altMC1Histo.SetLineWidth(2)
+        #altMC1Histo.SetLineColor(ROOT.kCyan+3)
+        #altMC1Histo.SetMarkerColor(ROOT.kCyan+3)
+        #altMC1Histo.SetMarkerStyle(25)
+        #legend.AddEntry( altMC1Histo, 'MG5-MLM+Pythia8' if 'MLM' in altMC1Histo_label else 'Pythia8', 'lp' )
+        #altMC1Histo.Draw("histE1 same")
+        
+        
+        altMC2Histo.Scale(1, 'width')  ### divide by bin width
+        altMC2Histo.SetLineWidth(2)
+        altMC2Histo.SetLineColor(ROOT.kGray+4)
+        altMC2Histo.SetMarkerColor(ROOT.kGray+4)
+        altMC2Histo.SetMarkerStyle(25)
+        legend.AddEntry( altMC2Histo, 'Pythia8' if 'Pt' in altMC2Histo_label else 'MG5-MLM+Pythia8', 'lp' )
+        altMC2Histo.Draw("histE1 same")
+        
+    genJetHisto.Draw( "histE1 same")
     altMCHisto.Draw("histE1 same")
-    #unfoldHistowoUnc.Draw( "e1 same")
-    #foldHisto.Draw( "histe same")
-    #if selfClosure: foldHisto.Draw( "histe same")
-    #dataJetHisto.Draw( "histe same")
-    #recoJetHisto.Draw( "histe same")
-    #if process.startswith('data'): recoJetHisto.Draw( "hist same")
     
     selText = textBox.Clone()
     selText.SetTextFont(42)
@@ -756,15 +857,15 @@ def drawUnfold( ivar, selection, process, year, lumi, dataJetHisto, genJetHisto,
     
     #if selection.startswith("_dijet") and 'Central' in jetType : seltext = 'p_{T}>200 GeV' 
     if selection.startswith("_dijet"): seltext = 'p_{T}>200 GeV' 
-    elif selection.startswith("_W"): seltext = 'p_{T}>200 GeV, 65<m_{jet}<125 GeV' 
-    elif selection.startswith("_top"): seltext = 'p_{T}>400 GeV, 140<m_{jet}<250 GeV'
+    elif selection.startswith("_W"): seltext = 'p_{T}>200 GeV, 65<m_{SD}<125 GeV' 
+    elif selection.startswith("_top"): seltext = 'p_{T}>400 GeV, 140<m_{SD}<300 GeV'
     #selText.DrawLatex( ( 0.65 if tlegendAlignment.startswith('right') else 0.2 ), 0.83, seltext )
     selText.DrawLatex( ( 0.21 if tlegendAlignment.startswith('right') else 0.55 ), 0.78, seltext )
     
     legend.Draw()
     if process.startswith('data'):
         CMS_lumi.extraText = "Preliminary"
-        CMS_lumi.lumi_13TeV = ('#leq' if selection.startswith('dijet') else '')+str( round( (lumi/1000.), 2 ) )+" fb^{-1}, 13 TeV"+('' if year.startswith('all') else ", "+( '2016+2017+2018' if year.startswith('all') else year ) )
+        CMS_lumi.lumi_13TeV = ('#leq' if 'dijet' in selection else '')+str( round( (lumi/1000.), 2 ) )+" fb^{-1}, 13 TeV"+('' if year.startswith('all') else ", "+( '2016+2017+2018' if year.startswith('all') else year ) )
     else:
         CMS_lumi.extraText = "Simulation Preliminary"
         CMS_lumi.lumi_13TeV = "13 TeV, "+ ( '2016+2017+2018' if year.startswith('all') else year )
@@ -817,11 +918,11 @@ def drawUnfold( ivar, selection, process, year, lumi, dataJetHisto, genJetHisto,
     ratio_datastatUnc.SetLineWidth(0)
     ratio_datastatUnc.SetFillStyle(3245)
     ratio_datastatUnc.GetXaxis().SetTitle( '#'+labelX.split('#')[1] )
-    ratio_datastatUnc.GetXaxis().SetTitleOffset( 0.8 )
+    ratio_datastatUnc.GetXaxis().SetTitleOffset( 0.9 )
     ratio_datastatUnc.GetYaxis().SetTitle( "Sim./Data" )
     ratio_datastatUnc.GetYaxis().SetTitleOffset( 0.6 )
     if not('dijet' in selection): 
-        ratio_datastatUnc.GetYaxis().SetRangeUser(0., 3. )
+        ratio_datastatUnc.GetYaxis().SetRangeUser(0., 2.8 )
     else:
         ratio_datastatUnc.GetYaxis().SetRangeUser(0.5, 2. )
     ratio_datastatUnc.GetYaxis().CenterTitle()
@@ -853,21 +954,41 @@ def drawUnfold( ivar, selection, process, year, lumi, dataJetHisto, genJetHisto,
     #ratiosystUncHisto.Scale(1,'width')    
     #ratiosystUncHisto.Draw('E3 same')
 
-    hRatioUp = ROOT.TGraphAsymmErrors()
-    hRatioUp.Divide( genJetHisto, unfoldHisto, 'pois' )
-    hRatioUp.SetLineColor(ROOT.kRed)
-    hRatioUp.SetMarkerColor(ROOT.kRed)
-    #hRatioUp.SetLineWidth(2)
-    hRatioUp.SetMarkerStyle(25)
-    hRatioUp.Draw('P0 same')
+    hRatio = ROOT.TGraphAsymmErrors()
+    hRatio.Divide( genJetHisto, unfoldHisto, 'pois' )
+    hRatio.SetLineColor(ROOT.kRed)
+    hRatio.SetMarkerColor(ROOT.kRed)
+    #hRatio.SetLineWidth(2)
+    hRatio.SetMarkerStyle(25)
     
-    hRatioUp2 = ROOT.TGraphAsymmErrors()
-    hRatioUp2.Divide( altMCHisto, unfoldHisto, 'pois' )
-    hRatioUp2.SetLineColor(ROOT.kBlue)
-    hRatioUp2.SetMarkerColor(ROOT.kBlue)
-    #hRatioUp.SetLineWidth(2)
-    hRatioUp2.SetMarkerStyle(25)
-    hRatioUp2.Draw('P0 same')
+    
+    hRatio2 = ROOT.TGraphAsymmErrors()
+    hRatio2.Divide( altMCHisto, unfoldHisto, 'pois' )
+    hRatio2.SetLineColor(ROOT.kBlue)
+    hRatio2.SetMarkerColor(ROOT.kBlue)
+    #hRatio.SetLineWidth(2)
+    hRatio2.SetMarkerStyle(25)
+    
+    if extraMC:
+        #hRatio3 = ROOT.TGraphAsymmErrors()
+        #hRatio3.Divide( altMC1Histo, unfoldHisto, 'pois' )
+        #hRatio3.SetLineColor(ROOT.kCyan+3)
+        #hRatio3.SetMarkerColor(ROOT.kCyan+3)
+        ##hRatio3.SetLineWidth(2)
+        #hRatio3.SetMarkerStyle(25)
+        #hRatio3.Draw('P0 same')
+
+        hRatio4 = ROOT.TGraphAsymmErrors()
+        hRatio4.Divide( altMC2Histo, unfoldHisto, 'pois' )
+        hRatio4.SetLineColor(ROOT.kGray+4)
+        hRatio4.SetMarkerColor(ROOT.kGray+4)
+        #hRatio4.SetLineWidth(2)
+        hRatio4.SetMarkerStyle(25)
+        hRatio4.Draw('P0 same')
+    
+    hRatio.Draw('P0 same')
+    
+    hRatio2.Draw('P0 same')
     
     ratioLegend=ROOT.TLegend(0.15,0.85,0.7,0.95)
     ratioLegend.SetTextSize(0.09)
@@ -887,6 +1008,18 @@ def drawUnfold( ivar, selection, process, year, lumi, dataJetHisto, genJetHisto,
     
 def drawClosures(ivar, selection, process, year, lumi, genJetHisto, genJetHistoCross, unfoldHisto, unfoldHistoCross,
                  ratioUncHisto, ratiototUncHisto, ratiosystUncHisto, labelX, maxX, tlegendAlignment, outputName ):
+    if process.startswith('MCCrossClosure'):
+    
+        genJetHistoCross.SetTitle("") 
+        unfoldHistoCross.SetTitle("")
+        #ratioUncHisto.SetTitle("")
+        #ratiototUncHisto.SetTitle("")
+        #ratiosystUncHisto.SetTitle("")
+    else:
+
+        genJetHisto.SetTitle("") 
+        unfoldHisto.SetTitle("")
+
     
     """docstring for drawUnfold"""
     print ("Drawing unfolding closure")
@@ -901,9 +1034,9 @@ def drawClosures(ivar, selection, process, year, lumi, genJetHisto, genJetHistoC
     pad1.cd()
     pad1.SetTopMargin(0.08)
     pad1.SetBottomMargin(0.02)
-    if tlegendAlignment.startswith('right'): legend=ROOT.TLegend(0.5,0.65,0.85,0.9)
-
-    else: legend=ROOT.TLegend(0.20,0.65,0.55,0.9)
+    if tlegendAlignment.startswith('right'): legend=ROOT.TLegend(0.55,0.6,0.9,0.9)
+    else: legend=ROOT.TLegend(0.20,0.65,0.45,0.9)
+        
     legend.SetFillStyle(0)
     legend.SetTextSize(0.035)
     legend.SetBorderSize(0)
@@ -923,7 +1056,7 @@ def drawClosures(ivar, selection, process, year, lumi, genJetHisto, genJetHistoC
     if 'dijet' in selection.lower():
         legend.AddEntry( unfoldHisto, ('MG5+P8 (self-closure)' if process.startswith('MCSelfClosure') else 'MG5+P8 unf. w/ MG5+P8'), 'pe' )
     else:
-        legend.AddEntry( unfoldHisto, ('Powheg+P8 (self-closure)' if process.startswith('MCSelfClosure') else 'Powheg+P8 unf. w/ Powheg+P8'), 'pe' )
+        legend.AddEntry( unfoldHisto, ('PWHG+P8 (self-closure)' if process.startswith('MCSelfClosure') else 'PWHG+P8 unf. w/ PWHG+P8'), 'pe' )
     
     #genJetHisto.Scale(1, 'width')
     #genJetHisto.Scale(scaleFactor)
@@ -932,7 +1065,7 @@ def drawClosures(ivar, selection, process, year, lumi, genJetHisto, genJetHistoC
     genJetHisto.SetLineColor(ROOT.kBlue)
     genJetHisto.SetMarkerStyle(0)
     genJetHisto.SetLineStyle(2)
-    legend.AddEntry( genJetHisto, 'MG5+Pythia8 (gen)' if 'dijet' in selection.lower() else 'Powheg+Pythia8 (gen)' , 'lp' )
+    legend.AddEntry( genJetHisto, 'MG5+P8 (gen)' if 'dijet' in selection.lower() else 'Powheg+P8 (gen)' , 'lp' )
     if 'tau' in labelX:
         unfoldHisto.GetYaxis().SetTitle( '#frac{d#sigma}{d#'+labelX.split('#')[1]+'}' )
     else:
@@ -964,7 +1097,7 @@ def drawClosures(ivar, selection, process, year, lumi, genJetHisto, genJetHistoC
         unfoldHistoCross.SetMarkerColor(ROOT.kRed+4)
         unfoldHistoCross.SetLineColor(ROOT.kRed+4)
         unfoldHistoCross.SetLineWidth(2)
-        legend.AddEntry( unfoldHistoCross, 'MG5+P8 unf. w/ MG5-MLM+H7' if 'dijet' in selection.lower() else 'Powheg+P8 unf. w/ aMC@NLO+P8', 'pe' )
+        legend.AddEntry( unfoldHistoCross, 'MG5+P8 unf. w/ MG5-MLM+H7' if 'dijet' in selection.lower() else 'PWHG+P8 unf. w/ aMC@NLO+P8', 'pe' )
 
         #genJetHisto.Scale(1, 'width')
         #genJetHisto.Scale(scaleFactor)
@@ -1015,7 +1148,7 @@ def drawClosures(ivar, selection, process, year, lumi, genJetHisto, genJetHistoC
     tmpPad2.GetXaxis().SetTitle( labelX )
     tmpPad2.GetYaxis().SetTitle( "Sim./Data" )
     tmpPad2.GetYaxis().SetTitleOffset( 0.5 )
-    tmpPad2.GetYaxis().SetRangeUser(0.5,1.5 )
+    tmpPad2.GetYaxis().SetRangeUser(0.7,1.4 )
     tmpPad2.GetXaxis().SetRangeUser(unfoldHisto.GetBinLowEdge(1),unfoldHisto.GetBinLowEdge(unfoldHisto.GetNbinsX()+2) )
     tmpPad2.GetYaxis().CenterTitle()
     tmpPad2.SetLabelSize(0.12, 'x')
@@ -1080,7 +1213,7 @@ def draw2D( ivar, histo, varInfo, outputDir, outputLabel='data', addCorrelation=
 
     textBox.SetTextSize(0.04)
     if addCorrelation:
-        #print('|-----> Correlation: ', histo.GetCorrelationFactor())
+        print('|-----> Correlation: ', histo.GetCorrelationFactor())
         textBoxCorr = textBox.Clone()
         textBoxCorr.DrawLatex( 0.05, varInfo['bins'][-1]-( .05*(varInfo['bins'][-1]-varInfo['bins'][0]) ), '#color[8]{Corr. Factor = '+str(round(histo.GetCorrelationFactor(),2))+'}' )
 
@@ -1520,13 +1653,13 @@ def drawUncertainties(ivar, unfoldHistoTotUnc,
             text = k.split('_')[-1].split('Total')[0].replace('TOTAL', '').replace('WEIGHT', '')
             if text.startswith(('ISR', 'FSR', 'JER', 'PU', 'PDF', 'Bkg')):
                 uncerUnfoldHisto[k].SetLineStyle(2)
-            uncerUnfoldHisto[k].SetLineColor(colors[dummy])
+            uncerUnfoldHisto[k].SetLineColor(colors[col_counter])
             uncerUnfoldHisto[k].SetLineWidth(2)
             #uncerUnfoldHisto[k].Scale( uncScaleFactor )
             uncerUnfoldHisto[k].Draw("hist same")
             if not 'damp' in k: legend.AddEntry( uncerUnfoldHisto[k], k.split('_')[-1].split('Total')[0].replace('TOTAL', '').replace('WEIGHT', ''), 'l' )
             else: legend.AddEntry( uncerUnfoldHisto[k], 'h_{damp}', 'l' )
-            dummy=dummy+1
+            col_counter=col_counter+1
             
         
     #get fractionals for stat and total errors
@@ -1581,7 +1714,7 @@ def drawUncertainties(ivar, unfoldHistoTotUnc,
     bkgSubErrHist.Draw('hist same ')
     
     
-    dummy=0
+    col_counter=0
     #print (uncerUnfoldHisto.keys())
     
     for k in normeduncerUnfoldHisto:
@@ -1589,13 +1722,13 @@ def drawUncertainties(ivar, unfoldHistoTotUnc,
             text = k.split('_')[-1].split('Total')[0].replace('TOTAL', '').replace('WEIGHT', '')
             if text.startswith(('ISR', 'FSR', 'JER', 'PU', 'PDF', 'Bkg')):
                 normeduncerUnfoldHisto[k].SetLineStyle(2)
-            normeduncerUnfoldHisto[k].SetLineColor(colors[dummy])
+            normeduncerUnfoldHisto[k].SetLineColor(colors[col_counter])
             normeduncerUnfoldHisto[k].SetLineWidth(2)
             #uncerUnfoldHisto[k].Scale( uncScaleFactor )
             normeduncerUnfoldHisto[k].Draw("hist same")
             if not 'damp' in k: legend.AddEntry( normeduncerUnfoldHisto[k], k.split('_')[-1].split('Total')[0].replace('TOTAL', '').replace('WEIGHT', ''), 'l' )
             else: legend.AddEntry( normeduncerUnfoldHisto[k], 'h_{damp}', 'l' )
-            dummy=dummy+1
+            col_counter=col_counter+1
     #print ("adding jeshisto values")
     
    
@@ -1639,20 +1772,13 @@ def drawUncertainties(ivar, unfoldHistoTotUnc,
     
 def drawUncertainties_normalizedshifts(ivar, unfoldHistoTotUnc, unfoldHistowoUnc, unfoldHistoStatUnc, unfoldHistoRMStatUnc, unfoldHistoBkgSubUnc, uncerUnfoldHisto, cov_tot, cov_datastat_tot, cov_rmstat_tot, cov_bkg_tot, labelX, tlegendAlignment, outputName, year, unftot, selection ):
     
-    """docstring for drawUncUncertainties"""
-    #outputRoot = ROOT.TFile.Open( 'draw_unc'+ivar+'.root', 'recreate' )
-
-    #Absolute shifts on the sbolute unfolded distribution are first created
-    #this distribtuion is normalized taking into account the bin widths as for the nominal 
-    
     #print('All uncertainty keys from uncerUnfoldHisto', uncerUnfoldHisto.keys())
     
     print (f'|------> Procesing uncertainty plot for {ivar}')
-    colors = [ 95, 38, 6, 7, 8, 42, 50, 218, 225, 30, 16, 198, 190, 83, 167, 207, 209, 212, 216, 51, 61, 67, 89, 133, 142, 208, 36, 2, 144, 225, 227, 150]
+    colors = [ 95, 38, 6, 7, 8, 42, 50, 218, 225, 30, 16, 198, 190, 83, 167, 207, 209, 212, 216, 51, 61, 67, 89, 133, 142, 208, 36, 2, 144, 225, 227, 150, 93, 40]
     ROOT.gStyle.SetPadRightMargin(0.05)
     ROOT.gStyle.SetPadLeftMargin(0.15)
-    #ROOT.gROOT.ForceStyle()
-    #tdrstyle.setTDRStyle()
+    
     
     canUnc = ROOT.TCanvas('canUnc'+ivar, 'canUnc'+ivar,  10, 10, 1500, 1000 )
     canUnc.SetTopMargin(0.08)
@@ -1660,26 +1786,29 @@ def drawUncertainties_normalizedshifts(ivar, unfoldHistoTotUnc, unfoldHistowoUnc
     
     
     if tlegendAlignment.startswith('right'): 
-        legend=ROOT.TLegend(0.30,0.65,0.65,0.9)
+        legend=ROOT.TLegend(0.2,0.7,0.7,0.9)
     else: 
-        legend=ROOT.TLegend(0.55,0.65,0.90,0.9)
+        legend=ROOT.TLegend(0.4,0.7,0.9,0.9)
     legend.SetFillStyle(0)
-    legend.SetNColumns(2)
+    legend.SetNColumns(3)
     legend.SetTextSize(0.03)
     legend.SetBorderSize(0)
     
-    ''' 
-    unfoldHistoDataStatUnc=unfoldHistoStatUnc.Clone()
-    unfoldHistoRMStatUnc=unfoldHistoRMStatUnc.Clone()
-    unfoldHistoBkgSubUnc=unfoldHistoBkgSubUnc.Clone()
-    '''
+    
     unfoldHistoNoNorm = normalise_hist(unfoldHistoTotUnc.Clone())
     unfoldHistowoUnc = normalise_hist(unfoldHistowoUnc.Clone())
     unfoldHistoTotUnc = normalise_hist(unfoldHistoTotUnc.Clone())
     unfoldHistoDataStatUnc = normalise_hist(unfoldHistoStatUnc.Clone())
     unfoldHistoRMStatUnc = normalise_hist(unfoldHistoRMStatUnc.Clone())
     unfoldHistoBkgSubUnc = normalise_hist(unfoldHistoBkgSubUnc.Clone())
-
+    
+    unfoldHistoNoNorm.SetTitle("")
+    unfoldHistowoUnc.SetTitle("")
+    unfoldHistoTotUnc.SetTitle("")
+    unfoldHistoDataStatUnc.SetTitle("")
+    unfoldHistoRMStatUnc.SetTitle("")
+    unfoldHistoBkgSubUnc.SetTitle("")
+    
     unfoldHistoNoNorm.Sumw2()
     unfoldHistoTotUnc.Sumw2()
     unfoldHistoDataStatUnc.Sumw2()
@@ -1738,8 +1867,8 @@ def drawUncertainties_normalizedshifts(ivar, unfoldHistoTotUnc, unfoldHistowoUnc
     unfoldHistoRMStatUnc.Scale(1,'width')
     unfoldHistoBkgSubUnc.Scale(1,'width')
     
-    dummy=0
-    dummy_jes=0
+    col_counter=0
+    col_counter_jes=0
     
     normeduncerUnfoldHistoshiftsUp = OrderedDict()
     normeduncerUnfoldHistoshiftsDown = OrderedDict()
@@ -1758,16 +1887,17 @@ def drawUncertainties_normalizedshifts(ivar, unfoldHistoTotUnc, unfoldHistowoUnc
     
     jesHistoUpMax.Sumw2()
     jesHistoDownMax.Sumw2()
-    
+    #print(uncerUnfoldHisto.keys())
     for k in uncerUnfoldHisto:
         
         if ('_shifthist'in k.lower() and 'up' in k.lower()):# and not k.endswith(('TotalUnc', 'SystTotal', 'StatTotal')) and not 'CM' in k:
+            if 'btag' in k.lower() or 'lepton' in k.lower(): continue
             #print(k)
             text = (k.split('_shiftHist')[0].replace('Up','').replace('Down','').replace('Weight', '')).split(ivar+'_')[1]
             text=text.upper() if not('ALL' in text.upper()) else text.upper().replace('ALL','')
             if 'crtotal' in text.lower() or 'model' in text.lower(): continue
 
-            #print(k,text,dummy)
+            #print(k,text,col_counter)
 
             normeduncerUnfoldHistoshiftsUp[k] = uncerUnfoldHisto[k].Clone()
             normeduncerUnfoldHistoshiftsUp[k].Sumw2()
@@ -1778,34 +1908,34 @@ def drawUncertainties_normalizedshifts(ivar, unfoldHistoTotUnc, unfoldHistowoUnc
             
             if 'ISR' in text or 'L1' in text or 'FSR' in text or 'JER' in text or 'BTAG' in text or 'LEPTON' in text or ('PU' in text and not('DAMP' in text)) or 'PDF' in text:
                 normeduncerUnfoldHistoshiftsUp[k].SetLineStyle(2 if not('L1' in text) else 1)
-                normeduncerUnfoldHistoshiftsUp[k].SetLineColor(colors[dummy])
-                normeduncerUnfoldHistoshiftsUp[k].SetMarkerColor(colors[dummy])
-                normeduncerUnfoldHistoshiftsUp[k].SetMarkerSize(2 if not('L1' in text) else 1)
+                normeduncerUnfoldHistoshiftsUp[k].SetLineColor(colors[col_counter])
+                normeduncerUnfoldHistoshiftsUp[k].SetMarkerColor(colors[col_counter])
+                normeduncerUnfoldHistoshiftsUp[k].SetMarkerSize(2)# if not('L1' in text) else 1)
                 normeduncerUnfoldHistoshiftsUp[k].SetMarkerStyle(upstyles[up_counter])
-                #print (k,text, up_counter, dummy)
-                dummy=dummy+1    
+                #print (k,text, up_counter, col_counter)
+                col_counter=col_counter+1    
                 up_counter=up_counter+1
             elif 'DAMP' in text or 'MTOP' in text:
                 normeduncerUnfoldHistoshiftsUp[k].SetLineStyle(3)
-                normeduncerUnfoldHistoshiftsUp[k].SetLineColor(colors[dummy])
-                normeduncerUnfoldHistoshiftsUp[k].SetMarkerColor(colors[dummy])
+                normeduncerUnfoldHistoshiftsUp[k].SetLineColor(colors[col_counter])
+                normeduncerUnfoldHistoshiftsUp[k].SetMarkerColor(colors[col_counter])
                 normeduncerUnfoldHistoshiftsUp[k].SetMarkerSize(2)
                 normeduncerUnfoldHistoshiftsUp[k].SetMarkerStyle(upstyles[up_counter])
-                #print (k,text, up_counter, dummy)
-                dummy=dummy+1    
+                #print (k,text, up_counter, col_counter)
+                col_counter=col_counter+1    
                 up_counter=up_counter+1
-    dummy=0
+    col_counter=0
     #print("only down uncs")
     for k in uncerUnfoldHisto:
            
         if ('_shifthist' in k.lower() and 'down' in k.lower()):
-            
+            if 'btag' in k.lower() or 'lepton' in k.lower(): continue
             #print(k)
             text = (k.split('_shiftHist')[0].replace('Up','').replace('Down','').replace('Weight', '')).split(ivar+'_')[1]
             text=text.upper()  if not('ALL' in text.upper()) else text.upper().replace('ALL','')
             if 'crtotal' in text.lower() or 'model' in text.lower(): continue
 
-            #print(k,text,dummy)
+            #print(k,text,col_counter)
 
             normeduncerUnfoldHistoshiftsDown[k] = uncerUnfoldHisto[k].Clone()
             normeduncerUnfoldHistoshiftsDown[k].Sumw2()
@@ -1816,26 +1946,26 @@ def drawUncertainties_normalizedshifts(ivar, unfoldHistoTotUnc, unfoldHistowoUnc
               
             if 'ISR' in text or 'L1' in text or 'FSR' in text or 'JER' in text or 'BTAG' in text or 'LEPTON' in text or ('PU' in text and not('DAMP' in text)) or 'PDF' in text:
                 normeduncerUnfoldHistoshiftsDown[k].SetLineStyle(2 if not('L1' in text) else 1)
-                normeduncerUnfoldHistoshiftsDown[k].SetLineColor(colors[dummy])
-                normeduncerUnfoldHistoshiftsDown[k].SetMarkerColor(colors[dummy])
-                normeduncerUnfoldHistoshiftsDown[k].SetMarkerSize(2 if not('L1' in text) else 1)
+                normeduncerUnfoldHistoshiftsDown[k].SetLineColor(colors[col_counter])
+                normeduncerUnfoldHistoshiftsDown[k].SetMarkerColor(colors[col_counter])
+                normeduncerUnfoldHistoshiftsDown[k].SetMarkerSize(2)# if not('L1' in text) else 1)
                 normeduncerUnfoldHistoshiftsDown[k].SetMarkerStyle(downstyles[down_counter])
-                #print (k,text, down_counter, dummy)
+                #print (k,text, down_counter, col_counter)
                 down_counter=down_counter+1
-                dummy=dummy+1 
+                col_counter=col_counter+1 
             elif 'DAMP' in text or 'MTOP' in text:
                 normeduncerUnfoldHistoshiftsDown[k].SetLineStyle(3)
-                normeduncerUnfoldHistoshiftsDown[k].SetLineColor(colors[dummy])
-                normeduncerUnfoldHistoshiftsDown[k].SetMarkerColor(colors[dummy])
+                normeduncerUnfoldHistoshiftsDown[k].SetLineColor(colors[col_counter])
+                normeduncerUnfoldHistoshiftsDown[k].SetMarkerColor(colors[col_counter])
                 normeduncerUnfoldHistoshiftsDown[k].SetMarkerSize(2)
                 normeduncerUnfoldHistoshiftsDown[k].SetMarkerStyle(downstyles[down_counter])
-                #print (k,text, down_counter, dummy)
+                #print (k,text, down_counter, col_counter)
                 down_counter=down_counter+1
-                dummy=dummy+1 
+                col_counter=col_counter+1 
     
-    print("Moving to other uncs")
-    dummy = dummy+2
-    modelkey = 0
+    #print("Moving to other uncs")
+    #col_counter = col_counter+2
+    #modelkey = 0
     
     cr_maxup = unfoldHistoTotUnc.Clone()
     cr_maxup.Reset()
@@ -1846,12 +1976,8 @@ def drawUncertainties_normalizedshifts(ivar, unfoldHistoTotUnc, unfoldHistowoUnc
     
     for k in uncerUnfoldHisto:
         
-        #text = (k.split('_shiftHist')[0].replace('Up','').replace('Down','').replace('Weight', '')).split(ivar+'_')[1]
-        #print (text, dummy)
-        #if 'cr' in k.lower() or 'erd' in k.lower(): 
-            #print(k)
         if ('cr1' in k.lower() or 'cr2' in k.lower() or 'erd' in k.lower()) and '_shifthist' in k.lower():
-            #print (k, dummy)
+            #print (k, col_counter)
             cr_histos[k] = uncerUnfoldHisto[k].Clone()
             cr_histos[k].Sumw2()
             cr_histos[k] = normalise_hist(cr_histos[k].Clone())
@@ -1860,39 +1986,49 @@ def drawUncertainties_normalizedshifts(ivar, unfoldHistoTotUnc, unfoldHistowoUnc
                                                                   unfoldHistoTotUnc.Clone())
     
     modelkey=None
-
+    btag_key=None
+    lepton_key=None
+    
     for ibin in range(1,unfoldHistoTotUnc.GetNbinsX()+1):
         if not('dijet' in selection):
             cr_maxup.SetBinContent(ibin,1.)
             cr_maxdown.SetBinContent(ibin,1.)
-            upmax_ibin = 1
-            downmax_ibin = 1
+            upmax_ibin_cr = 1
+            downmax_ibin_cr = 1
+            
+            
+            
         for k in uncerUnfoldHisto:
             #print (k)
             try: 
                 text = (k.split('_shiftHist')[0].replace('Up','').replace('Down','').replace('Weight', '')).split(ivar+'_')[1]
             except IndexError:
                 print (k, "printing due to index error in: text = (k.split('_shiftHist')[0].replace('Up','').replace('Down','').replace('Weight', '')).split(ivar+'_')[1] ")
-            if 'modeltotal'in k.lower(): 
+            if 'modeltotal'in k.lower() and 'shifthist' in k.lower(): 
                 modelkey=k
-                #print (text, dummy, modelkey)
+                #print (text, col_counter, modelkey)
+            elif 'btag' in k.lower() and 'total' in k.lower() and 'shifthist' in k.lower():
+                btag_key=k
+                
+            elif 'lepton' in k.lower() and 'total' in k.lower() and 'shifthist' in k.lower():
+                lepton_key=k
 
             if ('cr1' in text.lower() or 'cr2' in text.lower() or 'erd' in text.lower()) and '_shifthist' in k.lower() and not('dijet' in selection):
                 
-                #print ("Color reconnection uncs.",text, dummy, k)
+                #print ("Color reconnection uncs.",text, col_counter, k)
                 
-                if upmax_ibin<cr_histos[k].GetBinContent(ibin):
-                    upmax_ibin=cr_histos[k].GetBinContent(ibin)
-                if downmax_ibin>cr_histos[k].GetBinContent(ibin):
-                    downmax_ibin=cr_histos[k].GetBinContent(ibin)
+                if upmax_ibin_cr<cr_histos[k].GetBinContent(ibin):
+                    upmax_ibin_cr=cr_histos[k].GetBinContent(ibin)
+                if downmax_ibin_cr>cr_histos[k].GetBinContent(ibin):
+                    downmax_ibin_cr=cr_histos[k].GetBinContent(ibin)
                
                 
             if not('dijet' in selection):
                 #print (upmax_ibin,downmax_ibin)
-                cr_maxup.SetBinContent(ibin,upmax_ibin)
-                cr_maxdown.SetBinContent(ibin,downmax_ibin)
+                cr_maxup.SetBinContent(ibin,upmax_ibin_cr)
+                cr_maxdown.SetBinContent(ibin,downmax_ibin_cr)
                     
-    #print ("OtherUncs", otherUncs)
+    print ("Other uncs' keys", modelkey,btag_key,lepton_key)
     
     modelUnc = uncerUnfoldHisto[modelkey].Clone()
     modelUnc.Sumw2()
@@ -1903,11 +2039,58 @@ def drawUncertainties_normalizedshifts(ivar, unfoldHistoTotUnc, unfoldHistowoUnc
     modelUnc.SetLineWidth(2)
     modelUnc.SetMarkerSize(0)
     modelUnc.SetLineColor(28)
-    #dummy+=1
+    #col_counter+=1
     modelUnc.SetFillColor(0)
 
-               
-                
+    if not('dijet' in selection):
+        btagUnc = uncerUnfoldHisto[btag_key].Clone()
+        btagUnc.Sumw2()
+        btagUnc = normalise_hist(btagUnc.Clone())
+        btagUnc.Scale(1,'width')
+
+        btagUp = convert_syst_shift_to_error_ratio_hist(btagUnc.Clone(),unfoldHistoTotUnc.Clone())
+        btagUp.Sumw2()
+        #btagUp = convert_syst_shift_to_error_ratio_hist(btagUp.Clone(),1)
+        #btagUp.Sumw2()
+
+        btagDown = btagUp.Clone()#,-1)#convert_error_bars_to_error_ratio_hist(btagHist.Clone(),-1)
+        btagDown.Sumw2()
+
+        for ibin in range(btagDown.GetNbinsX()+1):
+            bc = btagUp.GetBinContent(ibin)
+            #print(bc)
+            diff=abs(bc-1.)
+            if (1.-diff)<0. or bc==0.:
+                print(f"WARNING: btag down unc. ratio has bin content <=0: {bc}")
+                btagDown.SetBinContent(ibin,1.)
+                continue
+
+            btagDown.SetBinContent(ibin,1.-diff)
+        if not(lepton_key==None):
+            leptonUnc = uncerUnfoldHisto[lepton_key].Clone()
+            leptonUnc.Sumw2()
+            leptonUnc = normalise_hist(leptonUnc.Clone())
+            leptonUnc.Scale(1,'width')
+
+            leptonUp = convert_syst_shift_to_error_ratio_hist(leptonUnc.Clone(),unfoldHistoTotUnc.Clone())
+            leptonUp.Sumw2()
+            #leptonUp = convert_syst_shift_to_error_ratio_hist(leptonUp.Clone(),1)
+            #leptonUp.Sumw2()
+
+            leptonDown = leptonUp.Clone()#,-1)#convert_error_bars_to_error_ratio_hist(leptonHist.Clone(),-1)
+            leptonDown.Sumw2()
+
+            for ibin in range(leptonDown.GetNbinsX()+1):
+                bc = leptonUp.GetBinContent(ibin)
+                #print(bc)
+                diff=abs(bc-1.)
+                if (1.-diff)<0. or bc==0.:
+                    print(f"WARNING: lepton down unc. ratio has bin content <=0: {bc}")
+                    leptonDown.SetBinContent(ibin,1.)
+                    continue
+
+                leptonDown.SetBinContent(ibin,1.-diff)
+   
     dataStatErrHist = unfoldHistoDataStatUnc.Clone()
     dataStatErrHist.Sumw2()
     dataStatErrHist.Divide(unfoldHistowoUnc)
@@ -1923,9 +2106,9 @@ def drawUncertainties_normalizedshifts(ivar, unfoldHistoTotUnc, unfoldHistowoUnc
     totalErrHist.GetYaxis().SetTitle('Variation/nominal')
     totalErrHist.GetYaxis().SetTitleSize(0.05)
     if not('dijet' in selection): 
-        totalErrHist.GetYaxis().SetRangeUser(0.,2.2)
+        totalErrHist.GetYaxis().SetRangeUser(0.2,2.)
     else:
-        totalErrHist.GetYaxis().SetRangeUser(0.5,1.8)
+        totalErrHist.GetYaxis().SetRangeUser(0.7,1.3)
     totalErrHist.GetXaxis().SetTitle('#'+labelX.split('#')[1])
     totalErrHist.SetLineStyle(2)
     totalErrHist.SetFillColorAlpha(ROOT.kGray+3,0.9)
@@ -1942,25 +2125,7 @@ def drawUncertainties_normalizedshifts(ivar, unfoldHistoTotUnc, unfoldHistowoUnc
     dataStatErrHist.SetLineColor(88)
     dataStatErrHist.Draw('E2 same')
     
-    if not('dijet' in selection):
-        #CR unc
     
-        cr_maxup.SetLineColor(208)
-        cr_maxdown.SetLineColor(208)
-        cr_maxup.SetMarkerColor(208)
-        cr_maxdown.SetMarkerColor(208)
-        cr_maxup.SetMarkerStyle(upstyles[up_counter])
-        cr_maxdown.SetMarkerStyle(downstyles[down_counter])
-        cr_maxup.SetMarkerSize(2)
-        cr_maxdown.SetMarkerSize(2)
-        #print ("Drawing CR unc",up_counter,down_counter)
-
-        cr_maxup.SetMarkerSize(2)
-        cr_maxdown.SetMarkerSize(2)
-        cr_maxup.Draw('P same')
-        cr_maxdown.Draw('P same')
-        up_counter=up_counter+1
-        down_counter=down_counter+1
     
     
     h1 = convert_error_bars_to_error_ratio_hist(rmStatErrHist.Clone(),-1)
@@ -2035,7 +2200,6 @@ def drawUncertainties_normalizedshifts(ivar, unfoldHistoTotUnc, unfoldHistowoUnc
         jesHistoUpMax.SetBinContent(ibin,upmax_ibin)
         jesHistoDownMax.SetBinContent(ibin,downmax_ibin)
         
-    if not('dijet' in selection): legend.AddEntry(cr_maxup,'CR model', 'p')
     legend.AddEntry(jesHistoUpMax,'JES', 'p')
     jesHistoUpMax.SetLineColor(51)
     jesHistoDownMax.SetLineColor(51)
@@ -2047,6 +2211,59 @@ def drawUncertainties_normalizedshifts(ivar, unfoldHistoTotUnc, unfoldHistowoUnc
     jesHistoDownMax.SetMarkerSize(2)
     jesHistoUpMax.Draw('P same')
     jesHistoDownMax.Draw('P same')
+    
+    if not('dijet' in selection):
+    
+        cr_maxup.SetLineColor(208)
+        cr_maxdown.SetLineColor(208)
+        cr_maxup.SetMarkerColor(208)
+        cr_maxdown.SetMarkerColor(208)
+        cr_maxup.SetMarkerStyle(upstyles[up_counter])
+        cr_maxdown.SetMarkerStyle(downstyles[down_counter])
+        
+        cr_maxup.SetMarkerSize(2)
+        cr_maxdown.SetMarkerSize(2)
+        cr_maxup.Draw('P same')
+        cr_maxdown.Draw('P same')
+        up_counter=up_counter+1
+        down_counter=down_counter+1
+                
+        #print(f"Color (btag) = {col_counter}{colors[col_counter]}")
+        btagUp.SetLineColor(colors[col_counter])
+        btagDown.SetLineColor(colors[col_counter])
+        btagUp.SetMarkerColor(colors[col_counter])
+        btagDown.SetMarkerColor(colors[col_counter])
+        btagUp.SetMarkerStyle(upstyles[up_counter])
+        btagDown.SetMarkerStyle(downstyles[down_counter])
+        
+        btagUp.SetMarkerSize(2)
+        btagDown.SetMarkerSize(2)
+        btagUp.Draw('P same')
+        btagDown.Draw('P same')
+        up_counter=up_counter+1
+        down_counter=down_counter+1
+        col_counter+=1
+        
+        #print(f"Color (lepton) = {col_counter}{colors[col_counter]}")
+        if not(lepton_key==None):
+            leptonUp.SetLineColor(colors[col_counter])
+            leptonDown.SetLineColor(colors[col_counter])
+            leptonUp.SetMarkerColor(colors[col_counter])
+            leptonDown.SetMarkerColor(colors[col_counter])
+            leptonUp.SetMarkerStyle(upstyles[up_counter])
+            leptonDown.SetMarkerStyle(downstyles[down_counter])
+
+            leptonUp.SetMarkerSize(2)
+            leptonDown.SetMarkerSize(2)
+            leptonUp.Draw('P same')
+            leptonDown.Draw('P same')
+            up_counter=up_counter+1
+            down_counter=down_counter+1
+            col_counter+=1
+        
+        legend.AddEntry(cr_maxup,'CR model', 'p')
+        legend.AddEntry(btagUp,'b-tagging wt.', 'p')
+        if not(lepton_key==None): legend.AddEntry(leptonUp,'Lepton wt.', 'p')
     
     for k in normeduncerUnfoldHistoshiftsUp:
         if 'jes' in k.lower() or 'model'in k.lower() or 'bkg' in k.lower() or 'crtotal' in k.lower(): 
@@ -2062,6 +2279,9 @@ def drawUncertainties_normalizedshifts(ivar, unfoldHistoTotUnc, unfoldHistowoUnc
         elif 'mtop' in k:
             normeduncerUnfoldHistoshiftsDown[k.replace('Up', 'Down')].Draw("P same")
             legend.AddEntry( normeduncerUnfoldHistoshiftsUp[k], 'Choice of m_{top}', 'p' )
+        elif 'L1' in k:
+            normeduncerUnfoldHistoshiftsDown[k.replace('Up', 'Down')].Draw("P same")
+            legend.AddEntry( normeduncerUnfoldHistoshiftsUp[k], 'L1 prefiring wt.', 'p' )
         else: 
             normeduncerUnfoldHistoshiftsDown[k.replace('Up', 'Down')].Draw("P same")
             legend.AddEntry( normeduncerUnfoldHistoshiftsUp[k], text, 'p' )
@@ -2079,6 +2299,8 @@ def drawUncertainties_normalizedshifts(ivar, unfoldHistoTotUnc, unfoldHistowoUnc
     CMS_lumi.lumi_13TeV = "13 TeV, "+ ( '2016+2017+2018' if year.startswith('all') else year )
     CMS_lumi.relPosX = 0.11
     CMS_lumi.CMS_lumi(canUnc, 4, 0)
+    #ROOT.gROOT.ForceStyle()
+    #tdrstyle.setTDRStyle()
     #canUnc.SetLogy()
     canUnc.Update()
     
@@ -2120,7 +2342,7 @@ def plotSysComparison2( nomHisto, dictUncHistos, outputName, labelX='', log=Fals
     #multiGraph.Add( gnom )
     
     dictShifts = {}
-    dummy=0
+    col_counter=0
     
     gnom.GetYaxis().SetTitle( 'Ratio Unc/Nominal' )
     gnom.GetXaxis().SetTitle( labelX )
@@ -2130,16 +2352,16 @@ def plotSysComparison2( nomHisto, dictUncHistos, outputName, labelX='', log=Fals
 
     #print (dictUncHistos)
     for ih in dictUncHistos.keys():
-        #print(ih, dummy, len(colors))
+        #print(ih, col_counter, len(colors))
         dictShifts[ih] = dictUncHistos[ih].Clone()
         dictShifts[ih].Divide( nomHisto)
         
-        if not dummy==len(colors)-1:
-            dictShifts[ih].SetLineColor( colors[dummy] )
+        if not col_counter==len(colors)-1:
+            dictShifts[ih].SetLineColor( colors[col_counter] )
             dictShifts[ih].SetLineStyle( 2 )
         else:
-            dummy = dummy-len(colors)+2
-            dictShifts[ih].SetLineColor( colors[dummy] )
+            col_counter = col_counter-len(colors)+2
+            dictShifts[ih].SetLineColor( colors[col_counter] )
             dictShifts[ih].SetLineStyle( 3 )
 
         
@@ -2156,7 +2378,7 @@ def plotSysComparison2( nomHisto, dictUncHistos, outputName, labelX='', log=Fals
             #print (ih, ih.split('_')[1])
         legend.AddEntry( dictShifts[ih], stringtocheck+'_'+y, 'l' )
         #else: legend.AddEntry( dictShifts[ih], ih.split('_')[1] , 'l' )
-        dummy=dummy+1
+        col_counter=col_counter+1
         dictShifts[ih].Draw("L SAME")
         
     CMS_lumi.cmsTextOffset = 0.0
@@ -2292,4 +2514,238 @@ def createCanvasPads():
     pad2.Draw()
  
     return c, pad1, pad2
- 
+
+#below from https://github.com/raggleton/QGAnalysisPlotting/blob/26bb66e690a4a052b9b1acc328059a372fd25c6b/print_bottom_line_test.py#L112C1-L135C15
+def get_null_bins(h):
+    null_bins = []
+    if isinstance(h, (ROOT.TH1, ROOT.TH2)):
+        if isinstance(h, ROOT.TH2):
+            h_proj = h.ProjectionX()
+        else:
+            h_proj = h
+        for ix in range(1, h_proj.GetNbinsX()+1):
+            if h_proj.GetBinContent(ix) == 0:
+                null_bins.append(ix)
+        return null_bins
+    else:
+        proj = h.sum(axis=0)
+        return np.where(proj == 0)[0]
+
+
+def remove_null_bins(arr, null_bins):
+    if len(arr.shape) > 1:
+        for ax in range(len(arr.shape)):
+            if arr.shape[ax] > 1:
+                arr = np.delete(arr, null_bins, axis=ax)
+    else:
+        arr = np.delete(arr, null_bins)
+    return arr
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+"""
+def bottomLineTest( ivar, dataHisto, mainHistoLabel, datarecoHisto, recoHisto, genHisto, datacovMatrix, hadcovMatrix, varInfo, outputLabel, outputDir, runMLU=False, ext='pdf',selection='_dijetSel',version='vNew' ):
+    #based on https://gitlab.cern.ch/DasAnalysisSystem/InclusiveJet/-/blob/master/UnfoldingSampleND/bin/unfold.cc#L74
+
+    outputDir=outputDir+'/'+ivar+'/'+process+'/'
+    if not os.path.exists(outputDir): os.makedirs(outputDir)
+    
+    
+    ##### computing chi2 and inverted matrix
+    vector = []
+    ndf = 0
+    for ibin in range(1, datacovMatrix.GetNbinsX()+1):
+        if (datacovMatrix.GetBinContent(ibin, ibin) > 0.):
+            ndf = ndf + 1
+            vector.append( datarecoHisto.GetBinContent( ibin ) - recoHisto.GetBinContent( ibin ) )
+            
+    print (ndf,datacovMatrix.GetNbinsX(),datacovMatrix.GetNbinsY())
+    #assert ndf==covMatrix.GetNbinsX()
+    matrix = np.eye( ndf, ndf )
+    
+    for ibin in range(1, datacovMatrix.GetNbinsX()+1):
+        if (datacovMatrix.GetBinContent(ibin, ibin) > 0.):
+            for jbin in range(1, datacovMatrix.GetNbinsY()+1):
+                matrix[ibin-1][jbin-1] = datacovMatrix.GetBinContent( ibin, jbin )
+    
+    vector = np.array( vector )
+    invMatrix = np.linalg.inv( matrix )
+    chi2 = np.dot( vector, np.dot( invMatrix, vector ) )
+    print('Detector level: chi2, ndf, chi2/ndf = ', chi2, ndf, chi2/ndf)
+    
+    
+    vector = []
+    ndf = 0
+    for ibin in range(1, hadcovMatrix.GetNbinsX()+1):
+        if (hadcovMatrix.GetBinContent(ibin, ibin) > 0.):
+            ndf = ndf + 1
+            vector.append( dataHisto.GetBinContent( ibin ) - genHisto.GetBinContent( ibin ) )
+            
+    print (ndf,hadcovMatrix.GetNbinsX(),hadcovMatrix.GetNbinsY())
+    
+    matrix = np.eye( ndf, ndf)
+    
+    for ibin in range(1, hadcovMatrix.GetNbinsX()+1):
+        if (hadcovMatrix.GetBinContent(ibin, ibin) > 0.):
+            for jbin in range(1, hadcovMatrix.GetNbinsY()+1):
+                matrix[ibin-1][jbin-1] = hadcovMatrix.GetBinContent( ibin, jbin )
+
+    #assert ndf==covMatrix.GetNbinsX()
+    vector = np.array( vector )
+    invMatrix = np.linalg.inv( matrix )
+    chi2 = np.dot( vector, np.dot( invMatrix, vector ) )
+    print('Hadron level: chi2, ndf, chi2/ndf = ', chi2, ndf, chi2/ndf)
+    
+    
+
+
+    #### plotting inverted matrix
+    invertedMatrix = hadcovMatrix.Clone()
+    invertedMatrix.Reset()
+    for ibin in range(1, hadcovMatrix.GetNbinsX()):
+        for jbin in range(1, hadcovMatrix.GetNbinsY()):
+            invertedMatrix.SetBinContent( ibin, jbin, invMatrix[ibin-1][jbin-1]  )
+    draw2D( ivar, invertedMatrix, varInfo, outputLabel=outputLabel+'_invertedMatrix', outputDir=outputDir.split(ivar)[0],selection=selection,version=version )
+    
+    ##### plotting ratios together
+    outputName = outputDir+ivar+'_'+selection+'_'+outputLabel+'_bottomLineTest_'+version+'.'+ext
+
+    canRatio = ROOT.TCanvas('canRatio'+ivar, 'canRatio'+ivar,  10, 10, 750, 500 )
+
+    genRatio = ROOT.TGraphAsymmErrors()
+    genRatio.Divide( dataHisto, genHisto, 'pois' )
+    recoRatio = ROOT.TGraphAsymmErrors()
+    recoRatio.Divide( datarecoHisto, recoHisto, 'pois' )
+
+    legend=ROOT.TLegend(0.15,0.70,0.40,0.90)
+    legend.SetFillStyle(0)
+    legend.SetTextSize(0.03)
+    legend.AddEntry( genRatio, 'Hadron level (w/ stat + unf. unc.)', 'pl' )
+    legend.AddEntry( recoRatio, 'Detector level (stat unc.)', 'pl' )
+    legend.SetBorderSize(0)
+    
+    genRatio.SetLineWidth(2)
+    genRatio.GetXaxis().SetTitle(varInfo['label'])
+    genRatio.GetXaxis().SetLimits( varInfo['bins'][0], varInfo['bins'][-1] )
+    genRatio.GetYaxis().SetTitle('Data / Simulation')
+    genRatio.GetYaxis().SetTitleOffset( 0.8 )
+    genRatio.SetMarkerStyle(8)
+    genRatio.GetYaxis().SetRangeUser(-5.,10.)
+    genRatio.Draw('AP0')
+    recoRatio.SetLineColor(ROOT.kRed)
+    recoRatio.SetLineWidth(2)
+    recoRatio.SetMarkerStyle(4)
+    recoRatio.Draw('P0 same')
+
+    lineOne = ROOT.TGraph(2, array('d', [0, 1]), array('d', [1, 1]))
+    lineOne.Draw('same')
+
+    legend.Draw()
+    CMS_lumi.extraText = " Preliminary"
+    CMS_lumi.lumi_13TeV = "13 TeV, "+ ( '2016+2017+2018' if year.startswith('all') else year )
+    CMS_lumi.relPosX = 0.11
+    CMS_lumi.CMS_lumi(canRatio, 4, 0)
+    canRatio.SaveAs(outputName)
+
+    return [genRatio, recoRatio]
+
+def bottomLineTest2(ivar, dataHisto, mainHistoLabel, 
+                    datarecoHisto, recoHisto, genHisto, 
+                    datacovMatrix, hadcovMatrix, 
+                    varInfo, outputLabel, outputDir, 
+                    selection = '_dijetSel',  ext='pdf' ):
+    #based on https://gitlab.cern.ch/DasAnalysisSystem/InclusiveJet/-/blob/master/UnfoldingSampleND/bin/unfold.cc#L74
+
+    outputDir=outputDir+'/'+ivar+'/'+process+'/'
+    if not os.path.exists(outputDir): os.makedirs(outputDir)
+
+    #recoHisto.Rebin( 2 )  ### because data and covMatrix have less number of bins
+    #datarecoHisto.Rebin(2)
+    #recoHisto.Scale( dataHisto.Integral()/recoHisto.Integral() )
+    
+    #genHisto.Scale( dataHisto.Integral()/genHisto.Integral() )
+
+    #dataHisto.Scale(datarecoHisto.Integral()/dataHisto.Integral())
+
+    #datarecoHisto.Scale( 1 )
+    
+    
+    ##### computing chi2 and inverted matrix
+    vector = []
+    ndf = 0
+    chi2_1 = 0.
+    for ibin in range(1, datacovMatrix.GetNbinsX()):
+        if (datacovMatrix.GetBinContent(ibin, ibin) > 0):
+            chi2_1+=pow((recoHisto.GetBinContent( ibin )-datarecoHisto.GetBinContent( ibin )), 2. ) / np.sqrt(datacovMatrix.GetBinContent(ibin,ibin))
+            #vector.append(  )
+            
+    chi2_1 /= recoHisto.GetNbinsX()
+    print('Detector level: chi2, ndf, chi2/ndf = ', chi2_1, recoHisto.GetNbinsX(), chi2_1/recoHisto.GetNbinsX())
+    
+    
+    chi2_2 = 0.
+    for ibin in range(1, hadcovMatrix.GetNbinsX()):
+        if (hadcovMatrix.GetBinContent(ibin, ibin) > 0):
+            chi2_2+=pow(( dataHisto.GetBinContent( ibin ) - genHisto.GetBinContent( ibin ) ), 2) / np.sqrt(hadcovMatrix.GetBinContent(ibin,ibin))
+            
+    print (ndf,hadcovMatrix.GetNbinsX(),hadcovMatrix.GetNbinsY())
+    
+    chi2_2/=dataHisto.GetNbinsX()
+    print('Hadron level: chi2, ndf, chi2/ndf = ', chi2_2, dataHisto.GetNbinsX(), chi2_2/dataHisto.GetNbinsX())
+    
+    ##### plotting ratios together
+    outputName = outputDir+ivar+'_'+selection+'_'+outputLabel+'_bottomLineTest_'+version+'.'+ext
+
+    canRatio = ROOT.TCanvas('canRatio'+ivar, 'canRatio'+ivar,  10, 10, 750, 500 )
+
+    genRatio = ROOT.TGraphAsymmErrors()
+    genRatio.Divide( dataHisto, genHisto, 'pois' )
+    recoRatio = ROOT.TGraphAsymmErrors()
+    recoRatio.Divide( datarecoHisto, recoHisto, 'pois' )
+
+    legend=ROOT.TLegend(0.15,0.70,0.40,0.90)
+    legend.SetFillStyle(0)
+    legend.SetTextSize(0.03)
+    legend.AddEntry( genRatio, 'Hadron level (w/ stat + unf. unc.)', 'pl' )
+    legend.AddEntry( recoRatio, 'Detector level (stat unc.)', 'pl' )
+    legend.SetBorderSize(0)
+    
+    genRatio.SetLineWidth(2)
+    genRatio.GetXaxis().SetTitle(varInfo['label'])
+    genRatio.GetXaxis().SetLimits( varInfo['bins'][0], varInfo['bins'][-1] )
+    genRatio.GetYaxis().SetTitle('Data / Simulation')
+    genRatio.GetYaxis().SetTitleOffset( 0.8 )
+    genRatio.SetMarkerStyle(8)
+    genRatio.GetYaxis().SetRangeUser(-5.,10.)
+    genRatio.Draw('AP0')
+    recoRatio.SetLineColor(ROOT.kRed)
+    recoRatio.SetLineWidth(2)
+    recoRatio.SetMarkerStyle(4)
+    recoRatio.Draw('P0 same')
+
+    lineOne = ROOT.TGraph(2, array('d', [0, 1]), array('d', [1, 1]))
+    lineOne.Draw('same')
+
+    legend.Draw()
+    CMS_lumi.extraText = " Preliminary"
+    CMS_lumi.lumi_13TeV = "13 TeV, "+ ( '2017+2018' if year.startswith('all') else year )
+    CMS_lumi.relPosX = 0.11
+    CMS_lumi.CMS_lumi(canRatio, 4, 0)
+    canRatio.SaveAs(outputName)
+
+    return [genRatio, recoRatio]
+"""
