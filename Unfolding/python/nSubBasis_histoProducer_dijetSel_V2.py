@@ -29,7 +29,7 @@ class nSubBasis_unfoldingHistoProd_Dijets():#processor.ProcessorABC
     def __init__(self, sampleName, sysSource=[],year='2017', era='', 
                  isMC=True, isSigMC=True, onlyUnc='', wtUnc=False, verbose=False, saveParquet=False, onlyParquet=False,
                  sampleDict=dictSamples,test=False, sysUnc=False, splitCount='0', jetType='Central', trigTest=False, 
-                 trigUpDownVal=10, withLepVeto=False):
+                 trigUpDownVal=10, withLepVeto=False, parquetDir='/scratch/kadatta/dijetChecks/parquets/'):
         self.test=test
         self.jetType=jetType
         self.year = year
@@ -43,14 +43,17 @@ class nSubBasis_unfoldingHistoProd_Dijets():#processor.ProcessorABC
         self.sysUnc = sysUnc
         self.splitCount=splitCount
         self.saveParquet=saveParquet
-        self.onlyParquet=onlyParquet        
+        self.onlyParquet=onlyParquet   
+        self.parquetDir=parquetDir
         self.dictSamples = sampleDict
         self.sampleName = sampleName
         self.trigTest = trigTest
         self.trigUpDownVal = trigUpDownVal if self.trigTest else 0.
         self.withLepVeto = withLepVeto
             
-        if (not self.isMC) and self.era=='': print (f'Data-loading error: You need to specify what era if you want to work with data' )
+        if (not self.isMC) and self.era=='': 
+            
+            print (f'Data-loading error: You need to specify what era if you want to work with data' )
         
         
         ### Helpers
@@ -307,7 +310,7 @@ class nSubBasis_unfoldingHistoProd_Dijets():#processor.ProcessorABC
                 accepGenMask = (selGenMask) & (selRecoMask) & ((events[f'accepGenJets{s}_pt']>0.) & (events[f'accepGenJetsF{s}_pt']>0.))
                 
                 missGenMask =  (selGenMask)  & ((events[f'accepGenJetsF{s}_pt']<0.) | (events[f'accepGenJets{s}_pt']<0.) ) #& (~selRecoMask)
-                if (self.verbose and (sys.endswith('nom') or self.sysUnc)): 
+                if (self.verbose and (sys.endswith('nom') or self.sysUnc)) or self.onlyParquet: 
                     print('#### Building event masks ####')
                     print(sys,s, 'masked array lengths for reco,true,fake,gen,accep,miss', len(events),
                           len(events[selRecoMask]),
@@ -320,19 +323,19 @@ class nSubBasis_unfoldingHistoProd_Dijets():#processor.ProcessorABC
                          )
 
                 if self.saveParquet: 
-                    #events['trueRecoMask']=trueRecoMask
-                    #events['selRecoMask']=selRecoMask
-                    #events['fakeRecoMask']=fakeRecoMask
-                    #events['selGenMask']=selGenMask
-                    #events['accepGenMask']=accepGenMask
-                    #events['missGenMask']=missGenMask
+                    events['trueRecoMask']=trueRecoMask
+                    events['selRecoMask']=selRecoMask
+                    events['fakeRecoMask']=fakeRecoMask
+                    events['selGenMask']=selGenMask
+                    events['accepGenMask']=accepGenMask
+                    events['missGenMask']=missGenMask
                     
 
                     if (sys.endswith('nom')): 
-                        print(f"Saving .parquet files with file-stem: {self.inputDir[0].split('jetObservables/')[0]+'jetObservables/Dijets_rootToParquet/'+self.inputDir[0].split('kadatta/jetObservables/')[1].split('/')[0]+'_UL'+self.year+f'_nomWts_dijetSel_{self.jetType}Jet_OC_reco/gen/truereco/..._{self.splitCount}'}")
+                        print(f"Saving .parquet files with file-stem: {self.parquetDir + self.inputDir[0].split('kadatta/jetObservables/')[1].split('/')[0]+'_UL'+self.year+f'_nomWts_dijetSel_{self.jetType}Jet_OC_reco/gen/truereco/..._{self.splitCount}.parquet'}")#self.inputDir[0].split('jetObservables/')[0]+'jetObservables/Dijets_rootToParquet/'
                         
-                        ak.to_parquet(events[selRecoMask],self.inputDir[0].split('jetObservables/')[0]+'jetObservables/Dijets_rootToParquet/recoMasked/'+self.year+'/'+self.inputDir[0].split('kadatta/jetObservables/')[1].split('/')[0]+'_UL'+self.year+f'_nomWts_dijetSel_{self.jetType}Jet_OC_reco_{self.splitCount}.parquet')
-                        ak.to_parquet(events[selGenMask],self.inputDir[0].split('jetObservables/')[0]+'jetObservables/Dijets_rootToParquet/genMasked/'+self.year+'/'+self.inputDir[0].split('kadatta/jetObservables/')[1].split('/')[0]+'_UL'+self.year+f'_nomWts_dijetSel_{self.jetType}Jet_OC_gen_{self.splitCount}.parquet')
+                        ak.to_parquet(events[selRecoMask],self.parquetDir +self.inputDir[0].split('kadatta/jetObservables/')[1].split('/')[0]+'_UL'+self.year+f'_nomWts_dijetSel_{self.jetType}Jet_OC_reco_{self.splitCount}.parquet')#self.inputDir[0].split('jetObservables/')[0]+'jetObservables/Dijets_rootToParquet/recoMasked/'+self.year+'/'
+                        ak.to_parquet(events[selGenMask],self.parquetDir +self.inputDir[0].split('kadatta/jetObservables/')[1].split('/')[0]+'_UL'+self.year+f'_nomWts_dijetSel_{self.jetType}Jet_OC_gen_{self.splitCount}.parquet')#self.inputDir[0].split('jetObservables/')[0]+'jetObservables/Dijets_rootToParquet/genMasked/'+self.year+'/'
                         #ak.to_parquet(events[trueRecoMask],self.inputDir[0].split('jetObservables/')[0]+'jetObservables/Dijets_rootToParquet/recoMasked/'+self.year+'/'+self.inputDir[0].split('kadatta/jetObservables/')[1].split('/')[0]+'_UL'+self.year+f'_nomWts_{self.jetType}Jet_truereco_{self.splitCount}.parquet')
                         #ak.to_parquet(events[accepGenMask],self.inputDir[0].split('jetObservables/')[0]+'jetObservables/Dijets_rootToParquet/genMasked/'+self.year+'/'+self.inputDir[0].split('kadatta/jetObservables/')[1].split('/')[0]+'_UL'+self.year+f'_nomWts_{self.jetType}Jet_accepgen_{self.splitCount}.parquet')
                         #ak.to_parquet(events[fakeRecoMask],self.inputDir[0].split('jetObservables/')[0]+'jetObservables/Dijets_rootToParquet/recoMasked/'+self.year+'/'+self.inputDir[0].split('kadatta/jetObservables/')[1].split('/')[0]+'_UL'+self.year+f'_nomWts_{self.jetType}Jet_fakereco_{self.splitCount}.parquet')
@@ -341,7 +344,7 @@ class nSubBasis_unfoldingHistoProd_Dijets():#processor.ProcessorABC
                         return 1 # dummy 
                     
                 
-            elif self.isMC and (not self.isSigMC) and sys.endswith('nom'): #not so relevant for dijets but for background MC's in W/top
+            elif self.isMC and (not self.isSigMC) and sys.endswith('nom'): #not so relevant for dijet histogramming but for background MC's in W/top or simple parquet production in dijets
                 
                 
                 selRecoMask = (events[f'totalRecoWeight{sys}']!=0.) & (events[f'passRecoSel{sys}']==1) 
@@ -350,6 +353,7 @@ class nSubBasis_unfoldingHistoProd_Dijets():#processor.ProcessorABC
                 if self.withLepVeto:
                     selRecoMask = (selRecoMask) & (events[f'nRecoLeptons_nom']==0)
                     selGenMask = (selGenMask) & (events[f'nGenLeptons_nom']==0)
+                '''
                 if self.saveParquet: 
                     #events['selRecoMask']=selRecoMask
                     #events['selGenMask']=selGenMask
@@ -361,6 +365,45 @@ class nSubBasis_unfoldingHistoProd_Dijets():#processor.ProcessorABC
                         ak.to_parquet(events[selGenMask],self.inputDir[0].split('jetObservables/')[0]+'jetObservables/Dijets_rootToParquet/genMasked/'+self.year+'/'+self.inputDir[0].split('kadatta/jetObservables/')[1].split('/')[0]+'_UL'+self.year+f'_nomWts_dijetSel_{self.jetType}Jet_OC_gen_{self.splitCount}.parquet')
                     
                     return 1 
+                '''
+                if self.saveParquet: 
+                    
+                    s= '_nom'
+                    
+                    trueRecoMask = (selRecoMask) & (selGenMask) & ((events[f'trueRecoJets{s}_pt']>0.) & (events[f'trueRecoJetsF{s}_pt']>0.))
+                
+                    fakeRecoMask = (selRecoMask) & ((events[f'trueRecoJets{s}_pt']<0.) | (events[f'trueRecoJetsF{s}_pt']<0.) ) #& (~selGenMask)
+
+                    accepGenMask = (selGenMask) & (selRecoMask) & ((events[f'accepGenJets{s}_pt']>0.) & (events[f'accepGenJetsF{s}_pt']>0.))
+
+                    missGenMask =  (selGenMask)  & ((events[f'accepGenJetsF{s}_pt']<0.) | (events[f'accepGenJets{s}_pt']<0.) ) #& (~selRecoMask)
+                    if (self.verbose and (sys.endswith('nom') or self.sysUnc)) or self.onlyParquet: 
+                        print('#### Building event masks ####')
+                        print(sys,s, 'masked array lengths for all, reco,true,fake,gen,accep,miss', len(events),
+                              len(events[selRecoMask]),
+                              len(events[trueRecoMask]),
+                              len(events[fakeRecoMask]),
+                              len(events[selGenMask]),
+                              len(events[accepGenMask]),
+                              len(events[missGenMask]),
+                              self.splitCount
+                             )
+
+                    events['trueRecoMask']=trueRecoMask
+                    events['selRecoMask']=selRecoMask
+                    events['fakeRecoMask']=fakeRecoMask
+                    events['selGenMask']=selGenMask
+                    events['accepGenMask']=accepGenMask
+                    events['missGenMask']=missGenMask
+                    
+
+                    if (sys.endswith('nom')): 
+                        print(f"Saving .parquet files with file-stem: {self.parquetDir + self.inputDir[0].split('kadatta/jetObservables/')[1].split('/')[0]+'_UL'+self.year+f'_nomWts_dijetSel_{self.jetType}Jet_OC_reco/gen/truereco/..._{self.splitCount}.parquet'}")#self.inputDir[0].split('jetObservables/')[0]+'jetObservables/Dijets_rootToParquet/'
+                        
+                        ak.to_parquet(events[selRecoMask],self.parquetDir +self.inputDir[0].split('kadatta/jetObservables/')[1].split('/')[0]+'_UL'+self.year+f'_nomWts_dijetSel_{self.jetType}Jet_OC_reco_{self.splitCount}.parquet')#self.inputDir[0].split('jetObservables/')[0]+'jetObservables/Dijets_rootToParquet/recoMasked/'+self.year+'/'
+                        ak.to_parquet(events[selGenMask],self.parquetDir +self.inputDir[0].split('kadatta/jetObservables/')[1].split('/')[0]+'_UL'+self.year+f'_nomWts_dijetSel_{self.jetType}Jet_OC_gen_{self.splitCount}.parquet')#self.inputDir[0].split('jetObservables/')[0]+'jetObservables/Dijets_rootToParquet/genMasked/'+self.year+'/'
+                        
+                        return 1 # dummy 
                     
             elif not(self.isMC) and sys.endswith('nom'): 
                 selRecoMasks = OrderedDict()
@@ -730,19 +773,13 @@ class nSubBasis_unfoldingHistoProd_Dijets():#processor.ProcessorABC
     
 
 
-def histoMaker( myProcessor, 
-                sampleIdentifier='qcd_ht', y='2017', sampleDict_PFNano=OrderedDict(),
-                sampleDict_local=OrderedDict(), 
-                writeChunks=True, writeAccumulatedORhadd=1, 
-                verbose=False, saveParquet=False,
-                isSigMC=True, isMC=True, 
-                wtUnc=True, sysUnc=False, onlyUnc='', 
-                outputdir='processorTests/', sysSource=[],
-                era='', ext='_nomWts', 
-                splitchunks=10, 
-                nWorkers=40, stepSize="2048 MB",
-                jetType='Central',
-                forceProduction=False):
+def histoMaker(myProcessor, sampleIdentifier='qcd_ht', y='2017', sampleDict_PFNano=OrderedDict(),
+               sampleDict_local=OrderedDict(), writeChunks=True, writeAccumulatedORhadd=1, verbose=False, 
+               saveParquet=False,
+               isSigMC=True, isMC=True, wtUnc=True, sysUnc=False, onlyUnc='', outputdir='processorTests/', 
+               sysSource=[],
+               era='', ext='_nomWts', splitchunks=10, nWorkers=40, stepSize="2048 MB",
+               jetType='Central',forceProduction=False,onlyParquet=False):
     
     nchunk=copy.deepcopy(splitchunks)
     cz=0
@@ -750,10 +787,10 @@ def histoMaker( myProcessor,
     if not os.path.exists(f'{outputdir}'): os.makedirs(f'{outputdir}')
     
     for sample in sampleDict_local.keys():
-        year_list=['2016_preVFP', '2016', '2017', '2018'] if y=='all' else [y]
-        #if verbose: print (sample,sampleIdentifier,splitchunks)
+        yl=['2016_preVFP', '2016', '2017', '2018'] if y=='all' else [y]
         
-        for year in year_list:#['2017','2018','2016','2016_preVFP']:
+        
+        for year in yl:
             gc.collect()
             pathExistsFlag=False
             if not( sample.lower().startswith(sampleIdentifier.lower())):# or ('170to300' in sample.lower() or jetType=='Central'):
@@ -763,7 +800,7 @@ def histoMaker( myProcessor,
             tstart0=time.time()
 
             print(f'Histogramming for {sample} in year: {year}')
-            #if verbose: print(f'using nanoskims from {sampleDict_local[sample][year]["t3_dirs"]}{chr(10)}','\n')
+            if verbose: print(f'using nanoskims from {sampleDict_local[sample][year]["t3_dirs"]}{chr(10)}','\n')
             
             
 
@@ -771,20 +808,21 @@ def histoMaker( myProcessor,
             dirfnames=inpdir[0].split('/0000/')[0]+'/000*/jetObservables_nanoskim_*.root'
 
             SC='0'
-            if verbose: 
-                print (sysSource)
-
+            if verbose: print (sysSource)
             my_processor=myProcessor(sampleName=sample, sampleDict=sampleDict_PFNano,
-                                     isMC=isMC, isSigMC=isSigMC, year=year, saveParquet=saveParquet, sysSource=sysSource,
-                                     wtUnc=wtUnc, sysUnc=sysUnc, onlyUnc='' if 'jes' in onlyUnc else onlyUnc, era=era,
-                                     verbose=False, splitCount=SC, jetType=jetType )
-            #if cz==0:
-            #    #if verbose: print("Branches being read \n", my_processor._branchesToRead)
-            #    cz=cz+1
+                                     isMC=isMC, isSigMC=isSigMC,year=year,
+                                     saveParquet=saveParquet,onlyParquet=onlyParquet,
+                                     sysSource=sysSource,
+                                     wtUnc=wtUnc,sysUnc=sysUnc,
+                                     onlyUnc='' if 'jes' in onlyUnc else onlyUnc,era=era,
+                                     verbose=False,splitCount=SC,jetType=jetType )
+            if cz==0:
+                if verbose: print("Branches being read \n", my_processor._branchesToRead)
+                cz=cz+1
             if splitchunks>0:
                 fl=[]
                 n_tosplit = []
-                fc=0
+                c=0
                 for x in range(len(inpdir)):
                     flist=os.listdir(inpdir[x])
                     flist = sorted([i for i in flist if 'nanoskim' in i], key=lambda s: int(re.search(r'\d+', s).group()))
@@ -793,31 +831,29 @@ def histoMaker( myProcessor,
                         if 'nanoskim' in i:
 
                             fl.append(inpdir[x]+i)
-                            if fc%splitchunks==0 and c!=0:
+                            if c%splitchunks==0 and c!=0:
                                 n_tosplit.append(splitchunks)
-                            fc=fc+1
+                            c=c+1
                 
                 if sum(n_tosplit)!=len(fl):
                     if len(fl)%splitchunks!=0: n_tosplit.append(len(fl)%splitchunks)
                     else: n_tosplit.append(splitchunks)
 
-                if verbose: 
-                    print(f"Splitting input filelist into the following sublists of file chunks:{n_tosplit}, requiring {len(n_tosplit)} iterations")
+                if verbose: print(f"Splitting input filelist into the following sublists of file chunks:{n_tosplit}")
                 ifl=iter(fl)
                 ifls=[list(islice(ifl,x)) for x in n_tosplit]
                 #if verbose: print(ifls)
+                c=0
                 hists=None
             else:
                 ifls=[dirfnames]
-
-            c=0
-            #if verbose: 
-            #    print(f"Loading events into arrays")# from the following file chunks:{n_tosplit}")    
+                c=0
+            if verbose: print(f"Loading events into arrays")# from the following file chunks:{n_tosplit}")    
             
             
             for i in ifls:#()track(ifls):#
-                if c%100==0: print (c, i, sample, year, jetType)
-                if 'jes' in onlyUnc and c%5==0: print (c, i, sample, year)
+                if c%100==0: print (c, sample, year, jetType)
+                if 'jes' in onlyUnc and c%5==0: print (c, sample, year)
                 if splitchunks>0:
                     ns = [int(x.split('jetObservables_nanoskim_')[1].split('.root')[0]) for x in i]
                     s = str(ns).split('[')[1].split(']')[0]
@@ -826,8 +862,8 @@ def histoMaker( myProcessor,
                     
                 stringfnames=stringfnames.replace(' ','')
                 
-                #if verbose:
-                #    tstart1 = time.time()
+                if verbose:
+                    tstart1 = time.time()
                 
                 if not sysUnc: 
                     if 'pt' in sample.lower(): 
@@ -874,20 +910,20 @@ def histoMaker( myProcessor,
                         events_df_nodup = events_df.drop_duplicates()#subset='recoSelectedEventNumber_nom',keep='first'----> not using this since it seems in this iteration the reco event number branch wasn't properly updated in skimmer logic
                         print(f"Dropped {len(events_df)-len(events_df_nodup)} duplicated events; left with {len(events_df_nodup)} events in this sample")
 
-                        f = events_df_nodup.to_parquet(f'tempQCDData_{year}_{sample,era}.parquet')
-                        events = ak.from_parquet(f'tempQCDData_{year}_{sample,era}.parquet')
+                        f = events_df_nodup.to_parquet(f'tempQCD_{year}_{era}.parquet')
+                        events = ak.from_parquet(f'tempQCD_{year}_{era}.parquet')
 
-                    #if verbose:
-                    #    elapsed1 = time.time()-tstart1
-                    #    print(f"Time taken to load {len(events)} events from {n_tosplit[c]} files in {sample} = {elapsed1}")
+                    if verbose:
+                        elapsed1 = time.time()-tstart1
+                        print(f"Time taken to load {len(events)} events from {n_tosplit[c]} files in {sample} = {elapsed1}")
 
                     if verbose: 
-                        print(f'nEvents in this file chunk: {len(events)} for {sample}, {year}')
+                        print(f'nEvents in this file chunk: {len(events)}')
 
-                    #if verbose: 
-                    #    tstart2=time.time()
+                    if verbose: 
+                        tstart2=time.time()
 
-                    #if verbose: print("#####Processing events#####")
+                    if verbose: print("#####Processing events#####")
 
                     processed_events=my_processor.process(events)
 
@@ -911,7 +947,27 @@ def histoMaker( myProcessor,
                                 print(f"Current integral of pT nominal hist: {hists['recoJet_pt_nom_dijetSel'].sum(flow=True)}")
                             elif jetType=="Forward":
                                 print(f"Current integral of pT nominal hist: {hists['recoJetF_pt_nom_dijetSel'].sum(flow=True)}")
+                    
+                    if not sysUnc: 
+                        if 'pt' in sample.lower(): 
+                            string=f'{sample.split("_Tune")[0].split("_")[0]+sample.split("_Tune")[0].split("_")[1]+sample.split("_Tune")[0].split("_")[2]}_UL{year}{ext}'
+                        else:
+                            string=f'{sample.split("_Tune")[0].split("_")[0]+sample.split("_Tune")[0].split("_")[1]}_UL{year}{ext}'
 
+                        fnstem = f'{outputdir}/jetObservables_histograms_{string}'    
+                        fn = f'{fnstem}_ForwardJet_{c}.root' if 'Forward' in jetType else f'{fnstem}_CentralJet_{c}.root'
+                    else: 
+
+                        fnstem = f'{outputdir}/{sampleDict_local[sample][year]["skimmerHisto"].split(".root")[0]}{ext}'
+                        if 'jes' in onlyUnc: 
+                            fnstem=f'{outputdir}/combinedJES/{fnstem.split(outputdir+"/")[1]}' 
+                            if not os.path.exists(f'{outputdir}/combinedJES/'): os.makedirs(f'{outputdir}/combinedJES/')
+
+                        fn = f'{fnstem}_ForwardJet_{c}.root' if 'Forward' in jetType else f'{fnstem}_CentralJet_{c}.root'
+
+                    if splitchunks==0 or len(n_tosplit)==1: 
+                        fn=f'{fnstem}_ForwardJet.root' if 'Forward' in jetType else f'{fnstem}_CentralJet.root'
+                    if verbose: print (fn,fnstem)
 
 
                     if writeChunks or writeAccumulatedORhadd==1:# or len(n_tosplit)==1:
@@ -922,7 +978,7 @@ def histoMaker( myProcessor,
                                 print(f"Current integral of pT nominal hist: {hists['recoJetF_pt_nom_dijetSel'].sum(flow=True)}")
 
                         #print (processed_events)
-                        print ("Events proccesed, now writing output file(s)",fn)
+                        print ("Events proccesed, now writing output file(s)",fn,c,len(i),len(ifls))
 
                         with uproot.recreate(fn) as fout:#outputTest_{sample.split("_Tune")[0]}_{year}.root'
                             for key in processed_events.keys():
@@ -943,7 +999,7 @@ def histoMaker( myProcessor,
                     del(events)
                     gc.collect()
             if not(pathExistsFlag):
-                if c==0 or (splitchunks>0):# and writeAccumulatedORhadd==0):
+                if c==0 or (splitchunks>0 and writeAccumulatedORhadd==0):
 
                     if verbose: 
                         if jetType=='Central':

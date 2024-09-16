@@ -11,12 +11,12 @@ from collections import defaultdict
 class nSubBasis_unfoldingHistoProd_WtopSel():#processor.ProcessorABC):
 
     #####################################################################################################################################
-    #####################################################################################################################################     #                                                                                                                                   # 
+    #####################################################################################################################################       #                                                                                                                                   # 
     #Relevant info wrt. what mode to run the W/top sample processing on, pragmatic choice: noDeltaR, 'purest'=massAndDeltaR (a la AL,SM)#
     # _________________________________________________________________________________________________________________________________ #
     #|      selection mode      |                                      details                                                         |#
     #|---------------------------------------------------------------------------------------------------------------------------------|#
-    #|       massAndDeltaR      |              AK8jet pt and softdropped mass and dR(muon,lept. hem. b-jet) cut                        |#
+    #|       massAndDeltaR      |              AK8jet pt and softdropped mass and dR(muon,lept. hem. b-jet)>x cut                      |#
     #|          noDeltaR        |        AK8jet pt and softdropped mass cut [& dR(muon,lept. hem. b-jet)<=1.6 by default]              |#
     #|---------------------------------------------------------------------------------------------------------------------------------|#
     #|_________________________________________________________________________________________________________________________________|#
@@ -29,8 +29,11 @@ class nSubBasis_unfoldingHistoProd_WtopSel():#processor.ProcessorABC):
                  verbose=False, saveParquet=False, onlyParquet=False, test=False,
                  splitCount='0', sampleDict=dictSamples, sysUnc=False, 
                  selectionmode='massAndDeltaR', massToCutOn = 'msoftdrop',
-                 btvJSON_fn=None, effMap=None,btagWP="M", withBTaggingWeights=True, #_b=None, effMap_c=None, effMap_udsg=None, 
+                 btvJSON_fn=None, effMap=None,btagWP="M", 
+                 withBTaggingWeights=True,
                  withLeptonWeights=True,
+                 vetoMap=None,
+                 applyVetoMap=False,
                  muIDISO_JSON_fn=None,muRecoEff_JSON_fn=None,muTrig_JSON_fn=None,profile_time=True,
                  top_ptmin = 400.,top_mSDmin = 140.,top_mSDmax = 300.,top_mINVmin = 140.,top_mINVmax = 300.,
                  W_ptmin = 200.,W_mSDmin = 65.,W_mSDmax = 125.,W_mINVmin = 65.,W_mINVmax = 125.,
@@ -77,6 +80,8 @@ class nSubBasis_unfoldingHistoProd_WtopSel():#processor.ProcessorABC):
         self.withBTaggingWeights = withBTaggingWeights
         self.withLeptonWeights = withLeptonWeights
         
+        
+        
         self.WPBDisc_dict = OrderedDict()
         self.WPBDisc_dict['2016_preVFP'] = {
                                             "L": 0.0508, 
@@ -99,6 +104,7 @@ class nSubBasis_unfoldingHistoProd_WtopSel():#processor.ProcessorABC):
                                      "T": 0.7100,
                                     }
         self.WPBDisc = self.WPBDisc_dict[self.year][btagWP] 
+        
         if self.isMC: # and not(self.onlyParquet)
             
             if self.withLeptonWeights:
@@ -124,12 +130,12 @@ class nSubBasis_unfoldingHistoProd_WtopSel():#processor.ProcessorABC):
                     raise ValueError("btvJSON_fn is not provided!")
 
                 if self.effMap:#_b:
-                    self.effCorr_b = correctionlib.CorrectionSet.from_file(self.effMap)#.Get(f'efficiency_b_b_{self.year}{selection}') #effFile_b[f'efficiency_b_b_{self.year}{selection}']
-                    self.effCorr_c = correctionlib.CorrectionSet.from_file(self.effMap)#.Get(f'efficiency_b_c_{self.year}{selection}') #effFile_c[f'efficiency_b_c_{self.year}{selection}']
-                    self.effCorr_udsg = correctionlib.CorrectionSet.from_file(self.effMap)#.Get(f'efficiency_b_udsg_{self.year}{selection}') #effFile_udsg[f'efficiency_b_udsg_{self.year}{selection}']
+                    self.effCorr_b = correctionlib.CorrectionSet.from_file(self.effMap)
+                    self.effCorr_c = correctionlib.CorrectionSet.from_file(self.effMap)
+                    self.effCorr_udsg = correctionlib.CorrectionSet.from_file(self.effMap)
                 else:
                     raise ValueError("effMap JSON is not provided!")
-
+                    
                 #if self.effMap_c:
                 #    self.effFile_c = self.effMap#uproot.open(self.effMap_c)
                     
@@ -141,6 +147,20 @@ class nSubBasis_unfoldingHistoProd_WtopSel():#processor.ProcessorABC):
                     
                 #else:
                 #    raise ValueError("effMap_udsg JSON is not provided!")
+        self.applyVetoMap = applyVetoMap
+        if self.applyVetoMap:
+            
+            if not(vetoMap==None):
+                vetoMap_cset = correctionlib.CorrectionSet.from_file(vetoMap)
+                if self.year.startswith('2016'):
+                    mapName = 'Summer19UL16_V1'
+                elif self.year=='2017':
+                    mapName = 'Summer19UL17_V1'
+                elif self.year=='2018':
+                    mapName = 'Summer19UL18_V1'
+                self.vetoMap = vetoMap_cset[mapName] 
+            else:
+                raise ValueError("jet veto map JSON is not provided!")
 
 
         
@@ -238,9 +258,9 @@ class nSubBasis_unfoldingHistoProd_WtopSel():#processor.ProcessorABC):
                                         "nselRecoJets": np.array([i for i in np.arange(0., 10, 1.)]),
                                         "selRecoLeptHemDeltaR": np.array([i for i in np.arange(0., 1.85, 0.05)]),
                                         "selRecoLeptHemDeltaRap": np.array([i for i in np.arange(-2.4, 2.6, 0.2)]),
-                                        "selRecoLeptHemDeltaPhi": np.array([i for i in np.arange(-3.4, 3.6, 0.2)]),
+                                        "selRecoLeptHemDeltaPhi": np.array([i for i in np.arange(-3.3, 3.4, 0.1)]),
                                         "selRecoLeptHemAK8DeltaPhi": np.array([i for i in np.arange(-3.3, 3.4, 0.1)]),
-                                        "selRecoLeptHemAK8DeltaR": np.array([i for i in np.arange(0., 4.1, 0.1)])
+                                        "selRecoLeptHemAK8DeltaR": np.array([i for i in np.arange(0., 4.8, 0.1)])
 
                                    }   
         
@@ -251,9 +271,9 @@ class nSubBasis_unfoldingHistoProd_WtopSel():#processor.ProcessorABC):
                                         "nselGenJets": np.array([i for i in np.arange(0., 10., 1.)]),
                                         "selGenLeptHemDeltaR": np.array([i for i in np.arange(0., 1.85, 0.05)]),
                                         "selGenLeptHemDeltaRap": np.array([i for i in np.arange(-2.4, 2.6, 0.2)]),
-                                        "selGenLeptHemDeltaPhi": np.array([i for i in np.arange(-3.4, 3.6, 0.2)]),
+                                        "selGenLeptHemDeltaPhi": np.array([i for i in np.arange(-3.3, 3.4, 0.1)]),
                                         "selGenLeptHemAK8DeltaPhi": np.array([i for i in np.arange(-3.3, 3.4, 0.1)]),
-                                        "selGenLeptHemAK8DeltaR": np.array([i for i in np.arange(0., 4.1, 0.1)])
+                                        "selGenLeptHemAK8DeltaR": np.array([i for i in np.arange(0., 4.8, 0.1)])
                                    } 
         
         self.recoMask = None
@@ -425,15 +445,27 @@ class nSubBasis_unfoldingHistoProd_WtopSel():#processor.ProcessorABC):
         self.dR_min = dR_min
         self.Mu_tkRelIso = Mu_tkRelIso
         
+    def add_vetoMapOutput_to_recoWeights(self):
+        #if self.apply
+        tstart=time.time()
+        events_jetVeto_fields = self.append_recoWeights_forJetVeto()
+        if self.verbose: 
+            print(f"Changing 'totalRecoWeight_nom/sysUpDown' reco weight in branches to easily add in info from jet veto maps to data/MC response matrices for unfolding in sig MC without changing genWeights in MC")
+        
+        for key, values in events_jetVeto_fields.items():
+            self.events[key] = values
+        elapsed = time.time() - tstart
+        if self.verbose: print (f'Finished adding in jet veto info. Time taken:{elapsed}') 
+        
     def add_btagAndLeptonWeights(self):
         if self.withLeptonWeights:
              
             tstart=time.time()
 
-            events_leptonWt_fields = self.include_leptonWeights()#events)
+            events_leptonWt_fields = self.include_leptonWeights()
 
             if self.verbose: print(f"Adding in new branches {events_leptonWt_fields.keys()} to access event weights+variations from lepton SFs")
-
+            
             for key, values in events_leptonWt_fields.items():
                 self.events[key] = values
             elapsed = time.time() - tstart
@@ -582,7 +614,7 @@ class nSubBasis_unfoldingHistoProd_WtopSel():#processor.ProcessorABC):
                                 #(self.events[f'nRecoAK4s{s}']>=3) & 
                                 (self.events[f'totalRecoWeight{s}']!=0.) & 
                                 (self.events[f'selRecoLeptHemDeltaR_nom']<=self.dR_max) &
-                                (self.events[f'selRecoAK4bjetLeptHem_nom_jetId']>=self.AK4_jetID) & 
+                                (self.events[f'selRecoAK4bjetLeptHem{s}_jetId']>=self.AK4_jetID) & 
                                 (self.events[f'selRecoLeptHemDeltaR_nom']>self.dR_min) ) # & (self.events[f'nRecoBtags_nom']>1)# & (self.events[f'nRecoHadBtags_nom']==1) 
 
                 WRecoMask = ( (self.events[f'selRecoJets{s}_pt']>self.W_ptmin) & 
@@ -596,7 +628,7 @@ class nSubBasis_unfoldingHistoProd_WtopSel():#processor.ProcessorABC):
                               #(self.events[f'nRecoAK4s{s}']>=3) & 
                               (self.events[f'totalRecoWeight{s}']!=0.) & 
                               (self.events[f'selRecoLeptHemDeltaR_nom']<=self.dR_max) &
-                              (self.events[f'selRecoAK4bjetLeptHem_nom_jetId']>=self.AK4_jetID) & 
+                              (self.events[f'selRecoAK4bjetLeptHem{s}_jetId']>=self.AK4_jetID) & 
                               (self.events[f'selRecoLeptHemDeltaR_nom']>self.dR_min) )# & (self.events[f'nRecoBtags_nom']>1)# & (self.events[f'nRecoHadBtags_nom']==1) 
 
                 if self.isMC:# or self.isSigMC:    
@@ -643,11 +675,9 @@ class nSubBasis_unfoldingHistoProd_WtopSel():#processor.ProcessorABC):
                     self.genWeights = self.events['evtGenWeight_nom']
                     #genWeightsW = self.events['genWeight'][WRecoMask]
            
+            if self.verbose or self.applyVetoMap:
+                print(s, sys, len([i for i in self.events['totalRecoWeight_nom'][topRecoMask] if i!=0]), len(self.events[topRecoMask]), len(self.events[topGenMask]) if self.isMC  else '', len([i for i in self.events['totalRecoWeight_nom'][WRecoMask] if i!=0]), len(self.events[WRecoMask]),  len(self.events[WGenMask]) if self.isMC else '', len(self.genWeights))
             
-            
-            if self.verbose:
-                print(s, sys, len(self.events[topRecoMask]), len(self.events[topGenMask]), len(self.events[WRecoMask]), len(self.events[WGenMask]), len(self.genWeights))
-
             if self.isSigMC:# and not(sys.startswith(self.sysWeightList)):
                 
                 s='_nom' if (sys.startswith(self.sysWeightList)) else sys
@@ -656,7 +686,10 @@ class nSubBasis_unfoldingHistoProd_WtopSel():#processor.ProcessorABC):
                     print('making individual W and topSel mask',sys,s)
 
 
-                
+                ########
+                #scope for generalisation left open by choices above, but for now run per individual selection...
+                ########
+
                 if '_WSel' in self.selList:
                     WtopRecoMask = (WRecoMask) #& (~(topRecoMask|topGenMask))
                     WtopGenMask = (WGenMask) #& (~(topRecoMask|topGenMask))
@@ -777,6 +810,15 @@ class nSubBasis_unfoldingHistoProd_WtopSel():#processor.ProcessorABC):
                 print(output.keys())
                 print("Going to fill histos")
             
+
+            if self.applyVetoMap:
+
+                self.add_vetoMapOutput_to_recoWeights()#recoMask=selRecoMask)
+
+            if self.verbose or self.applyVetoMap:
+                print(s, sys, len([i for i in self.events['totalRecoWeight_nom'][selRecoMask] if i!=0]), len(self.events[selRecoMask]), len(self.events[selGenMask]) if self.isMC else '')#, len([i for i in self.events['totalRecoWeight_nom'][WRecoMask] if i!=0]), len(self.events[WRecoMask]), len(self.events[WGenMask]), len(self.genWeights))
+
+            
             if not(self.onlyParquet): 
                 for isel in self.selList:
 
@@ -784,8 +826,16 @@ class nSubBasis_unfoldingHistoProd_WtopSel():#processor.ProcessorABC):
 
                     if sys.endswith('nom'):
                         listOfMiscOutputHistosNames = [k for k,h in output.items() if ((not ('Jet' in k and ('nsel' in k or 'ntrue' in k or 'naccep' in k)) and ('nom' in k)) and ('Mu' in k or 'LeptW' in k or 'LeptTop' in k or 'MET' in k or 'AK4bjetHadHem' in k or 'nPV' in k or 'DeltaR' or 'DeltaPhi' in k or 'Btag' in k))]
-                        #btagWeightNom{s}
-                        totalRecoWeight = self.events[f'puWeightNom{s}']*self.events[f'l1prefiringWeightNom{s}']*(self.events[f'new{self.sel}_leptonWeightNom{s}'] if self.withLeptonWeights else np.ones(len(self.events[f'puWeightNom{s}'])))*self.genWeights*(self.events[f'new{self.sel}_btagWeightNom{s}'] if self.withBTaggingWeights else np.ones(len(self.events[f'puWeightNom{s}']))) if self.isMC else self.events[f'totalRecoWeight_nom']#self.events[f'evtGenWeight_nom']*#
+
+                        if self.isMC:
+                            totalRecoWeight = self.events[f'puWeightNom{s}']*self.events[f'l1prefiringWeightNom{s}']*(self.events[f'new{self.sel}_leptonWeightNom{s}'] if self.withLeptonWeights else np.ones(len(self.events[f'puWeightNom{s}'])))*self.genWeights*(self.events[f'new{self.sel}_btagWeightNom{s}'] if self.withBTaggingWeights else np.ones(len(self.events[f'puWeightNom{s}'])))
+                            print("without veto map:", sum(totalRecoWeight[selRecoMask]))
+                            totalRecoWeight = totalRecoWeight*(self.events[f'new{self.sel}_eventJetVeto{s}'] if self.applyVetoMap else np.ones(len(self.events[f'puWeightNom{s}'])))  
+                            print("with veto map:", sum(totalRecoWeight[selRecoMask]))
+                        else:
+                            print("without veto map:", sum(self.events[f'totalRecoWeight_nom'][selRecoMask]))
+                            totalRecoWeight = self.events[f'totalRecoWeight_nom']*(self.events[f'new{self.sel}_eventJetVeto_nom'] if self.applyVetoMap else np.ones(len(self.events[f'totalRecoWeight_nom'])))#self.events[f'evtGenWeight_nom']*#
+                            print("with veto map:", sum(totalRecoWeight[selRecoMask]))
                         
                         self.recoWeight = totalRecoWeight
                         totalGenWeight = self.genWeights if self.isMC else None
@@ -799,8 +849,12 @@ class nSubBasis_unfoldingHistoProd_WtopSel():#processor.ProcessorABC):
                                 dicto=self.dict_variables_kinematics_Muon
                                 for i in dicto:
                                     if 'gen' in key.lower() and i.endswith(('_p','_ptRel','_tkRelIso')): continue
-
+                                    
                                     if i in key:
+                                        if i.endswith('_pt') and '_ptRel' in key: continue
+                                        elif i.endswith('_ptRel') and not('ptRel' in key): continue
+                                        elif i.endswith('_p') and ('pt' in key): continue
+
                                         if 'reco' in key.lower(): 
                                             output[key].fill(self.events[f'selRecoMu{s}{i}'][selRecoMask],weight=totalRecoWeight[selRecoMask], threads=8)
                                         elif 'gen' in key.lower():
@@ -858,21 +912,21 @@ class nSubBasis_unfoldingHistoProd_WtopSel():#processor.ProcessorABC):
                                     output[key].fill(self.events[f'selGenLeptHemDeltaR{s}'][selGenMask], weight=totalGenWeight[selGenMask])
 
                             elif 'DeltaPhi' in key and not ('AK8' in key):
-                                if 'reco' in key.lower() and self.isMC:
+                                if 'reco' in key.lower():# and self.isMC:
                                     output[key].fill(self.events[f'selRecoLeptHemDeltaPhi{s}'][selRecoMask], weight=totalRecoWeight[selRecoMask] )
                                 elif 'gen' in key.lower() and self.isMC:
                                     output[key].fill(self.events[f'selGenLeptHemDeltaPhi{s}'][selGenMask], weight=totalGenWeight[selGenMask])
                             
                             elif 'DeltaPhi' in key and ('AK8' in key):
                                 print(key)
-                                if 'reco' in key.lower() and self.isMC:
+                                if 'reco' in key.lower():# and self.isMC:
                                     output[key].fill(self.events[f'selRecoLeptHemAK8DeltaPhi{s}'][selRecoMask], weight=totalRecoWeight[selRecoMask] )
                                 elif 'gen' in key.lower() and self.isMC:
                                     output[key].fill(self.events[f'selGenLeptHemAK8DeltaPhi{s}'][selGenMask], weight=totalGenWeight[selGenMask])
                             
                             elif 'DeltaR' in key and not('DeltaRap' in key) and ('AK8' in key):
                                 print(key)
-                                if 'reco' in key.lower() and self.isMC:
+                                if 'reco' in key.lower():# and self.isMC:
                                     output[key].fill(self.events[f'selRecoLeptHemAK8DeltaR{s}'][selRecoMask], weight=totalRecoWeight[selRecoMask] )
                                 elif 'gen' in key.lower() and self.isMC:
                                     output[key].fill(self.events[f'selGenLeptHemAK8DeltaR{s}'][selGenMask], weight=totalGenWeight[selGenMask])
@@ -950,7 +1004,12 @@ class nSubBasis_unfoldingHistoProd_WtopSel():#processor.ProcessorABC):
                         # Decide what weights to use
                         if not (sys.startswith(self.sysWeightList) or sys.startswith(self.constJESList)):
                             s=sys
-                            totalRecoWeight = self.genWeights*self.events[f'puWeightNom{s}']*self.events[f'l1prefiringWeightNom{s}']*(self.events[f'new{self.sel}_leptonWeightNom{s}'] if self.withLeptonWeights else np.ones(len(self.events[f'puWeightNom{s}'])))*(self.events[f'new{self.sel}_btagWeightNom{s}'] if self.withBTaggingWeights else np.ones(len(self.events[f'puWeightNom{s}']))) if self.isMC else self.events[f'totalRecoWeight_nom']
+                            if self.isMC:
+                                totalRecoWeight = self.genWeights*self.events[f'puWeightNom{s}']*self.events[f'l1prefiringWeightNom{s}']*(self.events[f'new{self.sel}_leptonWeightNom{s}'] if self.withLeptonWeights else np.ones(len(self.events[f'puWeightNom{s}'])))*(self.events[f'new{self.sel}_btagWeightNom{s}'] if self.withBTaggingWeights else np.ones(len(self.events[f'puWeightNom{s}'])))*(self.events[f'new{self.sel}_eventJetVeto{s}'] if self.applyVetoMap else np.ones(len(self.events[f'puWeightNom{s}'])))
+                                
+                            else:
+                                totalRecoWeight = self.events[f'totalRecoWeight_nom']*(self.events[f'new{self.sel}_eventJetVeto_nom'] if self.applyVetoMap else np.ones(len(self.events[f'totalRecoWeight_nom'])))
+                                
                             totalGenWeight = self.events[f'evtGenWeight_nom'] if self.isMC else None
                         else:
                             if self.isSigMC:
@@ -958,28 +1017,28 @@ class nSubBasis_unfoldingHistoProd_WtopSel():#processor.ProcessorABC):
                                 #print(f'{sys.split("_")[1]}{s}')
                                 if 'pu' in sys:
                                     totalGenWeight = self.events[f'evtGenWeight{s}'] 
-                                    totalRecoWeight = self.genWeights*self.events[f'{sys.split("_")[1]}{s}']*self.events[f'l1prefiringWeightNom{s}']*(self.events[f'new{self.sel}_leptonWeightNom{s}'] if self.withLeptonWeights else np.ones(len(self.events[f'puWeightNom{s}'])))*(self.events[f'new{self.sel}_btagWeightNom{s}'] if self.withBTaggingWeights else np.ones(len(self.events[f'puWeightNom{s}'])))
+                                    totalRecoWeight = self.genWeights*self.events[f'{sys.split("_")[1]}{s}']*self.events[f'l1prefiringWeightNom{s}']*(self.events[f'new{self.sel}_leptonWeightNom{s}'] if self.withLeptonWeights else np.ones(len(self.events[f'puWeightNom{s}'])))*(self.events[f'new{self.sel}_btagWeightNom{s}'] if self.withBTaggingWeights else np.ones(len(self.events[f'puWeightNom{s}'])))*(self.events[f'new{self.sel}_eventJetVeto{s}'] if self.applyVetoMap else np.ones(len(self.events[f'puWeightNom{s}'])))
 
                                 elif 'l1' in sys:
                                     totalGenWeight = self.events[f'evtGenWeight{s}'] 
-                                    totalRecoWeight = self.genWeights*self.events[f'{sys.split("_")[1]}{s}']*self.events[f'puWeightNom{s}']*(self.events[f'new{self.sel}_leptonWeightNom{s}'] if self.withLeptonWeights else np.ones(len(self.events[f'puWeightNom{s}'])))*(self.events[f'new{self.sel}_btagWeightNom{s}'] if self.withBTaggingWeights else np.ones(len(self.events[f'puWeightNom{s}'])))
+                                    totalRecoWeight = self.genWeights*self.events[f'{sys.split("_")[1]}{s}']*self.events[f'puWeightNom{s}']*(self.events[f'new{self.sel}_leptonWeightNom{s}'] if self.withLeptonWeights else np.ones(len(self.events[f'puWeightNom{s}'])))*(self.events[f'new{self.sel}_btagWeightNom{s}'] if self.withBTaggingWeights else np.ones(len(self.events[f'puWeightNom{s}'])))*(self.events[f'new{self.sel}_eventJetVeto{s}'] if self.applyVetoMap else np.ones(len(self.events[f'puWeightNom{s}'])))
 
                                 elif '_btag' in sys:
                                     totalGenWeight = self.events[f'evtGenWeight{s}'] 
-                                    totalRecoWeight = self.genWeights*self.events[f'new{self.sel}_{sys.split("_")[1]}{s}']*self.events[f'puWeightNom{s}']*self.events[f'l1prefiringWeightNom{s}']*(self.events[f'new{self.sel}_leptonWeightNom{s}'] if self.withLeptonWeights else np.ones(len(self.events[f'puWeightNom{s}'])))
+                                    totalRecoWeight = self.genWeights*self.events[f'new{self.sel}_{sys.split("_")[1]}{s}']*self.events[f'puWeightNom{s}']*self.events[f'l1prefiringWeightNom{s}']*(self.events[f'new{self.sel}_leptonWeightNom{s}'] if self.withLeptonWeights else np.ones(len(self.events[f'puWeightNom{s}'])))*(self.events[f'new{self.sel}_eventJetVeto{s}'] if self.applyVetoMap else np.ones(len(self.events[f'puWeightNom{s}'])))
 
                                 elif 'lepton' in sys:
                                     #print(sys,f'new{self.sel}_{sys.split("_")[1]}{s}')
                                     totalGenWeight = self.events[f'evtGenWeight{s}'] 
-                                    totalRecoWeight = self.genWeights*self.events[f'new{self.sel}_{sys.split("_")[1]}{s}']*self.events[f'puWeightNom{s}']*self.events[f'l1prefiringWeightNom{s}']*(self.events[f'new{self.sel}_btagWeightNom{s}'] if self.withBTaggingWeights else np.ones(len(self.events[f'puWeightNom{s}'])))
+                                    totalRecoWeight = self.genWeights*self.events[f'new{self.sel}_{sys.split("_")[1]}{s}']*self.events[f'puWeightNom{s}']*self.events[f'l1prefiringWeightNom{s}']*(self.events[f'new{self.sel}_btagWeightNom{s}'] if self.withBTaggingWeights else np.ones(len(self.events[f'puWeightNom{s}'])))*(self.events[f'new{self.sel}_eventJetVeto{s}'] if self.applyVetoMap else np.ones(len(self.events[f'puWeightNom{s}'])))
 
                                 elif sys.startswith(('_isr','_fsr','_pdf')):#,'_pdf''):
                                     totalGenWeight = self.genWeights#self.events[f'evtGenWeight{s}']*self.events[f'{sys.split("_")[1]}{s}']
-                                    totalRecoWeight = self.genWeights*self.events[f'puWeightNom{s}']*self.events[f'l1prefiringWeightNom{s}']*(self.events[f'new{self.sel}_leptonWeightNom{s}'] if self.withLeptonWeights else np.ones(len(self.events[f'puWeightNom{s}'])))*(self.events[f'new{self.sel}_btagWeightNom{s}'] if self.withBTaggingWeights else np.ones(len(self.events[f'puWeightNom{s}'])))
+                                    totalRecoWeight = self.genWeights*self.events[f'puWeightNom{s}']*self.events[f'l1prefiringWeightNom{s}']*(self.events[f'new{self.sel}_leptonWeightNom{s}'] if self.withLeptonWeights else np.ones(len(self.events[f'puWeightNom{s}'])))*(self.events[f'new{self.sel}_btagWeightNom{s}'] if self.withBTaggingWeights else np.ones(len(self.events[f'puWeightNom{s}'])))*(self.events[f'new{self.sel}_eventJetVeto{s}'] if self.applyVetoMap else np.ones(len(self.events[f'puWeightNom{s}'])))
                                 
                                 elif 'const' in sys:
                                     totalGenWeight = self.events[f'evtGenWeight{s}'] 
-                                    totalRecoWeight = self.genWeights*self.events[f'new{self.sel}_leptonWeightNom{s}']*self.events[f'puWeightNom{s}']*self.events[f'l1prefiringWeightNom{s}']*(self.events[f'new{self.sel}_btagWeightNom{s}'] if self.withBTaggingWeights else np.ones(len(self.events[f'puWeightNom{s}'])))
+                                    totalRecoWeight = self.genWeights*self.events[f'new{self.sel}_leptonWeightNom{s}']*self.events[f'puWeightNom{s}']*self.events[f'l1prefiringWeightNom{s}']*(self.events[f'new{self.sel}_btagWeightNom{s}'] if self.withBTaggingWeights else np.ones(len(self.events[f'puWeightNom{s}'])))*(self.events[f'new{self.sel}_eventJetVeto{s}'] if self.applyVetoMap else np.ones(len(self.events[f'puWeightNom{s}'])))
                                 
                         if self.isSigMC and 'const' in sys:
                             s=sys
@@ -1357,7 +1416,7 @@ class nSubBasis_unfoldingHistoProd_WtopSel():#processor.ProcessorABC):
 
         return branchesToRead
     
-    
+      
     def include_dummy_leptonWeights(self):
         
         systematic_suffix_map = {
@@ -1417,6 +1476,67 @@ class nSubBasis_unfoldingHistoProd_WtopSel():#processor.ProcessorABC):
         #    if not(type(new_fields[key])==np.ma.core.MaskedArray): new_fields[key] =np.ma.core.MaskedArray(new_fields[key],dtype=np.float32)
 
         return new_fields
+    
+    def append_recoWeights_forJetVeto(self):
+        
+        #for non-signal MC, signal MC sys variations on jes/jer, or signal MC when run without exp/theory weight unc. variations
+        #if (self.isMC and not(self.isSigMC)) or (self.isSigMC and not(self.wtUnc)): 
+
+        #systematic_suffix_map = {
+        #                         'central': 'Nom',
+        #                        }
+        
+        if not(self.sysUnc) or ('const' in self.onlyUnc): sysList = ['_nom']
+        else: sysList=self.sysSources
+            
+        new_fields = OrderedDict()
+        
+        
+        if not (self.sysUnc) or 'const' in self.onlyUnc: 
+            new_fields[f'new{self.sel}_eventJetVeto_nom'] = np.ones(len(self.events['selRecoJets_nom_eta']))
+            new_fields[f'new{self.sel}_AK4jetVeto_nom'] = np.ones(len(self.events['selRecoJets_nom_eta']))
+            new_fields[f'new{self.sel}_AK8jetVeto_nom'] = np.ones(len(self.events['selRecoJets_nom_eta']))
+        else:
+            for sys in self.sysSources:
+                new_fields[f'new{self.sel}_eventJetVeto{sys}'] = np.ones(len(self.events[f'selRecoJets{sys}_eta']))
+                new_fields[f'new{self.sel}_AK4jetVeto{sys}'] = np.ones(len(self.events[f'selRecoJets{sys}_eta']))
+                new_fields[f'new{self.sel}_AK8jetVeto{sys}'] = np.ones(len(self.events[f'selRecoJets{sys}_eta']))
+                
+        for sys in sysList:     
+
+            #AK4jet_pt = self.events[f'selRecoAK4bjetLeptHem{sys}_pt']
+            AK4jet_eta = self.events[f'selRecoAK4bjetLeptHem{sys}_eta'][self.recoMask]
+            AK4jet_phi = self.events[f'selRecoAK4bjetLeptHem{sys}_phi'][self.recoMask]
+            #AK4jet_mass = self.events[f'selRecoAK4bjetLeptHem{sys}_mass']
+            
+            #AK8jet_pt = self.events[f'selRecoJets{sys}_pt']
+            AK8jet_eta = self.events[f'selRecoJets{sys}_eta'][self.recoMask]
+            AK8jet_phi = self.events[f'selRecoJets{sys}_phi'][self.recoMask]
+            #AK8jet_mass = self.events[f'selRecoJets{sys}_mass']
+
+            vetoAK8 = self.vetoMap.evaluate('jetvetomap',
+                                            AK8jet_eta,
+                                            AK8jet_phi                                      
+                                           )
+            vetoAK4 = self.vetoMap.evaluate('jetvetomap',
+                                            AK4jet_eta,
+                                            AK4jet_phi                                      
+                                           )
+            
+            #print(vetoAK8,(vetoAK8==0), len(vetoAK8), len(vetoAK8==0))
+            #print(vetoAK4,(vetoAK4==0), len(vetoAK4), len(vetoAK4==0))
+            
+            new_fields[f'new{self.sel}_AK4jetVeto{sys}'][self.recoMask] = (vetoAK4==0)
+            new_fields[f'new{self.sel}_AK8jetVeto{sys}'][self.recoMask] = (vetoAK8==0)
+            
+            
+            #new_fields[f'new{self.sel}_eventJetVeto{sys}'][~self.recoMask] = ((vetoAK4!=0) | (vetoAK8!=0))[~self.recoMask]
+            new_fields[f'new{self.sel}_eventJetVeto{sys}'][self.recoMask] = ((vetoAK4==0) & (vetoAK8==0))#[self.recoMask]
+
+        return new_fields
+
+
+      
     
     def include_btagWeights(self):
         # the setting of the keys for the systematic suffix map can be raised to the global/class level but keeping things hard-coded here since my needs are fixed and I use custom nomenclature for self-created branches in ntuples, and it meshes better with how I do my histo productions
@@ -1801,248 +1921,3 @@ def make_simple_plot(plotDict,nBins = 20):
         color+=1
     return canvas
         
-    
-################# DEPRECATED FUNCTIONS #################
-"""
-def include_btagWeights_old(self):
-        # the setting of the keys for the systematic suffix map can be raised to the global/class level but keeping things hard-coded here since my needs are fixed and I use custom nomenclature for self-created branches in ntuples, and it meshes better with how I do my histo productions
-        
-        #for non-signal MC, signal MC sys variations on jes/jer, or signal MC when run without exp/theory weight unc. variations
-        if (self.isMC and not(self.isSigMC)) or (self.isSigMC and not(self.wtUnc)): 
-            
-            systematic_suffix_map = {
-                                     'central': 'Nom',
-                                    }
-        
-        elif (self.isSigMC and self.wtUnc):
-            
-            systematic_suffix_map = {
-                                     'central': 'Nom',
-                                     'up_correlated': 'CorrelatedUp',
-                                     'down_correlated': 'CorrelatedDown',
-                                     'up_uncorrelated': 'UncorrelatedUp',
-                                     'down_uncorrelated': 'UncorrelatedDown',
-                                     'up_efficiency': 'EfficiencyUp',
-                                     'down_efficiency': 'EfficiencyDown',
-                                
-                                    }
-        
-        
-        new_fields = OrderedDict()
-        
-        
-        for s in systematic_suffix_map.keys(): 
-            if not self.sysUnc: 
-                new_fields[f'new{self.sel}_btagWeight{systematic_suffix_map[s]}_nom'] = []
-            else:
-                if s!='central': continue
-                    
-                for sys in self.sysSources:
-                    new_fields[f'new{self.sel}_btagWeight{systematic_suffix_map[s]}{sys}'] = []
-            
-        #new_fields = {
-        #                'new{self.sel}_btagWeightNom_nom': [],
-        #                'new{self.sel}_btagWeightUp_nom': [],
-        #                'new{self.sel}_btagWeightDown_nom': []
-        #             }
-
-        if not(self.sysUnc): sysList = ['_nom']
-        else: sysList=self.sysSources
-
-        print(f"Computing btagging weights ({systematic_suffix_map.keys()}) for following sys sources: {sysList}")
-        
-        
-        for i in range(0, len(self.events)):
-                
-            for sys in sysList:     
-                
-                if self.events[f'passRecoSel{sys}'][i]!=1:# or self.events[f'totalRecoWeight{sys}'][i]==0. or (i>=1 and self.events['selRecoAK4bjetLeptHem_nom_pt'][i]==self.events['selRecoAK4bjetLeptHem_nom_pt'][i-1] and self.events[f'passRecoSel{sys}'][i]==self.events[f'passRecoSel{sys}'][i-1]):
-                    for systematic in systematic_suffix_map.keys():
-                        new_fields[f'new{self.sel}_btagWeight{systematic_suffix_map[systematic]}{sys}'].append(0.)
-                else:
-                    
-                    #not calculating weights based on more than one jet in consideration (pick leading lept hem AK4, check if b-tagged)
-                    #so, btagging wt. is then given by eff*SF for just that jet, but keeping masking based approach since it's
-                    #generalisable to a degree and can be modified easily for >1 b-jet
-                    
-                    
-                    try: 
-                        #if not(type(self.events['Jet_pt'][i]))==list:
-                        #    #.index(self.events['selRecoAK4bjetLeptHem_nom_pt'][i])
-                        j = list(self.events['Jet_pt'][i]).index(self.events['selRecoAK4bjetLeptHem_nom_pt'][i])
-                        #else:
-                        #    j = (self.events['Jet_pt'][i]).index(self.events['selRecoAK4bjetLeptHem_nom_pt'][i])
-
-                    except TypeError: 
-                        #print((self.events['Jet_pt'][i]))
-                        print(self.events['selRecoAK4bjetLeptHem_nom_pt'][0], self.events['selRecoAK4bjetLeptHem_nom_pt'][i],self.events['selRecoAK4bjetLeptHem_nom_pt'][i-1 if i>0 else i])
-                        print(self.events['Jet_pt'][0], self.events['Jet_pt'][i],self.events['Jet_pt'][i-1 if i>0 else i])
-
-                        try: 
-                            j = list([self.events['Jet_pt'][i]]).index(self.events['selRecoAK4bjetLeptHem_nom_pt'][i])
-                        except ValueError:
-                            for systematic in systematic_suffix_map.keys():
-                                new_fields[f'new{self.sel}_btagWeight{systematic_suffix_map[systematic]}{sys}'].append(1.)
-                            continue
-                    
-                    #if type(self.events['Jet_pt'][i])==list:
-                    jet_pt = np.array([self.events['Jet_pt'][i][j]])
-                    jet_eta = np.array([self.events['Jet_eta'][i][j]])
-                    jet_ID = np.array([self.events['Jet_jetId'][i][j]])
-                    jet_flav = np.array([self.events['Jet_hadronFlavour'][i][j]])
-                    jet_discr = np.array([self.events['Jet_btagDeepFlavB'][i][j]])
-                    
-                    #elif type(self.events['Jet_pt'][i])==float:
-                        
-                    #    jet_pt = np.array([self.events['Jet_pt'][i]])
-                    #    jet_eta = np.array([self.events['Jet_eta'][i]])
-                    #    jet_ID = np.array([self.events['Jet_jetId'][i]])
-                    #    jet_flav = np.array([self.events['Jet_hadronFlavour'][i]])
-                    #    jet_discr = np.array([self.events['Jet_btagDeepFlavB'][i]])
-
-                    # Define the masks
-                    ID_mask = jet_ID>=self.AK4_jetID
-                    discr_mask = (jet_discr >= self.WPBDisc)
-                    ptMask = (jet_pt > self.AK4_ptmin)
-                    etaMask =((jet_eta<=self.AK4_etamax) & (jet_eta>=-1.*self.AK4_etamax))# (np.abs(jet_eta) <= self.AK4_etamax)
-                    jet_eta = np.abs(jet_eta)
-                    
-                    # Apply the masks
-                    pt, eta, flav = mask(ptMask, etaMask, discr_mask, ID_mask, jet_pt, jet_eta, jet_flav)
-
-                    # Identify b, c, and light jets
-                    b_jets = np.where(flav == 5)
-                    c_jets = np.where(flav == 4)
-                    light_jets = np.where(flav == 0)
-
-                    # Get efficiencies
-                    b_efficiencies = np.array([get_efficiency(self.effCorr_b, p, e)[0] for p, e in zip(pt[b_jets], eta[b_jets])])#np.array([1])#
-                    c_efficiencies = np.array([get_efficiency(self.effCorr_c, p, e)[0] for p, e in zip(pt[c_jets], eta[c_jets])])#np.array([1])#
-                    light_efficiencies = np.array([get_efficiency(self.effCorr_udsg, p, e)[0] for p, e in zip(pt[light_jets], eta[light_jets])])#np.array([1])#
-                    
-                    #Get efficiency errors
-                    b_efficiencies_err = np.array([get_efficiency(self.effCorr_b, p, e)[1] for p, e in zip(pt[b_jets], eta[b_jets])])#np.array([1])#
-                    c_efficiencies_err = np.array([get_efficiency(self.effCorr_c, p, e)[1] for p, e in zip(pt[c_jets], eta[c_jets])])#np.array([1])#
-                    light_efficiencies_err = np.array([get_efficiency(self.effCorr_udsg, p, e)[1] for p, e in zip(pt[light_jets], eta[light_jets])])#np.array([1])#
-                    
-                    #if i%25000==0: 
-                    #    print('\n',"Event #:", i)
-
-                    # Compute SFs for each systematic
-                    for systematic in systematic_suffix_map.keys():#self.btaggingSystLabels:
-                        
-                        if not('efficiency' in systematic):
-                            _, _, _, SFs = compute_btagSFAndWeight(self.btvjson, systematic, self.btagWP, 
-                                                                   flav, eta, pt, 
-                                                                   b_jets, c_jets, light_jets,
-                                                                   b_efficiencies, c_efficiencies, light_efficiencies,i)
-
-                            #if i%10000==0: 
-                            #    print("Event efficiencies b,c,udsg,and jet pt, jet eta =", b_efficiencies, c_efficiencies, light_efficiencies, pt, eta)
-
-                            #    print(f"Event weight {systematic} = {SFs}, {np.prod(SFs)}")
-
-                            #    #print("Event weight old =", i, self.events['btagWeightNom_nom'][i])
-
-                            new_fields[f'new{self.sel}_btagWeight{systematic_suffix_map[systematic]}{sys}'].append(np.prod(SFs))
-
-                        else:
-                            
-                            
-                            if 'up' in systematic.lower():
-                                
-                                _, _, _, SFs = compute_btagSFAndWeight(self.btvjson, 'central', self.btagWP, 
-                                                                       flav, eta, pt, 
-                                                                       b_jets, c_jets, light_jets,
-                                                                       b_efficiencies + b_efficiencies_err, 
-                                                                       c_efficiencies + c_efficiencies_err, 
-                                                                       light_efficiencies + light_efficiencies_err,i)
-                            elif 'down' in systematic.lower():
-                                _, _, _, SFs = compute_btagSFAndWeight(self.btvjson, 'central', self.btagWP, 
-                                                                       flav, eta, pt, 
-                                                                       b_jets, c_jets, light_jets,
-                                                                       b_efficiencies - b_efficiencies_err, 
-                                                                       c_efficiencies - c_efficiencies_err, 
-                                                                       light_efficiencies - light_efficiencies_err,i)
-                                
-                            #if i%10000==0: 
-                            #    print("Event efficiencies b,c,udsg,and jet pt, jet eta =", b_efficiencies, c_efficiencies, light_efficiencies, pt, eta)
-
-                            #    print(f"Event weight {systematic} = {SFs}, {np.prod(SFs)}")
-
-                            #    #print("Event weight old =", i, self.events['btagWeightNom_nom'][i])
-
-                            new_fields[f'new{self.sel}_btagWeight{systematic_suffix_map[systematic]}{sys}'].append(np.prod(SFs))
-                            
-
-        # Convert lists to arrays
-        #for key in new_fields:
-        #    if not(type(new_fields[key])==np.ma.core.MaskedArray): new_fields[key] = np.ma.core.MaskedArray(new_fields[key],dtype=np.float32)
-        #    #if not(type(new_fields[key])==np.ndarray): new_fields[key] = np.array(new_fields[key])
-
-        return new_fields
-    
-def compute_btagSFAndWeight(btvjson, systematic, WP,
-                            flav, eta, pt, 
-                            b_jets, c_jets, light_jets,
-                            b_efficiencies, c_efficiencies, light_efficiencies, iEvt
-                           ):
-    bJet_SFs = btvjson["deepJet_comb"].evaluate(systematic, WP, 
-                                               np.array(flav[b_jets]), 
-                                               np.array(eta[b_jets]), 
-                                               np.array(pt[b_jets]))
-    cJet_SFs = btvjson["deepJet_comb"].evaluate(systematic, WP, 
-                                               np.array(flav[c_jets]), 
-                                               np.array(eta[c_jets]), 
-                                               np.array(pt[c_jets]))
-    lightJet_SFs = btvjson["deepJet_incl"].evaluate(systematic, WP, 
-                                                    np.array(flav[light_jets]), 
-                                                    np.array(eta[light_jets]), 
-                                                    np.array(pt[light_jets]))
-
-    #if iEvt%25000==0:
-    #    print(iEvt,"Event SFs b,c,udsg =", bJet_SFs, cJet_SFs, lightJet_SFs)
-
-    bJet_SFs *= b_efficiencies 
-    cJet_SFs *= c_efficiencies
-    lightJet_SFs *= light_efficiencies
-    all_SFs = np.concatenate((bJet_SFs, cJet_SFs, lightJet_SFs))
-
-    return bJet_SFs, cJet_SFs, lightJet_SFs, all_SFs
-    
-def get_efficiency_old(hist, pt, eta):
-    '''Reads efficiency maps for tagging a b/c/udsg as a b; implementation based on uproot and hist'''
-    # deprecated since slower somehow a la %timeit
-    
-    eta_edges = hist.axis('y').edges()
-    pt_edges = hist.axis('x').edges()
-
-    biny = np.digitize(eta, eta_edges)-1
-    binx = np.digitize(pt, pt_edges)-1
-
-    biny = np.clip(biny, 0, len(eta_edges) - 2)
-    binx = np.clip(binx, 0, len(pt_edges) - 2)
-
-    bin_contents_eff = hist.values()
-
-    return bin_contents_eff[binx, biny]
-
-def get_efficiency(histogram, pt, eta):
-    '''Reads efficiency maps for tagging a b/c/udsg as a b; implementation based on (py)ROOT'''
-    pt_bin = histogram.GetXaxis().FindFixBin(pt)
-    eta_bin = histogram.GetYaxis().FindFixBin(eta)
-    
-    # Handle overflows
-    n_pt_bins = histogram.GetNbinsX()
-    n_eta_bins = histogram.GetNbinsY()
-    
-    if pt_bin > n_pt_bins:
-        pt_bin = n_pt_bins
-    if eta_bin > n_eta_bins:
-        eta_bin = n_eta_bins
-    
-    efficiency = histogram.GetBinContent(pt_bin, eta_bin)
-    error = histogram.GetBinError(pt_bin, eta_bin)
-    
-    return [efficiency, error]
-"""
