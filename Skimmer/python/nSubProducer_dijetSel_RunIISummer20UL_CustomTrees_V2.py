@@ -812,7 +812,6 @@ class nSubProd(Module):
                     
                     self.out.fillBranch( 'nRecoLeptons'+sys, reco_nleptons)
                     
-                    self.out.fillBranch( 'gen_delta_phi'+sys, gen_deltaPhi if passGenSel else 929.)
                     self.out.fillBranch( 'good_nPVs'+sys, getattr( event, 'PV_npvsGood') )#if passRecoSel[sys] else 0.)
 
                 #if sys.startswith('_nom'): 
