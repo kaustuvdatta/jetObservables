@@ -89,7 +89,7 @@ class TriggerEfficiencies : public EDAnalyzer {
         unsigned int lumi = 0, run=0;
         ULong64_t event = 0;
         //int preAK8PFJet80 = 0, preAK8PFJet140 = 0, preAK8PFJet200 = 0, preAK8PFJet260 = 0, preAK8PFJet320 = 0, preAK8PFJet400 = 0, preAK8PFJet450 = 0, preAK8PFJet500 = 0, preAK8PFJet550 = 0; 
-        vector<bool> triggerDesicion; 
+        vector<bool> triggerDecision; 
         vector<int> triggerPrescale;
 };
 
@@ -134,7 +134,7 @@ TriggerEfficiencies::~TriggerEfficiencies()
 // ------------ method called for each event  ------------
 void TriggerEfficiencies::analyze(const Event& iEvent, const EventSetup& iSetup) {
 
-    triggerDesicion.clear();
+    triggerDecision.clear();
     triggerPrescale.clear();
 
     edm::Handle<reco::VertexCollection> vertices;
@@ -162,11 +162,11 @@ void TriggerEfficiencies::analyze(const Event& iEvent, const EventSetup& iSetup)
         for (unsigned int i = 0, n = triggerBits->size(); i < n; ++i) {
             if (TString(names.triggerName(i)).Contains(listOfTriggers[t])) { 
                 if (triggerBits->accept(i)) {
-                    triggerDesicion.push_back( 1 );
+                    triggerDecision.push_back( 1 );
                     triggerPrescale.push_back( triggerPrescales->getPrescaleForIndex(i) );
                     //LogWarning("triggerbit") << names.triggerName(i) << " " <<  hltAK8PFJet80_bool << " " << hltAK8PFJet80_prescale;
                 } else {
-                    triggerDesicion.push_back( 0 );
+                    triggerDecision.push_back( 0 );
                     triggerPrescale.push_back( 0 );
                 }
             }
@@ -203,9 +203,9 @@ void TriggerEfficiencies::analyze(const Event& iEvent, const EventSetup& iSetup)
 
         if ( ( deltaPhi > 2 ) and ( ptAsym < 0.3 ) ){
 
-            if ( ( listOfTriggers.size() == triggerDesicion.size() ) and ( triggerDesicion.size() == triggerPrescale.size() ) ){
+            if ( ( listOfTriggers.size() == triggerDecision.size() ) and ( triggerDecision.size() == triggerPrescale.size() ) ){
                 for (size_t t = 0; t < listOfTriggers.size(); t++) {
-                    if (triggerDesicion[t]==1) {
+                    if (triggerDecision[t]==1) {
                         auto tmp = "jet1Pt_" + listOfTriggers[t] ;
                         histos1D_[ tmp ]->Fill( JETS[0].pt() );
                         histos1D_[ tmp+"_scaled" ]->Fill( JETS[0].pt(), triggerPrescale[t] );
@@ -232,7 +232,7 @@ void TriggerEfficiencies::analyze(const Event& iEvent, const EventSetup& iSetup)
                                                     << ", eta " << obj.eta()
                                                     << ", phi " << obj.phi()
                                                     << ", mass " << obj.mass() << endl;*/
-                            if ( ( triggerDesicion[t]==1 ) and ( hltJet.DeltaR( recoJet )<0.8 ) ){
+                            if ( ( triggerDecision[t]==1 ) and ( hltJet.DeltaR( recoJet )<0.8 ) ){
                                 auto tmpName = "jet1Pt_AK8PFJet";
                                 if ( hltPt>stod(triggerThresholds[t]) ) histos1D_[ tmpName+triggerThresholds[t] +"_only" ]->Fill( JETS[0].pt() );
                                 if ( hltPt>stod(triggerThresholds[t+1]) ) histos1D_[ tmpName+triggerThresholds[t+1] +"_simulated" ]->Fill( JETS[0].pt() );
@@ -272,6 +272,7 @@ void TriggerEfficiencies::beginJob() {
     histos1D_[ "jet1Pt_HLT_AK8PFJet450" ] = fs_->make< TH1D >( "jet1Pt_HLT_AK8PFJet450", "jet1Pt_HLT_AK8PFJet450", 150, 0., 1500. );
     histos1D_[ "jet1Pt_HLT_AK8PFJet500" ] = fs_->make< TH1D >( "jet1Pt_HLT_AK8PFJet500", "jet1Pt_HLT_AK8PFJet500", 150, 0., 1500. );
     histos1D_[ "jet1Pt_HLT_AK8PFJet550" ] = fs_->make< TH1D >( "jet1Pt_HLT_AK8PFJet550", "jet1Pt_HLT_AK8PFJet550", 150, 0., 1500. );
+    
     histos1D_[ "jet1Pt_HLT_AK8PFJet60_scaled" ] = fs_->make< TH1D >( "jet1Pt_HLT_AK8PFJet60_scaled", "jet1Pt_HLT_AK8PFJet60_scaled", 150, 0., 1500. );
     histos1D_[ "jet1Pt_HLT_AK8PFJet80_scaled" ] = fs_->make< TH1D >( "jet1Pt_HLT_AK8PFJet80_scaled", "jet1Pt_HLT_AK8PFJet80_scaled", 150, 0., 1500. );
     histos1D_[ "jet1Pt_HLT_AK8PFJet140_scaled" ] = fs_->make< TH1D >( "jet1Pt_HLT_AK8PFJet140_scaled", "jet1Pt_HLT_AK8PFJet140_scaled", 150, 0., 1500. );
