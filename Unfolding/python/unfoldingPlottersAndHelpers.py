@@ -663,6 +663,13 @@ def drawDataMCReco( ivar, selection, year, lumi, process,
     ROOT.gStyle.SetPadLeftMargin(0.12)
                     
 
+def get_th1_normedCovErrors(hist, covnorm):
+    for i in range( 1, hist.GetNbinsX() + 1):
+        unc_tot_norm = ROOT.TMath.Sqrt( covnorm[i-1][i-1] )
+        #hist.SetBinContent(i, unc_tot_norm )   
+        #print(i,hist.GetBinContent(i),hist.GetBinError(i),unc_tot_norm)
+        hist.SetBinError(i, unc_tot_norm )
+        
 
     
 def drawUnfold(ivar, selection, process, year, lumi,
@@ -679,6 +686,7 @@ def drawUnfold(ivar, selection, process, year, lumi,
     ROOT.gStyle.SetPadLeftMargin(0.13)
     #ROOT.gROOT.ForceStyle()
     #tdrstyle.setTDRStyle()
+    
     
     colors = [ROOT.TColor.GetColor("#e42536"),ROOT.TColor.GetColor("#5790fc"),ROOT.TColor.GetColor("#f89c20")]
     
@@ -697,10 +705,12 @@ def drawUnfold(ivar, selection, process, year, lumi,
     legend.SetFillStyle(0)
     legend.SetTextSize(0.04)
     legend.SetBorderSize(0)
-
     
     unfoldHisto = unfoldHistowoUnc.Clone('unfoldHisto'+ivar)
-    unfoldHistoStatUnc = unfoldHistowoUnc.Clone('unfoldHistoStatUnc'+ivar)
+    unfoldHisto.Sumw2()
+ 
+    unfoldHistoDataStatErr=unfoldHistowoUnc.Clone('unfoldHistoStatUnc'+ivar)
+    unfoldHistoDataStatErr.Sumw2()
     
     dataJetHisto.SetTitle("")
     print("data(minus bkgs).Integral()",dataJetHisto.Integral())
@@ -710,7 +720,7 @@ def drawUnfold(ivar, selection, process, year, lumi,
     
     unfoldHisto.SetTitle("")
     print("unfoldHisto.Integral()",unfoldHisto.Integral())
-    unfoldHistoStatUnc.SetTitle("")
+    unfoldHistoDataStatErr.SetTitle("")
     
     altMCHisto.SetTitle("")
     print("altMCHisto.Integral()",altMCHisto.Integral())
@@ -724,25 +734,23 @@ def drawUnfold(ivar, selection, process, year, lumi,
         print("fsrDownHisto.Integral()",fsrDownHisto.Integral())
     
     
-    dataScaling = unfoldHisto.Integral()
-    print (dataScaling)
+    #dataScaling = unfoldHisto.Integral()
+    #print (dataScaling)
+    
     #use unnormed unfold histo to build the jacobian for the correct propagation of errors
     #via the transformed covariance matrix, from the unnormalised -> the normalised space
     
-    cov_normTot_np, normed_covTot = get_normalised_cov(unfoldHisto.Clone(), 
+    cov_normTot_np, normed_covTot = get_normalised_cov(unfoldHisto, 
                                                        cov_tot.Clone())
-    cov_norm_dataStat_np, normed_cov_dataStat = get_normalised_cov(unfoldHistoStatUnc.Clone(), 
+    cov_norm_dataStat_np, normed_cov_dataStat = get_normalised_cov(unfoldHistoDataStatErr, 
                                                                    cov_datastat_tot.Clone())
+    #print(cov_normTot_np)
+    #print(cov_norm_dataStat_np)
     
-    
-    
-    unfoldHistoDataStatErr=unfoldHistoStatUnc.Clone()
 
-    unfoldHistoDataStatErr.Sumw2()
-    unfoldHisto.Sumw2()
     dataJetHisto.Sumw2()
     genJetHisto.Sumw2()
-    unfoldHistowoUnc.Sumw2()
+    #unfoldHistowoUnc.Sumw2()
     altMCHisto.Sumw2()
     foldHisto.Sumw2()
     recoJetHisto.Sumw2()
@@ -838,7 +846,6 @@ def drawUnfold(ivar, selection, process, year, lumi,
 
     unfoldHisto.Draw( "E1")
 
-    #altMCHisto.Scale(1, 'width')  ### divide by bin width
     altMCHisto.SetLineWidth(2)
     altMCHisto.SetMarkerSize(2)
     altMCHisto.SetLineColor(colors[1])#ROOT.kBlue)
@@ -862,7 +869,6 @@ def drawUnfold(ivar, selection, process, year, lumi,
         
         if 'dijet' in selection: 
         
-            #altMC2Histo.Scale(1, 'width')  ### divide by bin width
             altMC2Histo.SetLineWidth(2)
             altMC2Histo.SetLineColor(colors[2])#ROOT.kGray+4)
             altMC2Histo.SetMarkerColor(colors[2])#ROOT.kGray+4)
@@ -873,7 +879,6 @@ def drawUnfold(ivar, selection, process, year, lumi,
         
             altMC2Histo.Draw("histE1 same")
         else:
-            #altMC1Histo.Scale(1, 'width')  ### divide by bin width
             altMC1Histo.SetLineWidth(2)
             altMC1Histo.SetLineColor(colors[2])#ROOT.kGray+4)
             altMC1Histo.SetMarkerColor(colors[2])#ROOT.kGray+4)
@@ -925,8 +930,8 @@ def drawUnfold(ivar, selection, process, year, lumi,
     if process.startswith('data'):
         CMS_lumi.extraText = "Preliminary"
         if year=='all': 
-            if 'dijet' in selection:
-                CMS_lumi.lumi_13TeV = ('#leq 135' if 'dijet' in selection else '138')+" fb^{-1} (13 TeV)"+('' if year.startswith('all') else ", "+( '' if year.startswith('all') else year ) )
+            #if 'dijet' in selection:
+            CMS_lumi.lumi_13TeV = ('#leq 135' if 'dijet' in selection else '138')+" fb^{-1} (13 TeV)"+('' if year.startswith('all') else ", "+( '' if year.startswith('all') else year ) )
         else:
             CMS_lumi.lumi_13TeV = ('#leq' if 'dijet' in selection else '')+str( round( (lumi/1000.), 2 ) )+" fb^{-1}, 13 TeV"+('' if year.startswith('all') else ", "+( '2016+2017+2018' if year.startswith('all') else year ) )
     else:
@@ -945,9 +950,9 @@ def drawUnfold(ivar, selection, process, year, lumi,
     pad2.Draw()
     pad2.cd()
     
-    ratio_datastatUnc = unfoldHistoDataStatErr.Clone()
+    ratio_datastatUnc = unfoldHistoDataStatErr.Clone('ratio_datastatUnc')
     ratio_datastatUnc.Divide(unfoldHistowoUnc)
-    ratio_totalUnc = unfoldHisto.Clone()
+    ratio_totalUnc = unfoldHisto.Clone('ratio_totalUnc')
     ratio_totalUnc.Divide(unfoldHistowoUnc)
     
     tmpPad2= pad2.DrawFrame( 0, 0., maxX, 1.9 )
@@ -1079,404 +1084,6 @@ def drawUnfold(ivar, selection, process, year, lumi,
     can.SaveAs(png)
     ROOT.gStyle.SetPadRightMargin(0.09)     ## reseating
     ROOT.gStyle.SetPadLeftMargin(0.12)    
-
-def drawUnfold_normedCovErr(   ivar, selection, process, year, lumi,
-                               dataJetHisto, genJetHisto, unfoldHisto, unfoldHistoStatUnc, unfoldHistowoUnc, altMCHisto, foldHisto, recoJetHisto,
-                               cov_tot, cov_datastat_tot, labelX, maxX, tlegendAlignment, outputName,
-                               altMC1Histo = None, altMC2Histo = None, altMC1Histo_label = None, altMC2Histo_label = None, 
-                               nomMCHisto_label = None, altMCHisto_label = None,
-                               extraMC=False, includeFSR = False, fsrUpHisto = None, fsrDownHisto=None, noNorm=False
-                              ):
-    """docstring for drawUnfold"""
-    print ("Drawing unfolding for:",ivar)
-    ROOT.gStyle.SetPadRightMargin(0.04)
-    ROOT.gStyle.SetPadLeftMargin(0.13)
-    #ROOT.gROOT.ForceStyle()
-    #tdrstyle.setTDRStyle()
-    
-    colors = [ROOT.TColor.GetColor("#e42536"),ROOT.TColor.GetColor("#5790fc"),ROOT.TColor.GetColor("#f89c20")]
-    
-    dataJetHisto.SetTitle("")
-    print("data(minus bkgs).Integral()",dataJetHisto.Integral())
-    genJetHisto.SetTitle("")
-    print("genJetHisto.Integral()",genJetHisto.Integral())
-    unfoldHisto.SetTitle("")
-    print("unfoldHisto.Integral()",unfoldHisto.Integral())
-    unfoldHistoStatUnc.SetTitle("")
-    #print("unfoldHistoStatUnc.Integral()",unfoldHistoStatUnc.Integral())
-    #unfoldHistowoUnc.SetTitle("")
-    #print("unfoldHistowoUnc.Integral()",unfoldHistowoUnc.Integral())
-    altMCHisto.SetTitle("")
-    print("altMCHisto.Integral()",altMCHisto.Integral())
-    #foldHisto.SetTitle("")
-    #print("foldHisto.Integral()",foldHisto.Integral())
-    recoJetHisto.SetTitle("")
-    print("(RM proj.Y )recoJetHisto.Integral()",recoJetHisto.Integral())
-    if includeFSR: 
-        fsrUpHisto.SetTitle("")
-        print("fsrUpHisto.Integral()",fsrUpHisto.Integral())
-        fsrDownHisto.SetTitle("")
-        print("fsrDownHisto.Integral()",fsrDownHisto.Integral())
-
-            
-    
-    can = ROOT.TCanvas('can'+ivar, 'can'+ivar,  10, 10, 1500, 1500 )
-    pad1 = ROOT.TPad("pad1"+ivar, "Main",0,0.3,1.00,1.00,-1)
-    pad1.Draw()
-    
-    can.cd()
-    pad1.cd()
-    pad1.SetTopMargin(0.08)
-    pad1.SetBottomMargin(0.02)
-    
-    if tlegendAlignment.startswith('right'): legend=ROOT.TLegend(0.68,0.61,0.90,0.89)
-
-    else: legend=ROOT.TLegend(0.16,0.61,0.38,0.89)
-    legend.SetFillStyle(0)
-    legend.SetTextSize(0.035)
-    legend.SetBorderSize(0)
-    
-    #bins = variables[ivar]['bins']
-
-    unfoldHistoTot = unfoldHisto.Clone()
-    dataScaling = unfoldHisto.Integral()
-    
-    print (dataScaling)
-    #use unnormed unfold histo to build the jacobian for the correct propagation of errors
-    #via the covariance matrix, from the normalise -> the unnormalised space
-    #normed_cov_tot_matrix, normed_cov_tot = GetNormalizedTMatrixandTH2(cov_tot.Clone(),"normed_cov_tot", unfoldHisto.Clone())
-    
-    #normed_cov_datastat_tot_matrix, normed_cov_datastat_tot = GetNormalizedTMatrixandTH2(cov_datastat_tot.Clone(),"normed_cov_dastat_tot", unfoldHisto.Clone())
-    unfoldHistoDataStatErr=unfoldHistoStatUnc.Clone()
-    unfoldHistoDataStatErr.Sumw2()
-    unfoldHisto.Sumw2()
-    dataJetHisto.Sumw2()
-    genJetHisto.Sumw2()
-    unfoldHistowoUnc.Sumw2()
-    altMCHisto.Sumw2()
-    foldHisto.Sumw2()
-    recoJetHisto.Sumw2()
-    
-    unfoldHistoDataStatErr.Scale(1./(unfoldHistoDataStatErr.Integral() if not(noNorm) else 1.),'width')
-    unfoldHisto.Scale(1./(unfoldHisto.Integral() if not(noNorm) else 1.),'width')
-    dataJetHisto.Scale(1./(dataJetHisto.Integral() if not(noNorm) else 1.),'width')
-    genJetHisto.Scale(1./(genJetHisto.Integral() if not(noNorm) else 1.),'width')
-    unfoldHistowoUnc.Scale(1./(unfoldHistowoUnc.Integral() if not(noNorm) else 1.),'width')
-    altMCHisto.Scale(1./(altMCHisto.Integral() if not(noNorm) else 1.),'width')
-    foldHisto.Scale(1./(foldHisto.Integral() if not(noNorm) else 1.),'width')
-    recoJetHisto.Scale(1./(recoJetHisto.Integral() if not(noNorm) else 1.),'width')
-    
-    
-    
-    
-    if includeFSR: 
-        fsrUpHisto.Sumw2()
-        fsrUpHisto.Scale(1./(fsrUpHisto.Integral() if not(noNorm) else 1.),'width')
-        fsrDownHisto.Sumw2()
-        fsrDownHisto.Scale(1./(fsrDownHisto.Integral() if not(noNorm) else 1.),'width')
-        
-        
-    
-    
-    if extraMC:
-
-        altMC1Histo.Sumw2()
-        altMC1Histo.Scale(1./(altMC1Histo.Integral() if not(noNorm) else 1.),'width')
-        
-        altMC1Histo.SetTitle("")
-        if 'dijet' in selection and altMC2Histo:
-            altMC2Histo.Sumw2()
-            altMC2Histo.Scale(1./(altMC2Histo.Integral() if not(noNorm) else 1.),'width')
-            
-            altMC2Histo.SetTitle("")
-
-    
-    
-    
-    unfoldHisto.SetMarkerStyle(8)
-    unfoldHisto.SetMarkerSize(2)
-    unfoldHisto.SetMarkerColor(ROOT.kBlack)
-    unfoldHisto.SetLineColor(ROOT.kBlack)
-    legend.AddEntry( unfoldHisto, 'Data', 'pe' )
-    
-    
-    genJetHisto.SetLineWidth(2)
-    genJetHisto.SetLineColor(colors[0])#ROOT.kRed)
-    genJetHisto.SetMarkerColor(colors[0])#ROOT.kRed)
-    genJetHisto.SetMarkerSize(2)
-    genJetHisto.SetMarkerStyle(25)
-    if includeFSR: 
-        fsrUpHisto.SetMarkerSize(2)
-        fsrUpHisto.SetLineColor(46)
-        fsrUpHisto.SetMarkerColor(46)
-        fsrUpHisto.SetMarkerStyle(22)
-
-
-        fsrDownHisto.SetMarkerSize(2)
-        fsrDownHisto.SetLineColor(46)
-        fsrDownHisto.SetMarkerColor(46)
-        fsrDownHisto.SetMarkerStyle(23)
-    
-    legend.AddEntry( genJetHisto, nomMCHisto_label, 'lpe' )
-
-   
-    if 'tau' in labelX: 
-        unfoldHisto.GetYaxis().SetTitle( '#frac{1}{#sigma} #frac{d#sigma}{d#'+labelX.split('#')[1]+'}' )
-    else:
-        label=None
-        if 'pt' in labelX:
-            label = 'p_T'
-        elif 'mass'in labelX:
-            label = 'm'
-        elif 'softdrop' in labelX:
-            label = 'm_SD'
-        else:
-            pass
-        if label: unfoldHisto.GetYaxis().SetTitle( '#frac{1}{#sigma} #frac{d#sigma}{d'+label+'}' )
-    #unfoldHisto.GetYaxis().SetTitleOffset(0.95)
-    unfoldHisto.GetYaxis().SetTitleSize(0.05)
-    unfoldHisto.SetMaximum( (1.6 if '21' in ivar or '32' in ivar else 1.56)*max([ genJetHisto.GetMaximum(), unfoldHisto.GetMaximum()] )  )
-    unfoldHisto.SetMinimum(0.)
-    #pad1.GetYaxis().SetRangeUser(0,1.5*max([ genJetHisto.GetMaximum(), unfoldHisto.GetMaximum()] ) )
-
-    unfoldHisto.Draw( "E1")
-
-    #altMCHisto.Scale(1, 'width')  ### divide by bin width
-    altMCHisto.SetLineWidth(2)
-    altMCHisto.SetMarkerSize(2)
-    altMCHisto.SetLineColor(colors[1])#ROOT.kBlue)
-    altMCHisto.SetMarkerColor(colors[1])#ROOT.kBlue)
-    altMCHisto.SetMarkerStyle(25)
-    
-    if includeFSR: 
-
-        legend.AddEntry(fsrUpHisto, #('MG5-MLM+P8, ' if 'dijet' in selection else 'PWHG+P8, ') + 
-                        "FSR up", 'pe')
-
-        legend.AddEntry(fsrDownHisto, #('MG5-MLM+P8, ' if 'dijet' in selection else 'PWHG+P8, ') + 
-                        "FSR down", 'pe')
-        
-    legend.AddEntry( altMCHisto, altMCHisto_label, 'lp' )#'PWHG+H7','lpe')#
-    
-    
-    
-    if extraMC:
-        
-        
-        if 'dijet' in selection: 
-        
-            #altMC2Histo.Scale(1, 'width')  ### divide by bin width
-            altMC2Histo.SetLineWidth(2)
-            altMC2Histo.SetLineColor(colors[2])#ROOT.kGray+4)
-            altMC2Histo.SetMarkerColor(colors[2])#ROOT.kGray+4)
-            altMC2Histo.SetMarkerStyle(25)
-            altMC2Histo.SetMarkerSize(2)
-            
-            legend.AddEntry( altMC2Histo, altMC2Histo_label, 'lpe' )
-        
-            altMC2Histo.Draw("histE1 same")
-        else:
-            #altMC1Histo.Scale(1, 'width')  ### divide by bin width
-            altMC1Histo.SetLineWidth(2)
-            altMC1Histo.SetLineColor(colors[2])#ROOT.kGray+4)
-            altMC1Histo.SetMarkerColor(colors[2])#ROOT.kGray+4)
-            altMC1Histo.SetMarkerStyle(25)
-            altMC1Histo.SetMarkerSize(2)
-            #print("altMC1Histo.Integral()",altMC1Histo.Integral())
-            legend.AddEntry( altMC1Histo, altMC1Histo_label,'lpe')#'aMC@NLO-FxFx+P8', 'lpe' )
-            altMC1Histo.Draw("histE1 same")
-
-        
-    genJetHisto.Draw( "histE1 same")
-    altMCHisto.Draw("histE1 same")
-    if includeFSR: 
-        fsrUpHisto.Draw( "PE1 same")
-        fsrDownHisto.Draw("PE1 same")
-
-    
-    selText = textBox.Clone()
-    selText.SetTextFont(42)
-    selText.SetTextSize(0.042)
-
-    selText.SetNDC()
-    
-    dijetOffset = 0
-    
-    if selection.startswith("_dijet"): 
-        seltext = 'Central Dijet'#( 'Central' if 'Central' in labelX  else 'Outer' )+' dijet region'
-        dijetOffset = 0.15
-    elif selection.startswith("_W"): seltext = 'Boosted W-enriched'
-    elif selection.startswith("_top"): seltext = 'Boosted top-enriched'
-    
-    selText.DrawLatex( ( 0.19 if tlegendAlignment.startswith('right') else 0.55+dijetOffset ), 0.87, seltext )
-
-    selText = textBox.Clone()
-    selText.SetTextFont(42)
-    selText.SetTextSize(0.040)
-
-    selText.SetNDC()
-    
-    #if selection.startswith("_dijet") and 'Central' in jetType : seltext = 'p_{T}>200 GeV' 
-    if selection.startswith("_dijet"): seltext = 'p_{T}>200 GeV' 
-    elif selection.startswith("_W"): seltext = 'p_{T}>200 GeV, 65<m_{jet}<125 GeV' 
-    elif selection.startswith("_top"): seltext = 'p_{T}>400 GeV, 140<m_{jet}<300 GeV'
-    #selText.DrawLatex( ( 0.65 if tlegendAlignment.startswith('right') else 0.2 ), 0.83, seltext )
-    selText.DrawLatex( ( 0.19 if tlegendAlignment.startswith('right') else 0.55+dijetOffset ), 0.80, seltext )
-    
-    legend.Draw()
-    if process.startswith('data'):
-        CMS_lumi.extraText = "Preliminary"
-        CMS_lumi.lumi_13TeV = ('#leq' if 'dijet' in selection else '')+str( round( (lumi/1000.), 2 ) )+" fb^{-1}, 13 TeV"+('' if year.startswith('all') else ", "+( '2016+2017+2018' if year.startswith('all') else year ) )
-    else:
-        CMS_lumi.extraText = "Simulation Preliminary"
-        CMS_lumi.lumi_13TeV = "13 TeV, "+ ( '2016+2017+2018' if year.startswith('all') else year )
-    CMS_lumi.relPosX = 0.12
-    CMS_lumi.CMS_lumi(pad1, 4, 0)
-    
-    
-    can.cd()
-    pad2 = ROOT.TPad("pad2"+ivar, "Ratio",0,0.00,1.00,0.30,-1);
-    ROOT.gStyle.SetOptFit(1)
-    pad2.SetGrid()
-    pad2.SetTopMargin(0.)
-    pad2.SetBottomMargin(0.3)
-    pad2.Draw()
-    pad2.cd()
-    
-    ratio_datastatUnc = unfoldHistoDataStatErr.Clone()
-    ratio_datastatUnc.Divide(unfoldHistowoUnc)
-    ratio_totalUnc = unfoldHisto.Clone()
-    ratio_totalUnc.Divide(unfoldHistowoUnc)
-    
-    tmpPad2= pad2.DrawFrame( 0, 0., maxX, 1.9 )
-    print (labelX)
-    tmpPad2.GetYaxis().SetTitle( "#frac{Sim.}{Data}" )
-    tmpPad2.GetYaxis().SetTitleOffset( 0.50 )
-    #tmpPad2.GetYaxis().SetRangeUser(0.3,1.9 )
-    
-    tmpPad2.GetYaxis().CenterTitle()
-    tmpPad2.SetLabelSize(0.13, 'x')
-    tmpPad2.SetTitleSize(0.12, 'x')
-    tmpPad2.SetLabelSize(0.12, 'y')
-    tmpPad2.SetTitleSize(0.12, 'y')
-    tmpPad2.SetNdivisions(505, 'x')
-    tmpPad2.SetNdivisions(505, 'y')
-    pad2.Modified()
-    pad2.Update()
-    pad2.Draw()
-    can.Update()
-    
-    
-    ratio_datastatUnc.SetFillColorAlpha(ROOT.kAzure+7,0.7)
-    ratio_datastatUnc.SetLineColor(ROOT.kAzure+7)#,0.5)
-    ratio_datastatUnc.SetLineColor(0)
-    ratio_datastatUnc.SetLineWidth(0)
-    ratio_datastatUnc.SetFillStyle(3245)
-    ratio_totalUnc.GetXaxis().SetTitle( '#'+labelX.split('#')[1] )
-    ratio_totalUnc.GetXaxis().SetTitleOffset( 0.9 )
-    ratio_totalUnc.GetYaxis().SetTitle( "#frac{Sim.}{Data}" )
-    ratio_totalUnc.GetYaxis().SetTitleOffset( 0.50 )
-
-    ratio_totalUnc.GetYaxis().SetRangeUser(0.3,1.9 )
-
-    ratio_totalUnc.GetYaxis().CenterTitle()
-    ratio_totalUnc.GetXaxis().SetLabelSize(0.12)
-    ratio_totalUnc.GetXaxis().SetTitleSize(0.13)
-
-    ratio_totalUnc.GetYaxis().SetLabelSize(0.12)
-    ratio_totalUnc.GetYaxis().SetTitleSize(0.12)
-    ratio_totalUnc.GetXaxis().SetNdivisions(505)
-    ratio_totalUnc.GetYaxis().SetNdivisions(505)
-    
-    ratio_datastatUnc.SetMarkerStyle(0)
-    ratio_datastatUnc.SetMarkerSize(0)
-
-    ratio_totalUnc.SetFillColorAlpha(14,0.8)
-    ratio_totalUnc.SetLineColor(14)
-    ratio_totalUnc.SetLineColor(0)
-    ratio_totalUnc.SetLineWidth(0)
-    ratio_totalUnc.SetFillStyle(3354)
-    ratio_totalUnc.SetMarkerStyle(0)
-    ratio_totalUnc.SetMarkerSize(0)
-    set_dynamic_y_range_errRatioHist(ratio_totalUnc,1.5,0.5)
-    ratio_totalUnc.Draw('E2')
-    ratio_datastatUnc.Draw('E2 SAME')
-    
-   
-
-    hRatio = ROOT.TGraphAsymmErrors()
-    hRatio.Divide( genJetHisto, unfoldHisto, 'pois' )
-    hRatio.SetLineColor(colors[0])#ROOT.kRed)
-    hRatio.SetMarkerColor(colors[0])#ROOT.kRed)
-    #hRatio.SetLineWidth(2)
-    hRatio.SetMarkerStyle(25)
-    
-    
-    hRatio2 = ROOT.TGraphAsymmErrors()
-    hRatio2.Divide( altMCHisto, unfoldHisto, 'pois' )
-    hRatio2.SetLineColor(colors[1])#ROOT.kBlue)
-    hRatio2.SetMarkerColor(colors[1])#ROOT.kBlue)
-    #hRatio.SetLineWidth(2)
-    hRatio2.SetMarkerStyle(25)
-    if includeFSR: 
-        hRatio3 = ROOT.TGraphAsymmErrors()
-        hRatio3.Divide( fsrUpHisto, unfoldHisto, 'pois' )
-        hRatio3.SetLineColor(46)
-        hRatio3.SetMarkerColor(46)
-        #hRatio.SetLineWidth(2)
-        hRatio3.SetMarkerStyle(22)
-
-
-        hRatio4 = ROOT.TGraphAsymmErrors()
-        hRatio4.Divide( fsrDownHisto, unfoldHisto, 'pois' )
-        hRatio4.SetLineColor(46)
-        hRatio4.SetMarkerColor(46)
-        #hRatio.SetLineWidth(2)
-        hRatio4.SetMarkerStyle(23)
-    
-    if extraMC:
-        
-
-        hRatio5 = ROOT.TGraphAsymmErrors()
-        hRatio5.Divide( altMC2Histo if 'dijet' in selection else altMC1Histo, unfoldHisto, 'pois' )
-        hRatio5.SetLineColor(colors[2])#ROOT.kGray+4)
-        hRatio5.SetMarkerColor(colors[2])#ROOT.kGray+4)
-        #hRatio4.SetLineWidth(2)
-        hRatio5.SetMarkerStyle(25)
-        #hRatio5.Draw('P0 same')
-    
-    hRatio.SetMarkerSize(2)
-    hRatio.Draw('P0 same')
-    
-    hRatio2.SetMarkerSize(2)
-    hRatio2.Draw('P0 same')
-    
-    hRatio5.SetMarkerSize(2)
-    hRatio5.Draw('P0 same')
-    
-    if includeFSR:
-        hRatio3.SetMarkerSize(2)
-        hRatio3.Draw('P0 same')
-
-        hRatio4.SetMarkerSize(2)
-        hRatio4.Draw('P0 same')
-    
-    
-    ratioLegend=ROOT.TLegend(0.15,0.85,0.7,0.95)
-    ratioLegend.SetTextSize(0.088)
-    ratioLegend.SetNColumns(3)
-    ratioLegend.SetFillColorAlpha(10,0.6)
-    ratioLegend.SetBorderSize(0)
-    #ratioLegend.SetTextSize(0.1)
-    ratioLegend.AddEntry( ratio_totalUnc, 'Data total unc.', 'f' )
-    ratioLegend.AddEntry( ratio_datastatUnc, 'Data stat. unc.', 'f' )
-    #ratioLegend.AddEntry( ratiosystUncHisto, 'Syst.', 'f' )
-    ratioLegend.Draw()
-    png = outputName.split('.pdf')[0]+'.png'
-    can.SaveAs(outputName)
-    can.SaveAs(png)
-    ROOT.gStyle.SetPadRightMargin(0.09)     ## reseating
-    ROOT.gStyle.SetPadLeftMargin(0.12)         
     
 def drawClosures(ivar, selection, process, year, lumi, genJetHisto, genJetHistoCross, unfoldHisto, unfoldHistoCross,
                  ratioUncHisto, ratiototUncHisto, ratiosystUncHisto, labelX, maxX, tlegendAlignment, 
@@ -2419,8 +2026,13 @@ def drawUncertainties_from_err_shifts_theoryVariations(ivar, unfoldHistoTotUnc, 
     canUnc.SaveAs(png)
         
 
-def drawUncertainties_from_err_shifts_theoryVariations_unitNorm(ivar, unfoldHistoTotUnc, unfoldHistowoUnc, unfoldHistoDataStatUnc, unfoldHistoRMStatUnc, unfoldHistoBkgSubUnc, uncerUnfoldHisto, 
-                                                       cov_tot, cov_datastat_tot, cov_rmstat_tot, cov_bkg_tot, labelX, tlegendAlignment, outputName, year, unftot, selection, norming=True ):
+def drawUncertainties_from_err_shifts_theoryVariations_unitNorm(
+                                                                ivar, 
+                                                                unfoldHistoTotUnc, unfoldHistowoUnc, unfoldHistoDataStatUnc,
+                                                                unfoldHistoRMStatUnc, unfoldHistoBkgSubUnc, uncerUnfoldHisto, 
+                                                                cov_tot, cov_datastat_tot, cov_rmstat_tot, cov_bkg_tot, labelX, 
+                                                                tlegendAlignment, outputName, year, selection, norming=True 
+                                                                ):
     
     #print('All uncertainty keys from uncerUnfoldHisto', uncerUnfoldHisto.keys())
     
@@ -2457,6 +2069,7 @@ def drawUncertainties_from_err_shifts_theoryVariations_unitNorm(ivar, unfoldHist
     legend.SetTextSize(0.028)
     legend.SetBorderSize(0)
     
+    unftot = unfoldHistoTotUnc.Integral()
     unfoldHistoNoNorm = unfoldHistoTotUnc.Clone()
     
     unfoldHistowoUnc.Scale(1./(unftot if norming else 1.),'width')#
