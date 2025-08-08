@@ -32,9 +32,13 @@ class nSubBasis_unfoldingHistoProd_Dijets():#processor.ProcessorABC
                  vetoMap=None,
                  applyVetoMap=False,
                  trigTest=False, 
+                 onlyRedonePDFandAlphaSWts=True,#False
+                 withAllPdfVariations=False,#False
+                 withAlphaSVariations=True,#False
                  trigUpDownVal=10, withLepVeto=False, parquetDir='/scratch/kadatta/dijetChecks/parquets/',
-                 minLeadPt=200., minSubLeadPt=200., parquetExt=''
+                 minLeadPt=200., minSubLeadPt=200., parquetExt='',onlyControlHistos=False
                 ):
+        self.onlyControlHistos = onlyControlHistos
         self.parquetExt = parquetExt
         self.test=test
         self.jetType=jetType
@@ -58,6 +62,9 @@ class nSubBasis_unfoldingHistoProd_Dijets():#processor.ProcessorABC
         self.trigTest = trigTest
         self.trigUpDownVal = trigUpDownVal if self.trigTest else 0.
         self.withLepVeto = withLepVeto
+        self.onlyRedonePDFandAlphaSWts = onlyRedonePDFandAlphaSWts
+        self.withAlphaSVariations = withAlphaSVariations
+        self.withAllPdfVariations = withAllPdfVariations
         self.events = None            
         if (not self.isMC) and self.era=='': 
             
@@ -66,7 +73,7 @@ class nSubBasis_unfoldingHistoProd_Dijets():#processor.ProcessorABC
         
         ### Helpers
         if not(self.sysUnc):
-            self.listOfHistTypes =  [ 'gen', 'genLeading', 'genSubleading', 'accepgen', 'missgen', 'reco', 'recoLeading', 'recoSubleading', 'fakereco', 'truereco',  ] if self.isMC else [ 'reco', 'recoLeading', 'recoSubleading' ] 
+            self.listOfHistTypes =  [ 'gen', 'accepgen', 'missgen', 'reco', 'fakereco', 'truereco',  ] if self.isMC else [ 'reco', 'recoLeading', 'recoSubleading' ] #'genLeading', 'genSubleading', 'genSub2leading', #'recoLeading', 'recoSubleading', 'recoSub2leading',
         elif self.sysUnc and self.isSigMC:
             self.listOfHistTypes =  [ 'gen', 'accepgen', 'missgen', 'reco', 'fakereco', 'truereco',  ] 
         
@@ -167,102 +174,60 @@ class nSubBasis_unfoldingHistoProd_Dijets():#processor.ProcessorABC
             self.trueRecoMask = None
             self.genWeights = None
             
-        """   
-        self.dict_variables_toUnfold = {
-            
-                                #"_pt": np.array([i for i in np.arange(70., 3570., 10.)]),
-                                #"_mass": np.array([i for i in np.arange(0., 455., 5.)]),
-                    
-                                "_tau_0p25_1": np.array([(i/200) for i in np.arange(0.*200, 1.005*200)]),
-                                "_tau_0p25_2": np.array([(i/200) for i in np.arange(0.*200, 0.955*200)]),
-                                "_tau_0p25_3": np.array([(i/500) for i in np.arange(0.*500, 0.902*500)]),
-                                "_tau_0p25_4": np.array([(i/500) for i in np.arange(0.*500, 0.902*500)]),
-                                "_tau_0p25_5": np.array([(i/500) for i in np.arange(0.*500, 0.852*500)]),
-            
-                                "_tau_0p5_1": np.array([(i/200) for i in np.arange(0.*200, 1.005*200)]),
-                                "_tau_0p5_2": np.array([(i/200) for i in np.arange(0.*200, 0.925*200)]),
-                                "_tau_0p5_3": np.array([(i/500) for i in np.arange(0.*500, 0.852*500)]),
-                                "_tau_0p5_4": np.array([(i/500) for i in np.arange(0.*500, 0.802*500)]),
-                                "_tau_0p5_5": np.array([(i/500) for i in np.arange(0.*500, 0.752*500)]),
-            
-                                "_tau_1_1": np.array([(i/200) for i in np.arange(0.*200, 0.925*200)]),
-                                "_tau_1_2": np.array([(i/200) for i in np.arange(0.*200, 0.605*200)]),
-                                "_tau_1_3": np.array([(i/500) for i in np.arange(0.*500, 0.452*500)]),
-                                "_tau_1_4": np.array([(i/500) for i in np.arange(0.*500, 0.402*500)]),
-                                "_tau_1_5": np.array([(i/500) for i in np.arange(0.*500, 0.352*500)]),
-                                
-                                "_tau_1p5_1": np.array([(i/200) for i in np.arange(0.*200, 0.705*200)]),
-                                "_tau_1p5_2": np.array([(i/200) for i in np.arange(0.*200, 0.425*200)]),
-                                "_tau_1p5_3": np.array([(i/500) for i in np.arange(0.*500, 0.352*500)]),
-                                "_tau_1p5_4": np.array([(i/500) for i in np.arange(0.*500, 0.302*500)]),
-                                "_tau_1p5_5": np.array([(i/500) for i in np.arange(0.*500, 0.282*500)]),
-                                
-                                
-                                "_tau_2_1": np.array([(i/200) for i in np.arange(0.*200, 0.705*200)]),
-                                "_tau_2_2": np.array([(i/200) for i in np.arange(0.*200, 0.425*200)]),
-                                "_tau_2_3": np.array([(i/500) for i in np.arange(0.*500, 0.252*500)]),
-                                "_tau_2_4": np.array([(i/500) for i in np.arange(0.*500, 0.202*500)]),
-                                "_tau_2_5": np.array([(i/500) for i in np.arange(0.*500, 0.142*500)]),
-                                
-                                "_tau21": np.array([(i/500) for i in np.arange(0.*500, 1.202*500)]),#for one-pass kT minimization as per CMS
-                                "_tau32": np.array([(i/500) for i in np.arange(0.*500, 1.202*500)]),#for one-pass kT minimization as per CMS
-                                
-                                "_tau21_WTA": np.array([(i/500) for i in np.arange(0.*500, 1.102*501)]),#for WTA-kT for comparison
-                                "_tau32_WTA": np.array([(i/500) for i in np.arange(0.*500, 1.102*501)]),#for WTA-kT for comparison
-                                
-                                "_tau21_exkT": np.array([(i/500) for i in np.arange(0.*500, 1.602*500)]),#for excl.-kT and E-scheme as per basis
-                                "_tau32_exkT": np.array([(i/500) for i in np.arange(0.*500, 1.602*500)]),#for excl.-kT and E-scheme as per basis
+        if not self.onlyControlHistos:
+            self.dict_variables_toUnfold = {
 
-                               }
-        """
-        self.dict_variables_toUnfold = {
-            
-                                #"_pt": np.array([i for i in np.arange(70., 3570., 10.)]),
-                                #"_mass": np.array([i for i in np.arange(0., 455., 5.)]),
-                    
-                                "_tau_0p25_1": np.array([(i/200) for i in np.arange(0.*200, 1.005*200)]),
-                                "_tau_0p25_2": np.array([(i/500) for i in np.arange(0.*500, 0.952*500)]),
-                                "_tau_0p25_3": np.array([(i/500) for i in np.arange(0.*500, 0.902*500)]),
-                                "_tau_0p25_4": np.array([(i/1000) for i in np.arange(0.*1000, 0.901*1000)]),
-                                "_tau_0p25_5": np.array([(i/1000) for i in np.arange(0.*1000, 0.851*1000)]),
-            
-                                "_tau_0p5_1": np.array([(i/200) for i in np.arange(0.*200, 1.005*200)]),
-                                "_tau_0p5_2": np.array([(i/500) for i in np.arange(0.*500, 0.922*500)]),
-                                "_tau_0p5_3": np.array([(i/500) for i in np.arange(0.*500, 0.852*500)]),
-                                "_tau_0p5_4": np.array([(i/1000) for i in np.arange(0.*1000, 0.801*1000)]),
-                                "_tau_0p5_5": np.array([(i/1000) for i in np.arange(0.*1000, 0.751*1000)]),
-            
-                                "_tau_1_1": np.array([(i/200) for i in np.arange(0.*200, 0.925*200)]),
-                                "_tau_1_2": np.array([(i/500) for i in np.arange(0.*500, 0.602*500)]),
-                                "_tau_1_3": np.array([(i/1000) for i in np.arange(0.*1000, 0.451*1000)]),
-                                "_tau_1_4": np.array([(i/1000) for i in np.arange(0.*1000, 0.401*1000)]),
-                                "_tau_1_5": np.array([(i/1000) for i in np.arange(0.*1000, 0.351*1000)]),
-                                
-                                "_tau_1p5_1": np.array([(i/500) for i in np.arange(0.*500, 0.702*500)]),
-                                "_tau_1p5_2": np.array([(i/1000) for i in np.arange(0.*1000, 0.421*1000)]),
-                                "_tau_1p5_3": np.array([(i/1000) for i in np.arange(0.*1000, 0.351*1000)]),
-                                "_tau_1p5_4": np.array([(i/1000) for i in np.arange(0.*1000, 0.301*1000)]),
-                                "_tau_1p5_5": np.array([(i/1000) for i in np.arange(0.*1000, 0.281*1000)]),
-                                
-                                
-                                "_tau_2_1": np.array([(i/500) for i in np.arange(0.*500, 0.702*500)]),
-                                "_tau_2_2": np.array([(i/1000) for i in np.arange(0.*1000, 0.421*1000)]),
-                                "_tau_2_3": np.array([(i/1000) for i in np.arange(0.*1000, 0.251*1000)]),
-                                "_tau_2_4": np.array([(i/1000) for i in np.arange(0.*1000, 0.201*1000)]),
-                                "_tau_2_5": np.array([(i/1000) for i in np.arange(0.*1000, 0.141*1000)]),
-                                
-                                "_tau21": np.array([(i/500) for i in np.arange(0.*500, 1.202*500)]),#for one-pass kT minimization as per CMS
-                                "_tau32": np.array([(i/500) for i in np.arange(0.*500, 1.202*500)]),#for one-pass kT minimization as per CMS
-                                
-                                "_tau21_WTA": np.array([(i/500) for i in np.arange(0.*500, 1.102*501)]),#for WTA-kT for comparison
-                                "_tau32_WTA": np.array([(i/500) for i in np.arange(0.*500, 1.102*501)]),#for WTA-kT for comparison
-                                
-                                "_tau21_exkT": np.array([(i/500) for i in np.arange(0.*500, 1.602*500)]),#for excl.-kT and E-scheme as per basis
-                                "_tau32_exkT": np.array([(i/500) for i in np.arange(0.*500, 1.602*500)]),#for excl.-kT and E-scheme as per basis
+                                    #"_pt": np.array([i for i in np.arange(70., 3570., 10.)]),
+                                    #"_mass": np.array([i for i in np.arange(0., 455., 5.)]),
 
-                               }
+                                    "_tau_0p25_1": np.array([(i/200) for i in np.arange(0.*200, 1.005*200)]),
+                                    "_tau_0p25_2": np.array([(i/500) for i in np.arange(0.*500, 0.952*500)]),
+                                    "_tau_0p25_3": np.array([(i/500) for i in np.arange(0.*500, 0.902*500)]),
+                                    "_tau_0p25_4": np.array([(i/1000) for i in np.arange(0.*1000, 0.901*1000)]),
+                                    "_tau_0p25_5": np.array([(i/1000) for i in np.arange(0.*1000, 0.851*1000)]),
+
+                                    "_tau_0p5_1": np.array([(i/200) for i in np.arange(0.*200, 1.005*200)]),
+                                    "_tau_0p5_2": np.array([(i/500) for i in np.arange(0.*500, 0.922*500)]),
+                                    "_tau_0p5_3": np.array([(i/500) for i in np.arange(0.*500, 0.852*500)]),
+                                    "_tau_0p5_4": np.array([(i/1000) for i in np.arange(0.*1000, 0.801*1000)]),
+                                    "_tau_0p5_5": np.array([(i/1000) for i in np.arange(0.*1000, 0.751*1000)]),
+
+                                    "_tau_1_1": np.array([(i/200) for i in np.arange(0.*200, 0.925*200)]),
+                                    "_tau_1_2": np.array([(i/500) for i in np.arange(0.*500, 0.602*500)]),
+                                    "_tau_1_3": np.array([(i/1000) for i in np.arange(0.*1000, 0.451*1000)]),
+                                    "_tau_1_4": np.array([(i/1000) for i in np.arange(0.*1000, 0.401*1000)]),
+                                    "_tau_1_5": np.array([(i/1000) for i in np.arange(0.*1000, 0.351*1000)]),
+
+                                    "_tau_1p5_1": np.array([(i/500) for i in np.arange(0.*500, 0.702*500)]),
+                                    "_tau_1p5_2": np.array([(i/1000) for i in np.arange(0.*1000, 0.421*1000)]),
+                                    "_tau_1p5_3": np.array([(i/1000) for i in np.arange(0.*1000, 0.351*1000)]),
+                                    "_tau_1p5_4": np.array([(i/1000) for i in np.arange(0.*1000, 0.301*1000)]),
+                                    "_tau_1p5_5": np.array([(i/1000) for i in np.arange(0.*1000, 0.281*1000)]),
+
+
+                                    "_tau_2_1": np.array([(i/500) for i in np.arange(0.*500, 0.702*500)]),
+                                    "_tau_2_2": np.array([(i/1000) for i in np.arange(0.*1000, 0.421*1000)]),
+                                    "_tau_2_3": np.array([(i/1000) for i in np.arange(0.*1000, 0.251*1000)]),
+                                    "_tau_2_4": np.array([(i/1000) for i in np.arange(0.*1000, 0.201*1000)]),
+                                    "_tau_2_5": np.array([(i/1000) for i in np.arange(0.*1000, 0.141*1000)]),
+
+                                    "_tau21": np.array([(i/500) for i in np.arange(0.*500, 1.202*500)]),#for one-pass kT minimization as per CMS
+                                    "_tau32": np.array([(i/500) for i in np.arange(0.*500, 1.202*500)]),#for one-pass kT minimization as per CMS
+
+                                    "_tau21_WTA": np.array([(i/500) for i in np.arange(0.*500, 1.102*501)]),#for WTA-kT for comparison
+                                    "_tau32_WTA": np.array([(i/500) for i in np.arange(0.*500, 1.102*501)]),#for WTA-kT for comparison
+
+                                    "_tau21_exkT": np.array([(i/500) for i in np.arange(0.*500, 1.602*500)]),#for excl.-kT and E-scheme as per basis
+                                    "_tau32_exkT": np.array([(i/500) for i in np.arange(0.*500, 1.602*500)]),#for excl.-kT and E-scheme as per basis
+
+                                   }
+        else:
+            self.dict_variables_toUnfold = {
+
+                                   
+                                    "_tau_0p5_1": np.array([(i/200) for i in np.arange(0.*200, 1.005*200)]),
         
-        
+                                    }
 
         self.kinematic_labels = ['_pt','_eta', '_y', '_phi', '_mass']#, '_msoftdrop_new']
         self.reco_only_labels = ['_good_nPVs']#, '_JERfactor', '_JECfactor', '_pt_raw', ]#'_HT',
@@ -290,7 +255,12 @@ class nSubBasis_unfoldingHistoProd_Dijets():#processor.ProcessorABC
         
         self.sysWeightList = ( '_pu', '_pdf', '_isr', '_fsr', '_l1prefiring' ) #'_ps',
         self.constJESList = ( '_constituentJES_neutral', '_constituentJES_charged', '_constituentJES_photon' )
-        self.wtSources=['_puWeight','_isrWeight','_fsrWeight','_pdfWeight', '_l1prefiringWeight'] if self.wtUnc else [] 
+        if not self.onlyRedonePDFandAlphaSWts:
+            self.wtSources=['_puWeight','_isrWeight','_fsrWeight','_pdfWeight', '_l1prefiringWeight'] if self.wtUnc else [] 
+        else:
+            self.wtSources=['_pdfWeight'] if self.wtUnc else [] 
+            
+
         self.recoWtSources=['_pu', '_l1'] if self.isMC else [] 
         
         if self.onlyUnc!='' : self.sysSource = ['_nom'] + [ onlyUnc+i for i in [ 'Up', 'Down' ] ] 
@@ -316,6 +286,52 @@ class nSubBasis_unfoldingHistoProd_Dijets():#processor.ProcessorABC
     #        events[key] = values
     #    elapsed = time.time() - tstart
     #    if self.verbose: print (f'Finished adding in jet veto info. Time taken:{elapsed}') 
+    
+    
+    def add_new_PDF_and_AlphaS_wts(self):
+        #using implementation by S. Rothman https://github.com/ssrothman/EECpostprocessing/blob/566c077de831613f1cbfeec9179acf9fcef00da5/selections/theorySF.py#L90C5-L90C18
+        if self.onlyRedonePDFandAlphaSWts:
+            pdf_weights = self.events['pdfWeightAll_nom']
+            nevt = len(self.events['pdfWeightAll_nom'])
+            pdf_nom = np.ones(len(self.events['pdfWeightUp_nom']))
+            #self.wtSources[0] = 'pdfWeight2'
+            # Hessian weights a la Eq. 21 in https://arxiv.org/pdf/1510.03865v1.pdf
+            to_sum = pdf_weights[:,1:-2]-np.ones((nevt,100))
+            summed_up = ak.sum(np.square(to_sum),axis=1)
+            pdfWt_unc = np.sqrt( (1./99.) * summed_up )
+            pdfWt_up = pdfWt_unc + pdf_nom
+            pdfWt_dn = pdf_nom - pdfWt_unc
+            #weights.add('wt_PDF', nom, pdf_up, pdf_dn)
+            self.events['pdfWeightUp_nom'] = pdfWt_up
+            self.events['pdfWeightDown_nom'] = pdfWt_dn
+            
+            
+            if self.withAllPdfVariations:
+                self.sysWeightList=( '_pdf', )#, '_aS', '_alphaSandPDF')#, '_isr', '_fsr', '_l1prefiring' )
+
+                #don't do scale variations in same run
+                for i in range(1,101):
+                    self.events[f'{i}pdfWeight_nom'] =  pdf_weights[:,i]
+                    #self.wtSources.append(f'_pdf{i}Weight_nom')
+                    self.sysWeightList=tuple([wt for wt in list(self.sysWeightList)]+[f'_{i}pdfWeight'])
+                    self.sysSource+=[f'_{i}pdfWeight']
+                    
+            if self.withAlphaSVariations:
+                
+                # alpha_S weights; Eq. 27 of https://arxiv.org/pdf/1510.03865v1.pdf
+                alphaS_unc = 0.5*(pdf_weights[:,102] - pdf_weights[:,101])
+                self.events['alphaSWeightUp_nom'] = pdf_nom+alphaS_unc
+                self.events['alphaSWeightDown_nom'] = pdf_nom-alphaS_unc
+
+                # PDF + alpha_S weights; Eq. 28
+                pdf_and_alphaS_unc = np.sqrt( np.square(pdfWt_unc) + np.square(alphaS_unc) )
+                self.events['aSandPDFWeightUp_nom'] = pdf_nom+pdf_and_alphaS_unc
+                self.events['aSandPDFWeightDown_nom'] = pdf_nom-pdf_and_alphaS_unc
+
+                self.wtSources+=['_alphaSWeight','_aSandPDFWeight']
+                self.sysWeightList=(  '_pdf', '_alphaS', '_aSandPDF')# '_pu', '_isr', '_fsr', '_l1prefiring' )
+                self.sysSource += [ iwt+i for i in [ 'Up', 'Down' ] for iwt in self.wtSources if not (iwt+i in self.sysSource) and not( iwt.endswith(('nom','pdfWeightAll'))) ]
+            
         
     def process(self, events):
         '''fill Hist histograms to accumulate over chunks of processed files, convert to root or whatever else after returned by processor'''
@@ -331,10 +347,13 @@ class nSubBasis_unfoldingHistoProd_Dijets():#processor.ProcessorABC
 
         ################## jet vetoes ##################
                 
-        if self.applyVetoMap:
-
-            self.add_vetoMapOutput_to_recoWeights()#recoMask=selRecoMask)
-        
+        #if self.applyVetoMap:
+        #
+        #    self.add_vetoMapOutput_to_recoWeights()#recoMask=selRecoMask)
+        if self.isSigMC and self.wtUnc:
+            if self.onlyRedonePDFandAlphaSWts or self.withAllPdfVariations:
+                self.add_new_PDF_and_AlphaS_wts()
+           
         
         if not(self.onlyParquet): 
             output = self.buildDictOfHistograms()
@@ -349,7 +368,15 @@ class nSubBasis_unfoldingHistoProd_Dijets():#processor.ProcessorABC
             
         for sys in self.sysSource:
             
-            s='_nom' if (sys.startswith(self.sysWeightList) or 'const' in sys) or not(self.isSigMC) else sys
+            if not(self.onlyRedonePDFandAlphaSWts):
+
+                s='_nom' if (sys.startswith(self.sysWeightList) or 'const' in sys) or not(self.isSigMC) else sys
+            
+            else:
+                
+                s='_nom' if (sys.startswith(('_isr','_fsr','_pdf','_a')) or 'pdf' in sys or 'const' in sys) or not(self.isSigMC) else sys
+                #print(sys,s)
+                
             
            
             #########################################################################
@@ -364,7 +391,7 @@ class nSubBasis_unfoldingHistoProd_Dijets():#processor.ProcessorABC
                 
                 #specifically handle weight variations on sigMC and modify above clas-level variables accordingly
                 if self.isSigMC:
-                    if sys.startswith(('_isr','_fsr','_pdf')):
+                    if sys.startswith(('_isr','_fsr','_pdf', '_a')) or 'pdf' in sys.lower():
                         extraWeights = self.events[f'{sys.split("_")[1]}{s}']
                         #print(f'{sys.split("_")[1]}{s}',sum(extraWeights))
                         self.genWeights = self.events[f'evtGenWeight{s}']*extraWeights          
@@ -416,8 +443,15 @@ class nSubBasis_unfoldingHistoProd_Dijets():#processor.ProcessorABC
 
             if self.isSigMC:
                 
-                s='_nom' if (sys.startswith(self.sysWeightList)) or not(self.isSigMC) else sys
-                
+                #s='_nom' if (sys.startswith(self.sysWeightList)) or not(self.isSigMC) else sys
+                if not(self.onlyRedonePDFandAlphaSWts):
+
+                    s='_nom' if (sys.startswith(self.sysWeightList) or 'const' in sys) or not(self.isSigMC) else sys
+
+                else:
+
+                    s='_nom' if (sys.startswith(('_isr','_fsr','_pdf','_a')) or 'pdf' in sys or 'const' in sys) or not(self.isSigMC) else sys
+                    #print(sys,s)
                     
                 self.recoMask = selRecoMask
                 self.genMask = selGenMask
@@ -482,15 +516,15 @@ class nSubBasis_unfoldingHistoProd_Dijets():#processor.ProcessorABC
                 self.recoMask = selRecoMask
                 self.genMask = selGenMask
                 
-                trueRecoMask = (selRecoMask) & (selGenMask) & (self.events[f'trueRecoJets{self.jetFlag}{s}_pt']>0.) #& (self.events[f'accepGenJets{self.jetFlag}{s}_pt']>0.)
-                accepGenMask = (selGenMask) & (selRecoMask) & (self.events[f'accepGenJets{self.jetFlag}{s}_pt']>0.) #& (self.events[f'trueRecoJets{self.jetFlag}{s}_pt']>0.)
+                #trueRecoMask = (selRecoMask) & (selGenMask) & (self.events[f'trueRecoJets{self.jetFlag}{s}_pt']>0.) #& (self.events[f'accepGenJets{self.jetFlag}{s}_pt']>0.)
+                #accepGenMask = (selGenMask) & (selRecoMask) & (self.events[f'accepGenJets{self.jetFlag}{s}_pt']>0.) #& (self.events[f'trueRecoJets{self.jetFlag}{s}_pt']>0.)
                 
-                self.accepGenMask = accepGenMask
-                self.trueRecoMask = trueRecoMask
+                #self.accepGenMask = accepGenMask
+                #self.trueRecoMask = trueRecoMask
 
-                fakeRecoMask = ((selRecoMask) & (~trueRecoMask)) 
+                #fakeRecoMask = ((selRecoMask) & (~trueRecoMask)) 
                 
-                missGenMask =  ((selGenMask) & (~accepGenMask)) 
+                #missGenMask =  ((selGenMask) & (~accepGenMask)) 
                 #print(sys,len(self.events[trueRecoMask]),len(self.events[accepGenMask]))
                 
                 if self.verbose and self.onlyParquet: 
@@ -659,7 +693,7 @@ class nSubBasis_unfoldingHistoProd_Dijets():#processor.ProcessorABC
                                 output[key].fill(self.events[f'selRecoJets{self.jetFlag}{s}{varToFill}'][selRecoMasks[whichTrig] if not self.isMC else selRecoMask],weight=totalRecoWeight[selRecoMasks[whichTrig] if not self.isMC else selRecoMask],
                                                  threads=8)
                             else:
-                                if self.jetType=='Central':
+                                if self.jetType=='Central' and not('sub2' in key.lower()):
                                     if 'sub' in key.lower():
                                         output[key].fill(self.events[f'selRecoSubleadingJets{self.jetFlag}{s}{varToFill}'][selRecoMasks[whichTrig] if not self.isMC else selRecoMask],
                                                          weight=totalRecoWeight[selRecoMasks[whichTrig] if not self.isMC else selRecoMask],
@@ -668,7 +702,11 @@ class nSubBasis_unfoldingHistoProd_Dijets():#processor.ProcessorABC
                                         output[key].fill(self.events[f'selRecoLeadingJets{self.jetFlag}{s}{varToFill}'][selRecoMasks[whichTrig] if not self.isMC else selRecoMask],
                                                          weight=totalRecoWeight[selRecoMasks[whichTrig] if not self.isMC else selRecoMask],
                                                          threads=8)
-
+                                elif self.jetType=='Central' and ('sub2' in key.lower()):
+                                    output[key].fill(self.events[f'selRecoSub2leadingJets{self.jetFlag}{s}{varToFill}'][selRecoMasks[whichTrig] if not self.isMC else selRecoMask],
+                                                         weight=totalRecoWeight[selRecoMasks[whichTrig] if not self.isMC else selRecoMask],
+                                                         threads=8)
+                                    
                                     
                                 
 
@@ -682,33 +720,75 @@ class nSubBasis_unfoldingHistoProd_Dijets():#processor.ProcessorABC
                             #############################################################################
                             # self.listOfHistTypes =  [ 'gen', 'genLeading', 'genSubleading', 'accepgen', 'missgen', 'reco', 'recoLeading', 'recoSubleading', 'fakereco', 'truereco',  ] if self.isMC else [ 'reco', 'recoLeading', 'recoSubleading' ] 
                             #############################################################################
-                            
-                        if (key.lower().startswith('true')):
-                            output[key].fill(self.events[f'trueRecoJets{self.jetFlag}{s}{varToFill}'][trueRecoMask],weight=totalRecoWeight[trueRecoMask],
-                                             threads=8)
+                        if self.isSigMC:
+                            if (key.lower().startswith('true')):
+                                output[key].fill(self.events[f'trueRecoJets{self.jetFlag}{s}{varToFill}'][trueRecoMask],weight=totalRecoWeight[trueRecoMask],
+                                                 threads=8)
 
-                        elif (key.lower().startswith('fake')):
-                            output[key].fill(self.events[f'selRecoJets{self.jetFlag}{s}{varToFill}'][fakeRecoMask],weight=totalRecoWeight[fakeRecoMask],
-                                             threads=8)
+                            elif (key.lower().startswith('fake')):
+                                output[key].fill(self.events[f'selRecoJets{self.jetFlag}{s}{varToFill}'][fakeRecoMask],weight=totalRecoWeight[fakeRecoMask],
+                                                 threads=8)
+
+                            elif (key.lower().startswith('accepgenjet')):# and not key.startswith(('accep','miss')):
+                                #if self.verbose: 
+                                #    print('accepgen', key,s,sys, len(self.events[f'accepGenJets{self.jetFlag}{s}{varToFill}'][accepGenMask]))
+                                output[key].fill(self.events[f'accepGenJets{self.jetFlag}{s}{varToFill}'][accepGenMask],weight=totalGenWeight[accepGenMask],
+                                                 threads=8)
+
+                            elif (key.lower().startswith('missgenjet')):
+                                #if self.verbose: 
+                                #    print('missgen', key,s,sys, len(self.events[f'selGenJets{self.jetFlag}_nom{varToFill}'][missGenMask]))
+                                output[key].fill(self.events[f'selGenJets{self.jetFlag}_nom{varToFill}'][missGenMask],weight=totalGenWeight[missGenMask],
+                                                 threads=8)
+                                
+                            elif ( 'resp' in key.lower() and not('miss' in key.lower())):
+                                #if self.verbose: print("filling resp")
+                                #fill matched entries with weight wgen*wxreco='totalrecoweight' (x=>excl.to reco)
+                                output[key].fill(gen=self.events[f'accepGenJets{self.jetFlag}{s}{varToFill}'][accepGenMask], reco=self.events[f'trueRecoJets{self.jetFlag}{s}{varToFill}'][trueRecoMask],weight=totalRecoWeight[trueRecoMask],
+                                                 threads=8)
+
+                                #fill counter weight wgen(1-wxrec)= wgen-'totalrecoWeight'
+                                output[key].fill(gen=self.events[f'accepGenJets{self.jetFlag}{s}{varToFill}'][accepGenMask], reco=-1.*np.ones(len(self.events[f'trueRecoJets{self.jetFlag}{s}{varToFill}'][trueRecoMask])),
+                                                 weight=totalGenWeight[accepGenMask]-totalRecoWeight[trueRecoMask],
+                                                 threads=8)     
+
+                            elif ('respwithmiss' in key.lower()):
+                                #if self.verbose: print("filling resp with miss")
+                                #fill matched entries with weight wgen*wxreco='totalrecoweight' (x=>excl.to reco)
+                                output[key].fill(gen=self.events[f'accepGenJets{self.jetFlag}{s}{varToFill}'][accepGenMask], reco=self.events[f'trueRecoJets{self.jetFlag}{s}{varToFill}'][trueRecoMask], weight=totalRecoWeight[trueRecoMask],
+                                                 threads=8)
+
+                                #fill counter weight wgen(1-wxrec)= wgen-'totalrecoWeight'
+                                output[key].fill(gen=self.events[f'accepGenJets{self.jetFlag}{s}{varToFill}'][accepGenMask], reco=-1.*np.ones(len(self.events[f'trueRecoJets{self.jetFlag}{s}{varToFill}'][trueRecoMask])),
+                                                 weight=totalGenWeight[accepGenMask]-totalRecoWeight[trueRecoMask],
+                                                 threads=8)
+
+                                #fill missgen weight
+                                output[key].fill(gen=self.events[f'selGenJets{self.jetFlag}_nom{varToFill}'][missGenMask], reco=-1.*np.ones(len(self.events[f'selGenJets{self.jetFlag}_nom{varToFill}'][missGenMask])),
+                                                 weight=totalGenWeight[missGenMask],
+                                                 threads=8)
+
+
+                            elif ('residual' in key.lower() or 'resol' in key.lower() or 'smear' in key.lower()) and sys.endswith('nom') and self.isSigMC:
+                                genVarToFill = '_mSD' if 'msoftdrop_new' in varToFill else varToFill
+
+                                zeroMask=(self.events[f'accepGenJets{self.jetFlag}{s}{genVarToFill}']!=0.)&(accepGenMask)
+
+                                response = self.events[f'trueRecoJets{self.jetFlag}{s}{varToFill}'][zeroMask]/self.events[f'accepGenJets{self.jetFlag}{s}{genVarToFill}'][zeroMask]
+                                response = np.nan_to_num(response,nan=-999.)
+                                residual = self.events[f'trueRecoJets{self.jetFlag}{s}{varToFill}'][zeroMask]-self.events[f'accepGenJets{self.jetFlag}{s}{genVarToFill}'][zeroMask]
+                                relativeRes = residual/self.events[f'trueRecoJets{self.jetFlag}{s}{varToFill}'][zeroMask]
+                                #if 'pt' in key: print(key, residual[0:10],relativeRes[0:10],self.events[f'trueRecoJets{self.jetFlag}{s}{varToFill}'][zeroMask][0:10])
+                                if 'noWt_' in key: output[key].fill(response)#, weight=totalRecoWeight[zeroMask])
+                                elif 'mSmear' in key: output[key].fill(relativeRes)#, weight=totalRecoWeight[zeroMask])
+                                elif 'residual' in key: output[key].fill(residual)
+                            
 
                         if (key.lower().startswith('genjet')):
                             #if self.verbose or ('softdrop' in key): 
                             #    print('gen', key,s,sys, len(self.events[f'selGenJets{self.jetFlag}_nom{varToFill}'][selGenMask]))
                             output[key].fill(self.events[f'selGenJets{self.jetFlag}_nom{varToFill}'][selGenMask],weight=totalGenWeight[selGenMask],
                                              threads=8)#=self._listofHistograms(histoName) #hist.Hist("Events", hist.Cat("branch", branch), hist.Bin("value", branch, 100, 0, 1000))    
-
-                        elif (key.lower().startswith('accepgenjet')):# and not key.startswith(('accep','miss')):
-                            #if self.verbose: 
-                            #    print('accepgen', key,s,sys, len(self.events[f'accepGenJets{self.jetFlag}{s}{varToFill}'][accepGenMask]))
-                            output[key].fill(self.events[f'accepGenJets{self.jetFlag}{s}{varToFill}'][accepGenMask],weight=totalGenWeight[accepGenMask],
-                                             threads=8)
-
-                        elif (key.lower().startswith('missgenjet')):
-                            #if self.verbose: 
-                            #    print('missgen', key,s,sys, len(self.events[f'selGenJets{self.jetFlag}_nom{varToFill}'][missGenMask]))
-                            output[key].fill(self.events[f'selGenJets{self.jetFlag}_nom{varToFill}'][missGenMask],weight=totalGenWeight[missGenMask],
-                                             threads=8)
-                            
                         elif (key.lower().startswith('genleading')) and self.jetType=='Central':# and not key.startswith(('accep','miss')):
                             #if self.verbose: 
                             #    print('leading gen', key,s,sys, len(self.events[f'selGenLeadingJets{varToFill}'][selGenMask]))
@@ -719,48 +799,14 @@ class nSubBasis_unfoldingHistoProd_Dijets():#processor.ProcessorABC
                             #    print('subleading gen', key,s,sys, len(self.events[f'selGenSubleadingJets{varToFill}'][selGenMask]))
                             output[key].fill(self.events[f'selGenSubleadingJets{self.jetFlag}_nom{varToFill}'][selGenMask],weight=totalGenWeight[selGenMask],
                                              threads=8)
+                            
+                        elif (key.lower().startswith('gensub2leading')) and self.jetType=='Central':# and not key.startswith(('accep','miss')):
+                            #if self.verbose: 
+                            #    print('subleading gen', key,s,sys, len(self.events[f'selGenSubleadingJets{varToFill}'][selGenMask]))
+                            output[key].fill(self.events[f'selGenSub2leadingJets{self.jetFlag}_nom{varToFill}'][selGenMask],weight=totalGenWeight[selGenMask],
+                                             threads=8)
                         
-                        elif ( 'resp' in key.lower() and not('miss' in key.lower())):
-                            #if self.verbose: print("filling resp")
-                            #fill matched entries with weight wgen*wxreco='totalrecoweight' (x=>excl.to reco)
-                            output[key].fill(gen=self.events[f'accepGenJets{self.jetFlag}{s}{varToFill}'][accepGenMask], reco=self.events[f'trueRecoJets{self.jetFlag}{s}{varToFill}'][trueRecoMask],weight=totalRecoWeight[trueRecoMask],
-                                             threads=8)
-
-                            #fill counter weight wgen(1-wxrec)= wgen-'totalrecoWeight'
-                            output[key].fill(gen=self.events[f'accepGenJets{self.jetFlag}{s}{varToFill}'][accepGenMask], reco=-1.*np.ones(len(self.events[f'trueRecoJets{self.jetFlag}{s}{varToFill}'][trueRecoMask])),
-                                             weight=totalGenWeight[accepGenMask]-totalRecoWeight[trueRecoMask],
-                                             threads=8)     
                         
-                        elif ('respwithmiss' in key.lower()):
-                            #if self.verbose: print("filling resp with miss")
-                            #fill matched entries with weight wgen*wxreco='totalrecoweight' (x=>excl.to reco)
-                            output[key].fill(gen=self.events[f'accepGenJets{self.jetFlag}{s}{varToFill}'][accepGenMask], reco=self.events[f'trueRecoJets{self.jetFlag}{s}{varToFill}'][trueRecoMask], weight=totalRecoWeight[trueRecoMask],
-                                             threads=8)
-
-                            #fill counter weight wgen(1-wxrec)= wgen-'totalrecoWeight'
-                            output[key].fill(gen=self.events[f'accepGenJets{self.jetFlag}{s}{varToFill}'][accepGenMask], reco=-1.*np.ones(len(self.events[f'trueRecoJets{self.jetFlag}{s}{varToFill}'][trueRecoMask])),
-                                             weight=totalGenWeight[accepGenMask]-totalRecoWeight[trueRecoMask],
-                                             threads=8)
-                            
-                            #fill missgen weight
-                            output[key].fill(gen=self.events[f'selGenJets{self.jetFlag}_nom{varToFill}'][missGenMask], reco=-1.*np.ones(len(self.events[f'selGenJets{self.jetFlag}_nom{varToFill}'][missGenMask])),
-                                             weight=totalGenWeight[missGenMask],
-                                             threads=8)
-                            
-
-                        elif ('residual' in key.lower() or 'resol' in key.lower() or 'smear' in key.lower()) and sys.endswith('nom') and self.isSigMC:
-                            genVarToFill = '_mSD' if 'msoftdrop_new' in varToFill else varToFill
-                            
-                            zeroMask=(self.events[f'accepGenJets{self.jetFlag}{s}{genVarToFill}']!=0.)&(accepGenMask)
-
-                            response = self.events[f'trueRecoJets{self.jetFlag}{s}{varToFill}'][zeroMask]/self.events[f'accepGenJets{self.jetFlag}{s}{genVarToFill}'][zeroMask]
-                            response = np.nan_to_num(response,nan=-999.)
-                            residual = self.events[f'trueRecoJets{self.jetFlag}{s}{varToFill}'][zeroMask]-self.events[f'accepGenJets{self.jetFlag}{s}{genVarToFill}'][zeroMask]
-                            relativeRes = residual/self.events[f'trueRecoJets{self.jetFlag}{s}{varToFill}'][zeroMask]
-                            #if 'pt' in key: print(key, residual[0:10],relativeRes[0:10],self.events[f'trueRecoJets{self.jetFlag}{s}{varToFill}'][zeroMask][0:10])
-                            if 'noWt_' in key: output[key].fill(response)#, weight=totalRecoWeight[zeroMask])
-                            elif 'mSmear' in key: output[key].fill(relativeRes)#, weight=totalRecoWeight[zeroMask])
-                            elif 'residual' in key: output[key].fill(residual)
         l=[]
         
         for x,y in output.items(): #y.SetDirectory(0)
@@ -899,7 +945,7 @@ class nSubBasis_unfoldingHistoProd_Dijets():#processor.ProcessorABC
             
             #if 'pdfWeightAll' in self.wtSources: self.sysSources = self.sysSources+['pdfWeightAll'] 
             
-        if self.verbose: print ("Preparing branches to read",self.sysSource)
+        if self.verbose: print ("Preparing branches to read",self.sysSource,self.wtSources)
             
         for sys in self.sysSource:
             #if not wtUnc and not sysUnc:
@@ -924,6 +970,7 @@ class nSubBasis_unfoldingHistoProd_Dijets():#processor.ProcessorABC
                         if not(self.sysUnc):
                             reco_list.append('selRecoLeadingJets'+sys+i)
                             reco_list.append('selRecoSubleadingJets'+sys+i)
+                            #reco_list.append('selRecoSub2leadingJets'+sys+i)
                         
                     if (self.isSigMC and (sys.endswith('nom') or self.sysUnc)): 
                         reco_list.append('trueRecoJets'+sys+i)
@@ -936,6 +983,7 @@ class nSubBasis_unfoldingHistoProd_Dijets():#processor.ProcessorABC
                             if not(self.sysUnc):
                                 gen_list.append('selGenLeadingJets'+sys+i)
                                 gen_list.append('selGenSubleadingJets'+sys+i)
+                                #gen_list.append('selGenSub2leadingJets'+sys+i)
 
             elif 'Forward' in self.jetType: 
                 
@@ -1003,7 +1051,20 @@ class nSubBasis_unfoldingHistoProd_Dijets():#processor.ProcessorABC
                     
             elif (self.isMC and self.isSigMC) and self.wtUnc and not(sys.endswith('_nom') or self.sysUnc):
                 if 'pu' in sys or 'l1' in sys: reco_reweights_list.append(sys.split('_')[1]+'_nom')
-                else: gen_reweights_list.append(sys.split('_')[1]+'_nom')
+                else: 
+                    
+                    if self.onlyRedonePDFandAlphaSWts:
+                        if 'pdf' in sys.lower():
+                            if not( 'pdfWeightAll_nom'  in gen_reweights_list): 
+                                gen_reweights_list.append('pdfWeightAll_nom')
+                            
+                        gen_reweights_list.append(sys.split('_')[1]+'_nom')
+
+                        #    gen_reweights_list.append((sys.split('_')[1]+'_nom').replace('pdfWeight', 'pdfWeight2'))
+                        #    gen_reweights_list.append((sys.split('_')[1]+'_nom').replace('pdf', 'AlphaS'))
+                    elif not(self.onlyRedonePDFandAlphaSWts):
+                        gen_reweights_list.append(sys.split('_')[1]+'_nom')
+
 
         if self.isSigMC and not(self.sysUnc): 
             branchesToRead=gen_list+reco_list+gen_reweights_list+reco_reweights_list+['nRecoLeptons_nom','nGenLeptons_nom', 'pt_asymm_nom','delta_phi_nom','delta_R_nom', 'gen_pt_asymm_nom','gen_delta_phi_nom','gen_delta_R_nom', 'genWeight']#+['recoSelectedEventNumber_nom']
@@ -1091,7 +1152,7 @@ def histoMaker(myProcessor, sampleIdentifier='qcd_ht', y='2017', sampleDict_PFNa
                sysSource=[],
                era='', ext='_nomWts', splitchunks=10, nWorkers=40, stepSize="2048 MB",
                jetType='Central',forceProduction=False,onlyParquet=False, 
-               minLeadPtThreshold=200., minSubLeadPtThreshold=200.):
+               minLeadPtThreshold=200., minSubLeadPtThreshold=200.,onlyControlHistos=False):
     
     nchunk=copy.deepcopy(splitchunks)
     cz=0
@@ -1130,7 +1191,7 @@ def histoMaker(myProcessor, sampleIdentifier='qcd_ht', y='2017', sampleDict_PFNa
                                      onlyUnc='' if 'jes' in onlyUnc and not('HEM' in onlyUnc) else onlyUnc,era=era,
                                      verbose=False,splitCount=SC,jetType=jetType, 
                                      minLeadPt=minLeadPtThreshold, minSubLeadPt=minSubLeadPtThreshold,
-                                     parquetExt=ext )
+                                     parquetExt=ext, onlyControlHistos=onlyControlHistos )
             if cz==0:
                 #if verbose: print("Branches being read \n", my_processor._branchesToRead)
                 cz=cz+1
@@ -1182,8 +1243,10 @@ def histoMaker(myProcessor, sampleIdentifier='qcd_ht', y='2017', sampleDict_PFNa
                     tstart1 = time.time()
                 
                 if not sysUnc: 
-                    if 'pt' in sample.lower(): 
+                    if 'pt' in sample.lower() and not ('flat' in sample.lower()): 
                         string=f'{sample.split("_Tune")[0].split("_")[0]+sample.split("_Tune")[0].split("_")[1]+sample.split("_Tune")[0].split("_")[2]}_UL{year}{ext}'
+                    elif ('flat' in sample.lower()):
+                        string=f'{sample.split("_Tune")[0].split("_")[0]+sample.split("_Tune")[0].split("_")[1]}_UL{year}{ext}'.replace('-','')
                     else:
                         string=f'{sample.split("_Tune")[0].split("_")[0]+sample.split("_Tune")[0].split("_")[1]}_UL{year}{ext}'
 
@@ -1319,8 +1382,10 @@ def histoMaker(myProcessor, sampleIdentifier='qcd_ht', y='2017', sampleDict_PFNa
                                     
                     
                     if not sysUnc: 
-                        if 'pt' in sample.lower(): 
+                        if 'pt' in sample.lower() and not('flat' in sample.lower()): 
                             string=f'{sample.split("_Tune")[0].split("_")[0]+sample.split("_Tune")[0].split("_")[1]+sample.split("_Tune")[0].split("_")[2]}_UL{year}{ext}'
+                        elif ('flat' in sample.lower()):
+                            string=f'{sample.split("_Tune")[0].split("_")[0]+sample.split("_Tune")[0].split("_")[1]}_UL{year}{ext}'.replace('-','')
                         else:
                             string=f'{sample.split("_Tune")[0].split("_")[0]+sample.split("_Tune")[0].split("_")[1]}_UL{year}{ext}'
 

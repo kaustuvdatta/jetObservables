@@ -26,33 +26,46 @@ class nSubBasis_unfoldingHistoProd_WtopSel():#processor.ProcessorABC):
     #####################################################################################################################################
     """
     def __init__(
-                 self, sampleName, selection='_topSel', sysSources=[], year='2017', era='', 
+                 self, sampleName, selection='_topSel', sysSource=[], year='2017', era='', 
                  isMC=True, isSigMC=True, onlyUnc='', wtUnc=False, 
                  verbose=False, saveParquet=False, onlyParquet=False, test=False,
                  splitCount='0', sampleDict=dictSamples, sysUnc=False, 
                  selectionmode='massAndDeltaR', massToCutOn = 'mass',
                  btvJSON_fn=None, effMap=None,btagWP="M", 
+                 withBTaggingEffs = False, 
                  withBTaggingWeights=True,
                  withLeptonWeights=True,
                  vetoMap=None,
+                 addVetoMap=True,
                  applyVetoMap=True,
                  muIDISO_JSON_fn=None,muRecoEff_JSON_fn=None,muTrig_JSON_fn=None,profile_time=True,
                  top_ptmin = 400.,top_mSDmin = 140.,top_mSDmax = 300.,top_mINVmin = 140.,top_mINVmax = 300.,
+                 top_ptmax = 6500.,
                  W_ptmin = 200.,W_mSDmin = 65.,W_mSDmax = 125.,W_mINVmin = 65.,W_mINVmax = 125.,
+                 W_ptmax = 6500.,
                  LeptW_ptmin = 100.,Mu_ptmin = 55., Mu_tkRelIso=0.05, MET_ptmin = 30.,
                  AK4_ptmin = 30.,AK4_etamax = 2.4 ,AK4_jetID = 2 ,dR_max = 1.6,dR_min = 0.2,
                  parquetDir='/scratch/kadatta/Wtop_parquet/',
-                 parquetExt=''
+                 parquetExt='',
+                 onlyRedonePDFandAlphaSWts=False,#True, 
+                 withAllPdfVariations=False,
+                 withAlphaSVariations=False,#True,
                 ):
         self.parquetExt = parquetExt
         self.test=test
         self.events = None
-
+        self.onlyRedonePDFandAlphaSWts = onlyRedonePDFandAlphaSWts
+        self.withAlphaSVariations = withAlphaSVariations
+        self.withAllPdfVariations = withAllPdfVariations
+        
         self.profile_time = profile_time
         self.verbose = verbose
         self.saveParquet = saveParquet
         self.onlyParquet = onlyParquet
         self.parquetDir = parquetDir
+        if self.onlyParquet and not(os.path.exists(self.parquetDir)):
+            print("Parquet output directory does not exist; creating in scratch")
+            os.makedirs(parquetDir)
         self.year = year
         self.isMC = isMC or isSigMC
         self.isSigMC = isSigMC
@@ -75,6 +88,7 @@ class nSubBasis_unfoldingHistoProd_WtopSel():#processor.ProcessorABC):
         self.btvJSON_fn = btvJSON_fn
         self.effMap = effMap
         self.btagWP = btagWP
+        self.withBTaggingEffs = withBTaggingEffs
         self.withBTaggingWeights = withBTaggingWeights
         self.withLeptonWeights = withLeptonWeights
         
@@ -149,7 +163,8 @@ class nSubBasis_unfoldingHistoProd_WtopSel():#processor.ProcessorABC):
         ############# Veto map related initialisations #############
         
         self.applyVetoMap = applyVetoMap
-        if self.applyVetoMap:
+        self.addVetoMap = addVetoMap
+        if self.addVetoMap:
             
             if not(vetoMap==None):
                 vetoMap_cset = correctionlib.CorrectionSet.from_file(vetoMap)
@@ -186,12 +201,18 @@ class nSubBasis_unfoldingHistoProd_WtopSel():#processor.ProcessorABC):
 
         self.dict_variables_kinematics_AK8 = {
 
-                                            "_pt": np.array([i for i in np.arange(170., 3010., 5.)]) if 'WSel' in selection else  np.array([i for i in np.arange(300., 3010., 5.)]),
+                                            #"_pt": np.array([i for i in np.arange(170., 3010., 5.)]) if 'WSel' in selection else  np.array([i for i in np.arange(300., 3010., 5.)]),
+                                            "_mass": np.array([(i*1) for i in np.arange(0., 201.)]) if 'WSel' in selection else  np.array([(i*1) for i in np.arange(0., 401.)]),
+            
                                             "_eta": np.array([i for i in np.arange(-2.4, 2.42, 0.02)]),
                                             "_y": np.array([i for i in np.arange(-2.4, 2.42, 0.02)]),
                                             "_phi": np.array([i for i in np.arange(-3.4, 3.4, 0.02)]),
-                                            "_mass": np.array([i for i in np.arange(0., 205., 5.)]) if 'WSel' in selection else  np.array([i for i in np.arange(80., 405., 5.)]),
-                                            "_msoftdrop": np.array([i for i in np.arange(0., 145., 5.)]) if 'WSel' in selection else  np.array([i for i in np.arange(100., 305., 5.)]),
+                                            #"_mass": np.array([i for i in np.arange(0., 205., 5.)]) if 'WSel' in selection else  np.array([i for i in np.arange(80., 405., 5.)]),
+                                            "_msoftdrop": np.array([(i*1) for i in np.arange(0., 201.)]) if 'WSel' in selection else  np.array([(i*1) for i in np.arange(0., 401.)]),
+            
+                                            #"_msoftdrop": np.array([i for i in np.arange(0., 145., 5.)]) if 'WSel' in selection else  np.array([i for i in np.arange(100., 305., 5.)]),
+                                            "_pt": np.array([(i*10) for i in np.arange(18., 281.)]) if 'WSel' in selection else  np.array([(i*10) for i in np.arange(30., 281.)]),
+            
 
                                         }  if not(self.mode=='noMassCut') else {
             
@@ -301,10 +322,14 @@ class nSubBasis_unfoldingHistoProd_WtopSel():#processor.ProcessorABC):
         
         self.recoMask = None
         self.recoWeights = None
+        self.triggerMask = None
         if self.isMC:# and self.onlyParquet:
             self.genMask = None
+            #if self.isSigMC:
             self.accepGenMask = None
             self.trueRecoMask = None
+            self.fakeRecoMask = None
+            self.missGenMask = None
             self.genWeights = None
 
         if 'WSel' in selection:
@@ -346,8 +371,8 @@ class nSubBasis_unfoldingHistoProd_WtopSel():#processor.ProcessorABC):
                                             "_tau32_WTA": np.array([(i/200) for i in np.arange(0.*200, 1.2*200)]),#for WTA-kT for comparison
                                             "_tau21_exkT": np.array([(i/200) for i in np.arange(0.*200, 1.4*200)]),#for excl.-kT and E-scheme as per basis
                                             "_tau32_exkT": np.array([(i/200) for i in np.arange(0.*200, 1.6*200)]),#for excl.-kT and E-scheme as per basis
-                                            #"_mass": np.array([(i*2) for i in np.arange(0., 80.)]),
-                                            #"_msoftdrop": np.array([(i*2) for i in np.arange(0., 80.)]),
+                                            #"_mass": np.array([(i*1) for i in np.arange(0., 201.)]),
+                                            #"_msoftdrop": np.array([(i*1) for i in np.arange(0., 201.)]),
                                             #"_pt": np.array([(i*20) for i in np.arange(9., 121.)]),
                                             }
 
@@ -390,27 +415,86 @@ class nSubBasis_unfoldingHistoProd_WtopSel():#processor.ProcessorABC):
                                             "_tau32_WTA": np.array([(i/200) for i in np.arange(0.*200, 1.2*200)]),#for WTA-kT for comparison
                                             "_tau21_exkT": np.array([(i/200) for i in np.arange(0.*200, 1.4*200)]),#for excl.-kT and E-scheme as per basis
                                             "_tau32_exkT": np.array([(i/200) for i in np.arange(0.*200, 1.6*200)]),#for excl.-kT and E-scheme as per basis
-                                            #"_mass": np.array([(i*2) for i in np.arange(0., 180.)]),
-                                            #"_msoftdrop": np.array([(i*2) for i in np.arange(0., 160.)]),
-                                            #"_pt": np.array([(i*20) for i in np.arange(19., 141.)]),
+                                            #"_mass": np.array([(i*1) for i in np.arange(0., 401.)]),
+                                            #"_msoftdrop": np.array([(i*1) for i in np.arange(0., 401.)]),
+                                            #"_pt": np.array([(i*20) for i in np.arange(15., 141.)]),
+                                            }
+            
+        elif 'WtopSel' in selection:
+            self.dict_variables_toUnfold = {
+
+                                            "_tau_0p25_1": np.array([(i/200) for i in np.arange(0.*200, 1.*200)]),
+                                            "_tau_0p25_2": np.array([(i/500) for i in np.arange(0.*500, 1.*500)]),
+                                            "_tau_0p25_3": np.array([(i/500) for i in np.arange(0.*500, 0.96*500)]),
+                                            "_tau_0p25_4": np.array([(i/1000) for i in np.arange(0.*1000, 0.94*1000)]),
+                                            "_tau_0p25_5": np.array([(i/1000) for i in np.arange(0.*1000, 0.9*1000)]),
+
+                                            "_tau_0p5_1": np.array([(i/200) for i in np.arange(0.*200, 0.96*200)]),
+                                            "_tau_0p5_2": np.array([(i/500) for i in np.arange(0.*500, 0.9*500)]),
+                                            "_tau_0p5_3": np.array([(i/500) for i in np.arange(0.*500, 0.8*500)]),
+                                            "_tau_0p5_4": np.array([(i/1000) for i in np.arange(0.*1000, 0.7*1000)]),
+                                            "_tau_0p5_5": np.array([(i/1000) for i in np.arange(0.*1000, 0.64*1000)]),
+
+                                            "_tau_1_1": np.array([(i/200) for i in np.arange(0.*200, 0.84*200)]),
+                                            "_tau_1_2": np.array([(i/500) for i in np.arange(0.*500, 0.72*500)]),
+                                            "_tau_1_3": np.array([(i/1000) for i in np.arange(0.*1000, 0.52*1000)]),
+                                            "_tau_1_4": np.array([(i/1000) for i in np.arange(0.*1000, 0.42*1000)]),
+                                            "_tau_1_5": np.array([(i/1000) for i in np.arange(0.*1000, 0.38*1000)]),
+
+                                            "_tau_1p5_1": np.array([(i/500) for i in np.arange(0.*500, 0.7*500)]),
+                                            "_tau_1p5_2": np.array([(i/1000) for i in np.arange(0.*1000, 0.52*1000)]),
+                                            "_tau_1p5_3": np.array([(i/1000) for i in np.arange(0.*1000, 0.42*1000)]),
+                                            "_tau_1p5_4": np.array([(i/1000) for i in np.arange(0.*1000, 0.3*1000)]),
+                                            "_tau_1p5_5": np.array([(i/1000) for i in np.arange(0.*1000, 0.28*1000)]),
+
+                                            "_tau_2_1": np.array([(i/500) for i in np.arange(0.*500, 0.62*500)]),
+                                            "_tau_2_2": np.array([(i/1000) for i in np.arange(0.*1000, 0.42*1000)]),
+                                            "_tau_2_3": np.array([(i/1000) for i in np.arange(0.*1000, 0.3*1000)]),
+                                            "_tau_2_4": np.array([(i/1000) for i in np.arange(0.*1000, 0.26*1000)]),
+                                            "_tau_2_5": np.array([(i/1000) for i in np.arange(0.*1000, 0.24*1000)]),
+
+                                            "_tau21": np.array([(i/200) for i in np.arange(0.*200, 1.2*200)]),#for one-pass kT minimization as per CMS
+                                            "_tau32": np.array([(i/200) for i in np.arange(0.*200, 1.2*200)]),#for one-pass kT minimization as per CMS
+                                            "_tau21_WTA": np.array([(i/200) for i in np.arange(0.*200, 1.2*200)]),#for WTA-kT for comparison
+                                            "_tau32_WTA": np.array([(i/200) for i in np.arange(0.*200, 1.2*200)]),#for WTA-kT for comparison
+                                            "_tau21_exkT": np.array([(i/200) for i in np.arange(0.*200, 1.4*200)]),#for excl.-kT and E-scheme as per basis
+                                            "_tau32_exkT": np.array([(i/200) for i in np.arange(0.*200, 1.6*200)]),#for excl.-kT and E-scheme as per basis
+                                            #"_mass": np.array([(i*1) for i in np.arange(0., 501.)]),
+                                            #"_msoftdrop": np.array([(i*1) for i in np.arange(0., 501.)]),
+                                            #"_pt": np.array([(i*10) for i in np.arange(15., 241.)]),
                                             }
 
         
         ### Uncertainties
         
-        self.sysSources = ['_nom'] + [ isys+i for i in [ 'Up', 'Down' ] for isys in sysSources if not( isys.endswith('nom'))]# or self.sysUnc) ]
-        self.sysWeightList = ( '_pu', '_isr', '_fsr', '_pdf', '_l1prefiring', '_lepton', '_btag' ) #'_ps',
-        self.constJESList = ( '_constituentJES_neutral', '_constituentJES_charged', '_constituentJES_photon' ) #'_ps',
-        self.wtSources=['_puWeight','_isrWeight','_fsrWeight','_pdfWeight', '_l1prefiringWeight', 
-                        #'_leptonWeightISOStat', '_leptonWeightIDStat', '_leptonWeightTrigStat', '_leptonWeightRecoEffStat', 
-                        #'_leptonWeightISOSyst', '_leptonWeightIDSyst', '_leptonWeightTrigSyst', '_leptonWeightRecoEffSyst', 
-                        '_btagWeightEfficiency', '_btagWeightCorrelated', '_btagWeightUncorrelated',] if self.wtUnc else [] #, '_leptonWeightAll', 
-        if self.onlyUnc!='': self.sysSources = ['_nom'] + [ onlyUnc+i for i in [ 'Up', 'Down' ] ] #################### Not using for right now
+        self.sysSource = ['_nom'] + [ isys+i for i in [ 'Up', 'Down' ] for isys in sysSource if not( isys.endswith('nom'))]
+        if self.withBTaggingWeights:
+            self.sysWeightList = ( '_pu', '_isr', '_fsr', '_pdf', '_l1prefiring', '_btag' )#, '_lepton',)
+        else:
+            self.sysWeightList = ( '_pu', '_isr', '_fsr', '_pdf', '_l1prefiring' )#, '_lepton')
+        self.constJESList = ( '_constituentJES_neutral', '_constituentJES_charged', '_constituentJES_photon' ) 
+
+        if not self.onlyRedonePDFandAlphaSWts:
+            if self.withBTaggingWeights:
+                self.wtSources=['_puWeight','_isrWeight','_fsrWeight','_pdfWeight','_l1prefiringWeight', 
+                                #'_leptonWeightISOStat', '_leptonWeightIDStat', '_leptonWeightTrigStat', '_leptonWeightRecoEffStat', 
+                                #'_leptonWeightISOSyst', '_leptonWeightIDSyst', '_leptonWeightTrigSyst', '_leptonWeightRecoEffSyst', 
+                                '_btagWeightCorrelated', '_btagWeightUncorrelated',] + (['_btagWeightEfficiency'] if self.withBTaggingEffs else []) if self.wtUnc else [] #, 
+            else:
+                self.wtSources=['_puWeight','_isrWeight','_fsrWeight','_pdfWeight','_l1prefiringWeight', 
+                                #'_leptonWeightISOStat', '_leptonWeightIDStat', '_leptonWeightTrigStat', '_leptonWeightRecoEffStat', 
+                                #'_leptonWeightISOSyst', '_leptonWeightIDSyst', '_leptonWeightTrigSyst', '_leptonWeightRecoEffSyst', 
+                                #'_btagWeightEfficiency', '_btagWeightCorrelated', '_btagWeightUncorrelated',
+                               ] if self.wtUnc else [] #, 
         
-        if self.wtUnc: #for the jes/jer cases sys self.sysSources is udpated  above since these are run only in the 'onlyUnc' mode
-            self.sysSources = ['_nom'] + [ iwt+i for i in [ 'Up', 'Down' ] for iwt in self.wtSources if not iwt.endswith(('nom','pdfWeightAll')) ]
+        else:
+            self.wtSources=['_pdfWeight'] if self.wtUnc else [] 
+        
+        self.recoWtSources=['_pu', '_l1', '_btag'] if self.isMC else [] 
+
             
-            if 'pdfWeightAll' in self.wtSources: self.sysSources = self.sysSources+['pdfWeightAll'] 
+        if self.onlyUnc!='': 
+            self.sysSource = ['_nom'] + [ onlyUnc+i for i in [ 'Up', 'Down' ] ] 
         
         
         
@@ -425,7 +509,7 @@ class nSubBasis_unfoldingHistoProd_WtopSel():#processor.ProcessorABC):
                                                      nSub_labels=self.dict_variables_toUnfold,
                                                     )
         if self.isMC:
-            for sys in self.sysSources:
+            for sys in self.sysSource:
                 if not(sys.startswith(('_je', '_uncl', '_nom'))): continue
 
                 if self.withBTaggingWeights: 
@@ -446,7 +530,10 @@ class nSubBasis_unfoldingHistoProd_WtopSel():#processor.ProcessorABC):
         self.W_mSDmax = W_mSDmax
         self.W_mINVmin = W_mINVmin
         self.W_mINVmax = W_mINVmax
-
+        
+        self.top_ptmax = top_ptmax
+        self.W_ptmax = W_ptmax
+        
         self.LeptW_ptmin = LeptW_ptmin
         self.Mu_ptmin = Mu_ptmin
         self.MET_ptmin = MET_ptmin
@@ -456,7 +543,55 @@ class nSubBasis_unfoldingHistoProd_WtopSel():#processor.ProcessorABC):
         self.dR_max = dR_max
         self.dR_min = dR_min
         self.Mu_tkRelIso = Mu_tkRelIso
-        
+    
+    def add_new_PDF_and_AlphaS_wts(self):
+        #using implementation by S. Rothman https://github.com/ssrothman/EECpostprocessing/blob/566c077de831613f1cbfeec9179acf9fcef00da5/selections/theorySF.py#L90C5-L90C18
+        if self.onlyRedonePDFandAlphaSWts:
+            pdf_weights = self.events['pdfWeightAll_nom']
+            nevt = len(self.events['pdfWeightAll_nom'])
+            pdf_nom = np.ones(len(self.events['pdfWeightUp_nom']))
+            #self.wtSources[0] = 'pdfWeight2'
+            # Hessian weights a la Eq. 21 in https://arxiv.org/pdf/1510.03865v1.pdf
+            to_sum = pdf_weights[:,1:-2]-np.ones((nevt,100))
+            summed_up = ak.sum(np.square(to_sum),axis=1)
+            pdfWt_unc = np.sqrt( (1./99.) * summed_up )
+            pdfWt_up = pdfWt_unc + pdf_nom
+            pdfWt_dn = pdf_nom - pdfWt_unc
+            
+            print('Redoing PDF unc weights')
+            #weights.add('wt_PDF', nom, pdf_up, pdf_dn)
+            self.events['pdfWeightUp_nom'] = pdfWt_up
+            self.events['pdfWeightDown_nom'] = pdfWt_dn
+            
+            
+            if self.withAllPdfVariations:
+                self.sysWeightList=( '_pdf', )#, '_aS', '_alphaSandPDF')#, '_isr', '_fsr', '_l1prefiring' )
+    
+                #don't do scale variations in same run
+                for i in range(1,101):
+                    self.events[f'{i}pdfWeight_nom'] =  pdf_weights[:,i]
+                    #self.wtSources.append(f'_pdf{i}Weight_nom')
+                    self.sysWeightList=tuple([wt for wt in list(self.sysWeightList)]+[f'_{i}pdfWeight'])
+                    self.sysSource+=[f'_{i}pdfWeight']
+                    
+            if self.withAlphaSVariations:
+                
+                print('Doing scale varn. weights')
+                # alpha_S weights; Eq. 27 of https://arxiv.org/pdf/1510.03865v1.pdf
+                alphaS_unc = 0.5*(pdf_weights[:,102] - pdf_weights[:,101])
+                self.events['alphaSWeightUp_nom'] = pdf_nom+alphaS_unc
+                self.events['alphaSWeightDown_nom'] = pdf_nom-alphaS_unc
+
+                # PDF + alpha_S weights; Eq. 28
+                print('Doing scale and pdf unc. varn. weights')
+                pdf_and_alphaS_unc = np.sqrt( np.square(pdfWt_unc) + np.square(alphaS_unc) )
+                self.events['aSandPDFWeightUp_nom'] = pdf_nom+pdf_and_alphaS_unc
+                self.events['aSandPDFWeightDown_nom'] = pdf_nom-pdf_and_alphaS_unc
+
+                self.wtSources+=['_alphaSWeight','_aSandPDFWeight']
+                self.sysWeightList=(  '_pdf', '_alphaS', '_aSandPDF')# '_pu', '_isr', '_fsr', '_l1prefiring' )
+                self.sysSource += [ iwt+i for i in [ 'Up', 'Down' ] for iwt in self.wtSources if not (iwt+i in self.sysSource) and not( iwt.endswith(('nom','pdfWeightAll'))) ]
+                
     def add_vetoMapOutput_to_recoWeights(self):
         #if self.apply
         tstart=time.time()
@@ -533,10 +668,41 @@ class nSubBasis_unfoldingHistoProd_WtopSel():#processor.ProcessorABC):
         
         # Currently the branches to be read are being defined somewhat circularly, the branches that are to be read are extracted from the class-level variable and only those columns are read in from the nanoskims, but keeping this functionality in for easy generalisability if needed; ie, if one wants to make this class self sufficient and add  in what I do in my histo production noteeboks as a postprocessor in this class. 
         #events = events[branches]
-        self.events=events               
+        self.events=events   
+        
+        
+        if self.year in ['2017', '2018']:
+            self.triggerMask = ((self.events['passHLT_Mu50_nom'] == 1) | (self.events['passHLT_TkMu100_nom'] == 1) | (self.events['passHLT_OldMu100_nom'] == 1))
+                        
+        elif self.year in ['2016', '2016_preVFP']:
+            self.triggerMask = ((self.events['passHLT_Mu50_nom'] == 1) | (self.events['passHLT_TkMu50_nom'] == 1))
+            
+        else:
+            raise ValueError(f"Unknown year {y} for trigger masking")
+        
+        for sys in self.sysSource:
+            
+            if not(self.onlyRedonePDFandAlphaSWts):
+
+                s='_nom' if (sys.startswith(self.sysWeightList) or 'const' in sys) or not(self.isSigMC) else sys
+            
+            else:
+                
+                s='_nom' if (sys.startswith(('_isr','_fsr','_pdf','_a')) or 'pdf' in sys or 'const' in sys) or not(self.isSigMC) else sys
+                #print(sys,s)
+            
+            self.events[f'passRecoSel{s}'] = ak.where(self.triggerMask,
+                                                      events[f'passRecoSel{s}'],
+                                                      0)
 
         #hard-coding since only parquet prod or histo prod modes in use, so onlyParquet flag is somewhat redundant 
         self.onlyParquet = self.saveParquet
+        
+        if self.isSigMC and self.wtUnc:
+            if self.onlyRedonePDFandAlphaSWts or self.withAllPdfVariations:
+                self.add_new_PDF_and_AlphaS_wts()
+           
+        
         
         ################## btagging & lepton weights and jet vetoes, nom+variations ##################
         
@@ -545,8 +711,8 @@ class nSubBasis_unfoldingHistoProd_WtopSel():#processor.ProcessorABC):
 
             self.add_btagAndLeptonWeights()
         
-        if self.applyVetoMap:
-
+        if self.addVetoMap:# and not(self.onlyParquet):
+        
             self.add_vetoMapOutput_to_recoWeights()#recoMask=selRecoMask)
         
         if self.test: 
@@ -560,13 +726,12 @@ class nSubBasis_unfoldingHistoProd_WtopSel():#processor.ProcessorABC):
             self.events['totalRecoWeight_nom'] = self.recoWeights
             
                     
-                    
         if not(self.onlyParquet): 
 
             # dictionary of Hist (boost) histograms
             output = self.buildDictOfHistograms()
 
-            if self.verbose: print (f'Now, processing histograms; systematic sources being considered:{self.sysSources} for nevents={len(events)} (before masking)')
+            if self.verbose: print (f'Now, processing histograms; systematic sources being considered:{self.sysSource} for nevents={len(events)} (before masking)')
             if self.verbose: 
                 print (output.keys())
         
@@ -574,11 +739,16 @@ class nSubBasis_unfoldingHistoProd_WtopSel():#processor.ProcessorABC):
             print (f'Now, producing .parquet files; for nevents={len(events)} ')
             
             
-        for sys in self.sysSources:
+        for sys in self.sysSource:
             
+            if not(self.onlyRedonePDFandAlphaSWts):
+
+                s='_nom' if (sys.startswith(self.sysWeightList) or 'const' in sys) or not(self.isSigMC) else sys
             
-            s='_nom' if (sys.startswith(self.sysWeightList) or 'const' in sys) or not(self.isSigMC) else sys
-            
+            else:
+                
+                s='_nom' if (sys.startswith(('_isr','_fsr','_pdf','_a')) or 'pdf' in sys or 'const' in sys) or not(self.isSigMC) else sys
+                #print(sys,s)
             
             
             #########################################################################
@@ -594,14 +764,14 @@ class nSubBasis_unfoldingHistoProd_WtopSel():#processor.ProcessorABC):
                 self.genWeights = self.events[f'evtGenWeight{s}']
                 self.recoWeights = self.genWeights * self.events[f'puWeightNom{s}'] * self.events[f'l1prefiringWeightNom{s}'] * (self.events[f'new{self.sel}_leptonWeightNom{s}'] if self.withLeptonWeights else np.ones(len(self.events[f'passRecoSel{s}']))) * (self.events[f'new{self.sel}_btagWeightNom{s}'] if self.withBTaggingWeights else np.ones(len(self.events[f'passRecoSel{s}']))) * (self.events[f'new{self.sel}_eventJetVeto{s}'] if self.applyVetoMap else np.ones(len(self.events[f'passRecoSel{s}']))) 
                 
-                #specifically handle weight variations on sigMC and modify above clas-level variables accordingly
+                #specifically handle weight variations on sigMC and modify above class-level variables accordingly
                 if self.isSigMC:
-                    if sys.startswith(('_isr','_fsr','_pdf')):
+                    if sys.startswith(('_isr','_fsr','_pdf', '_a')) or 'pdf' in sys:
                         extraWeights = self.events[f'{sys.split("_")[1]}{s}']
                         self.genWeights = self.events[f'evtGenWeight_nom']*extraWeights
                         self.recoWeights = self.genWeights * self.events[f'puWeightNom{s}'] * self.events[f'l1prefiringWeightNom{s}'] * (self.events[f'new{self.sel}_leptonWeightNom{s}'] if self.withLeptonWeights else np.ones(len(self.events[f'passRecoSel{s}']))) * (self.events[f'new{self.sel}_btagWeightNom{s}'] if self.withBTaggingWeights else np.ones(len(self.events[f'passRecoSel{s}']))) * (self.events[f'new{self.sel}_eventJetVeto{s}'] if self.applyVetoMap else np.ones(len(self.events[f'passRecoSel{s}']))) 
                         
-                    #print(f'{sys.split("_")[1]}{s}')
+                        #print(f'{sys,sys.split("_")[1]}{s}')
                     elif 'pu' in sys:
                         
                         self.recoWeights = self.genWeights*self.events[f'{sys.split("_")[1]}{s}']*self.events[f'l1prefiringWeightNom{s}']*(self.events[f'new{self.sel}_leptonWeightNom{s}'] if self.withLeptonWeights else np.ones(len(self.events[f'passRecoSel{s}'])))*(self.events[f'new{self.sel}_btagWeightNom{s}'] if self.withBTaggingWeights else np.ones(len(self.events[f'passRecoSel{s}'])))*(self.events[f'new{self.sel}_eventJetVeto{s}'] if self.applyVetoMap else np.ones(len(self.events[f'passRecoSel{s}'])))
@@ -626,8 +796,11 @@ class nSubBasis_unfoldingHistoProd_WtopSel():#processor.ProcessorABC):
                 
             else:
                 #data
-                self.recoWeights = self.events[f'totalRecoWeight_nom']*(self.events[f'new{self.sel}_eventJetVeto_nom'] if self.applyVetoMap else np.ones(len(self.events[f'passRecoSel_nom']))) 
+                #print(sum( self.events[f'totalRecoWeight_nom']))
+                self.recoWeights = self.events[f'totalRecoWeight_nom']*(self.events[f'new{self.sel}_eventJetVeto_nom'] if self.applyVetoMap else np.ones(len(self.events[f'totalRecoWeight_nom']))) 
                 
+                
+            #print(sum( self.recoWeights), sum( self.recoWeights *(self.events[f'new{self.sel}_eventJetVeto_nom']) ))
             
             totalRecoWeight = self.recoWeights
             totalGenWeight = self.genWeights if self.isMC else None
@@ -639,25 +812,31 @@ class nSubBasis_unfoldingHistoProd_WtopSel():#processor.ProcessorABC):
             ########################### Build event masks ###########################
             #########################################################################            
             if self.mode=='noDeltaR': 
-
+                
                 topRecoMask = ( (self.events[f'selRecoJets{s}_pt']>self.top_ptmin) & 
+                                (self.events[f'selRecoJets{s}_pt']<=self.top_ptmax) & 
+                               
                                 (self.events[f'selRecoJets{s}_{self.massToCutOn}']>self.top_mSDmin) & 
                                 (self.events[f'selRecoJets{s}_{self.massToCutOn}']<self.top_mSDmax) & 
                                 (self.events[f'selRecoLeptHemDeltaR{s}']<self.dR_max) & 
                                 (self.events[f'selRecoLeptW{s}_pt']>self.LeptW_ptmin ) & 
                                 (self.events[f'selRecoMu_nom_pt']>self.Mu_ptmin ) & 
                                 (self.events[f'selRecoMET{s}_pt']>self.MET_ptmin ) & 
-                                (self.events[f'passRecoSel{s}']==1) & 
+                                #((self.events[f'passRecoSel{s}']==1) & (self.triggerMask)) &
+                                (self.events[f'passRecoSel{s}']==1) &
                                 (self.events[f'totalRecoWeight{s}']!=0.))
 
                 WRecoMask = ( (self.events[f'selRecoJets{s}_pt']>self.W_ptmin) & 
+                              (self.events[f'selRecoJets{s}_pt']<=self.W_ptmax) & 
+                             
                               (self.events[f'selRecoJets{s}_{self.massToCutOn}']>self.W_mSDmin) & 
                               (self.events[f'selRecoJets{s}_{self.massToCutOn}']<self.W_mSDmax) & 
                               (self.events[f'selRecoLeptHemDeltaR{s}']<self.dR_max) & 
                               (self.events[f'selRecoLeptW{s}_pt']>self.LeptW_ptmin ) & 
                               (self.events[f'selRecoMu_nom_pt']>self.Mu_ptmin ) & 
                               (self.events[f'selRecoMET{s}_pt']>self.MET_ptmin ) & 
-                              (self.events[f'passRecoSel{s}']==1) & 
+                              #((self.events[f'passRecoSel{s}']==1) & (self.triggerMask)) &
+                              (self.events[f'passRecoSel{s}']==1) &
                               (self.events[f'totalRecoWeight{s}']!=0.)) 
 
                 if not(self.isMC): 
@@ -667,6 +846,8 @@ class nSubBasis_unfoldingHistoProd_WtopSel():#processor.ProcessorABC):
                 if self.isMC:   
 
                     topGenMask = ( (self.events[f'selGenJets_nom_pt']>self.top_ptmin) & 
+                                   (self.events[f'selGenJets_nom_pt']<=self.top_ptmax) & 
+                                  
                                    (self.events[f'selGenJets_nom_{self.massToCutOn}']>self.top_mSDmin) & 
                                    (self.events[f'selGenJets_nom_{self.massToCutOn}']<self.top_mSDmax) & 
                                    (self.events[f'selGenLeptHemDeltaR_nom']<self.dR_max) & 
@@ -677,6 +858,8 @@ class nSubBasis_unfoldingHistoProd_WtopSel():#processor.ProcessorABC):
                                    #(self.events[f'evtGenWeight_nom']!=0.) )
 
                     WGenMask = ( (self.events[f'selGenJets_nom_pt']>self.W_ptmin) & 
+                                 (self.events[f'selGenJets_nom_pt']<=self.W_ptmax) & 
+                                
                                  (self.events[f'selGenJets_nom_{self.massToCutOn}']>self.W_mSDmin) & 
                                  (self.events[f'selGenJets_nom_{self.massToCutOn}']<self.W_mSDmax) & 
                                  (self.events[f'selGenLeptHemDeltaR_nom']<self.dR_max) & 
@@ -691,13 +874,16 @@ class nSubBasis_unfoldingHistoProd_WtopSel():#processor.ProcessorABC):
             elif self.mode=='massAndDeltaR':
 
                 topRecoMask = ( (self.events[f'selRecoJets{s}_pt']>self.top_ptmin) & 
+                                (self.events[f'selRecoJets{s}_pt']<=self.top_ptmax) & 
+                                
                                 (self.events[f'selRecoJets{s}_{self.massToCutOn}']>=self.top_mSDmin) & 
                                 (self.events[f'selRecoJets{s}_{self.massToCutOn}']<self.top_mSDmax) & 
                                 (self.events[f'selRecoLeptW{s}_pt']>self.LeptW_ptmin ) & 
                                 (self.events[f'selRecoMu{s}_pt']>self.Mu_ptmin ) & 
                                 (self.events[f'selRecoMu{s}_tkRelIso']<=self.Mu_tkRelIso ) & 
                                 (self.events[f'selRecoMET{s}_pt']>self.MET_ptmin ) & 
-                                (self.events[f'passRecoSel{s}']==1) & 
+                                #((self.events[f'passRecoSel{s}']==1) & (self.triggerMask)) &
+                                (self.events[f'passRecoSel{s}']==1) &
                                 #(self.events[f'nRecoAK4s{s}']>=3) & 
                                 (self.events[f'totalRecoWeight{s}']!=0.) & 
                                 (self.events[f'selRecoLeptHemDeltaR{s}']<=self.dR_max) &
@@ -706,13 +892,16 @@ class nSubBasis_unfoldingHistoProd_WtopSel():#processor.ProcessorABC):
                                 (self.events[f'selRecoLeptHemDeltaR{s}']>self.dR_min) )
 
                 WRecoMask = ( (self.events[f'selRecoJets{s}_pt']>self.W_ptmin) & 
+                              (self.events[f'selRecoJets{s}_pt']<=self.W_ptmax) & 
+                              
                               (self.events[f'selRecoJets{s}_{self.massToCutOn}']>=self.W_mSDmin) & 
                               (self.events[f'selRecoJets{s}_{self.massToCutOn}']<self.W_mSDmax) & 
                               (self.events[f'selRecoLeptW{s}_pt']>self.LeptW_ptmin ) & 
                               (self.events[f'selRecoMu{s}_pt']>self.Mu_ptmin ) & 
                               (self.events[f'selRecoMu{s}_tkRelIso']<=self.Mu_tkRelIso ) & 
                               (self.events[f'selRecoMET{s}_pt']>self.MET_ptmin ) & 
-                              (self.events[f'passRecoSel{s}']==1) & 
+                              #((self.events[f'passRecoSel{s}']==1) & (self.triggerMask)) &
+                              (self.events[f'passRecoSel{s}']==1) &
                               #(self.events[f'nRecoAK4s{s}']>=3) & 
                               (self.events[f'totalRecoWeight{s}']!=0.) & 
                               (self.events[f'selRecoLeptHemDeltaR{s}']<=self.dR_max) &
@@ -723,6 +912,8 @@ class nSubBasis_unfoldingHistoProd_WtopSel():#processor.ProcessorABC):
                 if self.isMC:# or self.isSigMC:    
 
                     topGenMask = ( (self.events[f'selGenJets_nom_pt']>self.top_ptmin) & 
+                                   (self.events[f'selGenJets_nom_pt']<=self.top_ptmax) & 
+                                   
                                    (self.events[f'selGenJets_nom_{self.genMassToCutOn}']>=self.top_mSDmin) & 
                                    (self.events[f'selGenJets_nom_{self.genMassToCutOn}']<self.top_mSDmax) & 
                                    (self.events[f'selGenLeptW_nom_pt']>self.LeptW_ptmin ) & 
@@ -736,6 +927,8 @@ class nSubBasis_unfoldingHistoProd_WtopSel():#processor.ProcessorABC):
                                    (self.events[f'selGenLeptHemDeltaR_nom']>self.dR_min)) 
 
                     WGenMask = ( (self.events[f'selGenJets_nom_pt']>self.W_ptmin) & 
+                                 (self.events[f'selGenJets_nom_pt']<=self.W_ptmax) & 
+                                 
                                  (self.events[f'selGenJets_nom_{self.genMassToCutOn}']>=self.W_mSDmin) & 
                                  (self.events[f'selGenJets_nom_{self.genMassToCutOn}']<self.W_mSDmax) & 
                                  (self.events[f'selGenLeptW_nom_pt']>self.LeptW_ptmin ) & 
@@ -753,17 +946,19 @@ class nSubBasis_unfoldingHistoProd_WtopSel():#processor.ProcessorABC):
                 
 
                 WRecoMask = ( (self.events[f'selRecoJets{s}_pt']>self.W_ptmin) & 
-                              #(self.events[f'selRecoJets{s}_{self.massToCutOn}']>=self.W_mSDmin) & 
+                              (self.events[f'selRecoJets{s}_pt']<=self.W_ptmax) & 
+                              (self.events[f'selRecoJets{s}_{self.massToCutOn}']>=50.) & #self.W_mSDmin) & 
                               #(self.events[f'selRecoJets{s}_{self.massToCutOn}']<self.W_mSDmax) & 
                               (self.events[f'selRecoLeptW{s}_pt']>self.LeptW_ptmin ) & 
                               (self.events[f'selRecoMu_nom_pt']>self.Mu_ptmin ) & 
                               (self.events[f'selRecoMu_nom_tkRelIso']<=self.Mu_tkRelIso ) & 
                               (self.events[f'selRecoMET{s}_pt']>self.MET_ptmin ) & 
-                              (self.events[f'passRecoSel{s}']==1) & 
+                              #((self.events[f'passRecoSel{s}']==1) & (self.triggerMask)) &
+                              (self.events[f'passRecoSel{s}']==1) &
                               #(self.events[f'nRecoAK4s{s}']>=3) & 
                               (self.events[f'totalRecoWeight{s}']!=0.) & 
                               (self.events[f'selRecoLeptHemDeltaR{s}']<=self.dR_max) &
-                              (self.events[f'selRecoAK4bjetLeptHem{s}_jetId']>=self.AK4_jetID) & 
+                              #(self.events[f'selRecoAK4bjetLeptHem{s}_jetId']>=self.AK4_jetID) & 
                               (self.events[f'selRecoAK4bjetLeptHem{s}_pt']>=self.AK4_ptmin) & 
                               (self.events[f'selRecoLeptHemDeltaR{s}']>self.dR_min) )
                 
@@ -773,12 +968,13 @@ class nSubBasis_unfoldingHistoProd_WtopSel():#processor.ProcessorABC):
 
                     
                     WGenMask = ( (self.events[f'selGenJets_nom_pt']>self.W_ptmin) & 
-                                 #(self.events[f'selGenJets_nom_{self.genMassToCutOn}']>=self.W_mSDmin) & 
+                                 (self.events[f'selGenJets_nom_pt']<=self.W_ptmax) & 
+                                 (self.events[f'selGenJets_nom_{self.genMassToCutOn}']>=50.) & #self.W_mSDmin) & 
                                  #(self.events[f'selGenJets_nom_{self.genMassToCutOn}']<self.W_mSDmax) & 
                                  (self.events[f'selGenLeptW_nom_pt']>self.LeptW_ptmin ) & 
                                  (self.events[f'selGenMu_nom_pt']>self.Mu_ptmin ) & 
                                  (self.events[f'selGenMET_nom_pt']>self.MET_ptmin ) & 
-                                 (self.events[f'passGenSel{s}']==1) & 
+                                 (self.events[f'passGenSel_nom']==1) & 
                                  #(self.events[f'nGenAK4s_nom']>=3) & 
                                  #(self.events[f'evtGenWeight_nom']!=0.) &
                                  (self.events[f'selGenAK4bjetLeptHem_nom_pt']>=self.AK4_ptmin) &                               
@@ -796,11 +992,24 @@ class nSubBasis_unfoldingHistoProd_WtopSel():#processor.ProcessorABC):
                 return -1
 
              
-
-
             if self.isSigMC:# and not(sys.startswith(self.sysWeightList)):
                 
-                s='_nom' if (sys.startswith(self.sysWeightList)) else sys
+                #s='_nom' if (sys.startswith(self.sysWeightList)) else sys
+
+                if self.verbose: 
+                    print('making individual W and topSel mask',sys,s)
+                    
+                
+                #    s='_nom' if (sys.startswith(self.sysWeightList)) else sys
+
+                if not(self.onlyRedonePDFandAlphaSWts):
+
+                    s='_nom' if (sys.startswith(self.sysWeightList) or 'const' in sys) or not(self.isSigMC) else sys
+
+                else:
+
+                    s='_nom' if (sys.startswith(('_isr','_fsr','_pdf','_a')) or 'pdf' in sys or 'const' in sys) or not(self.isSigMC) else sys
+                    #print(sys,s)
 
                 if self.verbose: 
                     print('making individual W and topSel mask',sys,s)
@@ -816,7 +1025,11 @@ class nSubBasis_unfoldingHistoProd_WtopSel():#processor.ProcessorABC):
 
                 elif '_topSel' in self.selList: 
                     WtopRecoMask = (topRecoMask) # & (~(WRecoMask)) #& (~(WRecoMask|WGenMask))
-                    WtopGenMask = (topGenMask)  #& (~(WGenMask)) #& (~(WGenMask|WRecoMask))    
+                    WtopGenMask = (topGenMask)  #& (~(WGenMask)) #& (~(WGenMask|WRecoMask))  
+                
+                elif '_WtopSel' in self.selList: 
+                    WtopRecoMask = (WRecoMask) # & (~(WRecoMask)) #& (~(WRecoMask|WGenMask))
+                    WtopGenMask = (WGenMask)  #& (~(WGenMask)) #& (~(WGenMask|WRecoMask))  
                     
 
                 self.recoMask = WtopRecoMask
@@ -834,23 +1047,29 @@ class nSubBasis_unfoldingHistoProd_WtopSel():#processor.ProcessorABC):
                 fakeRecoMask = ((selRecoMask) & (~trueRecoMask)) #((selRecoMask) ^ (trueRecoMask))#
 
                 missGenMask =  ((selGenMask) & (~accepGenMask))#((selGenMask) ^ (accepGenMask))  #
-                
+                self.fakeRecoMask = fakeRecoMask
+                self.missGenMask = missGenMask
                 
                 
                 if self.verbose:
                     print(s, sys, len(self.events[selRecoMask]), len(self.events[trueRecoMask]), len(self.events[fakeRecoMask]), sum(self.recoWeights), len(self.events[selGenMask]), len(self.events[accepGenMask]), len(self.events[missGenMask]),sum(self.genWeights))
 
-                sel = '_WSel' if '_WSel' in self.selList else '_topSel'
+                if '_WSel' in self.selList :
+                    sel = '_WSel' 
+                elif '_topSel' in self.selList :
+                    sel = '_topSel'
+                else:
+                    sel = '_WtopSel'
                 #print(f"{sel},{s},n_truereco,n_accepgen: {len(self.events[trueRecoMask]),len(self.events[accepGenMask])}")
                 
                 if self.saveParquet and (sys.endswith('nom')): 
                         
                     self.events['trueRecoMask'] = self.trueRecoMask
                     self.events['selRecoMask'] = self.recoMask
-                    self.events['fakeRecoMask'] = fakeRecoMask
+                    self.events['fakeRecoMask'] = self.fakeRecoMask
                     self.events['selGenMask'] = self.genMask
                     self.events['accepGenMask'] = self.accepGenMask
-                    self.events['missGenMask'] = missGenMask
+                    self.events['missGenMask'] = self.missGenMask
                     #self.events = self.events[(self.recoMask) | (self.genMask)]
 
                     print(f"Saving the following .parquet file: {self.parquetDir+self.inputDir[0].split('kadatta/jetObservables/')[1].split('/')[0]}_UL{self.year}"+f"_nomWts{sel}_OC_{self.splitCount}{self.parquetExt}.parquet")
@@ -873,6 +1092,9 @@ class nSubBasis_unfoldingHistoProd_WtopSel():#processor.ProcessorABC):
                 elif '_topSel' in self.selList: 
                     WtopRecoMask = (topRecoMask) #& (~(WRecoMask|WGenMask))
                     WtopGenMask = (topGenMask) #& (~(WGenMask|WRecoMask))    
+                elif '_WtopSel' in self.selList: 
+                    WtopRecoMask = (WRecoMask) # & (~(WRecoMask)) #& (~(WRecoMask|WGenMask))
+                    WtopGenMask = (WGenMask)  #& (~(WGenMask)) #& (~(WGenMask|WRecoMask))  
 
                 
                 self.recoMask = WtopRecoMask
@@ -886,14 +1108,19 @@ class nSubBasis_unfoldingHistoProd_WtopSel():#processor.ProcessorABC):
                 
                 self.accepGenMask = accepGenMask
                 self.trueRecoMask = trueRecoMask
-                
+
                 fakeRecoMask = ((selRecoMask) & (~trueRecoMask)) #((selRecoMask) ^ (trueRecoMask))#
 
                 missGenMask =  ((selGenMask) & (~accepGenMask))#((selGenMask) ^ (accepGenMask))  #
+                self.fakeRecoMask = fakeRecoMask
+                self.missGenMask = missGenMask
                 
-                
-                sel = '_WSel' if '_WSel' in self.selList else '_topSel'
-                #print(f"{sel},{s},n_truereco,n_accepgen: {len(self.events[trueRecoMask]),len(self.events[accepGenMask])}")
+                if '_WSel' in self.selList :
+                    sel = '_WSel' 
+                elif '_topSel' in self.selList :
+                    sel = '_topSel'
+                else:
+                    sel = '_WtopSel'
 
                 if self.saveParquet:
         
@@ -906,7 +1133,7 @@ class nSubBasis_unfoldingHistoProd_WtopSel():#processor.ProcessorABC):
                     
                     #self.events = self.events[(self.recoMask) | (self.genMask)]
                         
-                    print(f"Saving the following .parquet file: {self.parquetDir+self.inputDir[0].split('kadatta/jetObservables/')[1].split('/')[0]}_UL{self.year}"+f"_nomWts{sel}_OC_{self.splitCount}.parquet")
+                    print(f"Saving the following .parquet file: {self.parquetDir+self.inputDir[0].split('kadatta/jetObservables/')[1].split('/')[0]}_UL{self.year}"+f"_nomWts{sel}_OC_{self.splitCount}{self.parquetExt}.parquet")
                     ak.to_parquet(self.events,self.parquetDir +self.inputDir[0].split('kadatta/jetObservables/')[1].split('/')[0]+'_UL'+self.year+f'_nomWts{sel}_OC_{self.splitCount}{self.parquetExt}.parquet')
                     
                     
@@ -919,19 +1146,26 @@ class nSubBasis_unfoldingHistoProd_WtopSel():#processor.ProcessorABC):
 
                 elif '_topSel' in self.selList: 
                     WtopRecoMask = (topRecoMask) #& (~(WRecoMask))
+                elif '_WtopSel' in self.selList: 
+                    WtopRecoMask = (WRecoMask) #& (~(WRecoMask))
 
                 self.recoMask = WtopRecoMask
                 
                 selRecoMask = (WtopRecoMask) 
                 
-                sel = '_WSel' if '_WSel' in self.selList else '_topSel'
+                if '_WSel' in self.selList :
+                    sel = '_WSel' 
+                elif '_topSel' in self.selList :
+                    sel = '_topSel'
+                else:
+                    sel = '_WtopSel'
                 
                 if self.saveParquet:
                     #self.events['selRecoMask'] = self.recoMask
                     #self.events['totalRecoWeight_nom'] = self.recoWeights
                     #self.events = self.events[self.recoMask]
                     self.events['selRecoMask'] = self.recoMask
-                    print(f"Saving the following .parquet file: {self.parquetDir+self.inputDir[0].split('kadatta/jetObservables/')[1].split('/')[0]}_UL{self.year}"+self.era+f'{sel}_{self.splitCount}.parquet')
+                    print(f"Saving the following .parquet file: {self.parquetDir+self.inputDir[0].split('kadatta/jetObservables/')[1].split('/')[0]}_UL{self.year}"+self.era+f'{sel}_{self.splitCount}{self.parquetExt}.parquet')
 
                     ak.to_parquet(events,f"{self.parquetDir+self.inputDir[0].split('kadatta/jetObservables/')[1].split('/')[0]}_UL{self.year}"+self.era+f'{sel}_{self.splitCount}{self.parquetExt}.parquet')
                     return 1
@@ -1231,7 +1465,7 @@ class nSubBasis_unfoldingHistoProd_WtopSel():#processor.ProcessorABC):
         '''build dictionary of Hist histograms, convert to root or whatever else after filled and returned by processor'''
         dictOfHists = OrderedDict()
 
-       #self.selList = [ '_WSel' if self.selList.startswith(('_W')) else '_topSel' ]  
+        #self.selList = [ '_WSel' if self.selList.startswith(('_W')) else '_topSel' ]  
         if self.verbose: print(self.selList)
 
         #build from list of histo names for unfolding histograms
@@ -1242,7 +1476,7 @@ class nSubBasis_unfoldingHistoProd_WtopSel():#processor.ProcessorABC):
             for itype in self.listOfUnfHistTypes:
                 iJ=self.nJet[0] 
 
-                for sysUnc in self.sysSources:
+                for sysUnc in self.sysSource:
                     
                     for x, y in self.dict_variables_kinematics_AK8.items():
                         binning = y
@@ -1366,13 +1600,19 @@ class nSubBasis_unfoldingHistoProd_WtopSel():#processor.ProcessorABC):
         gen_reweights_list = [] if self.isSigMC else None
         reco_reweights_list = [] if self.isSigMC else None
 
+        
         if not self.isSigMC: #assurances against running into issues accidentally when processing non-signal MC
             self.wtSources=[]
             self.wtUnc=False
-                    
-        if self.verbose: print (self.sysSources)
 
-        for sys in self.sysSources:
+        
+        if self.wtUnc: 
+            self.sysSource = ['_nom'] + [ iwt+i for i in [ 'Up', 'Down' ] for iwt in self.wtSources if not iwt.endswith(('nom','pdfWeightAll')) ]
+                    
+        if self.verbose: print ("Preparing branches to read",self.sysSource,self.wtSources)
+
+        for sys in self.sysSource:
+            #print(sys)
             if ('btag' in sys) or ('lepton' in sys): 
                 continue #this is since the btag/leptonWeight branches are now generated on the fly vs. being read in
             #if not wtUnc and not sysUnc:
@@ -1458,6 +1698,7 @@ class nSubBasis_unfoldingHistoProd_WtopSel():#processor.ProcessorABC):
 
                 reco_list.append("totalRecoWeight"+sys)
                 reco_list.append("passRecoSel"+sys)
+                #if self.isSigMC: reco_list.append("selRecoGenDeltaRMatched"+sys)
                 reco_list.append("nRecoAK4s"+sys)               
                 
                 reco_list.append(f"selRecoJets{sys}_msoftdrop_corr_PUPPI")#+sys)
@@ -1509,11 +1750,24 @@ class nSubBasis_unfoldingHistoProd_WtopSel():#processor.ProcessorABC):
                     reco_list.append(i+sys)
                     
             elif (self.isMC and self.isSigMC) and self.wtUnc and not(sys.endswith('_nom') or  self.sysUnc):
-
                 if 'pu' in sys or 'l1' in sys or 'lepton' in sys or 'btag' in sys: 
                     reco_reweights_list.append(sys.split('_')[1]+'_nom')
-                else: 
-                    gen_reweights_list.append(sys.split('_')[1]+'_nom')
+                #else: 
+                
+                else:
+                    if self.onlyRedonePDFandAlphaSWts:
+                        if 'pdf' in sys.lower():
+                            if not( 'pdfWeightAll_nom'  in gen_reweights_list): 
+                                gen_reweights_list.append('pdfWeightAll_nom')
+                            
+                        gen_reweights_list.append(sys.split('_')[1]+'_nom')
+
+                        #    gen_reweights_list.append((sys.split('_')[1]+'_nom').replace('pdfWeight', 'pdfWeight2'))
+                        #    gen_reweights_list.append((sys.split('_')[1]+'_nom').replace('pdf', 'AlphaS'))
+                    elif not(self.onlyRedonePDFandAlphaSWts):
+                        gen_reweights_list.append(sys.split('_')[1]+'_nom')
+                
+                
 
         if self.isSigMC: 
             branchesToRead=gen_list+reco_list+gen_reweights_list+reco_reweights_list+['genWeight','recoSelectedEventNumber_nom','genSelectedEventNumber_nom']#,'recoEventCategory_nom','genEventCategory_nom']
@@ -1525,7 +1779,7 @@ class nSubBasis_unfoldingHistoProd_WtopSel():#processor.ProcessorABC):
         if self.isMC or self.isSigMC:
             for x in range(len(branchesToRead)): 
                 if ('genjet' in branchesToRead[x].lower()) and ('msoftdrop_new' in branchesToRead[x].lower()):
-                    print(branchesToRead[x])
+                    #print(branchesToRead[x])
                     branchesToRead[x] = branchesToRead[x].replace('_new','')
         if self.verbose: 
             print("Prepared branches to read",branchesToRead)        
@@ -1545,7 +1799,7 @@ class nSubBasis_unfoldingHistoProd_WtopSel():#processor.ProcessorABC):
         #new_fields[f'new{self.sel}_leptonWeightNom_nom'] = []
         
         if not(self.sysUnc): sysList = ['_nom']
-        else: sysList=self.sysSources
+        else: sysList=self.sysSource
 
         if self.verbose: print(f"Initialising dummy lepton weights (0=fail,1=pass)")
         
@@ -1577,7 +1831,7 @@ class nSubBasis_unfoldingHistoProd_WtopSel():#processor.ProcessorABC):
        # new_fields[f'new{self.sel}_btagWeightNom_{sys}'] = np.ones(len(self.events))
         
         if not(self.sysUnc): sysList = ['_nom']
-        else: sysList=self.sysSources
+        else: sysList=self.sysSource
 
         if self.verbose: print(f"Initialising dummy btagging weights (0=fail,1=pass)")
         
@@ -1605,7 +1859,7 @@ class nSubBasis_unfoldingHistoProd_WtopSel():#processor.ProcessorABC):
         #                        }
         
         if not(self.sysUnc) or ('const' in self.onlyUnc): sysList = ['_nom']
-        else: sysList=self.sysSources
+        else: sysList=self.sysSource
             
         new_fields = OrderedDict()
         
@@ -1615,7 +1869,7 @@ class nSubBasis_unfoldingHistoProd_WtopSel():#processor.ProcessorABC):
             new_fields[f'new{self.sel}_AK4jetVeto_nom'] = np.ones(len(self.events['selRecoJets_nom_eta']))
             new_fields[f'new{self.sel}_AK8jetVeto_nom'] = np.ones(len(self.events['selRecoJets_nom_eta']))
         else:
-            for sys in self.sysSources:
+            for sys in self.sysSource:
                 new_fields[f'new{self.sel}_eventJetVeto{sys}'] = np.ones(len(self.events[f'selRecoJets{sys}_eta']))
                 new_fields[f'new{self.sel}_AK4jetVeto{sys}'] = np.ones(len(self.events[f'selRecoJets{sys}_eta']))
                 new_fields[f'new{self.sel}_AK8jetVeto{sys}'] = np.ones(len(self.events[f'selRecoJets{sys}_eta']))
@@ -1689,12 +1943,12 @@ class nSubBasis_unfoldingHistoProd_WtopSel():#processor.ProcessorABC):
             else:
                 if s!='central': continue
                     
-                for sys in self.sysSources:
+                for sys in self.sysSource:
                     new_fields[f'new{self.sel}_btagWeight{systematic_suffix_map[s]}{sys}'] = []
             
        
         if not(self.sysUnc) or ('const' in self.onlyUnc): sysList = ['_nom']
-        else: sysList=self.sysSources
+        else: sysList=self.sysSource
 
         if self.verbose: print(f"Computing btagging weights ({systematic_suffix_map.keys()}) for following sys sources: {sysList}")
         
@@ -1725,7 +1979,7 @@ class nSubBasis_unfoldingHistoProd_WtopSel():#processor.ProcessorABC):
 
 
             passMask = (self.events[f'passRecoSel{sys}']==1) & (ID_mask) & (discr_mask) & (ptMask) & (etaMask)
-            failMask = (self.events[f'passRecoSel{sys}']!=1)  & ( (~ID_mask) | (~discr_mask) | (~ptMask) | (~etaMask))
+            failMask = ~(passMask)#(self.events[f'passRecoSel{sys}']!=1)  & ( (~ID_mask) | (~discr_mask) | (~ptMask) | (~etaMask))
 
             
             dummyOnes = np.ones(len(self.events))
@@ -1773,8 +2027,10 @@ class nSubBasis_unfoldingHistoProd_WtopSel():#processor.ProcessorABC):
                                                                                              )
                     SF[failMask] = np.zeros_like(dummyZeros)
 
-
-                    new_fields[f'new{self.sel}_btagWeight{systematic_suffix_map[systematic]}{sys}'] = SF*efficiency
+                    #if self.withBTaggingEffs:
+                    #    new_fields[f'new{self.sel}_btagWeight{systematic_suffix_map[systematic]}{sys}'] = SF*efficiency
+                    #else:
+                    new_fields[f'new{self.sel}_btagWeight{systematic_suffix_map[systematic]}{sys}'] = SF#*efficiency
 
                 else:
                     
@@ -1825,7 +2081,10 @@ class nSubBasis_unfoldingHistoProd_WtopSel():#processor.ProcessorABC):
                         
                     
 
-                    new_fields[f'new{self.sel}_btagWeight{systematic_suffix_map[systematic]}{sys}']=SF*efficiency
+                    #if self.withBTaggingEffs:
+                    #    new_fields[f'new{self.sel}_btagWeight{systematic_suffix_map[systematic]}{sys}']=SF*efficiency
+                    #else:
+                    new_fields[f'new{self.sel}_btagWeight{systematic_suffix_map[systematic]}{sys}']=SF#*efficiency
                     
 
         
@@ -1872,12 +2131,12 @@ class nSubBasis_unfoldingHistoProd_WtopSel():#processor.ProcessorABC):
         #    else:
         #        if s!='nominal': continue
         #            
-        #        for sys in self.sysSources:
+        #        for sys in self.sysSource:
         #            new_fields[f'new{self.sel}_leptonWeight{systematic_suffix_map[s]}{sys}'] = []
 
         
         if not(self.sysUnc) or ('const' in self.onlyUnc): sysList = ['_nom']
-        else: sysList=self.sysSources
+        else: sysList=self.sysSource
 
         if self.verbose: print(f"Computing lepton weights ({systematic_suffix_map.keys()}) for following sys sources: {sysList}, using {muon_SF_labels} SFs")
         
@@ -1893,13 +2152,23 @@ class nSubBasis_unfoldingHistoProd_WtopSel():#processor.ProcessorABC):
             dummyZeroes=np.zeros(len(self.events[f'selRecoMu{sys}_pt'][failMask]))
 
             ID_SFs, ISO_SFs, RecoEff_SFs, Trig_SFs = np.ones_like(dummyOnes),np.ones_like(dummyOnes),np.ones_like(dummyOnes),np.ones_like(dummyOnes)
-            
-            ID_SFs[passMask], ISO_SFs[passMask], RecoEff_SFs[passMask], Trig_SFs[passMask] = compute_MuonSFs(self.muIDISOjson, 
-                                                                                                             self.muRecoEffjson, self.muTrigjson,
-                                                                                                             'nominal', 
-                                                                                                             np.array(self.events[f'selRecoMu{sys}_eta'][passMask]), 
-                                                                                                             np.array(self.events[f'selRecoMu{sys}_p'][passMask]), 
-                                                                                                             np.array(self.events[f'selRecoMu{sys}_pt'][passMask]))
+            if self.Mu_tkRelIso==0.05:#tight WP
+
+                ID_SFs[passMask], ISO_SFs[passMask], RecoEff_SFs[passMask], Trig_SFs[passMask] = compute_MuonSFs(self.muIDISOjson, 
+                                                                                                                 self.muRecoEffjson, self.muTrigjson,
+                                                                                                                 'nominal', 
+                                                                                                                 np.array(self.events[f'selRecoMu{sys}_eta'][passMask]), 
+                                                                                                                 np.array(self.events[f'selRecoMu{sys}_p'][passMask]), 
+                                                                                                                 np.array(self.events[f'selRecoMu{sys}_pt'][passMask]))
+             
+            elif self.Mu_tkRelIso==0.1:#tight WP
+
+                ID_SFs[passMask], ISO_SFs[passMask], RecoEff_SFs[passMask], Trig_SFs[passMask] = compute_MuonSFs_LooseISO(self.muIDISOjson, 
+                                                                                                                 self.muRecoEffjson, self.muTrigjson,
+                                                                                                                 'nominal', 
+                                                                                                                 np.array(self.events[f'selRecoMu{sys}_eta'][passMask]), 
+                                                                                                                 np.array(self.events[f'selRecoMu{sys}_p'][passMask]), 
+                                                                                                                 np.array(self.events[f'selRecoMu{sys}_pt'][passMask]))
             #ID_SFs_pass, ISO_SFs_pass, RecoEff_SFs_pass, Trig_SFs_pass
             ID_SFs[failMask], ISO_SFs[failMask], RecoEff_SFs[failMask], Trig_SFs[failMask] = np.zeros_like(dummyZeroes),np.zeros_like(dummyZeroes),np.zeros_like(dummyZeroes),np.zeros_like(dummyZeroes)#ID_SFs_fail, ISO_SFs_fail, RecoEff_SFs_fail, Trig_SFs_fail
             
@@ -1995,13 +2264,23 @@ class nSubBasis_unfoldingHistoProd_WtopSel():#processor.ProcessorABC):
 #####################################################
 ###################### Helpers ######################
 #####################################################
-
 def compute_MuonSFs(mujsonIDISO, mujsonRecoEff, mujsonTrig, systematic, eta, momentum, pt):#, iEvt):
     
     ID_SFs = mujsonIDISO["NUM_HighPtID_DEN_GlobalMuonProbes"].evaluate( np.abs(eta), pt, systematic)
     ISO_SFs = mujsonIDISO["NUM_probe_TightRelTkIso_DEN_HighPtProbes"].evaluate( np.abs(eta), pt, systematic)
     RecoEff_SFs = mujsonRecoEff["NUM_GlobalMuons_DEN_TrackerMuonProbes"].evaluate( np.abs(eta), momentum, systematic)
     TriggerEff_SFs = mujsonTrig["NUM_HLT_DEN_HighPtTightRelIsoProbes"].evaluate( np.abs(eta), pt, systematic)
+
+    #print("Event 0-10, syst, SFs ID,ISO,Reco eff., Trig. eff. =", systematic, ID_SFs[0:10], ISO_SFs[0:10], RecoEff_SFs[0:10], TriggerEff_SFs[0:10])
+
+    return ID_SFs, ISO_SFs, RecoEff_SFs, TriggerEff_SFs
+
+def compute_MuonSFs_LooseISO(mujsonIDISO, mujsonRecoEff, mujsonTrig, systematic, eta, momentum, pt):#, iEvt):
+    
+    ID_SFs = mujsonIDISO["NUM_HighPtID_DEN_GlobalMuonProbes"].evaluate( np.abs(eta), pt, systematic)
+    ISO_SFs = mujsonIDISO["NUM_probe_LooseRelTkIso_DEN_HighPtProbes"].evaluate( np.abs(eta), pt, systematic)
+    RecoEff_SFs = mujsonRecoEff["NUM_GlobalMuons_DEN_TrackerMuonProbes"].evaluate( np.abs(eta), momentum, systematic)
+    TriggerEff_SFs = mujsonTrig["NUM_HLT_DEN_HighPtLooseRelIsoProbes"].evaluate( np.abs(eta), pt, systematic)
 
     #print("Event 0-10, syst, SFs ID,ISO,Reco eff., Trig. eff. =", systematic, ID_SFs[0:10], ISO_SFs[0:10], RecoEff_SFs[0:10], TriggerEff_SFs[0:10])
 

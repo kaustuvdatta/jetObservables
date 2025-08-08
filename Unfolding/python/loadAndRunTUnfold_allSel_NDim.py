@@ -449,7 +449,7 @@ def runTUnfold(
         #    print(year)
         #    print(allHistos[ 'dataHisto'+ivar ].Integral(), allHistos[ 'dataHistoGenBin' +ivar].Integral(), signalHistos[ signalLabel+'_reco'+ivar+'_nom'+sel ].Integral(), signalHistos[ signalLabel+'_gen'+ivar+'_nom'+sel ].Integral(), sysSignalHistos[f'{fsrLabel}'+'_gen'+ivar+'_fsrWeightUp'+sel].Integral(),        sysSignalHistos[f'{fsrLabel}'+'_gen'+ivar+'_fsrWeightDown'+sel].Integral() )
             
-        if sel.startswith('_dijet') and not('all' in year):#.startswith('all')): 
+        if sel.startswith('_dijet') and not('all' in year):
 
             scalingDict = {}    
             ### For dijet, scale QCD to data, as per AGE's past work
@@ -467,7 +467,7 @@ def runTUnfold(
                 #scaleFactorGenBin = round(scaleFactorGenBin,15)
                 
                 if not np.isclose(scaleFactor,scaleFactorGenBin): 
-                    print(f"WARNING (something weird): gen-/reco-binning mc-to-data SFs are not the same, {scaleFactor,scaleFactorGenBin}")
+                    print(f"WARNING (something weird in binning schemes): gen-/reco-binning mc-to-data SFs are not the same, {scaleFactor,scaleFactorGenBin}")
                     print ("SF genBin and recobin, data int., nominal reco int., respectively:",scaleFactor,scaleFactorGenBin,f"{dataHistosForRescaling['data_reco'+ivar+'_nom'+sel].Integral():.16f}",f"{allHistos[ 'allMCHisto' +ivar].Integral():.16f}")
                 
                 for ihsig in dataHistos:
@@ -868,8 +868,8 @@ def runTUnfold(
                 scaleUnc_bkgHistos['ST'+suff] = 0.23
                 scaleUnc_bkgHistos['WJets'+suff] = 0.19
                 scaleUnc_bkgHistos['QCD'+suff] = 1.
-                scaleUnc_bkgHistos['DY'+suff] = 1.#setting to 100% as per top mass measurement paper  #Z+jets and VV scale unc. set to 50% in ATLAS 2019 substructure paper
-                scaleUnc_bkgHistos['VV'+suff] = 1.#setting to 100% as per top mass measurement paper  #Z+jets and VV scale unc. set to 50% in ATLAS 2019 substructure paper
+                scaleUnc_bkgHistos['DY'+suff] = 1.#setting to 100% as per top mass measurement paper  #Z+jets and VV scale unc. set to 50% in ATLAS 2019 substructure paper(??)
+                scaleUnc_bkgHistos['VV'+suff] = 1.#setting to 100% as per top mass measurement paper  #Z+jets and VV scale unc. set to 50% in ATLAS 2019 substructure paper(??)
                 
                 for ibkg in bkgHistos:
                     if ibkg.endswith('_reco'+ivar+'_nom'+sel):
@@ -985,7 +985,7 @@ def runTUnfold(
                                             )
                         can2DNorm = ROOT.TCanvas(ivar+'can2DNorm'+sys+upDown, ivar+'can2DNorm'+sys+upDown, 750, 500 )
                         sysSignalHistos[s[0]+'_respWithMiss'+ivar+sys+upDown+sel].Draw("colz")
-                        can2DNorm.SaveAs(outputDir+ivar+'_from'+('Data' if process.startswith('data') else 'MC')+'_'+s[0]+sel+upDown+'Normalized_responseMatrix'+version+'.'+ext)
+                        #can2DNorm.SaveAs(outputDir+ivar+'_from'+('Data' if process.startswith('data') else 'MC')+'_'+s[0]+sel+upDown+'Normalized_responseMatrix'+version+'.'+ext)
 
                 #### adding model uncertainty
                 elif sys.startswith(('_model')):
@@ -999,7 +999,7 @@ def runTUnfold(
                                         )
                     can2DNorm = ROOT.TCanvas(ivar+'can2DNormAltSignal', ivar+'can2DNormAltSignal', 750, 500 )
                     altSignalHistos[altSignalLabel+'_respWithMiss'+ivar+'_nom'+sel].Draw("colz")
-                    can2DNorm.SaveAs(outputDir+ivar+'_from'+('Data' if process.startswith('data') else 'MC')+'_'+altSignalLabel+sel+'Normalized_alt_responseMatrix'+version+'.'+ext)
+                    #can2DNorm.SaveAs(outputDir+ivar+'_from'+('Data' if process.startswith('data') else 'MC')+'_'+altSignalLabel+sel+'Normalized_alt_responseMatrix'+version+'.'+ext)
                     dictUncHistos[sys] = altSignalHistos[altSignalLabel+'_reco'+ivar+'_nom'+sel].Clone()
             
                 #below if blocks for modelling systematics relevant only to ttbar (W/top) selections 
@@ -1015,7 +1015,7 @@ def runTUnfold(
                                         )
                     can2DNorm = ROOT.TCanvas(ivar+'can2DNorm'+'_hdampUp', ivar+'can2DNorm'+'_hdampUp', 750, 500 )
                     varSignalHistos['varTTToSemileptonic_hdampUp_TuneCP5'+'_respWithMiss'+ivar+'_nom'+sel].Draw("colz")
-                    can2DNorm.SaveAs(outputDir+ivar+'_from'+('Data' if process.startswith('data') else 'MC')+'_'+'TTToSemileptonic_hdampUp'+'_respWithMiss'+sel+'Normalized_responseMatrix'+version+'.'+ext)
+                    #can2DNorm.SaveAs(outputDir+ivar+'_from'+('Data' if process.startswith('data') else 'MC')+'_'+'TTToSemileptonic_hdampUp'+'_respWithMiss'+sel+'Normalized_responseMatrix'+version+'.'+ext)
 
                     tunfolder.AddSysError(
                                         varSignalHistos['varTTToSemileptonic_hdampDown_TuneCP5'+'_respWithMiss'+ivar+'_nom'+sel],
@@ -1025,7 +1025,7 @@ def runTUnfold(
                                         )
                     can2DNorm = ROOT.TCanvas(ivar+'can2DNorm'+'_hdampDown', ivar+'can2DNorm'+'_hdampDown', 750, 500 )
                     varSignalHistos['varTTToSemileptonic_hdampDown_TuneCP5'+'_respWithMiss'+ivar+'_nom'+sel].Draw("colz")
-                    can2DNorm.SaveAs(outputDir+ivar+'_from'+('Data' if process.startswith('data') else 'MC')+'_'+'TTToSemileptonic_hdampDown'+'_respWithMiss'+sel+'Normalized_responseMatrix'+version+'.'+ext)
+                    #can2DNorm.SaveAs(outputDir+ivar+'_from'+('Data' if process.startswith('data') else 'MC')+'_'+'TTToSemileptonic_hdampDown'+'_respWithMiss'+sel+'Normalized_responseMatrix'+version+'.'+ext)
 
                     dictUncHistos['_hdampUp'] = varSignalHistos['varTTToSemileptonic_hdampUp_TuneCP5'+'_reco'+ivar+'_nom'+sel].Clone()
                     dictUncHistos['_hdampDown'] = varSignalHistos['varTTToSemileptonic_hdampDown_TuneCP5'+'_reco'+ivar+'_nom'+sel].Clone()
@@ -1042,7 +1042,7 @@ def runTUnfold(
                                         )
                     can2DNorm = ROOT.TCanvas(ivar+'can2DNorm'+'_TuneCP5Up', ivar+'can2DNorm'+'_TuneCP5Up', 750, 500 )
                     varSignalHistos['varTTToSemileptonic_TuneCP5Up'+'_respWithMiss'+ivar+'_nom'+sel].Draw("colz")
-                    can2DNorm.SaveAs(outputDir+ivar+'_from'+('Data' if process.startswith('data') else 'MC')+'_'+'TTToSemileptonic_TuneCP5Up'+'_respWithMiss'+sel+'Normalized_responseMatrix'+version+'.'+ext)
+                    #can2DNorm.SaveAs(outputDir+ivar+'_from'+('Data' if process.startswith('data') else 'MC')+'_'+'TTToSemileptonic_TuneCP5Up'+'_respWithMiss'+sel+'Normalized_responseMatrix'+version+'.'+ext)
 
                     tunfolder.AddSysError(
                                         varSignalHistos['varTTToSemileptonic_TuneCP5Down'+'_respWithMiss'+ivar+'_nom'+sel],
@@ -1052,7 +1052,7 @@ def runTUnfold(
                                         )
                     can2DNorm = ROOT.TCanvas(ivar+'can2DNorm'+'_TuneCP5Down', ivar+'can2DNorm'+'_TuneCP5Down', 750, 500 )
                     varSignalHistos['varTTToSemileptonic_TuneCP5Down'+'_respWithMiss'+ivar+'_nom'+sel].Draw("colz")
-                    can2DNorm.SaveAs(outputDir+ivar+'_from'+('Data' if process.startswith('data') else 'MC')+'_'+'TTToSemileptonic_TuneCP5Down'+'_respWithMiss'+sel+'Normalized_responseMatrix'+version+'.'+ext)
+                    #can2DNorm.SaveAs(outputDir+ivar+'_from'+('Data' if process.startswith('data') else 'MC')+'_'+'TTToSemileptonic_TuneCP5Down'+'_respWithMiss'+sel+'Normalized_responseMatrix'+version+'.'+ext)
 
                     dictUncHistos['_TuneCP5Up'] = varSignalHistos['varTTToSemileptonic_TuneCP5Up'+'_reco'+ivar+'_nom'+sel].Clone()
                     dictUncHistos['_TuneCP5Down'] = varSignalHistos['varTTToSemileptonic_TuneCP5Down'+'_reco'+ivar+'_nom'+sel].Clone()
@@ -1070,7 +1070,7 @@ def runTUnfold(
                                             )
                         can2DNorm = ROOT.TCanvas(ivar+'can2DNorm'+'TuneCP5_erdON', ivar+'can2DNorm'+'TuneCP5_erdON', 750, 500 )
                         varSignalHistos['varTTToSemileptonic_TuneCP5_erdON'+'_respWithMiss'+ivar+'_nom'+sel].Draw("colz")
-                        can2DNorm.SaveAs(outputDir+ivar+'_from'+('Data' if process.startswith('data') else 'MC')+'_'+'TTToSemileptonic_TuneCP5_erdON'+'_respWithMiss'+sel+'Normalized_responseMatrix'+version+'.'+ext)
+                        #can2DNorm.SaveAs(outputDir+ivar+'_from'+('Data' if process.startswith('data') else 'MC')+'_'+'TTToSemileptonic_TuneCP5_erdON'+'_respWithMiss'+sel+'Normalized_responseMatrix'+version+'.'+ext)
 
                         dictUncHistos['_erdON'] = varSignalHistos['varTTToSemileptonic_TuneCP5_erdON'+'_reco'+ivar+'_nom'+sel].Clone()
                     
@@ -1086,7 +1086,7 @@ def runTUnfold(
                                             )
                         can2DNorm = ROOT.TCanvas(ivar+'can2DNorm'+'TuneCP5CR1', ivar+'can2DNorm'+'TuneCP5CR1', 750, 500 )
                         varSignalHistos['varTTToSemileptonic_TuneCP5CR1'+'_respWithMiss'+ivar+'_nom'+sel].Draw("colz")
-                        can2DNorm.SaveAs(outputDir+ivar+'_from'+('Data' if process.startswith('data') else 'MC')+'_'+'TTToSemileptonic_TuneCP5CR1'+'_respWithMiss'+sel+'Normalized_responseMatrix'+version+'.'+ext)
+                        #can2DNorm.SaveAs(outputDir+ivar+'_from'+('Data' if process.startswith('data') else 'MC')+'_'+'TTToSemileptonic_TuneCP5CR1'+'_respWithMiss'+sel+'Normalized_responseMatrix'+version+'.'+ext)
                         dictUncHistos['_CR1'] = varSignalHistos['varTTToSemileptonic_TuneCP5CR1'+'_reco'+ivar+'_nom'+sel].Clone()
 
                     if '_CR2' in sysUncert or '_CR2' in sys:
@@ -1098,7 +1098,7 @@ def runTUnfold(
                                             )
                         can2DNorm = ROOT.TCanvas(ivar+'can2DNorm'+'TuneCP5CR2', ivar+'can2DNorm'+'TuneCP5CR2', 750, 500 )
                         varSignalHistos['varTTToSemileptonic_TuneCP5CR2'+'_respWithMiss'+ivar+'_nom'+sel].Draw("colz")
-                        can2DNorm.SaveAs(outputDir+ivar+'_from'+('Data' if process.startswith('data') else 'MC')+'_'+'TTToSemileptonic_TuneCP5CR2'+'_respWithMiss'+sel+'Normalized_responseMatrix'+version+'.'+ext)
+                        #can2DNorm.SaveAs(outputDir+ivar+'_from'+('Data' if process.startswith('data') else 'MC')+'_'+'TTToSemileptonic_TuneCP5CR2'+'_respWithMiss'+sel+'Normalized_responseMatrix'+version+'.'+ext)
 
                         dictUncHistos['_CR2'] = varSignalHistos['varTTToSemileptonic_TuneCP5CR2'+'_reco'+ivar+'_nom'+sel].Clone()
                     
@@ -1116,7 +1116,7 @@ def runTUnfold(
                                             )
                         can2DNorm = ROOT.TCanvas(ivar+'can2DNorm'+'_mtop%s_TuneCP5'%m, ivar+'can2DNorm'+'_mtop%s_TuneCP5'%m, 750, 500 )
                         varSignalHistos['varTTToSemileptonic_mtop%s_TuneCP5'%m+'_respWithMiss'+ivar+'_nom'+sel].Draw("colz")
-                        can2DNorm.SaveAs(outputDir+ivar+'_from'+('Data' if process.startswith('data') else 'MC')+'_'+'TTToSemileptonic_mtop%s_TuneCP5'%m +'_respWithMiss'+sel+'Normalized_responseMatrix'+version+'.'+ext)
+                        #can2DNorm.SaveAs(outputDir+ivar+'_from'+('Data' if process.startswith('data') else 'MC')+'_'+'TTToSemileptonic_mtop%s_TuneCP5'%m +'_respWithMiss'+sel+'Normalized_responseMatrix'+version+'.'+ext)
 
                         dictUncHistos['_mtop%s'%m] = varSignalHistos['varTTToSemileptonic_mtop%s_TuneCP5'%m+'_reco'+ivar+'_nom'+sel].Clone()
 
@@ -1869,7 +1869,7 @@ def runTUnfold(
                        #unfoldHistoStatUnc=allHistos[ 'unfoldHistoStatUnc'+ivar ].Clone(),
                        unfoldHistowoUnc=allHistos[ 'unfoldHistowoUnc'+ivar ].Clone(),
                        foldHisto=tunfolder.GetFoldedOutput("folded"+ivar).Clone(), recoJetHisto=signalHistos[signalLabel+'_respWithMiss'+ivar+'_nom'+sel].ProjectionY().Clone(),
-                       cov_datastat_tot= allHistos['cov_dataAndBkgs'+ivar].Clone(),  #allHistos['cov_uncorr_data_'+ivar].Clone(),
+                       cov_datastat_tot=allHistos['cov_uncorr_data_'+ivar].Clone(),# allHistos['cov_dataAndBkgs'+ivar].Clone(),  #
                        cov_tot=allHistos['cov'+ivar].Clone(),
                        altMCHisto =  altSignalHistos[altSignalLabel+'_gen'+ivar+'_nom'+sel].Clone(),#altMCHisto =  altSignalHistos[altSignalLabel+'_respWithMiss'+ivar+'_nom'+sel].ProjectionX('altMCHisto_fromProjX', 0, altSignalHistos[altSignalLabel+'_respWithMiss'+ivar+'_nom'+sel].GetNbinsY()+1).Clone(),
                        labelX=variables[ivar]['label'],
@@ -1886,7 +1886,8 @@ def runTUnfold(
                        fsrUpHisto = sysSignalHistos[f'{fsrLabel}'+'_gen'+ivar+'_fsrWeightUp'+sel].Clone() if include_FSR_in_unfolded_result else None,
                        fsrDownHisto = sysSignalHistos[f'{fsrLabel}'+'_gen'+ivar+'_fsrWeightDown'+sel].Clone() if include_FSR_in_unfolded_result else None,
                        )
-            
+             
+            '''
             drawUnfold(ivar=ivar, 
                        selection=sel, year=year,lumi=lumi, process=process,
                        dataJetHisto=allHistos[ 'dataMinusBkgs'+ivar ].Clone(),
@@ -1896,7 +1897,7 @@ def runTUnfold(
                        unfoldHistowoUnc=allHistos[ 'unfoldHistowoUnc'+ivar ].Clone(),
                        foldHisto=tunfolder.GetFoldedOutput("folded"+ivar).Clone(),
                        recoJetHisto=signalHistos[signalLabel+'_respWithMiss'+ivar+'_nom'+sel].ProjectionY().Clone(),
-                       cov_datastat_tot= allHistos['cov_dataAndBkgs'+ivar].Clone(),  #allHistos['cov_uncorr_data_'+ivar].Clone(),
+                       cov_datastat_tot= allHistos['cov_uncorr_data_'+ivar].Clone(),#allHistos['cov_dataAndBkgs'+ivar].Clone(),  
                        cov_tot=allHistos['cov'+ivar].Clone(),
                        altMCHisto=  altSignalHistos[altSignalLabel+'_gen'+ivar+'_nom'+sel].Clone(),
                        labelX=variables[ivar]['label'],
@@ -1913,7 +1914,8 @@ def runTUnfold(
                        fsrUpHisto = sysSignalHistos[f'{fsrLabel}'+'_gen'+ivar+'_fsrWeightUp'+sel].Clone() if include_FSR_in_unfolded_result else None,
                        fsrDownHisto = sysSignalHistos[f'{fsrLabel}'+'_gen'+ivar+'_fsrWeightDown'+sel].Clone() if include_FSR_in_unfolded_result else None,
                        noNorm=True
-                       )
+                       ) 
+            '''
         else: 
             if 'Cross' in process:
                 drawClosures(ivar=ivar, selection=sel, year=year, lumi=lumi, process=process,
@@ -1935,6 +1937,7 @@ def runTUnfold(
                              nomMCHisto_label = sigPlotLabel, altMCHisto_label = altSigPlotLabel, noNorm=False
 
                              )
+                '''
                 drawClosures(ivar=ivar, selection=sel, year=year, lumi=lumi, process=process,
                              genJetHistoCross=altSignalHistos[altSignalLabel+'_gen'+ivar+'_nom'+sel].Clone(),
                              unfoldHistoCross=allHistos['unfoldHistoCross'+ivar ].Clone(),
@@ -1953,6 +1956,7 @@ def runTUnfold(
                              outputName=outputDir+ivar+sel+'_from'+process+signalLabel+'_TUnfold_NO_NORM_'+version+'.'+ext,
                              nomMCHisto_label = sigPlotLabel, altMCHisto_label = altSigPlotLabel, noNorm=True
                              )
+                             '''
                 
                                 
             else:
@@ -1974,6 +1978,7 @@ def runTUnfold(
                              outputName=outputDir+ivar+sel+'_from'+process+signalLabel+'_TUnfold_'+version+'.'+ext,
                              nomMCHisto_label = sigPlotLabel, altMCHisto_label = altSigPlotLabel, noNorm=False
                              )
+                '''
                 drawClosures(ivar=ivar, selection=sel, year=year, lumi=lumi, process=process,
                              genJetHistoCross=[], 
                              unfoldHistoCross=[] ,
@@ -1992,6 +1997,7 @@ def runTUnfold(
                              outputName=outputDir+ivar+sel+'_from'+process+signalLabel+'_TUnfold_NO_NORM_'+version+'.'+ext,
                              nomMCHisto_label = sigPlotLabel, altMCHisto_label = altSigPlotLabel, noNorm=True
                              )
+                '''
                 
                 
         
@@ -2023,6 +2029,10 @@ def runTUnfold(
                          version=version,
                          ext='pdf'
                         )
+            
+            
+            
+            """
             doRelUncPlot(ivar,
                          year,
                          lumi,
@@ -2033,9 +2043,7 @@ def runTUnfold(
                          version=version,
                          ext='png'
                         )
-            
-            
-            """
+                        
             drawUncertainties_from_err_shifts( ivar=ivar, 
                                                unfoldHistoTotUnc=allHistos[ 'unfoldHisto'+ivar ].Clone(),
                                                unfoldHistowoUnc=allHistos[ 'unfoldHistowoUnc'+ivar ].Clone(),
@@ -2117,13 +2125,13 @@ def runTUnfold(
             
             draw2D( ivar,  allHistos[ 'correlation_matrix_'+ivar ].Clone(), variables[ivar], outputLabel='data_correlationMatrix', outputDir=outputDir,selection=sel,version=version,year=year,pngToo=True)
             draw2D( ivar, allHistos[ 'cov'+ivar].Clone(), variables[ivar], outputLabel='dataTotal_covMatrix', outputDir=outputDir, addCorrelation=False,selection=sel,version=version,year=year,pngToo=True)
-            draw2D( ivar, allHistos[ 'cov_uncorr_'+ivar].Clone(), variables[ivar], outputLabel='uncorrUncRM_covMatrix', outputDir=outputDir, addCorrelation=False,selection=sel,version=version,year=year)
-            draw2D( ivar, allHistos[ 'cov_uncorr_data_'+ivar].Clone(), variables[ivar], outputLabel='dataInpStats_covMatrix', outputDir=outputDir, addCorrelation=False,selection=sel,version=version,year=year)
+            #draw2D( ivar, allHistos[ 'cov_uncorr_'+ivar].Clone(), variables[ivar], outputLabel='uncorrUncRM_covMatrix', outputDir=outputDir, addCorrelation=False,selection=sel,version=version,year=year)
+            #draw2D( ivar, allHistos[ 'cov_uncorr_data_'+ivar].Clone(), variables[ivar], outputLabel='dataInpStats_covMatrix', outputDir=outputDir, addCorrelation=False,selection=sel,version=version,year=year)
             
-            draw2D( ivar, allHistos[ 'cov_dataAndBkgs'+ivar].Clone(), variables[ivar], outputLabel='dataAndBkgStats_covMatrix', outputDir=outputDir, addCorrelation=False,selection=sel,version=version,year=year)
+            #draw2D( ivar, allHistos[ 'cov_dataAndBkgs'+ivar].Clone(), variables[ivar], outputLabel='dataAndBkgStats_covMatrix', outputDir=outputDir, addCorrelation=False,selection=sel,version=version,year=year)
             
-            draw2D( ivar, allHistos[ 'cov_uncorr_bkg_'+ivar].Clone(), variables[ivar], outputLabel='BkgSubtractionSyst_covMatrix', outputDir=outputDir, addCorrelation=False,selection=sel,version=version,year=year)
-            draw2D( ivar, allHistos[ 'cov_systTotal'+ivar].Clone(), variables[ivar], outputLabel='Syst_covMatrix', outputDir=outputDir, addCorrelation=False,selection=sel,version=version,year=year)
+            #draw2D( ivar, allHistos[ 'cov_uncorr_bkg_'+ivar].Clone(), variables[ivar], outputLabel='BkgSubtractionSyst_covMatrix', outputDir=outputDir, addCorrelation=False,selection=sel,version=version,year=year)
+            #draw2D( ivar, allHistos[ 'cov_systTotal'+ivar].Clone(), variables[ivar], outputLabel='Syst_covMatrix', outputDir=outputDir, addCorrelation=False,selection=sel,version=version,year=year)
         
             draw2D( ivar,  allHistos[ 'probaMatrix'+ivar ].Clone(), variables[ivar], outputLabel='data_probaMatrix', outputDir=outputDir, addCorrelation=True, addCondition=True ,selection=sel,version=version,year=year,pngToo=True)
             dict_condition_numbers[ivar] = get_condition_number(allHistos[ 'probaMatrix'+ivar ].Clone())
@@ -2168,7 +2176,7 @@ def runTUnfold(
                 
                 if process.startswith('data'):
                     
-                    draw2D( ivar, allHistos[i].Clone(), variables[ivar], outputLabel='Un-normed_'+i, outputDir=outputDir,selection=sel,version=version,year=year)
+                    #draw2D( ivar, allHistos[i].Clone(), variables[ivar], outputLabel='Un-normed_'+i, outputDir=outputDir,selection=sel,version=version,year=year)
                 
                     draw2D( ivar, normed_covs['Normed'+i].Clone(), variables[ivar], outputLabel='Normed_'+i, outputDir=outputDir,selection=sel,version=version,year=year)
                     

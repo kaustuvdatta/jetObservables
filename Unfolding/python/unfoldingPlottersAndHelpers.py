@@ -188,7 +188,8 @@ def drawDataMCReco( ivar, selection, year, lumi, process,
                     labelX, jetType, maxX, tlegendAlignment, outputName,log=False ):
     """docstring for drawDataMCReco (dijets)"""
     print ("Drawing Data/MC")
-    colors = [ROOT.TColor.GetColor("#bd1f01"),ROOT.TColor.GetColor("#3f90da"),ROOT.TColor.GetColor("#ffa90e")]
+    colors = [ROOT.TColor.GetColor("#e42536"),ROOT.TColor.GetColor("#5790fc"),ROOT.TColor.GetColor("#f89c20")]
+    #[ROOT.TColor.GetColor("#bd1f01"),ROOT.TColor.GetColor("#3f90da"),ROOT.TColor.GetColor("#ffa90e")]
     
     #ROOT.gStyle.SetPadRightMargin(0.05)
     #ROOT.gStyle.SetPadLeftMargin(0.15)
@@ -246,21 +247,20 @@ def drawDataMCReco( ivar, selection, year, lumi, process,
     can.cd()
     pad1.cd()
     
-    if tlegendAlignment.startswith('right'): legend=ROOT.TLegend(0.65,0.60,0.91-0.02,0.88) #legend=ROOT.TLegend(0.7,0.60,0.91,0.88)
-
-    else: legend=ROOT.TLegend(0.19,0.60,0.45-0.02,0.88) #legend=ROOT.TLegend(0.19,0.60,0.45,0.88)
+    if tlegendAlignment.startswith('right'): legend=ROOT.TLegend(0.63,0.55,0.90,0.89)
+    else: legend=ROOT.TLegend(0.175,0.55,0.545,0.89) #legend=ROOT.TLegend(0.19,0.60,0.45,0.88)
     legend.SetFillStyle(0)
-    legend.SetTextSize(0.040)
+    legend.SetTextSize(0.042)
     legend.SetTextFont(42)
     legend.SetBorderSize(0)
     
     print(dataJetHisto,nominal_recoJetHisto,alt0_recoJetHisto,alt1_recoJetHisto,alt2_recoJetHisto)
     
-    dataHisto = dataJetHisto.Clone()#normalise_hist
-    recoHisto = nominal_recoJetHisto.Clone()#normalise_hist
-    alt0recoHisto = alt0_recoJetHisto.Clone()#normalise_hist
-    alt1recoHisto = alt1_recoJetHisto.Clone()#normalise_hist
-    alt2recoHisto = alt2_recoJetHisto.Clone()#normalise_hist
+    dataHisto = dataJetHisto.Clone()
+    recoHisto = nominal_recoJetHisto.Clone()
+    alt0recoHisto = alt0_recoJetHisto.Clone()
+    alt1recoHisto = alt1_recoJetHisto.Clone()
+    alt2recoHisto = alt2_recoJetHisto.Clone()
     
     if 'tau' in ivar: dataHisto.Scale(1, 'width')  ### divide by bin width
     #dataHisto.Scale(1/dataHisto.Integral(), 'width')  ### divide by bin width
@@ -268,16 +268,16 @@ def drawDataMCReco( ivar, selection, year, lumi, process,
     dataHisto.SetMarkerSize(1)
     dataHisto.SetMarkerColor(ROOT.kBlack)
     dataHisto.SetLineColor(ROOT.kBlack)
-    legend.AddEntry( dataHisto, 'Data', 'pe' )
+    #dataHisto.SetFillColorAlpha(16,0.7)
+    #dataHisto.SetLineWidth(1)
     
     if 'tau' in ivar: recoHisto.Scale(1, 'width')
     
-    recoHisto.SetLineWidth(1)
+    recoHisto.SetLineWidth(2)
     recoHisto.SetLineColor(colors[0])
     recoHisto.SetMarkerColor(colors[0])
     recoHisto.SetMarkerStyle(25)
     recoHisto.SetMarkerSize(1)
-    legend.AddEntry( recoHisto, 'MG5-MLM+P8', 'lp' )
 
     print(labelX)
 
@@ -314,58 +314,63 @@ def drawDataMCReco( ivar, selection, year, lumi, process,
     
     dataHisto.GetXaxis().SetTitleOffset(999)    
     dataHisto.GetXaxis().SetLabelOffset(999)    
-    
-    dataHisto.GetYaxis().SetTitleOffset(extraSpace+1.15*Hup/H_ref)    
-    dataHisto.GetYaxis().SetTitleSize(0.056* H_ref / Hup)
-    dataHisto.GetYaxis().SetLabelSize(0.047* H_ref / Hup)
+    dataHisto.GetYaxis().SetLabelOffset(0.011* H_ref / Hup)    
+    dataHisto.GetYaxis().SetTitleOffset(extraSpace+1.1*Hup/H_ref)    
+    dataHisto.GetYaxis().SetTitleSize(0.054* H_ref / Hup)
+    dataHisto.GetYaxis().SetLabelSize(0.045* H_ref / Hup)
     dataHisto.GetYaxis().SetTitleFont(42)
-    dataHisto.SetMaximum( 1.8*max([ recoHisto.GetMaximum(), dataHisto.GetMaximum()] ) if not('pt') in ivar else 40.*max([ recoHisto.GetMaximum(), dataHisto.GetMaximum()] )  )
+    dataHisto.SetMaximum( 1.7*max([ recoHisto.GetMaximum(), dataHisto.GetMaximum()] ) if not('pt') in ivar else 40.*max([ recoHisto.GetMaximum(), dataHisto.GetMaximum()] )  )
     dataHisto.SetMinimum(0. if not log else 0.01)
-    #pad1.GetYaxis().SetRangeUser(0,1.5*max([ genJetHisto.GetMaximum(), dataHisto.GetMaximum()] ) )
-    #pad1.GetYaxis().SetRangeUser(0,1.5*max([ genJetHisto.GetMaximum(), unfoldHisto.GetMaximum()] ) )
+    
     dataHisto.SetTickLength(0.03, "XY")  # ?? ok if 1/3
     dataHisto.GetYaxis().SetMaxDigits(3)#,'y')
-    ROOT.TGaxis.SetExponentOffset(-0.09, 0.015, "Y")        
+    ROOT.TGaxis.SetExponentOffset(-0.08, 0.014, "Y")        
 
 
     dataHisto.Draw( "AXIS")
     can.Update()
+
+    legend.AddEntry( dataHisto, 'Data', 'pe' )
+
     
-    
-    
+    dataHisto.Draw( "PE1 same")
+
     dataHisto.SetTitle('')
     can.SetTitle('')
 
     
     #alt1recoHisto.Scale(1, 'width')  ### divide by bin width
-    #alt1recoHisto.SetLineWidth(2)
+    #alt1recoHisto.SetLineWidth(3)
     #alt1recoHisto.SetLineColor(ROOT.kCyan+3)
     #alt1recoHisto.SetMarkerColor(ROOT.kCyan+3)
     #alt1recoHisto.SetMarkerStyle(25)
     #alt1recoHisto.SetMarkerSize(2)
-    #legend.AddEntry( alt1recoHisto, 'MG5-MLM+Pythia8', 'lp' )
+    #legend.AddEntry( alt1recoHisto, 'MadGraph5+Pythia8', 'lp' )
     #alt1recoHisto.Draw("histe1 same")
-    recoHisto.Draw( "histe1 same")
+    legend.AddEntry( recoHisto, 'MadGraph5+P8', 'lp' )
+
+    recoHisto.Draw( "hist][ same")
 
     if 'tau' in ivar: alt0recoHisto.Scale(1, 'width')  ### divide by bin width
-    alt0recoHisto.SetLineWidth(1)
+    alt0recoHisto.SetLineWidth(3)
+    alt0recoHisto.SetLineStyle(2)
     alt0recoHisto.SetLineColor(colors[1])#ROOT.kBlue)
     alt0recoHisto.SetMarkerColor(colors[1])#ROOT.kBlue)
     alt0recoHisto.SetMarkerStyle(25)
     alt0recoHisto.SetMarkerSize(1)
-    legend.AddEntry( alt0recoHisto, 'MG5-MLM+H7', 'lp' )
-    alt0recoHisto.Draw("histe1 same")
+    legend.AddEntry( alt0recoHisto, 'MadGraph5+H7', 'lp' )
+    alt0recoHisto.Draw("hist][ same")
     
     
     if 'tau' in ivar: alt2recoHisto.Scale(1, 'width')  ### divide by bin width
-    alt2recoHisto.SetLineWidth(1)
+    alt2recoHisto.SetLineWidth(3)
+    alt2recoHisto.SetLineStyle(7)
     alt2recoHisto.SetLineColor(colors[2])#ROOT.kGray+4)
     alt2recoHisto.SetMarkerColor(colors[2])#ROOT.kGray+4)
     alt2recoHisto.SetMarkerStyle(25)
     alt2recoHisto.SetMarkerSize(1)
     legend.AddEntry( alt2recoHisto, 'P8+P8', 'lp' )
-    alt2recoHisto.Draw("histe1 same")
-    dataHisto.Draw( "E1 same")
+    alt2recoHisto.Draw("hist][ same")
     
     if log: ROOT.gPad.SetLogy()
     else: ROOT.gPad.SetLogy(0)
@@ -379,12 +384,13 @@ def drawDataMCReco( ivar, selection, year, lumi, process,
     dijetOffset = 0
     
     if selection.startswith("_dijet"): 
-        seltext = ( 'Central Dijet' if 'Central' in jetType  else 'Forward Dijet' )
-        dijetOffset = 0.15
+        seltext = ( 'Central Dijet' if 'Central' in jetType  else 'Forward Dijet' )#+' dijet region'
+        dijetOffset = 0.0
     elif selection.startswith("_W"): seltext = 'Boosted W-enriched'
     elif selection.startswith("_top"): seltext = 'Boosted top-enriched'
     
-    selText.DrawLatex( ( 0.19 if tlegendAlignment.startswith('right') else 0.51+dijetOffset ), 0.87, seltext )
+    selText.DrawLatex( ( 0.19 if tlegendAlignment.startswith('right') else 0.63+dijetOffset ), 0.87, seltext )
+    #selText.DrawLatex( 0.61 if 'dijet' in selection else 0.51, 0.87, seltext )
 
     selText = textBox.Clone()
     selText.SetTextFont(42)
@@ -393,11 +399,11 @@ def drawDataMCReco( ivar, selection, year, lumi, process,
     selText.SetNDC()
     
     #if selection.startswith("_dijet") and 'Central' in jetType : seltext = 'p_{T}>200 GeV' 
-    if selection.startswith("_dijet"): seltext = 'p_{T}>200 GeV' 
-    elif selection.startswith("_W"): seltext = 'p_{T}>200 GeV, 65<m_{jet}<125 GeV' 
-    elif selection.startswith("_top"): seltext = 'p_{T}>400 GeV, 140<m_{jet}<300 GeV'
+    if selection.startswith("_dijet"): seltext = 'p_{T}>200 GeV, |y|<1.7' 
+    elif selection.startswith("_W"): seltext = '#splitline{p_{T}>200 GeV, |y|<1.7}{65<m_{jet}<125 GeV}' 
+    elif selection.startswith("_top"): seltext = '#splitline{p_{T}>400 GeV, |y|<1.7}{140<m_{jet}<300 GeV}'
     #selText.DrawLatex( ( 0.65 if tlegendAlignment.startswith('right') else 0.2 ), 0.83, seltext )
-    selText.DrawLatex( ( 0.19 if tlegendAlignment.startswith('right') else 0.51+dijetOffset ), 0.80, seltext )
+    selText.DrawLatex( ( 0.19 if tlegendAlignment.startswith('right') else 0.63+dijetOffset ), 0.77 if not('dijet' in selection) else 0.80, seltext )
     
     legend.Draw()
     
@@ -405,7 +411,7 @@ def drawDataMCReco( ivar, selection, year, lumi, process,
         CMS_lumi.extraText = "Preliminary"
         if year=='all': 
             #if 'dijet' in selection:
-            CMS_lumi.lumi_13TeV = ('#leq 135' if 'dijet' in selection else '138')+" fb^{-1} (13 TeV)"
+            CMS_lumi.lumi_13TeV = ('135' if 'dijet' in selection else '138')+" fb^{-1} (13 TeV)"
         else:
             CMS_lumi.lumi_13TeV = ('#leq' if 'dijet' in selection else '')+str( round( (lumi/1000.), 2 ) )+" fb^{-1}, 13 TeV, "+ year
     else:
@@ -438,22 +444,24 @@ def drawDataMCReco( ivar, selection, year, lumi, process,
     
     tmpPad2= pad2.DrawFrame( recoHisto.GetXaxis().GetBinLowEdge(1), 0., maxX, 1.9 )
     #print (labelX)
-    tmpPad2.GetYaxis().SetTitle( "Sim./Data." )
-    tmpPad2.GetYaxis().SetTitleOffset( 0.5 )
-    tmpPad2.GetYaxis().SetRangeUser(0.2, 1.8 )
-    tmpPad2.GetYaxis().CenterTitle()
-    
+    #tmpPad2.GetYaxis().SetTitle( "Sim./Data." )
+    #tmpPad2.GetYaxis().SetTitleOffset( 0.5 )
+    tmpPad2.GetYaxis().SetRangeUser(0.25, 1.85 )
+    pad2.Modified()
+    pad2.Update()
+    pad2.Draw()
+    can.Update()   
        
     if 'tau' in ivar: tmpPad2.GetXaxis().SetTitle( '#'+labelX.split('#')[1] )
     else: tmpPad2.GetXaxis().SetTitle(labelX)
         
-    tmpPad2.GetYaxis().SetTitleOffset(extraSpace + (1.15 ) * Hdw / H_ref)
-    tmpPad2.GetXaxis().SetTitleOffset(0.92)
+    tmpPad2.GetYaxis().SetTitleOffset(extraSpace + (1.13 ) * Hdw / H_ref)
+    tmpPad2.GetXaxis().SetTitleOffset(0.96)
     tmpPad2.GetYaxis().SetTitleSize(0.054 * H_ref / Hdw)#, "Y")
-    tmpPad2.GetYaxis().SetLabelSize(0.047 * H_ref / Hdw)#, "Y")
-    tmpPad2.GetXaxis().SetTitleSize(0.056 * H_ref / Hdw)#, "X")
-    tmpPad2.GetXaxis().SetLabelSize(0.047 * H_ref / Hdw)#, "X")
-    tmpPad2.GetXaxis().SetLabelOffset(0.012 * H_ref / Hdw)#, "X")
+    tmpPad2.GetYaxis().SetLabelSize(0.045 * H_ref / Hdw)#, "Y")
+    tmpPad2.GetXaxis().SetTitleSize(0.054 * H_ref / Hdw)#, "X")
+    tmpPad2.GetXaxis().SetLabelSize(0.045 * H_ref / Hdw)#, "X")
+    tmpPad2.GetXaxis().SetLabelOffset(0.011 * H_ref / Hdw)#, "X")
     #ratio_nominal.GetXaxis().SetTitle( '#'+labelX.split('#')[1] )
     tmpPad2.GetYaxis().SetTitle( "#frac{Sim.}{Data}" )
     
@@ -475,34 +483,24 @@ def drawDataMCReco( ivar, selection, year, lumi, process,
     tmpPad2.GetYaxis().SetNdivisions(505)
     tmpPad2.GetYaxis().CenterTitle()
     
-
-    pad2.Modified()
-    pad2.Update()
-    pad2.Draw()
-    can.Update()
-    
-    
     ratio_nominal = ROOT.TGraphAsymmErrors()#len(l_bins)-1,x_bins,y_vals)
-    
-   
-    
+    ratio_nominal.SetName(ratio_nominal.GetName()+'_ratio')#+ivar)
     ratio_nominal.SetLineColor(colors[0])
+    ratio_nominal.SetLineWidth(2)
     ratio_nominal.SetMarkerColor(colors[0])
     ratio_nominal.SetMarkerSize(1)
         
-    
-    
-    ratio_nominal.Divide( recoHisto, dataHisto, 'pois' )
-    ratio_nominal.GetYaxis().SetRangeUser(0.1,2.1 )
+    ratio_nominal.Divide(recoHisto, dataHisto, 'pois' )
+    #ratio_nominal.GetYaxis().SetRangeUser(0.1,2.1 )
     
     #ratio_nominal.GetYaxis().SetTitle( "#frac{Sim.}{Data}" )
-    ratio_nominal.GetYaxis().SetTitleOffset(extraSpace + (1.15 ) * Hdw / H_ref)
-    ratio_nominal.GetXaxis().SetTitleOffset(0.92)
+    ratio_nominal.GetYaxis().SetTitleOffset(extraSpace + (1.13 ) * Hdw / H_ref)
+    ratio_nominal.GetXaxis().SetTitleOffset(0.96)
     ratio_nominal.GetYaxis().SetTitleSize(0.054 * H_ref / Hdw)#, "Y")
-    ratio_nominal.GetYaxis().SetLabelSize(0.047 * H_ref / Hdw)#, "Y")
-    ratio_nominal.GetXaxis().SetTitleSize(0.056 * H_ref / Hdw)#, "X")
-    ratio_nominal.GetXaxis().SetLabelSize(0.047 * H_ref / Hdw)#, "X")
-    ratio_nominal.GetXaxis().SetLabelOffset(0.012 * H_ref / Hdw)#, "X")
+    ratio_nominal.GetYaxis().SetLabelSize(0.045 * H_ref / Hdw)#, "Y")
+    ratio_nominal.GetXaxis().SetTitleSize(0.054 * H_ref / Hdw)#, "X")
+    ratio_nominal.GetXaxis().SetLabelSize(0.045 * H_ref / Hdw)#, "X")
+    ratio_nominal.GetXaxis().SetLabelOffset(0.011 * H_ref / Hdw)#, "X")
     #ratio_nominal.GetXaxis().SetTitle( '#'+labelX.split('#')[1] )
     ratio_nominal.GetYaxis().SetTitle( "#frac{Sim.}{Data}" )
     
@@ -511,9 +509,6 @@ def drawDataMCReco( ivar, selection, year, lumi, process,
         
     ratio_nominal.GetYaxis().SetTitleFont(42)
     ratio_nominal.GetXaxis().SetTitleFont(42)
-
-    #tmpPad2.GetXaxis().SetTitle(nameXaxis)
-    #tmpPad2.GetYaxis().SetTitle(nameRatio)
 
     # Set tick lengths to match original (these are fractions of axis length)
     ratio_nominal.GetYaxis().SetTickLength(0.03 * H_ref / Hup)#, "Y")  # ?? ok if 1/3
@@ -525,16 +520,19 @@ def drawDataMCReco( ivar, selection, year, lumi, process,
     
     
     
-    ratio_nominal.SetLineColor(colors[0])
-    ratio_nominal.SetMarkerColor(colors[0])
-    ratio_nominal.SetMarkerSize(1)
+    #ratio_nominal.SetLineColor(colors[0])
+    #ratio_nominal.SetMarkerColor(colors[0])
+    #ratio_nominal.SetMarkerSize(1)
     ratio_nominal.GetXaxis().SetNdivisions(505)
-    #ratio_nominal.GetYaxis().SetNdivisions(505)
+    ratio_nominal.GetYaxis().SetNdivisions(505)
     ratio_nominal.SetMarkerStyle(25)
     ratio_nominal.Draw('PE1 ')
     
     ratio_alt0MC = ROOT.TGraphAsymmErrors()
+    ratio_alt0MC.SetName(ratio_alt0MC.GetName()+'_ratio')#+ivar)    
     ratio_alt0MC.Divide(  alt0recoHisto, dataHisto, 'pois' )
+    ratio_alt0MC.SetLineStyle(2)
+    ratio_alt0MC.SetLineWidth(3)
     ratio_alt0MC.SetLineColor(colors[1])
     ratio_alt0MC.SetMarkerColor(colors[1])
     ratio_alt0MC.SetMarkerStyle(25)
@@ -550,25 +548,18 @@ def drawDataMCReco( ivar, selection, year, lumi, process,
     #ratio_alt1MC.Draw('PE1 same')
     
     ratio_alt2MC = ROOT.TGraphAsymmErrors()
+    ratio_alt2MC.SetName(ratio_alt2MC.GetName()+'_ratio')#+ivar)    
     ratio_alt2MC.Divide(  alt2recoHisto, dataHisto,  'pois' )
     ratio_alt2MC.SetLineColor(colors[2])#ROOT.kGray+4)
+    ratio_alt2MC.SetLineWidth(3)#ROOT.kGray+4)
+    ratio_alt2MC.SetLineStyle(7)#ROOT.kGray+4)
     ratio_alt2MC.SetMarkerColor(colors[2])#ROOT.kGray+4)
     ratio_alt2MC.SetMarkerStyle(25)
     ratio_alt2MC.SetMarkerSize(1)
     ratio_alt2MC.Draw('PE1 same')
     
-    #ratioLegend=ROOT.TLegend(0.19,0.78,0.69,0.88)
-    #ratioLegend.SetTextSize(0.09)
-    #ratioLegend.SetTextFont(42)
-    #ratioLegend.SetNColumns(3)
-    #ratioLegend.SetFillStyle(0)#ColorAlpha(10,0.6)
-    #ratioLegend.SetBorderSize(0)
-    ##ratioLegend.SetTextSize(0.1)
-    #ratioLegend.AddEntry( ratio_nominal, 'MG5-MLM+P8', 'lp' )
-    #ratioLegend.AddEntry( ratio_alt0MC, 'MG5-MLM+H7', 'lp' )
-    ##ratioLegend.AddEntry( ratio_alt1MC, 'MG5-MLM+P8', 'lp' )
-    #ratioLegend.AddEntry( ratio_alt2MC, 'P8+P8', 'lp' )
-    #ratioLegend.AddEntry( ratiosystUncHisto, 'Syst.', 'f' )
+    
+        
     pad2.Update()
     #ratioLegend.Draw()
     png = outputName.split('.pdf')[0]+'.png'
@@ -577,7 +568,28 @@ def drawDataMCReco( ivar, selection, year, lumi, process,
     root_macro = outputName.split('.pdf')[0]+'.C'
     can.SaveAs(root_macro)
     gc.collect()
+    
+    plotHistos = [ 
+                    dataHisto.Clone(dataHisto.GetName()+'_forHEPData'),
+                    recoHisto.Clone(recoHisto.GetName()+'_forHEPData'),
+                    alt0recoHisto.Clone(alt0recoHisto.GetName()+'_forHEPData'),
+                    alt2recoHisto.Clone(alt2recoHisto.GetName()+'_forHEPData'),
+                    ratio_nominal.Clone(ratio_nominal.GetName()+'_forHEPData'),
+                    ratio_alt0MC.Clone(ratio_alt0MC.GetName()+'_forHEPData'),
+                    ratio_alt2MC.Clone(ratio_alt2MC.GetName()+'_forHEPData'),
+                  ]
+    #hist1D_to_yoda = [yoda.root.to_yoda(  
+    #                    unfoldHisto.Clone( 'normed_unfoldHisto'+ ivar + selection ) ) 
+    #                 ]
+    #yoda.writeYODA(hist1D_to_yoda, f"{outputDir}normed_1D_hists{ivar}{selection}.yoda" )
     print(outputName,png)
+
+    outputFile = ROOT.TFile.Open(f"{outputName.split('.pdf')[0]}.root","RECREATE")
+    for h in plotHistos:
+        h.Write()
+    can.Write()
+    outputFile.Close()
+    
     #ROOT.gStyle.SetPadRightMargin(0.09)     ## reseating
     #ROOT.gStyle.SetPadLeftMargin(0.12)
                     
@@ -836,15 +848,15 @@ def drawUnfold(ivar, selection, process, year, lumi,
     altMCHisto.SetMarkerStyle(25)
     
     if includeFSR: 
-        legend.AddEntry(fsrDownHisto, #('MG5-MLM+P8, ' if 'dijet' in selection else 'PWHG+P8, ') + 
+        legend.AddEntry(fsrDownHisto, #('MadGraph5+P8, ' if 'dijet' in selection else 'POWHEG+P8, ') + 
                         "#alpha_{S}^{FSR} up", 'pe')
 
-        legend.AddEntry(fsrUpHisto, #('MG5-MLM+P8, ' if 'dijet' in selection else 'PWHG+P8, ') + 
+        legend.AddEntry(fsrUpHisto, #('MadGraph5+P8, ' if 'dijet' in selection else 'POWHEG+P8, ') + 
                         "#alpha_{S}^{FSR} down", 'pe')
 
         
         
-    legend.AddEntry( altMCHisto, altMCHisto_label, 'lp' )#'PWHG+H7','lpe')#
+    legend.AddEntry( altMCHisto, altMCHisto_label, 'lp' )#'POWHEG+H7','lpe')#
     
     
     
@@ -916,7 +928,7 @@ def drawUnfold(ivar, selection, process, year, lumi,
         CMS_lumi.extraText = "Preliminary"
         if year=='all': 
             #if 'dijet' in selection:
-            CMS_lumi.lumi_13TeV = ('#leq 135' if 'dijet' in selection else '138')+" fb^{-1} (13 TeV)"
+            CMS_lumi.lumi_13TeV = ('135' if 'dijet' in selection else '138')+" fb^{-1} (13 TeV)"
         else:
             CMS_lumi.lumi_13TeV = ('#leq' if 'dijet' in selection else '')+str( round( (lumi/1000.), 2 ) )+" fb^{-1}, 13 TeV, "+ year
     else:
@@ -1331,7 +1343,7 @@ def drawClosures(ivar, selection, process, year, lumi, genJetHisto, genJetHistoC
     CMS_lumi.extraText = "Simulation Preliminary"
     if year=='all': 
         #if 'dijet' in selection:
-        CMS_lumi.lumi_13TeV = ('#leq 135' if 'dijet' in selection else '138')+" fb^{-1} (13 TeV)"
+        CMS_lumi.lumi_13TeV = ('135' if 'dijet' in selection else '138')+" fb^{-1} (13 TeV)"
     else:
         CMS_lumi.lumi_13TeV = ('#leq' if 'dijet' in selection else '')+str( round( (lumi/1000.), 2 ) )+" fb^{-1}, 13 TeV, "+ year
     #else:
@@ -1747,13 +1759,13 @@ def drawUnfoldFromNdim(ivar, selection, process, year, lumi,
     
     if includeFSR: 
 
-        legend.AddEntry(fsrDownHisto, #('MG5-MLM+P8, ' if 'dijet' in selection else 'PWHG+P8, ') + 
+        legend.AddEntry(fsrDownHisto, #('MadGraph5+P8, ' if 'dijet' in selection else 'POWHEG+P8, ') + 
                         "#alpha_{S}^{FSR} up", 'pe')
 
-        legend.AddEntry(fsrUpHisto, #('MG5-MLM+P8, ' if 'dijet' in selection else 'PWHG+P8, ') + 
+        legend.AddEntry(fsrUpHisto, #('MadGraph5+P8, ' if 'dijet' in selection else 'POWHEG+P8, ') + 
                         "#alpha_{S}^{FSR} down", 'pe')
         
-    legend.AddEntry( altMCHisto, altMCHisto_label, 'lp' )#'PWHG+H7','lpe')#
+    legend.AddEntry( altMCHisto, altMCHisto_label, 'lp' )#'POWHEG+H7','lpe')#
     
     
     
@@ -1825,7 +1837,7 @@ def drawUnfoldFromNdim(ivar, selection, process, year, lumi,
         CMS_lumi.extraText = "Preliminary"
         if year=='all': 
             #if 'dijet' in selection:
-            CMS_lumi.lumi_13TeV = ('#leq 135' if 'dijet' in selection else '138')+" fb^{-1} (13 TeV)"
+            CMS_lumi.lumi_13TeV = ('135' if 'dijet' in selection else '138')+" fb^{-1} (13 TeV)"
         else:
             CMS_lumi.lumi_13TeV = ('#leq' if 'dijet' in selection else '')+str( round( (lumi/1000.), 2 ) )+" fb^{-1}, 13 TeV, "+ year
     else:
@@ -2084,7 +2096,7 @@ def draw2D( ivar, histo, varInfo, outputDir, outputLabel='data', addCorrelation=
     x_proj_ax = histo.GetXaxis()#ProjectionX('x_proj'+histo.GetName())
 
     x_min = -0.5 if 'body' in ivar else x_proj.GetBinLowEdge(1)#0.#histo.GetBinLowEdge(1)
-    x_max = x_proj_ax.GetBinLowEdge(histo.GetNbinsX()+1) 
+    x_max = x_proj_ax.GetBinLowEdge(histo.GetNbinsX()+1)
     y_min = -0.5 if 'body' in ivar else x_proj.GetBinLowEdge(1)#0. 
     y_max = x_max#max([y_max]+[10+i*100. for i in total_unc])
     #if 'tau' in ivar: 
@@ -2114,14 +2126,14 @@ def draw2D( ivar, histo, varInfo, outputDir, outputLabel='data', addCorrelation=
     if 'resp' in outputName.lower() or 'prob' in outputName.lower(): 
         histo.GetXaxis().SetTitle('AK8 gen jet '+varInfo['label'].replace('AK8 jet ','') +f" {'basis' if 'body' in outputName.lower() else ''}")   
     elif 'cov' in outputName.lower() or 'corr' in outputName.lower() : 
-        histo.GetXaxis().SetTitle('AK8 jet '+varInfo['label'] +f" {'basis' if 'body' in outputName.lower() else ''}")   
+        histo.GetXaxis().SetTitle(varInfo['label'] +f" {'N-subjettiness basis' if 'body' in outputName.lower() else ''}")   
         
     
     
     if 'resp' in outputName.lower() or 'prob' in outputName.lower(): 
         histo.GetYaxis().SetTitle('AK8 reco jet '+varInfo['label'].replace('AK8 jet ','') +f" {'basis' if 'body' in outputName.lower() else ''}")
     elif 'cov' in outputName.lower() or 'corr' in outputName.lower() : 
-        histo.GetYaxis().SetTitle('AK8 jet '+varInfo['label'] +f" {'basis' if 'body' in outputName.lower() else ''}")
+        histo.GetYaxis().SetTitle(varInfo['label'] +f" {'N-subjettiness basis' if 'body' in outputName.lower() else ''}")
     
         
     
@@ -2139,8 +2151,24 @@ def draw2D( ivar, histo, varInfo, outputDir, outputLabel='data', addCorrelation=
 
     
     ROOT.gStyle.SetPalette(ROOT.kViridis)
-    #h = histo.DrawCopy("colz")
-    
+    #ROOT.gStyle.SetNumberContours(255)
+    """
+    if 'body' in outputName.lower() and ('corr' in histo.GetName().lower() or 'cov' in histo.GetName().lower()) and not('closure' in outputDir.lower()):
+
+
+        ncont = ROOT.gStyle.GetNumberContours()         # should be 255
+        pal  = ROOT.TColor.GetPalette()            # returns a Python list of length ncont
+
+        # pick the palette‐bin whose z‐value is exactly zero
+        mid_i = ncont//2
+        mid = copy.deepcopy(pal[mid_i])
+        print(mid, mid_i)
+        # swap in white
+        pal[mid_i] = ROOT.TColor.GetColor('#89ADA4')#ROOT.kWhite
+        #print( pal[mid_i], mid_i)
+    """
+
+
     if 'cov' in outputName.lower():
         histo.GetZaxis().SetTitle('Covariance')
         histo.GetZaxis().SetMaxDigits(3)
@@ -2161,7 +2189,7 @@ def draw2D( ivar, histo, varInfo, outputDir, outputLabel='data', addCorrelation=
     histo.Draw("colz")
     
     ROOT.gPad.Update()
-
+    
     palette = histo.GetListOfFunctions().FindObject("palette")
     palette.SetX1NDC(0.86)
     palette.SetX2NDC(0.90)
@@ -2170,11 +2198,49 @@ def draw2D( ivar, histo, varInfo, outputDir, outputLabel='data', addCorrelation=
     can2D.RedrawAxis()
     can2D.Modified()
     can2D.Update()
-    
+    """
+    if 'body' in outputName.lower() and ('correl' in histo.GetName().lower() or 'cov6' in histo.GetName().lower()) and not('closure' in outputDir.lower()) and ('normed' in outputLabel.lower()):
+        print(outputLabel,outputName)
+        
+        nX = histo.GetNbinsX()
+        
+        nY = histo.GetNbinsY()
+        
+        print(nX,nY,mid,ncont) 
+        boxes = []
+        for ix in range(1, nX+1):
+            x1 = histo.GetXaxis().GetBinLowEdge(ix)
+            x2 = histo.GetXaxis().GetBinUpEdge(ix)
+            for iy in range(1, nY+1):
+                if histo.GetBinContent(ix, iy) == 0:
+                    y1 = histo.GetYaxis().GetBinLowEdge(iy)
+                    y2 = histo.GetYaxis().GetBinUpEdge(iy)
+                    
+                    box = ROOT.TBox(x1, y1, x2, y2)
+                    #box.SetName(f'{x1}{y1}')
+                    box.SetLineColorAlpha(ROOT.kWhite,0.6)
+                    box.SetFillColorAlpha(ROOT.kWhite,0.6)
+                    box.SetLineWidth(1)
+                    box.SetFillStyle(1001)     
+                    box.Draw('same')
+                    boxes.append(box)
+                    
+                    #box = ROOT.TBox(x1, y1, x2, y2)
+                    #box.SetName(f'{x1}{y1}')
+                    #box.SetLineColorAlpha(mid,0.7)
+                    #box.SetFillColorAlpha(mid,0.7)
+                    #box.SetLineWidth(0)
+                    #box.SetFillStyle(3154)     
+                    #box.Draw('same')
+                    #boxes.append(box)
+        ROOT.gPad.Update()
+        can2D.Modified()
+        can2D.Update()
+    """
     CMS_lumi.extraText = ("Simulation " if 'resp' in histo.GetName().lower() or 'prob' in histo.GetName().lower() else "")+"Preliminary"
     if year=='all': 
         #if 'dijet' in selection:
-        CMS_lumi.lumi_13TeV = ('#leq 135' if 'dijet' in selection else '138')+" fb^{-1} (13 TeV)"
+        CMS_lumi.lumi_13TeV = ('135' if 'dijet' in selection else '138')+" fb^{-1} (13 TeV)"
     else:
         CMS_lumi.lumi_13TeV = f"{year} fb^{{-1}} (13 TeV)"
     CMS_lumi.relPosX = 0.12
@@ -2220,10 +2286,32 @@ def draw2D( ivar, histo, varInfo, outputDir, outputLabel='data', addCorrelation=
         if 'cov' in outputName.lower() or 'corr' in outputName.lower() or 'proba' in outputName.lower() or 'rho' in outputName.lower():
             root_macro = outputName.split('.pdf')[0]+'.C'
             can2D.SaveAs(root_macro)
+            root_file = outputName.split('.pdf')[0]+'.root'
+            outputFile = ROOT.TFile.Open(root_file, "RECREATE")
+            histo.SetName(histo.GetName()+'_forHEPData')
+            histo.Write()
+            can2D.Write()
+            outputFile.Close()
     
     can2D.Close()        
     #del(can2D)
     gc.collect()
+    
+    ROOT.gStyle.SetPalette(ROOT.kViridis)
+    ROOT.gStyle.SetNumberContours(255)
+    
+
+    #h = histo.DrawCopy("colz")
+    
+    #if 'body' in outputName.lower() and ('corr' in histo.GetName().lower() or 'cov' in histo.GetName().lower()) and not('closure' in outputDir.lower()):
+    #    
+    #            
+    #    ncont = ROOT.gStyle.GetNumberContours()         # should be 255
+    #    pal  = ROOT.TColor.GetPalette()            # returns a Python list of length ncont
+
+        
+    #    pal[mid_i] = mid
+        
     
         
 
@@ -2562,7 +2650,7 @@ def drawUncertainties_from_err_shifts_theoryVariations_unitNorm(
     CMS_lumi.extraText = "Preliminary"
     if year=='all': 
         #if 'dijet' in selection:
-        CMS_lumi.lumi_13TeV = ('#leq 135' if 'dijet' in selection else '138')+" fb^{-1} (13 TeV)"
+        CMS_lumi.lumi_13TeV = ('135' if 'dijet' in selection else '138')+" fb^{-1} (13 TeV)"
     else:
         CMS_lumi.lumi_13TeV = ('#leq' if 'dijet' in selection else '')+str( round( (lumi/1000.), 2 ) )+" fb^{-1} (13 TeV)"
     CMS_lumi.relPosX = 0.11
@@ -2591,7 +2679,7 @@ def drawUncertainties_from_err_shifts_unitNorm(ivar,
 
     print (f'|> Procesing uncertainty plot for {ivar} {"with" if norming else "without"} norming of err_shift_hists by unfolding total={unftot} ')
     
-    colors_list = list(reversed(get_colour_palette_as_list('vf_10')[1:]))+[ROOT.TColor.GetColor('#c849a9'),61,30]
+    colors_list = list(reversed(get_colour_palette_as_list('mod_vf_10')[1:]))+[ROOT.TColor.GetColor('#c849a9'),61,30]
     
     colors = colors_list#[ 95, 7, 6, 38, 8, 42, 50, 218, 225, 30, 16, 51, 83, 61, 167, 207, 209, 212, 216, 198, 190, 67, 89, 133, 142, 208, 36, 2, 144, 225, 227, 150, 93, 40]
     #ROOT.gStyle.SetPadRightMargin(0.04)
@@ -3133,7 +3221,7 @@ def drawUncertainties_from_err_shifts_unitNorm(ivar,
     CMS_lumi.extraText = "Preliminary"
     if year=='all': 
         #if 'dijet' in selection:
-        CMS_lumi.lumi_13TeV = ('#leq 135' if 'dijet' in selection else '138')+" fb^{-1} (13 TeV)"
+        CMS_lumi.lumi_13TeV = ('135' if 'dijet' in selection else '138')+" fb^{-1} (13 TeV)"
     else:
         CMS_lumi.lumi_13TeV = ('#leq' if 'dijet' in selection else '')+str( round( (lumi/1000.), 2 ) )+" fb^{-1} (13 TeV)"
         
@@ -3806,7 +3894,7 @@ def make_rel_uncertainty_plot(ivar,
     CMS_lumi.extraText = "Preliminary"
     if year=='all': 
         #if 'dijet' in selection:
-        CMS_lumi.lumi_13TeV = ('#leq 135' if 'dijet' in selection else '138')+" fb^{-1} (13 TeV)"
+        CMS_lumi.lumi_13TeV = ('135' if 'dijet' in selection else '138')+" fb^{-1} (13 TeV)"
     else:
         CMS_lumi.lumi_13TeV = ('#leq' if 'dijet' in selection else '')+str( round( (lumi/1000.), 2 ) )+" fb^{-1}, 13 TeV, "+ year
     CMS_lumi.relPosX = 0.12
@@ -4152,7 +4240,7 @@ def drawUncertainties_from_err_shifts(ivar, unfoldHistoTotUnc, unfoldHistowoUnc,
     
     print (f'|> Procesing uncertainty plot for {ivar} {"with" if norming else "without"} norming of err_shift_hists by unfolding total={unftot} ')
     
-    colors_list = list(reversed(get_colour_palette_as_list('vf_10')[1:]))+[ROOT.TColor.GetColor('#c849a9'),61,30]
+    colors_list = list(reversed(get_colour_palette_as_list('mod_vf_10')[1:]))+[ROOT.TColor.GetColor('#c849a9'),61,30]
     
     colors = colors_list#[ 95, 7, 6, 38, 8, 42, 50, 218, 225, 30, 16, 51, 83, 61, 167, 207, 209, 212, 216, 198, 190, 67, 89, 133, 142, 208, 36, 2, 144, 225, 227, 150, 93, 40]
     ROOT.gStyle.SetPadRightMargin(0.05)
@@ -4990,7 +5078,7 @@ def makePSplot_simple(purity,stability,
     #CMS_lumi.extraText = "Preliminary"
     if year=='all': 
         #if 'dijet' in selection:
-        CMS_lumi.lumi_13TeV = ('#leq 135' if 'dijet' in sel else '138')+" fb^{-1} (13 TeV)"
+        CMS_lumi.lumi_13TeV = ('135' if 'dijet' in sel else '138')+" fb^{-1} (13 TeV)"
     else:
         CMS_lumi.lumi_13TeV = ('#leq' if 'dijet' in sel else '')+str( round( (lumi/1000.), 2 ) )+" fb^{-1}, 13 TeV, "+ year
     
@@ -5129,7 +5217,9 @@ def set_dynamic_y_range_errRatioHist(histList, extra_margin=1.4, bottom_margin=0
     
 def get_colour_palette_as_list(palette_requested=None):
     if palette_requested=='vf_10' or palette_requested==None:
-        hex_list = ["#3f90da", "#ffa90e", "#bd1f01", "#94a4a2", "#832db6", "#a96b59", "#e76300", "#b9ac70", "#717581", "#92dadd"]
+        hex_list = ["#3f90da", "#ffa90e",  "#b9ac70", "#94a4a2", "#832db6", "#a96b59", "#e76300", "#bd1f01", "#717581", "#92dadd"]
+    elif palette_requested=='mod_vf_10':# or palette_requested==None:
+        hex_list = ["#94a4a2", "#3f90da",  "#bd1f01", "#ffa90e", "#832db6", "#a96b59", "#e76300", "#b9ac70", "#964a8b", "#92dadd"]
     elif palette_requested=='vf_8':
         hex_list = ["#1845fb", "#ff5e02", "#c91f16", "#c849a9", "#adad7d", "#86c8dd", "#578dff", "#656364"]
     elif palette_requested=='vf_6':
